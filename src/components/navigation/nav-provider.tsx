@@ -1,16 +1,12 @@
-import { useState, ReactNode } from 'react';
-import NavContext, { NavContextType } from './nav-context';
+import { type ReactNode, useState } from "react";
+import NavContext, { type NavContextType } from "./nav-context";
 
-type Props = { children: ReactNode }
+type Props = { children: ReactNode };
 
 export default function NavContextProvider({ children }: Props) {
-  const [appState, setAppState] = useState<NavContextType['appState']>('home');
+	const [appState, setAppState] = useState<NavContextType["appState"]>("home");
 
-  const context: NavContextType = { setAppState, appState };
+	const context: NavContextType = { setAppState, appState };
 
-  return (
-    <NavContext.Provider value={context}>
-      {children}
-    </NavContext.Provider>
-  );
+	return <NavContext.Provider value={context}>{children}</NavContext.Provider>;
 }

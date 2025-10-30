@@ -1,16 +1,16 @@
 import { useContext } from "react";
-import NavContext from "./nav-context";
 import { AddContainer } from "../../views/add/add.container";
+import HomeContainer from "../../views/home/home.container";
+import NavContext from "./nav-context";
 
 const NavRouter = () => {
-    const { appState } = useContext(NavContext);
-    switch (appState) {
-        case "add": 
-            return <AddContainer />;
-        default: 
-            return <div> Home conotainer</div>
-
-    }
-}
+	const { appState } = useContext(NavContext);
+	switch (appState) {
+		case "add":
+			return <AddContainer />;
+		default:
+			return <HomeContainer />;
+	}
+};
 
 export default NavRouter;
