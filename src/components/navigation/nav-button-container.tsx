@@ -16,7 +16,7 @@ const NavButtonContainer = ({ children }: { children: ReactNode[] }) => {
 				`${gridCols[children.length - 1]}`,
 			)}
 		>
-			{children.map((child, i) => (
+			{children.map((child) => (
 				<div className="grid grid-cols-1" key={child?.toString()}>
 					{child}
 				</div>

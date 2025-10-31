@@ -1,11 +1,15 @@
 export type ClimbType = {
-    name: string;
-    type: "boulder" | "sport";
-    grade: string;
-    country:  string;
-    area:  string;
-    subArea:  string;
-    latlong:  string;
-    link:  string;
-    sent: boolean;
-}
+	id: string;
+	name: string;
+	route_type: string;
+	grade: string;
+	moves: string;
+	created_date: number;
+	last_update_date: number;
+	link?: string;
+	route_location?: string;
+	country?: string;
+	area?: string;
+	sub_area?: string;
+	sent_status: "Project" | "Sent";
+};
