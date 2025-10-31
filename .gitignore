@@ -12,6 +12,8 @@ dist
 dist-ssr
 *.local
 
+target/rust-analyzer/flycheck0/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
