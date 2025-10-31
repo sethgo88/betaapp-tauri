@@ -1,12 +1,90 @@
-import { useForm } from "@tanstack/react-form";
+import { useForm, uuid } from "@tanstack/react-form";
 import { invoke } from "@tauri-apps/api/core";
+import { useEffect, useRef, useState } from "react";
 import { route_grades } from "@/lib/json";
 import { FormInput } from "../../components/form/form-input";
 import { FormSelect } from "../../components/form/form-select";
 import PageWrapper from "../../components/page-wrapper/page-wrapper";
 import type { ClimbType } from "../../types/climb";
 
+type MoveType = {
+	id: string;
+	text: string;
+};
+
 export const AddContainer = ({ climbAsset }: { climbAsset?: ClimbType }) => {
+	const [movesList, setMovesList] = useState<MoveType[]>([
+		{ id: uuid(), text: "" },
+	]);
+	const inputRefs = useRef<Array<HTMLTextAreaElement | null>>([]);
+
+	const addMove = (id: string) => {
+		const index = movesList.findIndex((x) => x.id === id);
+		setMovesList([
+			...movesList.slice(0, index + 1),
+			{ id: uuid(), text: "" },
+			...movesList.slice(index + 1),
+		]);
+	};
+
+	const handleMoveChange = (
+		e: React.ChangeEvent<HTMLTextAreaElement>,
+		id: string,
+	) => {
+		const index = movesList.findIndex((x) => x.id === id);
+		const item = movesList[index];
+		item.text = e.target.value;
+		setMovesList([
+			...movesList.slice(0, index),
+			item,
+			...movesList.slice(index + 1),
+		]);
+	};
+
+	const handleMoveDelete = (id: string) => {
+		if (movesList.length > 1) {
+			setMovesList([...movesList.filter((x) => x.id !== id)]);
+		}
+	};
+
+	const handleTextAreaKeyDown = (
+		e: React.KeyboardEvent<HTMLTextAreaElement>,
+		id: string,
+	) => {
+		if (e.key === "Enter") {
+			e.preventDefault();
+			addMove(id);
+		}
+		if (e.key === "Backspace") {
+			const target = e.currentTarget;
+			if (target.value === "") {
+				e.preventDefault();
+				handleMoveDelete(id);
+				const focusedIndex = getFocusedMoveIndex();
+				inputRefs.current[focusedIndex - 1]?.focus();
+			}
+		}
+	};
+
+	const getFocusedMoveIndex = () => {
+		const focused = inputRefs.current.find(
+			(input) => input === document.activeElement,
+		);
+		if (!focused) return -1;
+		return inputRefs.current.indexOf(focused);
+	};
+
+	useEffect(() => {
+		if (inputRefs.current.length > 0 && movesList.length > 0) {
+			const focused = inputRefs.current.find(
+				(input) => input === document.activeElement,
+			);
+			if (!focused) return;
+			const focusedIndex = inputRefs.current.indexOf(focused);
+			inputRefs.current[focusedIndex + 1]?.focus();
+		}
+	}, [movesList.length]);
+
 	async function addClimb(climb: Omit<ClimbType, "id">) {
 		return await invoke("add_climb", {
 			climb,
@@ -37,15 +115,6 @@ export const AddContainer = ({ climbAsset }: { climbAsset?: ClimbType }) => {
 			sent_status: climbAsset?.sent_status ?? "Project",
 		},
 	});
-
-	const handleTextAreaKeyDown = (
-		e: React.KeyboardEvent<HTMLTextAreaElement>,
-	) => {
-		if (e.key === "Enter") {
-			e.preventDefault();
-			console.log("Enter pressed in textarea");
-		}
-	};
 
 	return (
 		<PageWrapper>
@@ -132,11 +201,27 @@ export const AddContainer = ({ climbAsset }: { climbAsset?: ClimbType }) => {
 					</div>
 					<FormInput type="text" placeholder="Link" name="link" />
 				</div>
-				<div className="w-full rounded-md bg-stone-800 p-2 h-[calc(93vh-240px)]">
-					<textarea
-						onKeyDown={(e) => handleTextAreaKeyDown(e)}
-						className="w-full field-sizing-content border-l border-white outline-none px-1"
-					></textarea>
+				<div className="w-full rounded-md bg-stone-800 p-2 h-[calc(93vh-240px)] overflow-y-scroll">
+					{movesList.map((move, index) => (
+						<>
+							<p>{move.id}</p>
+							<textarea
+								onKeyDown={(e) =>
+									handleTextAreaKeyDown(e, move.id ? move.id : "")
+								}
+								onChange={(e) =>
+									handleMoveChange(e, move.id ? move.id : index.toString())
+								}
+								className="w-full field-sizing-content border-l border-white outline-none px-1"
+								key={`move-input-${uuid}`}
+								value={move.text}
+								ref={(el) => {
+									inputRefs.current[index] = el;
+									return el;
+								}}
+							></textarea>
+						</>
+					))}
 				</div>
 			</form>
 		</PageWrapper>
