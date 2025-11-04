@@ -1,11 +1,12 @@
 import { useForm, uuid } from "@tanstack/react-form";
 import { invoke } from "@tauri-apps/api/core";
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { route_grades } from "@/lib/json";
 import { FormInput } from "../../components/form/form-input";
 import { FormSelect } from "../../components/form/form-select";
 import PageWrapper from "../../components/page-wrapper/page-wrapper";
 import type { ClimbType } from "../../types/climb";
+import ToastContext from "@/components/toast/toast-context";
 
 type MoveType = {
 	id: string;
@@ -19,6 +20,7 @@ export const AddContainer = ({ climbAsset }: { climbAsset?: ClimbType }) => {
 			: [{ id: uuid(), text: "" }],
 	);
 	const inputRefs = useRef<Array<HTMLTextAreaElement | null>>([]);
+	const { addToast } = useContext(ToastContext)
 
 	const addMove = (id: string) => {
 		const index = movesList.findIndex((x) => x.id === id);
@@ -111,12 +113,20 @@ export const AddContainer = ({ climbAsset }: { climbAsset?: ClimbType }) => {
 			if (climbAsset) {
 				const response = await editClimb(payload);
 				if (response) {
-					alert("updated");
+					addToast({
+						message: "Climb Updated",
+						type: "success",
+						id: crypto.randomUUID()
+					})
 				}
 			} else {
 				const response = await addClimb(payload);
 				if (response) {
-					alert("added");
+					addToast({
+						message: "Climb Added",
+						type: "success",
+						id: crypto.randomUUID()
+					})
 				}
 			}
 		},
