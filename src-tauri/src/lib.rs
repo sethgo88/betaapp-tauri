@@ -165,7 +165,7 @@ async fn update_climb(state: tauri::State<'_, AppState>, climb: Climb) -> Result
 }
 
 #[tauri::command]
-async fn delete_climb(state: tauri::State<'_, AppState>, id: u16) -> Result<(), String> {
+async fn delete_climb(state: tauri::State<'_, AppState>, id: String) -> Result<(), String> {
     let db = &state.db;
 
     sqlx::query("DELETE FROM climbs WHERE id = ?1")

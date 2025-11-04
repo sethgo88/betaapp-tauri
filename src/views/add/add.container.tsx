@@ -19,6 +19,7 @@ export const AddContainer = ({ climbAsset }: { climbAsset?: ClimbType }) => {
 			? JSON.parse(climbAsset.moves)
 			: [{ id: uuid(), text: "" }],
 	);
+	const [newClimb, setNewClimb] = useState(climbAsset ? false : true);
 	const inputRefs = useRef<Array<HTMLTextAreaElement | null>>([]);
 	const { addToast } = useContext(ToastContext)
 
@@ -110,20 +111,21 @@ export const AddContainer = ({ climbAsset }: { climbAsset?: ClimbType }) => {
 				last_update_date: Date.now(),
 				moves: JSON.stringify(movesList),
 			};
-			if (climbAsset) {
-				const response = await editClimb(payload);
-				if (response) {
-					addToast({
-						message: "Climb Updated",
-						type: "success",
-						id: crypto.randomUUID()
-					})
-				}
-			} else {
+			if (newClimb) {
 				const response = await addClimb(payload);
 				if (response) {
 					addToast({
 						message: "Climb Added",
+						type: "success",
+						id: crypto.randomUUID()
+					})
+					setNewClimb(false);
+				}
+			} else {
+				const response = await editClimb(payload);
+				if (response) {
+					addToast({
+						message: "Climb Updated",
 						type: "success",
 						id: crypto.randomUUID()
 					})
