@@ -11,5 +11,5 @@ export type ClimbType = {
 	country?: string;
 	area?: string;
 	sub_area?: string;
-	sent_status: "Project" | "Sent";
+	sent_status: string;
 };

@@ -9,15 +9,16 @@ const NavButtonContainer = ({ children }: { children: ReactNode[] }) => {
 		"grid-cols-4",
 		"grid-cols-5",
 	];
+	console.log(children);
 	return (
 		<div
 			className={twMerge(
-				"w-full flex justify-around bg-stone-900 fixed bottom-0 px-[3vw] py-[2vh] pb-[3vh] text-white",
+				"w-full flex justify-around bg-stone-900 fixed bottom-0 px-[3vw] text-white h-[7vh]",
 				`${gridCols[children.length - 1]}`,
 			)}
 		>
 			{children.map((child) => (
-				<div className="grid grid-cols-1" key={child?.toString()}>
+				<div className="grid grid-cols-1" key={`${Math.random()}`}>
 					{child}
 				</div>
 			))}

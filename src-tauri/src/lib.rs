@@ -18,6 +18,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             add_climb,
             get_climbs,
+            update_climb,
+            delete_climb
         ])
         .setup(|app| {
             tauri::async_runtime::block_on(async move {
@@ -63,15 +65,9 @@ async fn setup_db(app: &App) -> Db {
     db
 }
 
-#[derive(Debug, Serialize, Deserialize, sqlx::Type)]
-enum SentStatus {
-    Project,
-    Sent,
-}
-
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 struct Climb {
-    id: Option<i64>,
+    id: String,
     name: String,
     route_type: String,
     grade: String,
@@ -83,7 +79,7 @@ struct Climb {
     country: Option<String>,
     area: Option<String>,
     sub_area: Option<String>,
-    sent_status: SentStatus,
+    sent_status: String,
 }
 
 #[tauri::command]
@@ -96,18 +92,21 @@ async fn get_climbs(state: tauri::State<'_, AppState>) -> Result<Vec<Climb>, Str
         .await
         .map_err(|e| format!("Failed to get climbs {}", e))?;
 
+    println!("grabbing climb: {:?}", climbs);
     Ok(climbs)
 }
 
 #[tauri::command]
-async fn add_climb(state: tauri::State<'_, AppState>, climb: Climb) -> Result<(), String> {
+async fn add_climb(state: tauri::State<'_, AppState>, climb: Climb) -> Result<Vec<Climb>, String> {
     let db = &state.db;
 
+    println!("Adding climb: {:?}", climb);
     sqlx::query(
         "INSERT INTO climbs (
-            name, route_type, grade, moves, created_date, last_update_date, link, route_location, country, area, sub_area, sent_status
-        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)"
+            id, name, route_type, grade, moves, created_date, last_update_date, link, route_location, country, area, sub_area, sent_status
+        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)"
     )
+        .bind(climb.id.clone())
         .bind(climb.name)
         .bind(climb.route_type)
         .bind(climb.grade)
@@ -123,6 +122,57 @@ async fn add_climb(state: tauri::State<'_, AppState>, climb: Climb) -> Result<()
         .execute(db)
         .await
         .map_err(|e| format!("Error saving climb: {}", e))?;
+        
+        let climb: Vec<Climb> = sqlx::query_as::<_, Climb>("SELECT * FROM climbs WHERE id = ?1")
+        .bind(climb.id.clone())
+        .fetch(db)
+        .try_collect()
+        .await
+        .map_err(|e| format!("Failed to get climbs {}", e))?;
+
+    Ok(climb)
+}
+
+#[tauri::command]
+async fn update_climb(state: tauri::State<'_, AppState>, climb: Climb) -> Result<Vec<Climb>, String> {
+    let db = &state.db;
+    println!("Updating climb: {:?}", climb);
+    sqlx::query("UPDATE climbs SET name = ?1, route_type = ?2, grade = ?3, moves = ?4, last_update_date = ?5, link = ?6, route_location = ?7, country = ?8, area = ?9, sub_area = ?10, sent_status = ?11 WHERE id = ?12")
+        .bind(climb.name)
+        .bind(climb.route_type)
+        .bind(climb.grade)
+        .bind(climb.moves)
+        .bind(climb.last_update_date)
+        .bind(climb.link)
+        .bind(climb.route_location)
+        .bind(climb.country)
+        .bind(climb.area)
+        .bind(climb.sub_area)
+        .bind(climb.sent_status)
+        .bind(climb.id.clone())
+        .execute(db)
+        .await
+        .map_err(|e| format!("could not update climb {}", e))?;
+
+    let climb: Vec<Climb> = sqlx::query_as::<_, Climb>("SELECT * FROM climbs WHERE id = ?1")
+        .bind(climb.id.clone())
+        .fetch(db)
+        .try_collect()
+        .await
+        .map_err(|e| format!("Failed to get climbs {}", e))?;
+
+    Ok(climb)
+}
+
+#[tauri::command]
+async fn delete_climb(state: tauri::State<'_, AppState>, id: u16) -> Result<(), String> {
+    let db = &state.db;
+
+    sqlx::query("DELETE FROM climbs WHERE id = ?1")
+        .bind(id)
+        .execute(db)
+        .await
+        .map_err(|e| format!("could not delete climb {}", e))?;
 
     Ok(())
 }

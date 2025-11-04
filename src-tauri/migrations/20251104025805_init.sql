@@ -1,5 +1,5 @@
-CREATE TABLE IF NOT EXISTS climbs (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+CREATE TABLE climbs (
+    id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
     route_type TEXT NOT NULL,
     grade TEXT NOT NULL,
@@ -11,5 +11,5 @@ CREATE TABLE IF NOT EXISTS climbs (
     country TEXT,
     area TEXT,
     sub_area TEXT,
-    sent_status VARCHAR(30) NOT NULL DEFAULT 'Project'
+    sent_status VARCHAR(30) NOT NULL
 );

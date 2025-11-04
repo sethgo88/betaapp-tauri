@@ -13,9 +13,11 @@ type MoveType = {
 };
 
 export const AddContainer = ({ climbAsset }: { climbAsset?: ClimbType }) => {
-	const [movesList, setMovesList] = useState<MoveType[]>([
-		{ id: uuid(), text: "" },
-	]);
+	const [movesList, setMovesList] = useState<MoveType[]>(
+		climbAsset?.moves
+			? JSON.parse(climbAsset.moves)
+			: [{ id: uuid(), text: "" }],
+	);
 	const inputRefs = useRef<Array<HTMLTextAreaElement | null>>([]);
 
 	const addMove = (id: string) => {
@@ -85,23 +87,38 @@ export const AddContainer = ({ climbAsset }: { climbAsset?: ClimbType }) => {
 		}
 	}, [movesList.length]);
 
-	async function addClimb(climb: Omit<ClimbType, "id">) {
+	async function addClimb(climb: ClimbType) {
 		return await invoke("add_climb", {
+			climb,
+		});
+	}
+
+	async function editClimb(climb: ClimbType) {
+		return await invoke("update_climb", {
 			climb,
 		});
 	}
 
 	const form = useForm({
 		onSubmit: async ({ value }) => {
-			const payload: Omit<ClimbType, "id"> = {
+			const payload: ClimbType = {
 				...value,
+				id: climbAsset ? climbAsset.id : uuid(),
 				created_date: climbAsset?.created_date || Date.now(),
 				last_update_date: Date.now(),
-				sent_status: "Project",
-				moves: "",
+				moves: JSON.stringify(movesList),
 			};
-			alert(JSON.stringify(payload, null, 2));
-			addClimb(payload);
+			if (climbAsset) {
+				const response = await editClimb(payload);
+				if (response) {
+					alert("updated");
+				}
+			} else {
+				const response = await addClimb(payload);
+				if (response) {
+					alert("added");
+				}
+			}
 		},
 		defaultValues: {
 			name: climbAsset?.name ?? "",
@@ -117,7 +134,7 @@ export const AddContainer = ({ climbAsset }: { climbAsset?: ClimbType }) => {
 	});
 
 	return (
-		<PageWrapper>
+		<PageWrapper className="grid pb-[calc(7vh+1rem)]">
 			<form
 				onSubmit={(e) => {
 					e.preventDefault();
@@ -125,7 +142,7 @@ export const AddContainer = ({ climbAsset }: { climbAsset?: ClimbType }) => {
 					form.handleSubmit();
 				}}
 				id="climb-form"
-				className="flex flex-col gap-4"
+				className="grid grid-rows-[auto_1fr] h-full gap-4"
 			>
 				<div className="flex flex-col gap-2">
 					<form.Field
@@ -200,11 +217,26 @@ export const AddContainer = ({ climbAsset }: { climbAsset?: ClimbType }) => {
 						</form.Field>
 					</div>
 					<FormInput type="text" placeholder="Link" name="link" />
+					<div className="flex gap-2">
+						<form.Field name="sent_status">
+							{(field) => (
+								<FormSelect
+									onChange={(e) => {
+										field.handleChange(e.target.value);
+									}}
+									value={field.state.value}
+									name="sent_status"
+								>
+									<option value="Project">Project</option>
+									<option value="Sent">Sent</option>
+								</FormSelect>
+							)}
+						</form.Field>
+					</div>
 				</div>
-				<div className="w-full rounded-md bg-stone-800 p-2 h-[calc(93vh-240px)] overflow-y-scroll">
+				<div className="w-full rounded-md bg-stone-800 p-2 overflow-y-scroll">
 					{movesList.map((move, index) => (
 						<>
-							<p>{move.id}</p>
 							<textarea
 								onKeyDown={(e) =>
 									handleTextAreaKeyDown(e, move.id ? move.id : "")
