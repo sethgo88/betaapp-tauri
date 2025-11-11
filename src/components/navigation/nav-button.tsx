@@ -1,16 +1,16 @@
+import AppContext, { AppContextType } from "@/components/app-context/app-context";
 import { type ReactNode, useContext } from "react";
-import NavContext, { type NavContextType } from "./nav-context";
 
 const NavbarButton = ({
 	children,
 	target,
 }: {
 	children: ReactNode;
-	target: NavContextType["appState"];
+	target: AppContextType["appState"];
 }) => {
-	const { setAppState } = useContext(NavContext);
+	const { setAppState } = useContext(AppContext);
 
-	const handleOnClick = (target: NavContextType["appState"]) => () => {
+	const handleOnClick = (target: AppContextType["appState"]) => () => {
 		setAppState(target);
 	};
 

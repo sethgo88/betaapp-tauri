@@ -9,7 +9,6 @@ const NavButtonContainer = ({ children }: { children: ReactNode[] }) => {
 		"grid-cols-4",
 		"grid-cols-5",
 	];
-	console.log(children);
 	return (
 		<div
 			className={twMerge(

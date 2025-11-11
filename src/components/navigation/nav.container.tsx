@@ -6,12 +6,13 @@ import { MdOutlinePlaylistAdd } from "react-icons/md";
 import { Button } from "../button/button";
 import NavbarButton from "./nav-button";
 import NavButtonContainer from "./nav-button-container";
-import NavContext from "./nav-context";
 import NavRouter from "./nav-router";
+import AppContext from "@/components/app-context/app-context";
+import { FaRegCircleUser } from "react-icons/fa6";
 
 const NavContainer = () => {
 	const { appState, currentClimb, setAppState, setCurrentClimb } =
-		useContext(NavContext);
+		useContext(AppContext);
 
 	const deleteClimb = async () => {
 		if (!currentClimb) return;
@@ -41,10 +42,14 @@ const NavContainer = () => {
 						<Button onClick={deleteClimb} variant="unstyled" type="button">
 							<GoTrash className="text-2xl" />
 						</Button>
+						<NavbarButton target="profile">
+							<FaRegCircleUser className="text-2xl" />
+						</NavbarButton>
 					</NavButtonContainer>
 				</>
 			);
 		case "home":
+		case "profile":
 			return (
 				<>
 					<NavRouter />
@@ -54,6 +59,9 @@ const NavContainer = () => {
 						</NavbarButton>
 						<NavbarButton target="add">
 							<MdOutlinePlaylistAdd className="text-2xl" />
+						</NavbarButton>
+						<NavbarButton target="profile">
+							<FaRegCircleUser className="text-2xl" />
 						</NavbarButton>
 					</NavButtonContainer>
 				</>

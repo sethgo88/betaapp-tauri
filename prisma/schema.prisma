@@ -1,0 +1,35 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["relationJoins"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id  String  @id
+  email String?
+  phone String?
+  username String?
+  synced Boolean
+}
+
+model Climb {
+  id    String    @id
+  user_id String
+  synced Boolean
+  name  String
+  route_type  String
+  grade String
+  moves String
+  created_date Int
+  last_updated_date Int
+  link String?
+  route_location String?
+  country String?
+  area String?
+  sub_area String?
+  sent_status Boolean
+}

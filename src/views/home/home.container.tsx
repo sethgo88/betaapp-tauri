@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { useContext, useEffect, useState } from "react";
 import { twMerge } from "tailwind-merge";
-import NavContext from "@/components/navigation/nav-context";
+import AppContext from "@/components/app-context/app-context";
 import { buildLocationString } from "@/utils/build-location-string";
 import { ListItem } from "@/views/home/components/list-item";
 import PageWrapper from "../../components/page-wrapper/page-wrapper";
@@ -11,7 +11,7 @@ const HomeContainer = () => {
 	const [isLoadingClimbs, setIsLoadingClimbs] = useState(true);
 	const [Climbs, setClimbs] = useState<ClimbType[]>([]);
 	const [error, setError] = useState<string>("");
-	const { setAppState, setCurrentClimb } = useContext(NavContext);
+	const { setAppState, setCurrentClimb } = useContext(AppContext);
 
 	async function getClimbs() {
 		const response = await invoke("get_climbs");

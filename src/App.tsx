@@ -1,16 +1,16 @@
 import "./App.css";
 import NavContainer from "./components/navigation/nav.container";
-import NavContextProvider from "./components/navigation/nav-provider";
+import AppContextProvider from '@/components/app-context/app-provider'
 import ToastContextProvider from "@/components/toast/toast-provider";
 
 function App() {
 
 	return (
-		<NavContextProvider>
+		<AppContextProvider>
 			<ToastContextProvider>
 				<NavContainer />
 			</ToastContextProvider>
-		</NavContextProvider>
+		</AppContextProvider>
 	);
 }
 
