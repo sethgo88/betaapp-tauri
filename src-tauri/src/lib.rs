@@ -20,6 +20,7 @@ pub fn run() {
             get_climbs,
             update_climb,
             delete_climb,
+            get_user,
             add_user,
             update_user
         ])
@@ -189,6 +190,20 @@ async fn delete_climb(state: tauri::State<'_, AppState>, id: String) -> Result<(
         .map_err(|e| format!("could not delete climb {}", e))?;
 
     Ok(())
+}
+
+#[tauri::command]
+async fn get_user(state: tauri::State<'_, AppState>) -> Result<Vec<User>, String> {
+    let db = &state.db;
+
+    let user: Vec<User> = sqlx::query_as::<_, User>("SELECT * FROM users")
+        .fetch(db)
+        .try_collect()
+        .await
+        .map_err(|e| format!("Failed to get user {}", e))?;
+
+    println!("grabbing user: {:?}", user);
+    Ok(user)
 }
 
 #[tauri::command]

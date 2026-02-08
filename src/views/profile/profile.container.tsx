@@ -1,6 +1,6 @@
 import { useForm } from "@tanstack/react-form";
 import { invoke } from "@tauri-apps/api/core";
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
 import AppContext from "@/components/app-context/app-context";
 import { Button } from "@/components/button/button";
 import { FormInput } from "@/components/form/form-input";
@@ -9,6 +9,16 @@ import type { UserType } from "@/types/user";
 
 const ProfileContainer = () => {
 	const { userInfo, setUserInfo } = useContext(AppContext);
+
+	async function getUser() {
+		const response: UserType[] = await invoke("get_user");
+		setUserInfo(response[0]);
+	}
+
+	// biome-ignore lint/correctness/useExhaustiveDependencies: <run on first render>
+	useEffect(() => {
+		getUser();
+	}, []);
 
 	async function addUser(user: UserType) {
 		return await invoke("add_user", {
@@ -113,7 +123,7 @@ const ProfileContainer = () => {
 				</div>
 				<div className="flex flex-col gap-2">
 					<Button type="submit" className="py-2">
-						Update User
+						{!userInfo ? "Add" : "Update"} User
 					</Button>
 				</div>
 			</form>
