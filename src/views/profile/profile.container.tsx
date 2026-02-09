@@ -12,7 +12,17 @@ const ProfileContainer = () => {
 
 	async function getUser() {
 		const response: UserType[] = await invoke("get_user");
-		setUserInfo(response[0]);
+		if(response){
+			setUserInfo(response[0]);
+		} else {
+			setUserInfo(
+				{
+					username: "",
+					email: "",
+					phone: ""
+				}
+			)
+		}
 	}
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: <run on first render>
@@ -34,7 +44,6 @@ const ProfileContainer = () => {
 
 	const form = useForm({
 		onSubmit: async ({ value }) => {
-			alert(userInfo);
 			if (!value.email && !value.phone && !value.username) return;
 			const payload = {
 				id: userInfo?.id ?? crypto.randomUUID(),
@@ -46,13 +55,11 @@ const ProfileContainer = () => {
 			if (!userInfo) {
 				const response = await addUser(payload);
 				if (response) {
-					alert(response);
 					setUserInfo(payload);
 				}
 			} else {
 				const response = await editUser(payload);
 				if (response) {
-					alert(response);
 					setUserInfo(payload);
 				}
 			}

@@ -2,6 +2,7 @@
 use futures::TryStreamExt;
 use serde::{Deserialize, Serialize};
 use sqlx::{migrate::MigrateDatabase, prelude::FromRow, sqlite::SqlitePoolOptions, Pool, Sqlite};
+use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::{App, Manager as _};
 
 type Db = Pool<Sqlite>;
@@ -63,9 +64,73 @@ async fn setup_db(app: &App) -> Db {
         .await
         .unwrap();
 
-    sqlx::migrate!("./migrations").run(&db).await.unwrap();
+    // Run migrations at runtime
+    run_migrations(&db).await.expect("Failed to run migrations");
 
     db
+}
+
+async fn run_migrations(db: &Db) -> Result<(), String> {
+    // Create migrations table if it doesn't exist
+    sqlx::query(
+        "CREATE TABLE IF NOT EXISTS _sqlx_migrations (
+            version BIGINT PRIMARY KEY,
+            description TEXT NOT NULL,
+            installed_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            success BOOLEAN NOT NULL,
+            execution_time BIGINT NOT NULL
+        )"
+    )
+    .execute(db)
+    .await
+    .map_err(|e| format!("Failed to create migrations table: {}", e))?;
+
+    let migrations: &[(&str, &str)] = &[
+        ("20251105035844_add_commas.sql", include_str!("../migrations/20251105035844_add_commas.sql")),
+        ("20260208045737_user_create_date.sql", include_str!("../migrations/20260208045737_user_create_date.sql")),
+        ("20260208191541_user_first_last.sql", include_str!("../migrations/20260208191541_user_first_last.sql")),
+        ("20260208204353_user_last_name.sql", include_str!("../migrations/20260208204353_user_last_name.sql")),
+    ];
+
+    for (file_name, sql) in migrations {
+        let version: i64 = file_name
+            .split('_')
+            .next()
+            .and_then(|v| v.parse().ok())
+            .ok_or_else(|| format!("Invalid migration filename: {}", file_name))?;
+
+        let already_applied: (i64,) = sqlx::query_as(
+            "SELECT COUNT(*) FROM _sqlx_migrations WHERE version = ?1"
+        )
+        .bind(version)
+        .fetch_one(db)
+        .await
+        .map_err(|e| format!("Failed to check migration status: {}", e))?;
+
+        if already_applied.0 > 0 {
+            println!("Migration {} already applied, skipping", file_name);
+            continue;
+        }
+
+        println!("Running migration: {}", file_name);
+        sqlx::query(sql)
+            .execute(db)
+            .await
+            .map_err(|e| format!("Failed to execute migration {}: {}", file_name, e))?;
+
+        sqlx::query(
+            "INSERT INTO _sqlx_migrations (version, description, success, execution_time) VALUES (?1, ?2, ?3, ?4)"
+        )
+        .bind(version)
+        .bind(file_name)
+        .bind(true)
+        .bind(0i64)
+        .execute(db)
+        .await
+        .map_err(|e| format!("Failed to record migration: {}", e))?;
+    }
+
+    Ok(())
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
@@ -90,9 +155,12 @@ struct Climb {
 struct User {
     id: String,
     username: Option<String>,
+    firstname: Option<String>,
+    lastname: Option<String>,
     email: Option<String>,
     phone: Option<String>,
-    synced: Option<String>
+    synced: Option<String>,
+    date_added: Option<i64>
 }
 
 #[tauri::command]
@@ -211,16 +279,25 @@ async fn add_user(state: tauri::State<'_, AppState>, user: User) -> Result<Vec<U
     let db = &state.db;
 
     println!("Adding user: {:?}", user);
+    
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_err(|e| format!("Failed to get current time: {}", e))?
+        .as_secs() as i64;
+
     sqlx::query(
         "INSERT INTO users (
-            id, username, email, phone, synced
-        ) VALUES (?1, ?2, ?3, ?4, ?5)"
+            id, username, firstname, lastname, email, phone, synced, date_added
+        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)"
     )
         .bind(user.id.clone())
         .bind(user.username)
+        .bind(user.firstname)
+        .bind(user.lastname)
         .bind(user.email)
         .bind(user.phone)
         .bind(user.synced)
+        .bind(now)
         .execute(db)
         .await
         .map_err(|e| format!("Error saving user: {}", e))?;
@@ -239,8 +316,10 @@ async fn add_user(state: tauri::State<'_, AppState>, user: User) -> Result<Vec<U
 async fn update_user(state: tauri::State<'_, AppState>, user: User) -> Result<Vec<User>, String> {
     let db = &state.db;
     println!("Updating user: {:?}", user);
-    sqlx::query("UPDATE users SET username = ?1, email = ?2, phone = ?3, synced = ?4 WHERE id = ?5")
+    sqlx::query("UPDATE users SET username = ?1, firstname = ?2, lastname = ?3, email = ?4, phone = ?5, synced = ?6 WHERE id = ?7")
         .bind(user.username)
+        .bind(user.firstname)
+        .bind(user.lastname)
         .bind(user.email)
         .bind(user.phone)
         .bind(user.synced)
