@@ -8,13 +8,13 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
+model Users {
   id  String  @id
   email String?
   synced Boolean
 }
 
-model Climb {
+model Climbs {
   id    String    @id
   user_id String
   synced Boolean
