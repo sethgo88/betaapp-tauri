@@ -5,7 +5,7 @@ import AppContext from "@/components/app-context/app-context";
 import ProfileContainer from "@/views/profile/profile.container";
 
 const NavRouter = () => {
-	const { appState, setAppState, currentClimb, setCurrentClimb, userInfo, setUserInfo } = useContext(AppContext);
+	const { appState, setAppState, currentClimb, setCurrentClimb, userInfo } = useContext(AppContext);
 	useEffect(() => {
 		if (appState !== "add" && currentClimb) {
 			setCurrentClimb(null);

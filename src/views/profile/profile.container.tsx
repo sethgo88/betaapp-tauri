@@ -17,9 +17,7 @@ const ProfileContainer = () => {
 		} else {
 			setUserInfo(
 				{
-					username: "",
 					email: "",
-					phone: ""
 				}
 			)
 		}
@@ -44,12 +42,10 @@ const ProfileContainer = () => {
 
 	const form = useForm({
 		onSubmit: async ({ value }) => {
-			if (!value.email && !value.phone && !value.username) return;
+			if (!value.email) return;
 			const payload = {
 				id: userInfo?.id ?? crypto.randomUUID(),
-				username: value.username,
 				email: value.email,
-				phone: value.phone,
 				synced: "",
 			};
 			if (!userInfo) {
@@ -65,9 +61,7 @@ const ProfileContainer = () => {
 			}
 		},
 		defaultValues: {
-			username: userInfo?.username ?? "",
 			email: userInfo?.email ?? "",
-			phone: userInfo?.phone ?? "",
 		},
 	});
 
@@ -75,8 +69,6 @@ const ProfileContainer = () => {
 		<PageWrapper>
 			{userInfo && (
 				<div>
-					<p>username: {userInfo.username}</p>
-					<p>phone: {userInfo.phone}</p>
 					<p>email: {userInfo.email}</p>
 				</div>
 			)}
@@ -90,19 +82,6 @@ const ProfileContainer = () => {
 				className="grid grid-rows-[auto_1fr] h-full gap-4"
 			>
 				<div className="flex flex-col gap-2">
-					<form.Field name="username">
-						{(field) => (
-							<FormInput
-								value={field.state.value}
-								onBlur={field.handleBlur}
-								onChange={(e) => field.handleChange(e.target.value)}
-								placeholder="Username"
-								errorState={field.state.meta.errors.length > 0}
-							/>
-						)}
-					</form.Field>
-				</div>
-				<div className="flex flex-col gap-2">
 					<form.Field name="email">
 						{(field) => (
 							<FormInput
@@ -110,19 +89,6 @@ const ProfileContainer = () => {
 								onBlur={field.handleBlur}
 								onChange={(e) => field.handleChange(e.target.value)}
 								placeholder="Email"
-								errorState={field.state.meta.errors.length > 0}
-							/>
-						)}
-					</form.Field>
-				</div>
-				<div className="flex flex-col gap-2">
-					<form.Field name="phone">
-						{(field) => (
-							<FormInput
-								value={field.state.value}
-								onBlur={field.handleBlur}
-								onChange={(e) => field.handleChange(e.target.value)}
-								placeholder="Phone"
 								errorState={field.state.meta.errors.length > 0}
 							/>
 						)}

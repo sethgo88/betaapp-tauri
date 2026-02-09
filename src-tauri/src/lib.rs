@@ -90,6 +90,7 @@ async fn run_migrations(db: &Db) -> Result<(), String> {
         ("20260208045737_user_create_date.sql", include_str!("../migrations/20260208045737_user_create_date.sql")),
         ("20260208191541_user_first_last.sql", include_str!("../migrations/20260208191541_user_first_last.sql")),
         ("20260208204353_user_last_name.sql", include_str!("../migrations/20260208204353_user_last_name.sql")),
+        ("20260209031105_cleanup_users_table.sql", include_str!("../migrations/20260209031105_cleanup_users_table.sql")),
     ];
 
     for (file_name, sql) in migrations {
@@ -154,11 +155,7 @@ struct Climb {
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 struct User {
     id: String,
-    username: Option<String>,
-    firstname: Option<String>,
-    lastname: Option<String>,
     email: Option<String>,
-    phone: Option<String>,
     synced: Option<String>,
     date_added: Option<i64>
 }
@@ -287,15 +284,11 @@ async fn add_user(state: tauri::State<'_, AppState>, user: User) -> Result<Vec<U
 
     sqlx::query(
         "INSERT INTO users (
-            id, username, firstname, lastname, email, phone, synced, date_added
-        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)"
+            id, email, synced, date_added
+        ) VALUES (?1, ?2, ?3, ?4)"
     )
         .bind(user.id.clone())
-        .bind(user.username)
-        .bind(user.firstname)
-        .bind(user.lastname)
         .bind(user.email)
-        .bind(user.phone)
         .bind(user.synced)
         .bind(now)
         .execute(db)
@@ -316,12 +309,8 @@ async fn add_user(state: tauri::State<'_, AppState>, user: User) -> Result<Vec<U
 async fn update_user(state: tauri::State<'_, AppState>, user: User) -> Result<Vec<User>, String> {
     let db = &state.db;
     println!("Updating user: {:?}", user);
-    sqlx::query("UPDATE users SET username = ?1, firstname = ?2, lastname = ?3, email = ?4, phone = ?5, synced = ?6 WHERE id = ?7")
-        .bind(user.username)
-        .bind(user.firstname)
-        .bind(user.lastname)
+    sqlx::query("UPDATE users SET email = ?1, synced = ?2 WHERE id = ?3")
         .bind(user.email)
-        .bind(user.phone)
         .bind(user.synced)
         .bind(user.id.clone())
         .execute(db)
