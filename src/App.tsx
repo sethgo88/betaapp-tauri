@@ -14,13 +14,15 @@ import {
 } from "@/features/auth/auth.service";
 import { useAuthStore } from "@/features/auth/auth.store";
 import { seedGrades } from "@/features/grades/grades-seed";
+import { useSync } from "@/hooks/useSync";
 import { supabase } from "@/lib/supabase";
 import { router } from "@/router";
 
 const queryClient = new QueryClient();
 
 function Bootstrap() {
-	const { setUser, setSession } = useAuthStore();
+	const { setUser, setSession, user } = useAuthStore();
+	useSync(user?.id);
 
 	const { isLoading } = useQuery({
 		queryKey: ["bootstrap"],

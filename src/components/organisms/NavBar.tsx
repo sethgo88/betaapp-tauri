@@ -1,5 +1,5 @@
 import { useNavigate, useRouterState } from "@tanstack/react-router";
-import { CircleUser, Home, PlusSquare, Save, Trash2 } from "lucide-react";
+import { CircleUser, Home, PlusSquare, Trash2 } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 import { useDeleteClimb } from "@/features/climbs/climbs.queries";
 import { useClimbsStore } from "@/features/climbs/climbs.store";
@@ -9,7 +9,6 @@ export const NavBar = () => {
 	const navigate = useNavigate();
 	const pathname = location.pathname;
 
-	const isAddOrEdit = pathname === "/climbs/add" || pathname.endsWith("/edit");
 	const isEdit = pathname.endsWith("/edit");
 
 	const selectedClimbId = useClimbsStore((s) => s.selectedClimbId);
@@ -46,17 +45,6 @@ export const NavBar = () => {
 				<PlusSquare className="mx-auto" size={22} />
 			</Button>
 
-			{isAddOrEdit && (
-				<Button
-					variant="unstyled"
-					type="submit"
-					form="climb-form"
-					className="w-full text-center"
-				>
-					<Save className="mx-auto" size={22} />
-				</Button>
-			)}
-
 			{isEdit && (
 				<Button
 					variant="unstyled"
@@ -71,10 +59,10 @@ export const NavBar = () => {
 			<Button
 				variant="unstyled"
 				type="button"
-				className="w-full text-center"
+				className="w-full text-center flex flex-col items-center gap-0.5"
 				onClick={() => navigate({ to: "/profile" })}
 			>
-				<CircleUser className="mx-auto" size={22} />
+				<CircleUser size={22} />
 			</Button>
 		</div>
 	);

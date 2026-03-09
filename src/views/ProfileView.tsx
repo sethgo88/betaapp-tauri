@@ -5,6 +5,7 @@ import { useState } from "react";
 import { z } from "zod";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
+import { SyncStatus } from "@/components/molecules/SyncStatus";
 import {
 	fetchOrCreateSupabaseUser,
 	signIn,
@@ -13,10 +14,36 @@ import {
 	upsertLocalUser,
 } from "@/features/auth/auth.service";
 import { useAuthStore } from "@/features/auth/auth.store";
+import { useSyncStore } from "@/features/sync/sync.store";
 import { useUiStore } from "@/stores/ui.store";
 
 // ── Password policy — change this to update requirements everywhere ───────────
 const PASSWORD_MIN_LENGTH = 6;
+
+const SYNC_LABEL: Record<string, string> = {
+	idle: "Synced",
+	syncing: "Syncing…",
+	error: "No internet",
+};
+
+const SyncStatusWell = () => {
+	const status = useSyncStore((s) => s.status);
+	const lastSyncedAt = useSyncStore((s) => s.lastSyncedAt);
+	const label =
+		lastSyncedAt || status !== "idle" ? SYNC_LABEL[status] : "Not yet synced";
+
+	return (
+		<div className="rounded-lg bg-stone-800 p-4 flex flex-col gap-2">
+			<p className="text-xs text-stone-400 uppercase tracking-wide">
+				Sync Status
+			</p>
+			<div className="flex items-center gap-2">
+				<SyncStatus />
+				<span className="text-sm">{label}</span>
+			</div>
+		</div>
+	);
+};
 
 const EmailSchema = z.string().email("Valid email required");
 const PasswordSchema = z
@@ -108,10 +135,11 @@ const ProfileView = () => {
 							Admin
 						</span>
 					)}
+					<Button variant="secondary" onClick={handleSignOut}>
+						Sign out
+					</Button>
 				</div>
-				<Button variant="secondary" onClick={handleSignOut}>
-					Sign out
-				</Button>
+				<SyncStatusWell />
 			</div>
 		);
 	}
