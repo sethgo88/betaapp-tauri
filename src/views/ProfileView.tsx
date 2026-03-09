@@ -6,14 +6,22 @@ import { z } from "zod";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import {
-	signInWithMagicLink,
+	fetchOrCreateSupabaseUser,
+	signIn,
 	signOut,
+	signUp,
 	upsertLocalUser,
 } from "@/features/auth/auth.service";
 import { useAuthStore } from "@/features/auth/auth.store";
 import { useUiStore } from "@/stores/ui.store";
 
+// ── Password policy — change this to update requirements everywhere ───────────
+const PASSWORD_MIN_LENGTH = 4;
+
 const EmailSchema = z.string().email("Valid email required");
+const PasswordSchema = z
+	.string()
+	.min(PASSWORD_MIN_LENGTH, `At least ${PASSWORD_MIN_LENGTH} characters`);
 
 const DEV_ID = "00000000-0000-0000-0000-000000000001";
 const DEV_EMAIL = "dev@betaapp.local";
@@ -22,19 +30,52 @@ const ProfileView = () => {
 	const navigate = useNavigate();
 	const { user, isAuthenticated, setUser, setSession } = useAuthStore();
 	const addToast = useUiStore((s) => s.addToast);
-	const [magicLinkSent, setMagicLinkSent] = useState(false);
+	const [mode, setMode] = useState<"signin" | "signup">("signin");
 
-	const form = useForm({
-		defaultValues: { email: "" },
+	const handleSession = async (session: Session) => {
+		setSession(session);
+		const role = await fetchOrCreateSupabaseUser(
+			session.user.id,
+			session.user.email ?? "",
+		);
+		const localUser = await upsertLocalUser(
+			session.user.id,
+			session.user.email ?? "",
+			role,
+		);
+		setUser(localUser);
+		navigate({ to: "/" });
+	};
+
+	const signInForm = useForm({
+		defaultValues: { email: "", password: "" },
 		onSubmit: async ({ value }) => {
-			const parsed = EmailSchema.safeParse(value.email);
-			if (!parsed.success) return;
 			try {
-				await signInWithMagicLink(parsed.data);
-				setMagicLinkSent(true);
+				const session = await signIn(value.email, value.password);
+				await handleSession(session);
 			} catch (err) {
-				console.error("Magic link error:", err);
-				addToast({ message: "Failed to send magic link", type: "error" });
+				console.error("Sign in error:", err);
+				addToast({ message: "Invalid email or password", type: "error" });
+			}
+		},
+	});
+
+	const signUpForm = useForm({
+		defaultValues: { email: "", password: "", confirmPassword: "" },
+		onSubmit: async ({ value }) => {
+			if (value.password !== value.confirmPassword) {
+				addToast({ message: "Passwords don't match", type: "error" });
+				return;
+			}
+			try {
+				const session = await signUp(value.email, value.password);
+				await handleSession(session);
+			} catch (err) {
+				console.error("Sign up error:", err);
+				addToast({
+					message: err instanceof Error ? err.message : "Sign up failed",
+					type: "error",
+				});
 			}
 		},
 	});
@@ -68,7 +109,6 @@ const ProfileView = () => {
 						</span>
 					)}
 				</div>
-
 				<Button variant="secondary" onClick={handleSignOut}>
 					Sign out
 				</Button>
@@ -76,19 +116,95 @@ const ProfileView = () => {
 		);
 	}
 
-	if (magicLinkSent) {
+	if (mode === "signup") {
 		return (
-			<div className="flex flex-col gap-4 pt-4">
+			<div className="flex flex-col gap-4">
 				<div className="rounded-lg bg-stone-800 p-4">
-					<p className="font-semibold mb-1">Check your email</p>
+					<p className="font-semibold mb-1">Create account</p>
 					<p className="text-sm text-stone-400">
-						We sent a magic link to your email. Tap it on this device to sign
-						in.
+						Password must be at least {PASSWORD_MIN_LENGTH} characters.
 					</p>
 				</div>
-				<Button variant="secondary" onClick={() => setMagicLinkSent(false)}>
-					Use a different email
-				</Button>
+
+				<form
+					className="flex flex-col gap-3"
+					onSubmit={(e) => {
+						e.preventDefault();
+						e.stopPropagation();
+						signUpForm.handleSubmit();
+					}}
+				>
+					<signUpForm.Field
+						name="email"
+						validators={{
+							onChange: ({ value }) =>
+								EmailSchema.safeParse(value).success
+									? undefined
+									: "Valid email required",
+						}}
+					>
+						{(field) => (
+							<Input
+								type="email"
+								placeholder="your@email.com"
+								value={field.state.value}
+								onBlur={field.handleBlur}
+								onChange={(e) => field.handleChange(e.target.value)}
+								errorState={field.state.meta.errors.length > 0}
+							/>
+						)}
+					</signUpForm.Field>
+
+					<signUpForm.Field
+						name="password"
+						validators={{
+							onChange: ({ value }) =>
+								PasswordSchema.safeParse(value).success
+									? undefined
+									: `At least ${PASSWORD_MIN_LENGTH} characters`,
+						}}
+					>
+						{(field) => (
+							<Input
+								type="password"
+								placeholder="Password"
+								value={field.state.value}
+								onBlur={field.handleBlur}
+								onChange={(e) => field.handleChange(e.target.value)}
+								errorState={field.state.meta.errors.length > 0}
+							/>
+						)}
+					</signUpForm.Field>
+
+					<signUpForm.Field name="confirmPassword">
+						{(field) => (
+							<Input
+								type="password"
+								placeholder="Confirm password"
+								value={field.state.value}
+								onBlur={field.handleBlur}
+								onChange={(e) => field.handleChange(e.target.value)}
+								errorState={field.state.meta.errors.length > 0}
+							/>
+						)}
+					</signUpForm.Field>
+
+					<Button type="submit">Create account</Button>
+				</form>
+
+				<button
+					type="button"
+					className="text-sm text-stone-400 text-center"
+					onClick={() => setMode("signin")}
+				>
+					Already have an account? Sign in
+				</button>
+
+				{import.meta.env.DEV && (
+					<Button variant="secondary" onClick={handleDevLogin}>
+						Dev login
+					</Button>
+				)}
 			</div>
 		);
 	}
@@ -97,9 +213,6 @@ const ProfileView = () => {
 		<div className="flex flex-col gap-4">
 			<div className="rounded-lg bg-stone-800 p-4">
 				<p className="font-semibold mb-1">Sign in</p>
-				<p className="text-sm text-stone-400">
-					Enter your email to receive a magic link.
-				</p>
 			</div>
 
 			<form
@@ -107,32 +220,61 @@ const ProfileView = () => {
 				onSubmit={(e) => {
 					e.preventDefault();
 					e.stopPropagation();
-					form.handleSubmit();
+					signInForm.handleSubmit();
 				}}
 			>
-				<form.Field
+				<signInForm.Field
 					name="email"
 					validators={{
-						onChange: ({ value }) => {
-							const result = EmailSchema.safeParse(value);
-							return result.success ? undefined : "Valid email required";
-						},
+						onChange: ({ value }) =>
+							EmailSchema.safeParse(value).success
+								? undefined
+								: "Valid email required",
 					}}
 				>
 					{(field) => (
 						<Input
 							type="email"
+							placeholder="your@email.com"
 							value={field.state.value}
 							onBlur={field.handleBlur}
 							onChange={(e) => field.handleChange(e.target.value)}
-							placeholder="your@email.com"
 							errorState={field.state.meta.errors.length > 0}
 						/>
 					)}
-				</form.Field>
+				</signInForm.Field>
 
-				<Button type="submit">Send magic link</Button>
+				<signInForm.Field
+					name="password"
+					validators={{
+						onChange: ({ value }) =>
+							PasswordSchema.safeParse(value).success
+								? undefined
+								: `At least ${PASSWORD_MIN_LENGTH} characters`,
+					}}
+				>
+					{(field) => (
+						<Input
+							type="password"
+							placeholder="Password"
+							value={field.state.value}
+							onBlur={field.handleBlur}
+							onChange={(e) => field.handleChange(e.target.value)}
+							errorState={field.state.meta.errors.length > 0}
+						/>
+					)}
+				</signInForm.Field>
+
+				<Button type="submit">Sign in</Button>
 			</form>
+
+			<button
+				type="button"
+				className="text-sm text-stone-400 text-center"
+				onClick={() => setMode("signup")}
+			>
+				No account? Create one
+			</button>
 
 			{import.meta.env.DEV && (
 				<Button variant="secondary" onClick={handleDevLogin}>

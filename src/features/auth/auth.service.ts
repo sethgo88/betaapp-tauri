@@ -3,48 +3,33 @@ import { getDb } from "@/lib/db";
 import { supabase } from "@/lib/supabase";
 import type { User } from "./auth.schema";
 
-// ── Magic link ──────────────────────────────────────────────────────────────
+// ── Sign in ──────────────────────────────────────────────────────────────────
 
-export async function signInWithMagicLink(email: string): Promise<void> {
-	const { error } = await supabase.auth.signInWithOtp({
+export async function signIn(
+	email: string,
+	password: string,
+): Promise<Session> {
+	const { data, error } = await supabase.auth.signInWithPassword({
 		email,
-		options: { emailRedirectTo: "betaapp://auth/callback" },
+		password,
 	});
 	if (error) throw error;
+	return data.session;
 }
 
-// ── Deep link callback ───────────────────────────────────────────────────────
+// ── Sign up ──────────────────────────────────────────────────────────────────
 
-export async function handleAuthCallback(url: string): Promise<Session | null> {
-	// Hash fragment: betaapp://auth/callback#access_token=...&refresh_token=...
-	const hash = url.split("#")[1];
-	if (hash) {
-		const params = new URLSearchParams(hash);
-		const accessToken = params.get("access_token");
-		const refreshToken = params.get("refresh_token");
-		if (accessToken && refreshToken) {
-			const { data, error } = await supabase.auth.setSession({
-				access_token: accessToken,
-				refresh_token: refreshToken,
-			});
-			if (error || !data.session) return null;
-			return data.session;
-		}
-	}
-
-	// Query param (PKCE code exchange): betaapp://auth/callback?code=...
-	const query = url.split("?")[1]?.split("#")[0];
-	if (query) {
-		const params = new URLSearchParams(query);
-		const code = params.get("code");
-		if (code) {
-			const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-			if (error || !data.session) return null;
-			return data.session;
-		}
-	}
-
-	return null;
+export async function signUp(
+	email: string,
+	password: string,
+): Promise<Session> {
+	const { data, error } = await supabase.auth.signUp({ email, password });
+	if (error) throw error;
+	if (!data.session)
+		throw new Error(
+			"Account created but no session returned — ensure email confirmation is disabled in Supabase.",
+		);
+	return data.session;
 }
 
 // ── Session restore ──────────────────────────────────────────────────────────
