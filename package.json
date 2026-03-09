@@ -1,37 +1,41 @@
 {
-  "name": "betaapp",
-  "private": true,
-  "version": "0.1.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview",
-    "tauri": "tauri"
-  },
-  "dependencies": {
-    "@prisma/client": "^6.18.0",
-    "@prisma/extension-accelerate": "^2.0.2",
-    "@tailwindcss/vite": "^4.1.15",
-    "@tanstack/react-form": "^1.23.8",
-    "@tauri-apps/api": "^2",
-    "@tauri-apps/plugin-opener": "^2",
-    "@tauri-apps/plugin-sql": "^2.3.0",
-    "prisma": "^6.18.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "tailwind-merge": "^3.3.1",
-    "tailwindcss": "^4.1.15"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "2.3.2",
-    "@tauri-apps/cli": "^2",
-    "@types/node": "^24.8.1",
-    "@types/react": "^18.3.1",
-    "@types/react-dom": "^18.3.1",
-    "@vitejs/plugin-react": "^4.3.4",
-    "react-icons": "^5.5.0",
-    "typescript": "~5.6.2",
-    "vite": "^6.0.3"
-  }
+	"name": "betaapp",
+	"private": true,
+	"version": "0.1.0",
+	"type": "module",
+	"scripts": {
+		"dev": "cargo tauri android dev",
+		"build": "tsc && vite build",
+		"tauri": "tauri",
+		"lint": "biome check .",
+		"format": "biome format --write .",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@supabase/supabase-js": "^2.99.0",
+		"@tailwindcss/vite": "^4.1.15",
+		"@tanstack/react-form": "^1.23.8",
+		"@tanstack/react-query": "^5.90.21",
+		"@tanstack/react-router": "^1.166.3",
+		"@tauri-apps/api": "^2",
+		"@tauri-apps/plugin-opener": "^2",
+		"@tauri-apps/plugin-sql": "^2.3.0",
+		"lucide-react": "^0.577.0",
+		"react": "^18.3.1",
+		"react-dom": "^18.3.1",
+		"tailwind-merge": "^3.3.1",
+		"tailwindcss": "^4.1.15",
+		"zod": "^4.3.6",
+		"zustand": "^5.0.11"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.3.2",
+		"@tauri-apps/cli": "^2",
+		"@types/node": "^24.8.1",
+		"@types/react": "^18.3.1",
+		"@types/react-dom": "^18.3.1",
+		"@vitejs/plugin-react": "^4.3.4",
+		"typescript": "~5.6.2",
+		"vite": "^6.0.3"
+	}
 }
