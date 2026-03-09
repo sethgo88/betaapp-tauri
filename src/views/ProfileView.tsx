@@ -16,7 +16,7 @@ import { useAuthStore } from "@/features/auth/auth.store";
 import { useUiStore } from "@/stores/ui.store";
 
 // ── Password policy — change this to update requirements everywhere ───────────
-const PASSWORD_MIN_LENGTH = 4;
+const PASSWORD_MIN_LENGTH = 6;
 
 const EmailSchema = z.string().email("Valid email required");
 const PasswordSchema = z
