@@ -25,7 +25,7 @@
 		"deep-link": {
 			"mobile": [
 				{
-					"scheme": "betaapp",
+					"scheme": ["betaapp"],
 					"host": "auth"
 				}
 			]

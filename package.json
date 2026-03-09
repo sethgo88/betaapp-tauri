@@ -4,7 +4,7 @@
 	"version": "0.1.0",
 	"type": "module",
 	"scripts": {
-		"dev": "cargo tauri android dev",
+		"dev": "vite --host",
 		"build": "tsc && vite build",
 		"tauri": "tauri",
 		"lint": "biome check .",

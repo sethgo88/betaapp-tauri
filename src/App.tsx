@@ -5,7 +5,7 @@ import {
 	useQuery,
 } from "@tanstack/react-query";
 import { RouterProvider } from "@tanstack/react-router";
-import { onOpenUrl } from "@tauri-apps/plugin-deep-link";
+import { getCurrent, onOpenUrl } from "@tauri-apps/plugin-deep-link";
 import { useEffect } from "react";
 import { Spinner } from "@/components/atoms/Spinner";
 import {
@@ -29,7 +29,23 @@ function Bootstrap() {
 		queryFn: async () => {
 			await seedGrades();
 
-			const session = await restoreSession();
+			// Check if the app was cold-started via a deep link (magic link callback)
+			let callbackUrl: string | undefined;
+			try {
+				const launchUrls = await getCurrent();
+				callbackUrl = launchUrls?.find((u) =>
+					u.startsWith("betaapp://auth/callback"),
+				);
+			} catch {
+				// No deep link on this launch
+			}
+
+			let session = await restoreSession();
+
+			if (!session && callbackUrl) {
+				session = await handleAuthCallback(callbackUrl);
+			}
+
 			if (session) {
 				setSession(session);
 				const role = await fetchOrCreateSupabaseUser(

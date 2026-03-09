@@ -1,14 +1,22 @@
+import type { Session } from "@supabase/supabase-js";
 import { useForm } from "@tanstack/react-form";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { z } from "zod";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
-import { signInWithMagicLink, signOut } from "@/features/auth/auth.service";
+import {
+	signInWithMagicLink,
+	signOut,
+	upsertLocalUser,
+} from "@/features/auth/auth.service";
 import { useAuthStore } from "@/features/auth/auth.store";
 import { useUiStore } from "@/stores/ui.store";
 
 const EmailSchema = z.string().email("Valid email required");
+
+const DEV_ID = "00000000-0000-0000-0000-000000000001";
+const DEV_EMAIL = "dev@betaapp.local";
 
 const ProfileView = () => {
 	const navigate = useNavigate();
@@ -21,10 +29,22 @@ const ProfileView = () => {
 		onSubmit: async ({ value }) => {
 			const parsed = EmailSchema.safeParse(value.email);
 			if (!parsed.success) return;
-			await signInWithMagicLink(parsed.data);
-			setMagicLinkSent(true);
+			try {
+				await signInWithMagicLink(parsed.data);
+				setMagicLinkSent(true);
+			} catch (err) {
+				console.error("Magic link error:", err);
+				addToast({ message: "Failed to send magic link", type: "error" });
+			}
 		},
 	});
+
+	const handleDevLogin = async () => {
+		const devUser = await upsertLocalUser(DEV_ID, DEV_EMAIL, "admin");
+		setUser(devUser);
+		setSession({ user: { id: DEV_ID } } as Session);
+		navigate({ to: "/" });
+	};
 
 	const handleSignOut = async () => {
 		await signOut();
@@ -113,6 +133,12 @@ const ProfileView = () => {
 
 				<Button type="submit">Send magic link</Button>
 			</form>
+
+			{import.meta.env.DEV && (
+				<Button variant="secondary" onClick={handleDevLogin}>
+					Dev login
+				</Button>
+			)}
 		</div>
 	);
 };
