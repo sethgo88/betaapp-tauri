@@ -12,6 +12,12 @@
 		"sql:allow-load",
 		"sql:allow-execute",
 		"sql:allow-close",
-		"sql:allow-select"
+		"sql:allow-select",
+		"deep-link:default",
+		"deep-link:allow-get-current",
+		"deep-link:allow-is-registered",
+		"deep-link:allow-on-open-url",
+		"deep-link:allow-register",
+		"deep-link:allow-unregister"
 	]
 }

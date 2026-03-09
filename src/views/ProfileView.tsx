@@ -1,51 +1,88 @@
 import { useForm } from "@tanstack/react-form";
 import { useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { z } from "zod";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
-import { insertUser, updateUserEmail } from "@/features/auth/auth.service";
+import { signInWithMagicLink, signOut } from "@/features/auth/auth.service";
 import { useAuthStore } from "@/features/auth/auth.store";
 import { useUiStore } from "@/stores/ui.store";
 
-const EmailSchema = z.object({
-	email: z.string().email("Valid email required"),
-});
+const EmailSchema = z.string().email("Valid email required");
 
 const ProfileView = () => {
 	const navigate = useNavigate();
-	const { user, setUser } = useAuthStore();
+	const { user, isAuthenticated, setUser, setSession } = useAuthStore();
 	const addToast = useUiStore((s) => s.addToast);
+	const [magicLinkSent, setMagicLinkSent] = useState(false);
 
 	const form = useForm({
-		defaultValues: { email: user?.email ?? "" },
+		defaultValues: { email: "" },
 		onSubmit: async ({ value }) => {
-			const parsed = EmailSchema.safeParse(value);
+			const parsed = EmailSchema.safeParse(value.email);
 			if (!parsed.success) return;
-
-			if (!user) {
-				const newUser = await insertUser(parsed.data.email);
-				setUser(newUser);
-				addToast({ message: "Profile created", type: "success" });
-				navigate({ to: "/" });
-			} else {
-				await updateUserEmail(user.id, parsed.data.email);
-				setUser({ ...user, email: parsed.data.email });
-				addToast({ message: "Profile updated", type: "success" });
-			}
+			await signInWithMagicLink(parsed.data);
+			setMagicLinkSent(true);
 		},
 	});
 
+	const handleSignOut = async () => {
+		await signOut();
+		setSession(null);
+		setUser(null);
+		navigate({ to: "/" });
+		addToast({ message: "Signed out", type: "success" });
+	};
+
+	if (isAuthenticated && user) {
+		return (
+			<div className="flex flex-col gap-4">
+				<div className="rounded-lg bg-stone-800 p-4 flex flex-col gap-2">
+					<p className="text-xs text-stone-400 uppercase tracking-wide">
+						Signed in as
+					</p>
+					<p className="font-semibold">{user.email}</p>
+					{user.role === "admin" && (
+						<span className="self-start bg-emerald-700 text-xs rounded-full px-2 py-0.5">
+							Admin
+						</span>
+					)}
+				</div>
+
+				<Button variant="secondary" onClick={handleSignOut}>
+					Sign out
+				</Button>
+			</div>
+		);
+	}
+
+	if (magicLinkSent) {
+		return (
+			<div className="flex flex-col gap-4 pt-4">
+				<div className="rounded-lg bg-stone-800 p-4">
+					<p className="font-semibold mb-1">Check your email</p>
+					<p className="text-sm text-stone-400">
+						We sent a magic link to your email. Tap it on this device to sign
+						in.
+					</p>
+				</div>
+				<Button variant="secondary" onClick={() => setMagicLinkSent(false)}>
+					Use a different email
+				</Button>
+			</div>
+		);
+	}
+
 	return (
 		<div className="flex flex-col gap-4">
-			{user && (
-				<div className="rounded-lg bg-stone-800 p-3">
-					<p className="text-xs text-stone-400">Signed in as</p>
-					<p className="font-semibold">{user.email}</p>
-				</div>
-			)}
+			<div className="rounded-lg bg-stone-800 p-4">
+				<p className="font-semibold mb-1">Sign in</p>
+				<p className="text-sm text-stone-400">
+					Enter your email to receive a magic link.
+				</p>
+			</div>
 
 			<form
-				id="profile-form"
 				className="flex flex-col gap-3"
 				onSubmit={(e) => {
 					e.preventDefault();
@@ -57,7 +94,7 @@ const ProfileView = () => {
 					name="email"
 					validators={{
 						onChange: ({ value }) => {
-							const result = z.string().email().safeParse(value);
+							const result = EmailSchema.safeParse(value);
 							return result.success ? undefined : "Valid email required";
 						},
 					}}
@@ -68,13 +105,13 @@ const ProfileView = () => {
 							value={field.state.value}
 							onBlur={field.handleBlur}
 							onChange={(e) => field.handleChange(e.target.value)}
-							placeholder="Email"
+							placeholder="your@email.com"
 							errorState={field.state.meta.errors.length > 0}
 						/>
 					)}
 				</form.Field>
 
-				<Button type="submit">{user ? "Update" : "Save"} Profile</Button>
+				<Button type="submit">Send magic link</Button>
 			</form>
 		</div>
 	);

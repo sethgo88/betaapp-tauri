@@ -18,6 +18,7 @@
 		"@tanstack/react-query": "^5.90.21",
 		"@tanstack/react-router": "^1.166.3",
 		"@tauri-apps/api": "^2",
+		"@tauri-apps/plugin-deep-link": "^2.4.7",
 		"@tauri-apps/plugin-opener": "^2",
 		"@tauri-apps/plugin-sql": "^2.3.0",
 		"lucide-react": "^0.577.0",

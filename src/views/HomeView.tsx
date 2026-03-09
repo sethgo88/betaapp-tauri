@@ -7,13 +7,13 @@ import { useClimbs, useDeleteClimb } from "@/features/climbs/climbs.queries";
 
 const HomeView = () => {
 	const navigate = useNavigate();
-	const user = useAuthStore((s) => s.user);
+	const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 	const { data: climbs = [], isLoading } = useClimbs();
 	const { mutateAsync: deleteClimb } = useDeleteClimb();
 
 	useEffect(() => {
-		if (!user) navigate({ to: "/profile" });
-	}, [user, navigate]);
+		if (!isAuthenticated) navigate({ to: "/profile" });
+	}, [isAuthenticated, navigate]);
 
 	if (isLoading) {
 		return (
