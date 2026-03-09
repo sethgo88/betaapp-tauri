@@ -77,3 +77,34 @@ export async function softDeleteClimb(id: string): Promise<void> {
 		[id],
 	);
 }
+
+// Apply a climb received from Supabase Realtime or a pull.
+// Uses INSERT OR REPLACE to bypass the updated_at trigger so the
+// server timestamp is preserved exactly.
+export async function applyRemoteClimb(climb: Climb): Promise<void> {
+	const db = await getDb();
+	await db.execute(
+		`INSERT OR REPLACE INTO climbs
+     (id, user_id, name, route_type, grade, moves, sent_status,
+      country, area, sub_area, route_location, link,
+      created_at, updated_at, deleted_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		[
+			climb.id,
+			climb.user_id,
+			climb.name,
+			climb.route_type,
+			climb.grade,
+			climb.moves,
+			climb.sent_status,
+			climb.country ?? null,
+			climb.area ?? null,
+			climb.sub_area ?? null,
+			climb.route_location ?? null,
+			climb.link ?? null,
+			climb.created_at,
+			climb.updated_at,
+			climb.deleted_at ?? null,
+		],
+	);
+}

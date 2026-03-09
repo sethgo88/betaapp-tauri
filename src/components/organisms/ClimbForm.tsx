@@ -1,5 +1,6 @@
 import { useForm, uuid } from "@tanstack/react-form";
 import { useEffect, useRef, useState } from "react";
+import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { Select } from "@/components/atoms/Select";
 import {
@@ -99,6 +100,7 @@ export const ClimbForm = ({ defaultValues, onSubmit }: ClimbFormProps) => {
 	const { data: grades = [] } = useGrades(routeType);
 
 	const form = useForm({
+		canSubmitWhenInvalid: true,
 		defaultValues: {
 			name: defaultValues?.name ?? "",
 			route_type: defaultValues?.route_type ?? ("sport" as RouteType),
@@ -111,11 +113,18 @@ export const ClimbForm = ({ defaultValues, onSubmit }: ClimbFormProps) => {
 			link: defaultValues?.link ?? "",
 		},
 		onSubmit: async ({ value }) => {
+			const gradeValue =
+				value.grade || (grades.length > 0 ? grades[0].grade : "");
 			const parsed = ClimbFormSchema.safeParse({
 				...value,
+				grade: gradeValue,
 				moves: JSON.stringify(movesList),
 			});
-			if (!parsed.success) return;
+			if (!parsed.success) {
+				const messages = parsed.error.issues.map((i) => i.message).join(", ");
+				alert(messages);
+				return;
+			}
 			await onSubmit(parsed.data);
 		},
 	});
@@ -127,7 +136,6 @@ export const ClimbForm = ({ defaultValues, onSubmit }: ClimbFormProps) => {
 			onSubmit={(e) => {
 				e.preventDefault();
 				e.stopPropagation();
-				form.handleSubmit();
 			}}
 		>
 			<div className="flex flex-col gap-2">
@@ -166,16 +174,13 @@ export const ClimbForm = ({ defaultValues, onSubmit }: ClimbFormProps) => {
 						)}
 					</form.Field>
 
-					<form.Field
-						name="grade"
-						validators={{
-							onChange: ({ value }) =>
-								!value ? "Grade is required" : undefined,
-						}}
-					>
+					<form.Field name="grade">
 						{(field) => (
 							<Select
-								value={field.state.value}
+								value={
+									field.state.value ||
+									(grades.length > 0 ? grades[0].grade : "")
+								}
 								onChange={(e) => field.handleChange(e.target.value)}
 								name="grade"
 							>
@@ -217,6 +222,17 @@ export const ClimbForm = ({ defaultValues, onSubmit }: ClimbFormProps) => {
 						/>
 					)}
 				</form.Field>
+
+				<Button
+					type="submit"
+					variant="primary"
+					className="w-full"
+					onClick={() => {
+						form.handleSubmit();
+					}}
+				>
+					Save
+				</Button>
 			</div>
 
 			<div className="w-full rounded-md bg-stone-800 p-2 overflow-y-scroll">
