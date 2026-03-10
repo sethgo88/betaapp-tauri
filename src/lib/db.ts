@@ -36,11 +36,19 @@ async function initSchema(db: Database): Promise<void> {
       sub_area TEXT,
       route_location TEXT,
       link TEXT,
+      route_id TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now')),
       deleted_at TEXT
     )
   `);
+
+	// Migrate existing climbs table to add route_id if not present
+	try {
+		await db.execute(`ALTER TABLE climbs ADD COLUMN route_id TEXT`);
+	} catch {
+		// Column already exists — safe to ignore
+	}
 
 	await db.execute(`
     CREATE TABLE IF NOT EXISTS grades_cache (
@@ -69,6 +77,57 @@ async function initSchema(db: Database): Promise<void> {
       name TEXT NOT NULL,
       sort_order INTEGER NOT NULL,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+
+	await db.execute(`
+    CREATE TABLE IF NOT EXISTS sub_regions_cache (
+      id TEXT PRIMARY KEY,
+      region_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+
+	await db.execute(`
+    CREATE TABLE IF NOT EXISTS crags_cache (
+      id TEXT PRIMARY KEY,
+      sub_region_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+
+	await db.execute(`
+    CREATE TABLE IF NOT EXISTS walls_cache (
+      id TEXT PRIMARY KEY,
+      crag_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+
+	await db.execute(`
+    CREATE TABLE IF NOT EXISTS routes_cache (
+      id TEXT PRIMARY KEY,
+      wall_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      grade TEXT NOT NULL,
+      route_type TEXT NOT NULL DEFAULT 'sport',
+      description TEXT,
+      verified INTEGER NOT NULL DEFAULT 0,
+      created_by TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+
+	await db.execute(`
+    CREATE TABLE IF NOT EXISTS downloaded_regions (
+      region_id TEXT PRIMARY KEY,
+      downloaded_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
   `);
 
