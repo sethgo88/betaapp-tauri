@@ -52,3 +52,39 @@ export type Region = z.infer<typeof RegionSchema>;
 export type SubRegion = z.infer<typeof SubRegionSchema>;
 export type Crag = z.infer<typeof CragSchema>;
 export type Wall = z.infer<typeof WallSchema>;
+
+// ── User submission schemas ───────────────────────────────────────────────────
+
+export const SubRegionSubmitSchema = z.object({
+	region_id: z.string().min(1, "Region is required"),
+	name: z.string().min(1, "Name is required"),
+});
+
+export const CragSubmitSchema = z.object({
+	sub_region_id: z.string().min(1, "Sub-region is required"),
+	name: z.string().min(1, "Name is required"),
+});
+
+export const WallSubmitSchema = z.object({
+	crag_id: z.string().min(1, "Crag is required"),
+	name: z.string().min(1, "Name is required"),
+});
+
+export type SubRegionSubmitValues = z.infer<typeof SubRegionSubmitSchema>;
+export type CragSubmitValues = z.infer<typeof CragSubmitSchema>;
+export type WallSubmitValues = z.infer<typeof WallSubmitSchema>;
+
+// ── Admin pending-location type ───────────────────────────────────────────────
+
+export type PendingLocationType = "sub_region" | "crag" | "wall";
+
+export type PendingLocation = {
+	id: string;
+	name: string;
+	type: PendingLocationType;
+	created_by: string;
+	created_at: string;
+	// Breadcrumb context
+	parent_name: string;
+	region_name?: string;
+};

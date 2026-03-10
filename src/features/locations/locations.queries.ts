@@ -1,4 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAuthStore } from "@/features/auth/auth.store";
+import type {
+	CragSubmitValues,
+	SubRegionSubmitValues,
+	WallSubmitValues,
+} from "./locations.schema";
 import {
 	adminAddCountry,
 	adminAddRegion,
@@ -8,11 +14,17 @@ import {
 	fetchCountries,
 	fetchCrags,
 	fetchDownloadedRegionIds,
+	fetchPendingLocations,
 	fetchRegions,
 	fetchSubRegions,
 	fetchWalls,
 	pullCountries,
 	pullRegions,
+	rejectLocation,
+	submitCrag,
+	submitSubRegion,
+	submitWall,
+	verifyLocation,
 } from "./locations.service";
 
 export function useCountries() {
@@ -131,6 +143,85 @@ export function useAdminDeleteRegion() {
 		onSuccess: async (_data, { countryId }) => {
 			await pullRegions();
 			qc.invalidateQueries({ queryKey: ["regions", countryId] });
+		},
+	});
+}
+
+// ── User submission mutations ─────────────────────────────────────────────────
+
+export function useSubmitSubRegion() {
+	const qc = useQueryClient();
+	const userId = useAuthStore((s) => s.user?.id ?? "");
+	return useMutation({
+		mutationFn: (values: SubRegionSubmitValues) =>
+			submitSubRegion(values, userId),
+		onSuccess: (_data, values) => {
+			qc.invalidateQueries({ queryKey: ["sub_regions", values.region_id] });
+		},
+	});
+}
+
+export function useSubmitCrag() {
+	const qc = useQueryClient();
+	const userId = useAuthStore((s) => s.user?.id ?? "");
+	return useMutation({
+		mutationFn: (values: CragSubmitValues) => submitCrag(values, userId),
+		onSuccess: (_data, values) => {
+			qc.invalidateQueries({
+				queryKey: ["crags", values.sub_region_id],
+			});
+		},
+	});
+}
+
+export function useSubmitWall() {
+	const qc = useQueryClient();
+	const userId = useAuthStore((s) => s.user?.id ?? "");
+	return useMutation({
+		mutationFn: (values: WallSubmitValues) => submitWall(values, userId),
+		onSuccess: (_data, values) => {
+			qc.invalidateQueries({ queryKey: ["walls", values.crag_id] });
+		},
+	});
+}
+
+// ── Admin location verification ───────────────────────────────────────────────
+
+export function usePendingLocations() {
+	return useQuery({
+		queryKey: ["pending_locations"],
+		queryFn: fetchPendingLocations,
+	});
+}
+
+export function useVerifyLocation() {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: ({
+			table,
+			id,
+		}: {
+			table: "sub_regions" | "crags" | "walls";
+			id: string;
+		}) => verifyLocation(table, id),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: ["pending_locations"] });
+		},
+	});
+}
+
+export function useRejectLocation() {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: ({
+			table,
+			id,
+		}: {
+			table: "sub_regions" | "crags" | "walls";
+			id: string;
+		}) => rejectLocation(table, id),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: ["pending_locations"] });
 		},
 	});
 }

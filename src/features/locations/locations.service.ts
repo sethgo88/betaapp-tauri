@@ -3,9 +3,12 @@ import { supabase } from "@/lib/supabase";
 import type {
 	Country,
 	Crag,
+	CragSubmitValues,
 	Region,
 	SubRegion,
+	SubRegionSubmitValues,
 	Wall,
+	WallSubmitValues,
 } from "./locations.schema";
 
 export async function fetchCountries(): Promise<Country[]> {
@@ -206,6 +209,188 @@ export async function downloadRegion(regionId: string): Promise<void> {
 	await db.execute(
 		"INSERT OR REPLACE INTO downloaded_regions (region_id, downloaded_at) VALUES (?, datetime('now'))",
 		[regionId],
+	);
+}
+
+// ── User submissions ──────────────────────────────────────────────────────────
+
+export async function submitSubRegion(
+	values: SubRegionSubmitValues,
+	userId: string,
+): Promise<void> {
+	const id = crypto.randomUUID();
+	const { error } = await supabase.from("sub_regions").insert({
+		id,
+		region_id: values.region_id,
+		name: values.name,
+		sort_order: 9999,
+		status: "pending",
+		created_by: userId,
+	});
+	if (error) throw error;
+
+	const db = await getDb();
+	await db.execute(
+		"INSERT INTO sub_regions_cache (id, region_id, name, sort_order, status, created_by, created_at) VALUES (?, ?, ?, 9999, 'pending', ?, datetime('now'))",
+		[id, values.region_id, values.name, userId],
+	);
+}
+
+export async function submitCrag(
+	values: CragSubmitValues,
+	userId: string,
+): Promise<void> {
+	const id = crypto.randomUUID();
+	const { error } = await supabase.from("crags").insert({
+		id,
+		sub_region_id: values.sub_region_id,
+		name: values.name,
+		sort_order: 9999,
+		status: "pending",
+		created_by: userId,
+	});
+	if (error) throw error;
+
+	const db = await getDb();
+	await db.execute(
+		"INSERT INTO crags_cache (id, sub_region_id, name, sort_order, status, created_by, created_at) VALUES (?, ?, ?, 9999, 'pending', ?, datetime('now'))",
+		[id, values.sub_region_id, values.name, userId],
+	);
+}
+
+export async function submitWall(
+	values: WallSubmitValues,
+	userId: string,
+): Promise<void> {
+	const id = crypto.randomUUID();
+	const { error } = await supabase.from("walls").insert({
+		id,
+		crag_id: values.crag_id,
+		name: values.name,
+		sort_order: 9999,
+		status: "pending",
+		created_by: userId,
+	});
+	if (error) throw error;
+
+	const db = await getDb();
+	await db.execute(
+		"INSERT INTO walls_cache (id, crag_id, name, sort_order, status, created_by, created_at) VALUES (?, ?, ?, 9999, 'pending', ?, datetime('now'))",
+		[id, values.crag_id, values.name, userId],
+	);
+}
+
+// ── Admin location verification ───────────────────────────────────────────────
+
+type LocationTable = "sub_regions" | "crags" | "walls";
+type LocationCacheTable = "sub_regions_cache" | "crags_cache" | "walls_cache";
+
+function cacheTableFor(table: LocationTable): LocationCacheTable {
+	return `${table}_cache` as LocationCacheTable;
+}
+
+export async function verifyLocation(
+	table: LocationTable,
+	id: string,
+): Promise<void> {
+	const { error } = await supabase
+		.from(table)
+		.update({ status: "verified" })
+		.eq("id", id);
+	if (error) throw error;
+
+	const db = await getDb();
+	await db.execute(
+		`UPDATE ${cacheTableFor(table)} SET status = 'verified' WHERE id = ?`,
+		[id],
+	);
+}
+
+export async function rejectLocation(
+	table: LocationTable,
+	id: string,
+): Promise<void> {
+	const { error } = await supabase
+		.from(table)
+		.update({ status: "rejected", deleted_at: new Date().toISOString() })
+		.eq("id", id);
+	if (error) throw error;
+
+	const db = await getDb();
+	await db.execute(
+		`UPDATE ${cacheTableFor(table)} SET status = 'rejected' WHERE id = ?`,
+		[id],
+	);
+}
+
+export type PendingLocationItem = {
+	id: string;
+	name: string;
+	status: string;
+	created_by: string | null;
+	created_at: string;
+	type: "sub_region" | "crag" | "wall";
+	parent_name: string;
+};
+
+export async function fetchPendingLocations(): Promise<PendingLocationItem[]> {
+	const [srRes, cRes, wRes] = await Promise.all([
+		supabase
+			.from("sub_regions")
+			.select("id, name, status, created_by, created_at, regions(name)")
+			.eq("status", "pending")
+			.order("created_at", { ascending: false }),
+		supabase
+			.from("crags")
+			.select("id, name, status, created_by, created_at, sub_regions(name)")
+			.eq("status", "pending")
+			.order("created_at", { ascending: false }),
+		supabase
+			.from("walls")
+			.select("id, name, status, created_by, created_at, crags(name)")
+			.eq("status", "pending")
+			.order("created_at", { ascending: false }),
+	]);
+
+	if (srRes.error) throw srRes.error;
+	if (cRes.error) throw cRes.error;
+	if (wRes.error) throw wRes.error;
+
+	const subRegions: PendingLocationItem[] = (srRes.data ?? []).map((r) => ({
+		id: r.id,
+		name: r.name,
+		status: r.status,
+		created_by: r.created_by,
+		created_at: r.created_at,
+		type: "sub_region" as const,
+		parent_name:
+			(r.regions as { name: string } | null)?.name ?? "Unknown region",
+	}));
+
+	const crags: PendingLocationItem[] = (cRes.data ?? []).map((r) => ({
+		id: r.id,
+		name: r.name,
+		status: r.status,
+		created_by: r.created_by,
+		created_at: r.created_at,
+		type: "crag" as const,
+		parent_name:
+			(r.sub_regions as { name: string } | null)?.name ?? "Unknown sub-region",
+	}));
+
+	const walls: PendingLocationItem[] = (wRes.data ?? []).map((r) => ({
+		id: r.id,
+		name: r.name,
+		status: r.status,
+		created_by: r.created_by,
+		created_at: r.created_at,
+		type: "wall" as const,
+		parent_name: (r.crags as { name: string } | null)?.name ?? "Unknown crag",
+	}));
+
+	return [...subRegions, ...crags, ...walls].sort(
+		(a, b) =>
+			new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
 	);
 }
 
