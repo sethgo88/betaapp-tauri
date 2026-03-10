@@ -3,6 +3,10 @@ import { useEffect } from "react";
 import type { Climb } from "@/features/climbs/climbs.schema";
 import { applyRemoteClimb } from "@/features/climbs/climbs.service";
 import { pullGrades } from "@/features/grades/grades.service";
+import {
+	pullCountries,
+	pullRegions,
+} from "@/features/locations/locations.service";
 import { pullClimbs, pushClimbs } from "@/features/sync/sync.service";
 import { useSyncStore } from "@/features/sync/sync.store";
 import { supabase } from "@/lib/supabase";
@@ -21,8 +25,12 @@ export function useSync(userId: string | undefined) {
 				await pushClimbs(userId);
 				await pullClimbs(userId);
 				await pullGrades();
+				await pullCountries();
+				await pullRegions();
 				queryClient.invalidateQueries({ queryKey: ["climbs"] });
 				queryClient.invalidateQueries({ queryKey: ["grades"] });
+				queryClient.invalidateQueries({ queryKey: ["countries"] });
+				queryClient.invalidateQueries({ queryKey: ["regions"] });
 				setSuccess();
 			} catch (err) {
 				console.error("Sync error:", err);
