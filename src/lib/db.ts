@@ -53,6 +53,26 @@ async function initSchema(db: Database): Promise<void> {
   `);
 
 	await db.execute(`
+    CREATE TABLE IF NOT EXISTS countries_cache (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      code TEXT NOT NULL,
+      sort_order INTEGER NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+
+	await db.execute(`
+    CREATE TABLE IF NOT EXISTS regions_cache (
+      id TEXT PRIMARY KEY,
+      country_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      sort_order INTEGER NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+
+	await db.execute(`
     CREATE TRIGGER IF NOT EXISTS climbs_updated_at
     AFTER UPDATE ON climbs
     BEGIN
