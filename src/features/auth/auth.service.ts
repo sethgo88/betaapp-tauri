@@ -85,27 +85,14 @@ export async function upsertLocalUser(
 
 export async function fetchOrCreateSupabaseUser(
 	userId: string,
-	email: string,
+	_email: string,
 ): Promise<"user" | "admin"> {
-	// Check user_roles table for explicit role assignment
+	// Role is managed exclusively via user_roles table
 	const { data: roleData } = await supabase
 		.from("user_roles")
 		.select("role")
 		.eq("user_id", userId)
 		.single();
 
-	if (roleData?.role === "admin") return "admin";
-
-	// Ensure user row exists in Supabase
-	const { data: userData } = await supabase
-		.from("users")
-		.select("id")
-		.eq("id", userId)
-		.single();
-
-	if (!userData) {
-		await supabase.from("users").insert({ id: userId, email, role: "user" });
-	}
-
-	return "user";
+	return roleData?.role === "admin" ? "admin" : "user";
 }

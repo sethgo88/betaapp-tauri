@@ -63,6 +63,14 @@ export const Drawer = ({ isOpen, onClose }: DrawerProps) => {
 								<MapPin size={18} />
 								<span>Location Manager</span>
 							</button>
+							<button
+								type="button"
+								className="flex items-center gap-3 py-3 px-2 text-left rounded-lg hover:bg-stone-800"
+								onClick={() => handleNav("/admin/routes")}
+							>
+								<MapPin size={18} />
+								<span>Route Verification</span>
+							</button>
 						</>
 					)}
 				</nav>
