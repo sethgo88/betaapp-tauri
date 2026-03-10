@@ -1,0 +1,92 @@
+import { useRouter } from "@tanstack/react-router";
+import {
+	usePendingLocations,
+	useRejectLocation,
+	useVerifyLocation,
+} from "@/features/locations/locations.queries";
+import type { PendingLocationItem } from "@/features/locations/locations.service";
+
+const typeLabel: Record<PendingLocationItem["type"], string> = {
+	sub_region: "Sub-area",
+	crag: "Crag",
+	wall: "Wall",
+};
+
+const tableFor = (
+	type: PendingLocationItem["type"],
+): "sub_regions" | "crags" | "walls" => {
+	if (type === "sub_region") return "sub_regions";
+	if (type === "crag") return "crags";
+	return "walls";
+};
+
+const LocationVerificationView = () => {
+	const router = useRouter();
+	const { data: items = [], isLoading } = usePendingLocations();
+	const verify = useVerifyLocation();
+	const reject = useRejectLocation();
+
+	return (
+		<div className="flex flex-col gap-4">
+			<button
+				type="button"
+				className="text-stone-400 text-sm text-left"
+				onClick={() => router.history.back()}
+			>
+				← Back
+			</button>
+
+			<h1 className="text-lg font-semibold">Pending Locations</h1>
+
+			{isLoading && <p className="text-stone-400 text-sm">Loading…</p>}
+
+			{!isLoading && items.length === 0 && (
+				<p className="text-stone-400 text-sm">No pending submissions.</p>
+			)}
+
+			<div className="flex flex-col gap-3">
+				{items.map((item) => (
+					<div
+						key={item.id}
+						className="rounded-lg bg-stone-800 p-4 flex flex-col gap-2"
+					>
+						<div className="flex items-start justify-between gap-2">
+							<div>
+								<p className="font-medium">{item.name}</p>
+								<p className="text-xs text-stone-400 mt-0.5">
+									{typeLabel[item.type]} · in {item.parent_name}
+								</p>
+							</div>
+							<span className="text-xs text-amber-400 shrink-0">pending</span>
+						</div>
+
+						<div className="flex gap-2 mt-1">
+							<button
+								type="button"
+								disabled={verify.isPending || reject.isPending}
+								onClick={() =>
+									verify.mutate({ table: tableFor(item.type), id: item.id })
+								}
+								className="flex-1 text-sm py-2 rounded-lg bg-emerald-700 hover:bg-emerald-600 disabled:opacity-40"
+							>
+								Verify
+							</button>
+							<button
+								type="button"
+								disabled={verify.isPending || reject.isPending}
+								onClick={() =>
+									reject.mutate({ table: tableFor(item.type), id: item.id })
+								}
+								className="flex-1 text-sm py-2 rounded-lg bg-red-800 hover:bg-red-700 disabled:opacity-40"
+							>
+								Reject
+							</button>
+						</div>
+					</div>
+				))}
+			</div>
+		</div>
+	);
+};
+
+export default LocationVerificationView;

@@ -11,6 +11,7 @@ import { AppLayout } from "@/components/templates/AppLayout";
 import { useAuthStore } from "@/features/auth/auth.store";
 import AddClimbView from "@/views/AddClimbView";
 import LocationManagerView from "@/views/admin/LocationManagerView";
+import LocationVerificationView from "@/views/admin/LocationVerificationView";
 import RouteVerificationView from "@/views/admin/RouteVerificationView";
 import ClimbDetailView from "@/views/ClimbDetailView";
 import CragView from "@/views/CragView";
@@ -121,6 +122,13 @@ const adminRouteVerificationRoute = createRoute({
 	component: RouteVerificationView,
 });
 
+const adminLocationVerificationRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/admin/locations/pending",
+	beforeLoad: requireAdmin,
+	component: LocationVerificationView,
+});
+
 const routeTree = rootRoute.addChildren([
 	homeRoute,
 	addClimbRoute,
@@ -133,6 +141,7 @@ const routeTree = rootRoute.addChildren([
 	cragRoute,
 	adminLocationsRoute,
 	adminRouteVerificationRoute,
+	adminLocationVerificationRoute,
 ]);
 
 const memoryHistory = createMemoryHistory({ initialEntries: ["/"] });
