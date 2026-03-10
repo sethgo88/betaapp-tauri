@@ -118,7 +118,7 @@ async function initSchema(db: Database): Promise<void> {
       grade TEXT NOT NULL,
       route_type TEXT NOT NULL DEFAULT 'sport',
       description TEXT,
-      verified INTEGER NOT NULL DEFAULT 0,
+      status TEXT NOT NULL DEFAULT 'verified',
       created_by TEXT NOT NULL,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
@@ -130,6 +130,35 @@ async function initSchema(db: Database): Promise<void> {
       downloaded_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
   `);
+
+	// ── Schema migrations for existing installs ────────────────────────────────
+	// routes_cache: verified INTEGER → status TEXT
+	try {
+		await db.execute(
+			`ALTER TABLE routes_cache ADD COLUMN status TEXT NOT NULL DEFAULT 'verified'`,
+		);
+	} catch {
+		// Column already exists
+	}
+	// sub_regions_cache, crags_cache, walls_cache: add status + created_by
+	for (const table of [
+		"sub_regions_cache",
+		"crags_cache",
+		"walls_cache",
+	] as const) {
+		try {
+			await db.execute(
+				`ALTER TABLE ${table} ADD COLUMN status TEXT NOT NULL DEFAULT 'verified'`,
+			);
+		} catch {
+			// Column already exists
+		}
+		try {
+			await db.execute(`ALTER TABLE ${table} ADD COLUMN created_by TEXT`);
+		} catch {
+			// Column already exists
+		}
+	}
 
 	await db.execute(`
     CREATE TRIGGER IF NOT EXISTS climbs_updated_at

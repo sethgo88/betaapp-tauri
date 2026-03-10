@@ -2,7 +2,7 @@
 
 5-level location hierarchy: Country → Region → Sub-Region → Crag → Wall.
 
-Admin-managed reference data. Read-only for users. Cached locally; route data only available after a region download.
+**Ownership:** Countries and Regions are admin-only. Sub-Regions, Crags, and Walls are user-submitted and admin-verified (same `status` model as Routes).
 
 ---
 
@@ -24,9 +24,11 @@ Country
 ```ts
 CountrySchema    = { id, name, code, sort_order, created_at }
 RegionSchema     = { id, country_id, name, sort_order, created_at }
-SubRegionSchema  = { id, region_id, name, sort_order, created_at }
-CragSchema       = { id, sub_region_id, name, sort_order, created_at }
-WallSchema       = { id, crag_id, name, sort_order, created_at }
+SubRegionSchema  = { id, region_id, name, sort_order, status, created_by?, created_at }
+CragSchema       = { id, sub_region_id, name, sort_order, status, created_by?, created_at }
+WallSchema       = { id, crag_id, name, sort_order, status, created_by?, created_at }
+
+// status: 'pending' | 'verified' | 'rejected'
 ```
 
 ---

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { SubmissionStatus } from "@/features/routes/routes.schema";
 
 export const CountrySchema = z.object({
 	id: z.string(),
@@ -21,6 +22,8 @@ export const SubRegionSchema = z.object({
 	region_id: z.string(),
 	name: z.string(),
 	sort_order: z.number(),
+	status: SubmissionStatus.default("verified"),
+	created_by: z.string().nullable().optional(),
 	created_at: z.string(),
 });
 
@@ -29,6 +32,8 @@ export const CragSchema = z.object({
 	sub_region_id: z.string(),
 	name: z.string(),
 	sort_order: z.number(),
+	status: SubmissionStatus.default("verified"),
+	created_by: z.string().nullable().optional(),
 	created_at: z.string(),
 });
 
@@ -37,6 +42,8 @@ export const WallSchema = z.object({
 	crag_id: z.string(),
 	name: z.string(),
 	sort_order: z.number(),
+	status: SubmissionStatus.default("verified"),
+	created_by: z.string().nullable().optional(),
 	created_at: z.string(),
 });
 

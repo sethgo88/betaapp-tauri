@@ -106,23 +106,32 @@ export type Database = {
       crags: {
         Row: {
           created_at: string
+          created_by: string | null
+          deleted_at: string | null
           id: string
           name: string
           sort_order: number
+          status: string
           sub_region_id: string
         }
         Insert: {
           created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
           id?: string
           name: string
           sort_order?: number
+          status?: string
           sub_region_id: string
         }
         Update: {
           created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
           id?: string
           name?: string
           sort_order?: number
+          status?: string
           sub_region_id?: string
         }
         Relationships: [
@@ -195,34 +204,37 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string
+          deleted_at: string | null
           description: string | null
           grade: string
           id: string
           name: string
           route_type: string
-          verified: boolean
+          status: string
           wall_id: string
         }
         Insert: {
           created_at?: string
           created_by: string
+          deleted_at?: string | null
           description?: string | null
           grade: string
           id?: string
           name: string
           route_type?: string
-          verified?: boolean
+          status?: string
           wall_id: string
         }
         Update: {
           created_at?: string
           created_by?: string
+          deleted_at?: string | null
           description?: string | null
           grade?: string
           id?: string
           name?: string
           route_type?: string
-          verified?: boolean
+          status?: string
           wall_id?: string
         }
         Relationships: [
@@ -238,24 +250,33 @@ export type Database = {
       sub_regions: {
         Row: {
           created_at: string
+          created_by: string | null
+          deleted_at: string | null
           id: string
           name: string
           region_id: string
           sort_order: number
+          status: string
         }
         Insert: {
           created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
           id?: string
           name: string
           region_id: string
           sort_order?: number
+          status?: string
         }
         Update: {
           created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
           id?: string
           name?: string
           region_id?: string
           sort_order?: number
+          status?: string
         }
         Relationships: [
           {
@@ -286,23 +307,32 @@ export type Database = {
         Row: {
           crag_id: string
           created_at: string
+          created_by: string | null
+          deleted_at: string | null
           id: string
           name: string
           sort_order: number
+          status: string
         }
         Insert: {
           crag_id: string
           created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
           id?: string
           name: string
           sort_order?: number
+          status?: string
         }
         Update: {
           crag_id?: string
           created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
           id?: string
           name?: string
           sort_order?: number
+          status?: string
         }
         Relationships: [
           {

@@ -23,7 +23,7 @@ export async function submitRoute(
 		grade: values.grade,
 		route_type: values.route_type,
 		description: values.description ?? null,
-		verified: false,
+		status: "pending",
 		created_by: userId,
 	});
 	if (error) throw error;
@@ -31,7 +31,7 @@ export async function submitRoute(
 	const db = await getDb();
 	await db.execute(
 		`INSERT INTO routes_cache
-       (id, wall_id, name, grade, route_type, description, verified, created_by, created_at)
+       (id, wall_id, name, grade, route_type, description, status, created_by, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
 		[
 			id,
@@ -40,7 +40,7 @@ export async function submitRoute(
 			values.grade,
 			values.route_type,
 			values.description ?? null,
-			0,
+			"pending",
 			userId,
 		],
 	);
@@ -87,7 +87,7 @@ export async function fetchUnverifiedRoutes(): Promise<UnverifiedRoute[]> {
 		.select(
 			"id, wall_id, name, grade, route_type, description, created_by, created_at, walls(name, crags(name, sub_regions(name, regions(id, name, countries(name)))))",
 		)
-		.eq("verified", false)
+		.eq("status", "pending")
 		.order("created_at", { ascending: false });
 	if (error) throw error;
 	return (data ?? []) as UnverifiedRoute[];
@@ -96,18 +96,25 @@ export async function fetchUnverifiedRoutes(): Promise<UnverifiedRoute[]> {
 export async function verifyRoute(id: string): Promise<void> {
 	const { error } = await supabase
 		.from("routes")
-		.update({ verified: true })
+		.update({ status: "verified" })
 		.eq("id", id);
 	if (error) throw error;
 	const db = await getDb();
-	await db.execute("UPDATE routes_cache SET verified = 1 WHERE id = ?", [id]);
+	await db.execute("UPDATE routes_cache SET status = 'verified' WHERE id = ?", [
+		id,
+	]);
 }
 
 export async function rejectRoute(id: string): Promise<void> {
-	const { error } = await supabase.from("routes").delete().eq("id", id);
+	const { error } = await supabase
+		.from("routes")
+		.update({ status: "rejected" })
+		.eq("id", id);
 	if (error) throw error;
 	const db = await getDb();
-	await db.execute("DELETE FROM routes_cache WHERE id = ?", [id]);
+	await db.execute("UPDATE routes_cache SET status = 'rejected' WHERE id = ?", [
+		id,
+	]);
 }
 
 export async function updateRouteFields(
@@ -159,7 +166,7 @@ export async function searchVerifiedRoutes(
 	const { data, error } = await supabase
 		.from("routes")
 		.select("id, name, grade, route_type, walls(name)")
-		.eq("verified", true)
+		.eq("status", "verified")
 		.ilike("name", `%${query}%`)
 		.limit(10);
 	if (error) throw error;
