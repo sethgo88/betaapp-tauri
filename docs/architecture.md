@@ -18,18 +18,48 @@
 │   tauri-plugin-sql   │   │   @supabase/supabase-js        │
 │   src/lib/db.ts      │   │   src/lib/supabase.ts          │
 └─────────────────────┘   └───────────────────────────────┘
-           │                          │
-┌──────────▼──────────┐   ┌──────────▼────────────────────┐
-│   Rust / Tauri       │   │   Supabase Realtime            │
-│   plugin reg only    │   │   WebSocket channel (climbs)   │
-│   migrations         │   │   live push to local SQLite    │
-└─────────────────────┘   └───────────────────────────────┘
 ```
+
+## Navigation Structure
+
+Bottom tab bar (always visible):
+- **Home** — personal climb list
+- **Add** — log a new climb
+- **Profile** — auth status, sync status
+- **Menu (☰)** — hamburger drawer
+
+Drawer (slides in from right):
+- Routes — browse location hierarchy
+- **Admin** section (role-gated):
+  - Location Manager
+  - Route Verification
+
+---
+
+## Route Structure
+
+```
+/                          → HomeView (personal climb list, requireAuth)
+/climbs/add                → AddClimbView (requireAuth)
+/climbs/$climbId           → ClimbDetailView (requireAuth)
+/climbs/$climbId/edit      → EditClimbView (requireAuth, delete inline)
+/profile                   → ProfileView (public)
+/routes                    → RoutesView (country/region browser, requireAuth)
+/routes/submit             → SubmitRouteView (requireAuth, search params: wallId, wallName)
+/regions/$regionId         → RegionView (sub-regions → crags, requireAuth)
+/crags/$cragId             → CragView (walls → routes + submit button, requireAuth)
+/admin/locations           → LocationManagerView (requireAdmin)
+/admin/routes              → RouteVerificationView (requireAdmin)
+```
+
+---
 
 ## Layer Responsibilities
 
 ### `src/views/`
 Page-level components. Compose organisms with real data. One file per route. The only place that owns page-level routing logic and layout decisions.
+
+Admin views live in `src/views/admin/`.
 
 ### `src/components/`
 Pure UI — atoms, molecules, organisms, templates. Components receive data as props or read from TanStack Query/Zustand. They never call service functions directly (exception: organisms may use `useQuery` hooks).
@@ -39,57 +69,34 @@ All business logic. No JSX. Divided by domain:
 
 | Domain | Files | Responsibility |
 |---|---|---|
-| `climbs` | `climbs.service.ts` | CRUD against SQLite for user's climbs |
-| `climbs` | `climbs.queries.ts` | TanStack Query hooks for climbs |
-| `climbs` | `climbs.store.ts` | Zustand — active filters, UI state |
+| `climbs` | `climbs.service.ts` | CRUD against local SQLite; push to Supabase |
+| `climbs` | `climbs.queries.ts` | TanStack Query hooks + silent push mutations |
+| `climbs` | `climbs.store.ts` | Zustand — selectedClimbId, active filters |
 | `climbs` | `climbs.schema.ts` | Zod schemas for Climb domain |
-| `routes` | `routes.service.ts` | Read routes from SQLite cache, submit new routes to Supabase |
-| `routes` | `routes.queries.ts` | TanStack Query hooks for route browsing |
+| `routes` | `routes.service.ts` | Read from routes_cache; submit/verify/reject/merge via Supabase |
+| `routes` | `routes.queries.ts` | TanStack Query hooks for browse + admin verification |
 | `routes` | `routes.schema.ts` | Zod schemas for Route domain |
-| `locations` | `locations.service.ts` | Read location hierarchy from SQLite cache |
-| `locations` | `locations.queries.ts` | TanStack Query hooks for location browsing |
-| `locations` | `downloads.service.ts` | Download region route data from Supabase to local cache |
-| `grades` | `grades.service.ts` | Read grades from local cache, seed on first install |
+| `locations` | `locations.service.ts` | Read location hierarchy from SQLite cache; downloadRegion orchestration |
+| `locations` | `locations.queries.ts` | TanStack Query hooks for location hierarchy + download mutation |
+| `locations` | `locations.schema.ts` | Zod schemas for Country, Region, SubRegion, Crag, Wall |
+| `grades` | `grades.service.ts` | Read from grades_cache; seed on first install; pull from Supabase |
 | `grades` | `grades.queries.ts` | TanStack Query hook for grades list |
 | `grades` | `grades-seed.ts` | Hardcoded fallback grades (sport + boulder) |
-| `sync` | `sync.service.ts` | Push/pull logic for user data (climbs) ↔ Supabase |
-| `sync` | `sync.store.ts` | Sync state — isSyncing, lastSyncedAt, realtimeStatus |
-| `auth` | `auth.service.ts` | Magic link sign-in/out, session management |
-| `auth` | `auth.store.ts` | Auth state — user, session, role |
+| `sync` | `sync.service.ts` | Push/pull for climbs + reference data (grades, countries, regions) |
+| `sync` | `sync.store.ts` | Sync state — status, lastSyncedAt |
+| `auth` | `auth.service.ts` | Sign in/up/out, session restore, role detection via user_roles |
+| `auth` | `auth.store.ts` | Auth state — user, session, isAuthenticated |
 
 ### `src/lib/`
 React-free singletons and utilities:
-- `db.ts` — typed wrapper around `@tauri-apps/plugin-sql`
-- `supabase.ts` — configured Supabase client singleton
-- `cn.ts` — Tailwind class merging utility (`clsx` + `tailwind-merge`)
+- `db.ts` — SQLite wrapper; `initSchema()` runs on first load (CREATE TABLE IF NOT EXISTS + ALTER TABLE migrations)
+- `supabase.ts` — typed Supabase client (`createClient<Database>`)
+- `database.types.ts` — generated via `supabase gen types typescript`; re-run after schema changes
+- `cn.ts` — Tailwind class merging utility
 - `date.ts` — ISO 8601 / Unix timestamp helpers
 
 ### `src-tauri/src/`
-Rust backend — minimal. Handles:
-- Plugin registration (`tauri-plugin-sql`, `tauri-plugin-deep-link`)
-- Migration definitions (passed to `tauri-plugin-sql` — run automatically on launch)
-- No custom Tauri commands for data access (all SQLite access is JS-side)
-
----
-
-## Route Structure
-
-```
-/                              → HomeView (personal climb list)
-/add                           → AddClimbView
-/climb/:id                     → ClimbDetailView
-/edit/:id                      → EditClimbView
-/routes                        → RoutesView (browse countries/regions)
-/routes/:regionId              → RegionView (sub-regions in a region)
-/routes/:regionId/:subRegionId → SubRegionView (crags in a sub-region)
-/routes/:regionId/:subRegionId/:cragId → CragView (walls + routes)
-/profile                       → ProfileView
-/settings                      → SettingsView (auth + sync status)
-/admin                         → AdminView (role-gated)
-/admin/locations               → LocationManagerView
-/admin/grades                  → GradesManagerView
-/admin/routes/verify           → RouteVerificationView
-```
+Rust backend — minimal. Handles plugin registration only. No custom Tauri commands for data access (all SQLite access is JS-side via `tauri-plugin-sql`).
 
 ---
 
@@ -98,148 +105,146 @@ Rust backend — minimal. Handles:
 ### User Data (bidirectional sync)
 Owned by the authenticated user. Synced to Supabase with RLS (`user_id = auth.uid()`).
 
-- `climbs` — personal log of ascents. May link to a `route_id` or use freeform location fields.
+- `climbs` — personal log of ascents. `route_id` links to a verified route (nullable; Phase 10).
 
 ### Reference Data (one-way pull, admin-managed)
-Written only by admin (via in-app admin views or Supabase Studio). Read-only for regular users.
+Written only by admin. Read-only for regular users.
 
-- **Grades** — seeded from `grades-seed.ts` on first install; Supabase is authoritative.
-- **Location hierarchy** — Countries → Regions → Sub-Regions → Crags → Walls. Countries and Regions are always synced (lightweight metadata). Sub-Regions, Crags, and Walls are cached on demand as the user navigates.
-- **Routes** — linked to a Wall. Only cached locally when the user explicitly downloads the containing Region. Pending routes (submitted by users, not yet admin-verified) are visible only to their creator.
+- **Grades** — seeded from `grades-seed.ts` on first install; Supabase is authoritative on sync.
+- **Countries + Regions** — always pulled on app launch (lightweight).
+- **Sub-Regions, Crags, Walls** — pulled per-region on explicit user download.
+- **Routes** — pulled per-region on explicit download; only verified routes cached locally. Unverified routes (user submissions) visible to creator only via RLS.
 
 ---
 
 ## Data Flow: Logging a Climb
 
-### With a known route (region downloaded)
 ```
-AddClimbView → user searches/browses routes
+AddClimbView / EditClimbView
       ↓
-LocationPicker: Country → Region → Sub-Region → Crag → Wall → Route
+ClimbForm.handleSubmit() → ClimbFormSchema.safeParse()
       ↓
-ClimbForm filled (grade auto-populated from route)
+useCreateClimb / useUpdateClimb mutation
       ↓
-form.handleSubmit() → ClimbSchema.parse() → useCreateClimb mutation
-      ↓
-climbs.service.createClimb() → db.ts → SQLite
+climbs.service → INSERT/UPDATE local SQLite
       ↓
 onSuccess: invalidateQueries(['climbs'])
       ↓
-If online: sync.service.pushClimb(id) → Supabase upsert
-```
-
-### Without a downloaded region (custom location)
-```
-AddClimbView → user types freeform location fields
-      ↓
-Climb saved with is_custom_location = true, route_id = null
-      ↓
-Later: EditClimbView → "Link to official location" option
-      ↓
-User downloads region → selects route → climb updated with route_id
-      → is_custom_location = false
+silentPush(userId) → sync.service.pushClimbs() → Supabase upsert
+  (fire-and-forget; toast on success/failure)
 ```
 
 ---
 
-## Data Flow: Sync (User Data)
+## Data Flow: Region Download
 
-### Push (local → Supabase)
 ```
-Climb created/updated locally
+RoutesView → user taps "Download" on a region
       ↓
-If online: immediately upsert to Supabase climbs table
+useDownloadRegion mutation → locations.service.downloadRegion(regionId)
       ↓
-On failure: mark climb as unsynced → retry on next runSync()
-```
-
-### Pull (Supabase → local) — startup + Realtime
-```
-App launch:
-  read sync_meta.last_synced_at
-  fetch Supabase climbs WHERE updated_at > last_synced_at AND user_id = me
-  upsert into local SQLite
-  update sync_meta.last_synced_at
-
-While app is open (Supabase Realtime):
-  subscribe to climbs channel for current user_id
-  on INSERT/UPDATE: upsert row to local SQLite → invalidateQueries(['climbs'])
-  on DELETE: soft-delete local row → invalidateQueries(['climbs'])
-```
-
----
-
-## Data Flow: Reference Data Sync
-
-### Grades
-```
-First install:
-  grades_cache is empty
-  grades.service.seedGrades() → insert from grades-seed.ts
-
-On sync:
-  fetch Supabase grades WHERE updated_at > last_grades_synced_at
-  upsert into grades_cache
-  → invalidateQueries(['grades'])
-```
-
-### Location metadata (always-on)
-```
-App launch:
-  fetch all countries from Supabase → upsert countries_cache
-  fetch all regions (with route_count) from Supabase → upsert regions_cache
-
-On user navigation into a region:
-  fetch sub_regions for region_id → upsert sub_regions_cache
-  fetch crags for sub_region_id → upsert crags_cache
-  fetch walls for crag_id → upsert walls_cache
-```
-
-### Region download (explicit user action)
-```
-User taps "Download Region" on RegionView
+Supabase: fetch sub_regions for region
+  → fetch crags for sub_region_ids
+  → fetch walls for crag_ids
+  → fetch verified routes for wall_ids
       ↓
-downloads.service.downloadRegion(regionId):
-  fetch all sub_regions, crags, walls, routes for the region
-  bulk upsert into local cache tables
-  insert into downloaded_regions (region_id, downloaded_at, route_count)
+Bulk insert into local cache tables
       ↓
-invalidateQueries(['routes', regionId])
+INSERT OR REPLACE INTO downloaded_regions (region_id)
+      ↓
+invalidateQueries(['downloaded_regions', 'sub_regions'])
 Region is now available offline
 ```
 
 ---
 
-## Auth Flow (Magic Link)
+## Data Flow: Route Submission & Verification
 
 ```
-SettingsView → user enters email → auth.service.signInWithMagicLink(email)
+User submits route (SubmitRouteView):
+  → INSERT to Supabase routes (verified=false, created_by=user_id)
+  → INSERT to local routes_cache (verified=0) for immediate visibility
+  → RLS: only creator can SELECT this unverified route
+
+Admin verifies (RouteVerificationView):
+  Approve  → UPDATE routes SET verified=true; UPDATE local cache
+  Edit     → inline edit form → UPDATE fields → optionally approve
+  Reject   → DELETE from Supabase + local cache
+  Merge    → search for existing verified route → DELETE unverified
+             (climb.route_id updates deferred to Phase 10)
+```
+
+---
+
+## Data Flow: Sync (Climbs)
+
+### Push (local → Supabase)
+```
+Climb mutated locally
       ↓
-Supabase sends magic link email → link contains token
+silentPush(userId) → pushClimbs():
+  SELECT climbs WHERE user_id = ? AND deleted_at IS NULL
+  → Supabase upsert (INSERT OR REPLACE via updated_at)
       ↓
-User taps link on device → Android deep link opens app (betaapp://auth/callback?token=...)
+Toast: "Synced" or "Sync failed — saved offline"
+```
+
+### Pull (Supabase → local) — app launch
+```
+runSync():
+  pushClimbs(userId)          ← push first
+  pullClimbs(userId)          ← then pull remote changes
+  pullGrades()
+  pullCountries()
+  pullRegions()
+  → invalidate all affected query keys
+```
+
+---
+
+## Auth Flow
+
+### Email/Password
+```
+ProfileView → signIn(email, password) or signUp(email, password)
       ↓
-tauri-plugin-deep-link fires event → auth.service.handleDeepLink(url)
+Supabase auth → session returned
       ↓
-Supabase client exchanges token for session
+fetchOrCreateSupabaseUser(userId):
+  SELECT role FROM user_roles WHERE user_id = ?
+  → "admin" | "user"
       ↓
-Session stored in Tauri secure store
+upsertLocalUser(id, email, role) → local SQLite users table
       ↓
-auth.store updates (user, session, role)
+auth.store: setUser(), setSession()
       ↓
-sync.service.runSync() fires (initial full sync)
+navigate("/") → runSync() fires
+```
+
+### Magic Link (deep link)
+```
+User taps magic link on device
+      ↓
+Android deep link opens app (betaapp://auth/callback?token=...)
+      ↓
+tauri-plugin-deep-link fires → Supabase exchanges token for session
+      ↓
+Same handleSession() flow as above
 ```
 
 ---
 
 ## Admin System
 
-Admin role is determined by `users.role = 'admin'` in Supabase. On login, the user's profile is fetched and the role is stored in `auth.store`.
+Admin role is managed via the `user_roles` table in Supabase (not `users.role`). On login, `fetchOrCreateSupabaseUser` reads `user_roles` and stores the role in `auth.store`.
 
-**In-app admin views** (gated by `role === 'admin'`):
-- `LocationManagerView` — add/edit countries, regions, sub-regions, crags, walls
-- `GradesManagerView` — add/edit grades by route type
-- `RouteVerificationView` — approve or reject user-submitted routes
+**Route guards:**
+- `requireAuth` — redirects to `/profile` if not authenticated
+- `requireAdmin` — redirects to `/` if authenticated but not admin
+
+**In-app admin views** (accessed via Drawer, gated by `requireAdmin`):
+- `LocationManagerView` — add/delete countries and regions
+- `RouteVerificationView` — approve, edit, reject, or merge pending route submissions
 
 **Supabase RLS** enforces the same restrictions on the backend — UI gating is for UX only.
 
@@ -247,18 +252,16 @@ Admin role is determined by `users.role = 'admin'` in Supabase. On login, the us
 
 ## Local-First Principles
 
-1. **All reads come from SQLite.** Supabase is never queried for display data.
+1. **All reads come from SQLite.** Supabase is never queried for display data (exception: admin views read unverified routes directly from Supabase).
 2. **The app works offline.** Offline climbs accumulate and sync when connected.
-3. **Soft deletes for safety.** `deleted_at` set on delete; hard delete after sync confirmation.
-4. **Last-write-wins conflict resolution.** The row with the newer `updated_at` wins during merge. Acceptable for a single-user app; will need revision for multi-user.
-5. **Grades always available.** `grades-seed.ts` ensures grades exist even before first sync.
+3. **Soft deletes for user data.** `deleted_at` set on delete; never hard-deleted from local SQLite.
+4. **Last-write-wins conflict resolution.** The row with the newer `updated_at` wins. Acceptable for a single-user app.
+5. **Grades always available.** `grades-seed.ts` ensures grades exist before first sync.
 6. **Reference data is read-only for users.** Users never push to reference tables.
 
 ---
 
 ## Tauri 2 Capabilities
-
-Tauri 2 uses a capabilities-based permission system. Missing capability = silent failure. Declared in `src-tauri/capabilities/`.
 
 | Capability | Reason |
 |---|---|
