@@ -117,88 +117,16 @@ Written only by admin. Read-only for regular users.
 
 ---
 
-## Data Flow: Logging a Climb
+## Data Flows
 
-```
-AddClimbView / EditClimbView
-      ↓
-ClimbForm.handleSubmit() → ClimbFormSchema.safeParse()
-      ↓
-useCreateClimb / useUpdateClimb mutation
-      ↓
-climbs.service → INSERT/UPDATE local SQLite
-      ↓
-onSuccess: invalidateQueries(['climbs'])
-      ↓
-silentPush(userId) → sync.service.pushClimbs() → Supabase upsert
-  (fire-and-forget; toast on success/failure)
-```
+Detailed flows live in the feature READMEs:
 
----
-
-## Data Flow: Region Download
-
-```
-RoutesView → user taps "Download" on a region
-      ↓
-useDownloadRegion mutation → locations.service.downloadRegion(regionId)
-      ↓
-Supabase: fetch sub_regions for region
-  → fetch crags for sub_region_ids
-  → fetch walls for crag_ids
-  → fetch verified routes for wall_ids
-      ↓
-Bulk insert into local cache tables
-      ↓
-INSERT OR REPLACE INTO downloaded_regions (region_id)
-      ↓
-invalidateQueries(['downloaded_regions', 'sub_regions'])
-Region is now available offline
-```
-
----
-
-## Data Flow: Route Submission & Verification
-
-```
-User submits route (SubmitRouteView):
-  → INSERT to Supabase routes (verified=false, created_by=user_id)
-  → INSERT to local routes_cache (verified=0) for immediate visibility
-  → RLS: only creator can SELECT this unverified route
-
-Admin verifies (RouteVerificationView):
-  Approve  → UPDATE routes SET verified=true; UPDATE local cache
-  Edit     → inline edit form → UPDATE fields → optionally approve
-  Reject   → DELETE from Supabase + local cache
-  Merge    → search for existing verified route → DELETE unverified
-             (climb.route_id updates deferred to Phase 10)
-```
-
----
-
-## Data Flow: Sync (Climbs)
-
-### Push (local → Supabase)
-```
-Climb mutated locally
-      ↓
-silentPush(userId) → pushClimbs():
-  SELECT climbs WHERE user_id = ? AND deleted_at IS NULL
-  → Supabase upsert (INSERT OR REPLACE via updated_at)
-      ↓
-Toast: "Synced" or "Sync failed — saved offline"
-```
-
-### Pull (Supabase → local) — app launch
-```
-runSync():
-  pushClimbs(userId)          ← push first
-  pullClimbs(userId)          ← then pull remote changes
-  pullGrades()
-  pullCountries()
-  pullRegions()
-  → invalidate all affected query keys
-```
+| Flow | See |
+|---|---|
+| Logging a climb (form → SQLite → Supabase) | `src/features/climbs/README.md` |
+| Region download | `src/features/locations/README.md` |
+| Route submission + admin verification | `src/features/routes/README.md` |
+| Sync push/pull + Realtime | `src/features/sync/README.md` |
 
 ---
 
