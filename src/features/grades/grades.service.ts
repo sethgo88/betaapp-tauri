@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 import type { Grade } from "./grades.schema";
 
 export async function fetchGrades(
@@ -9,4 +10,19 @@ export async function fetchGrades(
 		"SELECT * FROM grades_cache WHERE discipline = ? ORDER BY sort_order ASC",
 		[discipline],
 	);
+}
+
+export async function pullGrades(): Promise<void> {
+	const { data, error } = await supabase.from("grades").select("*");
+	if (error) throw error;
+	if (!data || data.length === 0) return;
+
+	const db = await getDb();
+	for (const row of data as Grade[]) {
+		await db.execute(
+			`INSERT OR REPLACE INTO grades_cache (id, discipline, grade, sort_order, created_at)
+       VALUES (?, ?, ?, ?, ?)`,
+			[row.id, row.discipline, row.grade, row.sort_order, row.created_at],
+		);
+	}
 }
