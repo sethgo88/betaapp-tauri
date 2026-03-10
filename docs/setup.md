@@ -77,11 +77,18 @@ You'll need a Supabase project for cloud sync and auth. This is required from Ph
 Run the SQL from `docs/database.md` → "Supabase Schema" section in the Supabase SQL Editor.
 
 ### 3. Configure auth
-- Authentication → URL Configuration → Redirect URLs → Add `betaapp://auth/callback`
-- Authentication → Providers → Email → Enable "Magic Links"
+- Authentication → Providers → Email → Disable "Confirm email" (for development) or configure as needed
+- Email + password sign-in is used currently. Magic link is planned but not yet implemented.
 
-### 4. Store credentials in Tauri secure store
-Credentials are stored at runtime via `tauri-plugin-store` — not in `.env`. On first app launch after Phase 4, the app will prompt for the Supabase URL and anon key (or these can be hardcoded in development only via a `.env.local` that is gitignored).
+### 4. Create a `.env` file
+Credentials are provided via environment variables. Create `.env` (or `.env.local`) in the project root — both are gitignored:
+
+```bash
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+```
+
+Find these values in your Supabase project → Settings → API.
 
 ---
 
@@ -93,7 +100,7 @@ cargo tauri android dev
 
 # Lint + typecheck (run before every commit)
 pnpm lint
-pnpm tsc --noEmit
+pnpm typecheck
 ```
 
 ---
