@@ -25,6 +25,7 @@ export const ClimbSchema = z.object({
 	sub_area: z.string().optional(),
 	route_location: z.string().optional(),
 	link: z.string().optional(),
+	route_id: z.string().nullable().optional(),
 	created_at: z.string(),
 	updated_at: z.string(),
 	deleted_at: z.string().nullable().optional(),

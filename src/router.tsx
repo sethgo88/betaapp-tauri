@@ -53,6 +53,12 @@ const addClimbRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/climbs/add",
 	beforeLoad: requireAuth,
+	validateSearch: z.object({
+		routeId: z.string().optional(),
+		routeName: z.string().optional(),
+		grade: z.string().optional(),
+		routeType: z.enum(["sport", "boulder"]).optional(),
+	}),
 	component: AddClimbView,
 });
 

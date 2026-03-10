@@ -55,6 +55,7 @@ const InlineAddForm = ({
 // ── Route list ────────────────────────────────────────────────────────────────
 
 const RouteList = ({ wallId }: { wallId: string }) => {
+	const navigate = useNavigate();
 	const { data: routes = [] } = useRoutes(wallId);
 
 	if (routes.length === 0) {
@@ -64,9 +65,22 @@ const RouteList = ({ wallId }: { wallId: string }) => {
 	return (
 		<div className="flex flex-col gap-1 mt-2">
 			{routes.map((route) => (
-				<div
+				<button
 					key={route.id}
-					className="flex items-center justify-between py-2 px-2 rounded-lg bg-stone-700"
+					type="button"
+					disabled={route.status === "pending"}
+					onClick={() =>
+						navigate({
+							to: "/climbs/add",
+							search: {
+								routeId: route.id,
+								routeName: route.name,
+								grade: route.grade,
+								routeType: route.route_type as "sport" | "boulder",
+							},
+						})
+					}
+					className="flex items-center justify-between py-2 px-2 rounded-lg bg-stone-700 hover:bg-stone-600 disabled:opacity-60 w-full text-left"
 				>
 					<span className="text-sm">{route.name}</span>
 					<div className="flex items-center gap-2">
@@ -76,7 +90,7 @@ const RouteList = ({ wallId }: { wallId: string }) => {
 							<span className="text-xs text-amber-400">pending</span>
 						)}
 					</div>
-				</div>
+				</button>
 			))}
 		</div>
 	);

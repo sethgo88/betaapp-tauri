@@ -21,12 +21,13 @@ export async function fetchClimb(id: string): Promise<Climb | null> {
 export async function insertClimb(
 	userId: string,
 	data: ClimbFormValues,
+	routeId?: string,
 ): Promise<void> {
 	const db = await getDb();
 	const id = crypto.randomUUID();
 	await db.execute(
-		`INSERT INTO climbs (id, user_id, name, route_type, grade, moves, sent_status, country, area, sub_area, route_location, link)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		`INSERT INTO climbs (id, user_id, name, route_type, grade, moves, sent_status, country, area, sub_area, route_location, link, route_id)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		[
 			id,
 			userId,
@@ -40,6 +41,7 @@ export async function insertClimb(
 			data.sub_area ?? null,
 			data.route_location ?? null,
 			data.link ?? null,
+			routeId ?? null,
 		],
 	);
 }
@@ -47,12 +49,13 @@ export async function insertClimb(
 export async function updateClimb(
 	id: string,
 	data: ClimbFormValues,
+	routeId?: string | null,
 ): Promise<void> {
 	const db = await getDb();
 	await db.execute(
 		`UPDATE climbs
      SET name = ?, route_type = ?, grade = ?, moves = ?, sent_status = ?,
-         country = ?, area = ?, sub_area = ?, route_location = ?, link = ?
+         country = ?, area = ?, sub_area = ?, route_location = ?, link = ?, route_id = ?
      WHERE id = ? AND deleted_at IS NULL`,
 		[
 			data.name,
@@ -65,8 +68,20 @@ export async function updateClimb(
 			data.sub_area ?? null,
 			data.route_location ?? null,
 			data.link ?? null,
+			routeId ?? null,
 			id,
 		],
+	);
+}
+
+export async function linkClimbToRoute(
+	climbId: string,
+	routeId: string,
+): Promise<void> {
+	const db = await getDb();
+	await db.execute(
+		"UPDATE climbs SET route_id = ? WHERE id = ? AND deleted_at IS NULL",
+		[routeId, climbId],
 	);
 }
 
@@ -86,9 +101,9 @@ export async function applyRemoteClimb(climb: Climb): Promise<void> {
 	await db.execute(
 		`INSERT OR REPLACE INTO climbs
      (id, user_id, name, route_type, grade, moves, sent_status,
-      country, area, sub_area, route_location, link,
+      country, area, sub_area, route_location, link, route_id,
       created_at, updated_at, deleted_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		[
 			climb.id,
 			climb.user_id,
@@ -102,6 +117,7 @@ export async function applyRemoteClimb(climb: Climb): Promise<void> {
 			climb.sub_area ?? null,
 			climb.route_location ?? null,
 			climb.link ?? null,
+			climb.route_id ?? null,
 			climb.created_at,
 			climb.updated_at,
 			climb.deleted_at ?? null,

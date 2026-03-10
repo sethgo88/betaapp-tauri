@@ -7,6 +7,7 @@ import {
 	fetchClimb,
 	fetchClimbs,
 	insertClimb,
+	linkClimbToRoute,
 	softDeleteClimb,
 	updateClimb,
 } from "./climbs.service";
@@ -44,7 +45,13 @@ export function useAddClimb() {
 	const qc = useQueryClient();
 	const userId = useAuthStore((s) => s.user?.id);
 	return useMutation({
-		mutationFn: (data: ClimbFormValues) => insertClimb(userId ?? "", data),
+		mutationFn: ({
+			data,
+			routeId,
+		}: {
+			data: ClimbFormValues;
+			routeId?: string;
+		}) => insertClimb(userId ?? "", data, routeId),
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: [CLIMBS_KEY] });
 			silentPush(userId);
@@ -56,8 +63,28 @@ export function useUpdateClimb() {
 	const qc = useQueryClient();
 	const userId = useAuthStore((s) => s.user?.id);
 	return useMutation({
-		mutationFn: ({ id, data }: { id: string; data: ClimbFormValues }) =>
-			updateClimb(id, data),
+		mutationFn: ({
+			id,
+			data,
+			routeId,
+		}: {
+			id: string;
+			data: ClimbFormValues;
+			routeId?: string | null;
+		}) => updateClimb(id, data, routeId),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: [CLIMBS_KEY] });
+			silentPush(userId);
+		},
+	});
+}
+
+export function useLinkClimbToRoute() {
+	const qc = useQueryClient();
+	const userId = useAuthStore((s) => s.user?.id);
+	return useMutation({
+		mutationFn: ({ climbId, routeId }: { climbId: string; routeId: string }) =>
+			linkClimbToRoute(climbId, routeId),
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: [CLIMBS_KEY] });
 			silentPush(userId);
