@@ -6,6 +6,7 @@ import {
 	Outlet,
 	redirect,
 } from "@tanstack/react-router";
+import { z } from "zod";
 import { AppLayout } from "@/components/templates/AppLayout";
 import { useAuthStore } from "@/features/auth/auth.store";
 import AddClimbView from "@/views/AddClimbView";
@@ -17,6 +18,7 @@ import HomeView from "@/views/HomeView";
 import ProfileView from "@/views/ProfileView";
 import RegionView from "@/views/RegionView";
 import RoutesView from "@/views/RoutesView";
+import SubmitRouteView from "@/views/SubmitRouteView";
 
 const requireAuth = () => {
 	if (!useAuthStore.getState().isAuthenticated) {
@@ -93,6 +95,17 @@ const cragRoute = createRoute({
 	component: CragView,
 });
 
+const submitRouteRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/routes/submit",
+	beforeLoad: requireAuth,
+	validateSearch: z.object({
+		wallId: z.string(),
+		wallName: z.string(),
+	}),
+	component: SubmitRouteView,
+});
+
 const adminLocationsRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/admin/locations",
@@ -107,6 +120,7 @@ const routeTree = rootRoute.addChildren([
 	editClimbRoute,
 	profileRoute,
 	routesRoute,
+	submitRouteRoute,
 	regionRoute,
 	cragRoute,
 	adminLocationsRoute,

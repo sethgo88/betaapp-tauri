@@ -1,5 +1,6 @@
-import { useParams, useRouter } from "@tanstack/react-router";
+import { useNavigate, useParams, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
+import { Button } from "@/components/atoms/Button";
 import { useWalls } from "@/features/locations/locations.queries";
 import { useRoutes } from "@/features/routes/routes.queries";
 
@@ -31,6 +32,7 @@ const RouteList = ({ wallId }: { wallId: string }) => {
 const CragView = () => {
 	const { cragId } = useParams({ from: "/crags/$cragId" });
 	const router = useRouter();
+	const navigate = useNavigate();
 	const { data: walls = [] } = useWalls(cragId);
 	const [selectedWallId, setSelectedWallId] = useState<string | null>(null);
 
@@ -60,7 +62,25 @@ const CragView = () => {
 						{wall.name}
 					</button>
 
-					{selectedWallId === wall.id && <RouteList wallId={wall.id} />}
+					{selectedWallId === wall.id && (
+						<>
+							<RouteList wallId={wall.id} />
+							<Button
+								type="button"
+								variant="secondary"
+								size="small"
+								className="mt-3"
+								onClick={() =>
+									navigate({
+										to: "/routes/submit",
+										search: { wallId: wall.id, wallName: wall.name },
+									})
+								}
+							>
+								Submit a route
+							</Button>
+						</>
+					)}
 				</div>
 			))}
 		</div>
