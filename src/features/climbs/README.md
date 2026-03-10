@@ -31,6 +31,7 @@ ClimbSchema = {
 }
 
 ClimbFormSchema = ClimbSchema minus (id, route_id, created_at, updated_at, deleted_at)
+// route_id is passed separately to insertClimb/updateClimb, not part of the form
 ```
 
 ---
@@ -67,8 +68,9 @@ CREATE TABLE IF NOT EXISTS climbs (
 |---|---|
 | `fetchClimbs(userId)` | All active climbs for user, newest first |
 | `fetchClimb(id)` | Single climb by id |
-| `insertClimb(userId, data)` | Creates new climb with `crypto.randomUUID()` |
-| `updateClimb(id, data)` | Updates mutable fields; trigger stamps `updated_at` |
+| `insertClimb(userId, data, routeId?)` | Creates new climb; `routeId` links to a verified route |
+| `updateClimb(id, data, routeId?)` | Updates mutable fields; trigger stamps `updated_at` |
+| `linkClimbToRoute(climbId, routeId)` | Sets `route_id` without changing other fields (upgrade flow) |
 | `softDeleteClimb(id)` | Sets `deleted_at = datetime('now')` |
 | `applyRemoteClimb(climb)` | `INSERT OR REPLACE` — preserves server `updated_at`; used by sync + Realtime |
 
@@ -82,8 +84,9 @@ CREATE TABLE IF NOT EXISTS climbs (
 |---|---|
 | `useClimbs()` | All active climbs for current user |
 | `useClimb(id)` | Single climb |
-| `useAddClimb()` | Mutation — inserts + silent push |
-| `useUpdateClimb()` | Mutation — updates + silent push |
+| `useAddClimb()` | Mutation — `{ data, routeId? }` — inserts + silent push |
+| `useUpdateClimb()` | Mutation — `{ id, data, routeId? }` — updates + silent push |
+| `useLinkClimbToRoute()` | Mutation — `{ climbId, routeId }` — upgrade flow in EditClimbView |
 | `useDeleteClimb()` | Mutation — soft delete + silent push |
 
 After each mutation a **silent push** fires: `pushClimbs(userId)` runs in the background, toasting success or "saved offline" on failure.

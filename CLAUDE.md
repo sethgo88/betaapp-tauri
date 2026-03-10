@@ -73,6 +73,7 @@ src/
 - Capabilities: `core:default`, `sql:default`, `sql:allow-execute`, `deep-link:default`
 - Permissions: `INTERNET`, `ACCESS_NETWORK_STATE`
 - Safe areas: `env(safe-area-inset-top/bottom)` — see `docs/android.md`
+- **APK signing:** Sign both debug and release build types with the same keystore (set `signingConfig = signingConfigs.getByName("release")` on the debug build type). Store passwords in `local.properties` (gitignored), not hardcoded in `build.gradle.kts`. This lets you swap between `cargo tauri android dev` and the installed release APK without uninstalling. See moviedb `src-tauri/gen/android/app/build.gradle.kts` for reference.
 
 ## Supabase
 - Auth: email/password (`signInWithPassword`); magic link planned
@@ -109,5 +110,5 @@ src/
 - [x] Phase 7: Location metadata sync (countries + regions on launch; sub-regions/crags/walls on demand)
 - [x] Phase 8: Admin — location management views
 - [x] Phase 9: Route system (browse → download → submit → admin verification)
-- [ ] Phase 10: Custom location + upgrade flow
+- [x] Phase 10: Route linking — log from CragView, route_id on climbs, upgrade flow in edit
 - [ ] Phase 11: Android polish (CSP, magic link deep link, back button, APK signing)

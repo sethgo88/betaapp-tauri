@@ -49,6 +49,7 @@ Drawer (slides in from right):
 /regions/$regionId         → RegionView (sub-regions → crags, requireAuth)
 /crags/$cragId             → CragView (walls → routes + submit button, requireAuth)
 /admin/locations           → LocationManagerView (requireAdmin)
+/admin/locations/pending   → LocationVerificationView (requireAdmin)
 /admin/routes              → RouteVerificationView (requireAdmin)
 ```
 
@@ -172,6 +173,7 @@ Admin role is managed via the `user_roles` table in Supabase (not `users.role`).
 
 **In-app admin views** (accessed via Drawer, gated by `requireAdmin`):
 - `LocationManagerView` — add/delete countries and regions
+- `LocationVerificationView` — approve or reject pending sub-area, crag, and wall submissions
 - `RouteVerificationView` — approve, edit, reject, or merge pending route submissions
 
 **Supabase RLS** enforces the same restrictions on the backend — UI gating is for UX only.
