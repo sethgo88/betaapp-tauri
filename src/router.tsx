@@ -9,6 +9,7 @@ import {
 import { AppLayout } from "@/components/templates/AppLayout";
 import { useAuthStore } from "@/features/auth/auth.store";
 import AddClimbView from "@/views/AddClimbView";
+import LocationManagerView from "@/views/admin/LocationManagerView";
 import ClimbDetailView from "@/views/ClimbDetailView";
 import EditClimbView from "@/views/EditClimbView";
 import HomeView from "@/views/HomeView";
@@ -18,6 +19,12 @@ const requireAuth = () => {
 	if (!useAuthStore.getState().isAuthenticated) {
 		throw redirect({ to: "/profile" });
 	}
+};
+
+const requireAdmin = () => {
+	const { isAuthenticated, user } = useAuthStore.getState();
+	if (!isAuthenticated) throw redirect({ to: "/profile" });
+	if (user?.role !== "admin") throw redirect({ to: "/" });
 };
 
 const rootRoute = createRootRoute({
@@ -62,12 +69,20 @@ const profileRoute = createRoute({
 	component: ProfileView,
 });
 
+const adminLocationsRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/admin/locations",
+	beforeLoad: requireAdmin,
+	component: LocationManagerView,
+});
+
 const routeTree = rootRoute.addChildren([
 	homeRoute,
 	addClimbRoute,
 	climbDetailRoute,
 	editClimbRoute,
 	profileRoute,
+	adminLocationsRoute,
 ]);
 
 const memoryHistory = createMemoryHistory({ initialEntries: ["/"] });
