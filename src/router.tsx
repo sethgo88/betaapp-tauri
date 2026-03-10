@@ -11,9 +11,11 @@ import { useAuthStore } from "@/features/auth/auth.store";
 import AddClimbView from "@/views/AddClimbView";
 import LocationManagerView from "@/views/admin/LocationManagerView";
 import ClimbDetailView from "@/views/ClimbDetailView";
+import CragView from "@/views/CragView";
 import EditClimbView from "@/views/EditClimbView";
 import HomeView from "@/views/HomeView";
 import ProfileView from "@/views/ProfileView";
+import RegionView from "@/views/RegionView";
 import RoutesView from "@/views/RoutesView";
 
 const requireAuth = () => {
@@ -77,6 +79,20 @@ const routesRoute = createRoute({
 	component: RoutesView,
 });
 
+const regionRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/regions/$regionId",
+	beforeLoad: requireAuth,
+	component: RegionView,
+});
+
+const cragRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/crags/$cragId",
+	beforeLoad: requireAuth,
+	component: CragView,
+});
+
 const adminLocationsRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/admin/locations",
@@ -91,6 +107,8 @@ const routeTree = rootRoute.addChildren([
 	editClimbRoute,
 	profileRoute,
 	routesRoute,
+	regionRoute,
+	cragRoute,
 	adminLocationsRoute,
 ]);
 

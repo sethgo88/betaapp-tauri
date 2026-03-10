@@ -4,8 +4,13 @@ import {
 	adminAddRegion,
 	adminDeleteCountry,
 	adminDeleteRegion,
+	downloadRegion,
 	fetchCountries,
+	fetchCrags,
+	fetchDownloadedRegionIds,
 	fetchRegions,
+	fetchSubRegions,
+	fetchWalls,
 	pullCountries,
 	pullRegions,
 } from "./locations.service";
@@ -22,6 +27,48 @@ export function useRegions(countryId: string | null) {
 		queryKey: ["regions", countryId],
 		queryFn: () => fetchRegions(countryId ?? ""),
 		enabled: !!countryId,
+	});
+}
+
+export function useSubRegions(regionId: string | null) {
+	return useQuery({
+		queryKey: ["sub_regions", regionId],
+		queryFn: () => fetchSubRegions(regionId ?? ""),
+		enabled: !!regionId,
+	});
+}
+
+export function useCrags(subRegionId: string | null) {
+	return useQuery({
+		queryKey: ["crags", subRegionId],
+		queryFn: () => fetchCrags(subRegionId ?? ""),
+		enabled: !!subRegionId,
+	});
+}
+
+export function useWalls(cragId: string | null) {
+	return useQuery({
+		queryKey: ["walls", cragId],
+		queryFn: () => fetchWalls(cragId ?? ""),
+		enabled: !!cragId,
+	});
+}
+
+export function useDownloadedRegionIds() {
+	return useQuery({
+		queryKey: ["downloaded_regions"],
+		queryFn: fetchDownloadedRegionIds,
+	});
+}
+
+export function useDownloadRegion() {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: (regionId: string) => downloadRegion(regionId),
+		onSuccess: (_data, regionId) => {
+			qc.invalidateQueries({ queryKey: ["downloaded_regions"] });
+			qc.invalidateQueries({ queryKey: ["sub_regions", regionId] });
+		},
 	});
 }
 
