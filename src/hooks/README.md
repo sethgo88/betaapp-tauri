@@ -32,12 +32,31 @@ See [`features/sync/README.md`](../features/sync/README.md) for full sync flow d
 
 ---
 
-## Planned hooks
+---
 
-These are not yet implemented but are part of the planned architecture:
+## useAndroidBackButton
+
+**File:** `useAndroidBackButton.ts`
+**Call from:** `AppLayout` — once, unconditionally.
+
+```ts
+import { useAndroidBackButton } from '@/hooks/useAndroidBackButton'
+
+// In AppLayout:
+useAndroidBackButton()
+```
+
+**What it does:**
+- Registers `onBackButtonPress` from `@tauri-apps/api/app`
+- If `router.history.length > 1`: calls `router.history.back()`
+- At root: does nothing — the OS closes the app naturally
+- Cleans up via `listener.unregister()` on unmount
+
+---
+
+## Planned hooks
 
 | Hook | Purpose |
 |---|---|
-| `useAndroidBackButton` | Intercepts hardware back button; navigates back or exits app at root. Call in `AppLayout`. |
 | `useOnlineStatus` | Returns `{ isOnline: boolean }` using the Network Information API. Used to gate sync attempts. |
 | `useAuth` | Wraps session restore on launch + exposes `login` / `logout` actions backed by `auth.service`. |

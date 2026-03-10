@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Toast } from "@/components/molecules/Toast";
 import { Drawer } from "@/components/organisms/Drawer";
 import { NavBar } from "@/components/organisms/NavBar";
+import { useAndroidBackButton } from "@/hooks/useAndroidBackButton";
 import { useUiStore } from "@/stores/ui.store";
 
 interface AppLayoutProps {
@@ -12,6 +13,7 @@ interface AppLayoutProps {
 export const AppLayout = ({ children }: AppLayoutProps) => {
 	const toasts = useUiStore((s) => s.toasts);
 	const [drawerOpen, setDrawerOpen] = useState(false);
+	useAndroidBackButton();
 
 	return (
 		<div className="bg-stone-700 min-h-screen min-w-screen max-w-screen text-white pt-[env(safe-area-inset-top)]">

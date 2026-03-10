@@ -81,6 +81,27 @@ export async function upsertLocalUser(
 	return rows[0];
 }
 
+// ── Deep link handler (magic link) ───────────────────────────────────────────
+
+export async function initDeepLinkHandler(
+	onSession: (session: Session) => void,
+): Promise<() => void> {
+	const { onOpenUrl } = await import("@tauri-apps/plugin-deep-link");
+	const unlisten = await onOpenUrl(async (urls) => {
+		for (const url of urls) {
+			if (!url.startsWith("betaapp://auth/callback")) continue;
+			const params = new URL(url.replace("betaapp://", "https://placeholder/"));
+			const code = params.searchParams.get("code");
+			if (!code) continue;
+			const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+			if (!error && data.session) {
+				onSession(data.session);
+			}
+		}
+	});
+	return unlisten;
+}
+
 // ── Supabase user profile ────────────────────────────────────────────────────
 
 export async function fetchOrCreateSupabaseUser(

@@ -111,4 +111,4 @@ src/
 - [x] Phase 8: Admin — location management views
 - [x] Phase 9: Route system (browse → download → submit → admin verification)
 - [x] Phase 10: Route linking — log from CragView, route_id on climbs, upgrade flow in edit
-- [ ] Phase 11: Android polish (CSP, magic link deep link, back button, APK signing)
+- [x] Phase 11: Android polish (CSP, back button hook, magic link deep link handler)

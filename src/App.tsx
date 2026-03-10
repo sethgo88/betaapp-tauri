@@ -9,6 +9,7 @@ import { useEffect } from "react";
 import { Spinner } from "@/components/atoms/Spinner";
 import {
 	fetchOrCreateSupabaseUser,
+	initDeepLinkHandler,
 	restoreSession,
 	upsertLocalUser,
 } from "@/features/auth/auth.service";
@@ -58,6 +59,17 @@ function Bootstrap() {
 		});
 		return () => subscription.unsubscribe();
 	}, [setSession, setUser]);
+
+	// Handle magic link deep link callbacks
+	useEffect(() => {
+		let cleanup: (() => void) | undefined;
+		initDeepLinkHandler((session) => {
+			setSession(session);
+		}).then((unlisten) => {
+			cleanup = unlisten;
+		});
+		return () => cleanup?.();
+	}, [setSession]);
 
 	if (isLoading) {
 		return (
