@@ -15,7 +15,7 @@ RouteSchema = {
   grade: string
   route_type: 'sport' | 'boulder'
   description: string | null
-  verified: number     // 0 = pending, 1 = verified (SQLite boolean)
+  status: 'pending' | 'verified' | 'rejected'
   created_by: string   // Supabase user UUID
   created_at: string
 }
@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS routes_cache (
     grade       TEXT NOT NULL,
     route_type  TEXT NOT NULL DEFAULT 'sport',
     description TEXT,
-    verified    INTEGER NOT NULL DEFAULT 0,
+    status      TEXT NOT NULL DEFAULT 'verified',
     created_by  TEXT NOT NULL,
     created_at  TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -128,7 +128,7 @@ public.routes (
   created_by uuid references auth.users,
   created_at timestamptz,  deleted_at timestamptz
 )
--- RLS: verified = true visible to all authenticated users
---       verified = false visible to created_by only
+-- RLS: status = 'verified' visible to all authenticated users
+--       status = 'pending'/'rejected' visible to created_by only
 -- INSERT: auth.uid() = created_by
 ```

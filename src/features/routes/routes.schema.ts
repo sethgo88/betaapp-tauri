@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+export const SubmissionStatus = z.enum(["pending", "verified", "rejected"]);
+export type SubmissionStatus = z.infer<typeof SubmissionStatus>;
+
 export const RouteSchema = z.object({
 	id: z.string(),
 	wall_id: z.string(),
@@ -7,7 +10,7 @@ export const RouteSchema = z.object({
 	grade: z.string(),
 	route_type: z.enum(["sport", "boulder"]),
 	description: z.string().nullable(),
-	verified: z.number(), // 0 = false, 1 = true (SQLite boolean)
+	status: SubmissionStatus,
 	created_by: z.string(),
 	created_at: z.string(),
 });

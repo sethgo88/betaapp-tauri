@@ -174,7 +174,7 @@ export async function downloadRegion(regionId: string): Promise<void> {
 				.from("routes")
 				.select("*")
 				.in("wall_id", wallIds)
-				.eq("verified", true);
+				.eq("status", "verified");
 			if (rError) throw rError;
 
 			await db.execute(
@@ -185,7 +185,7 @@ export async function downloadRegion(regionId: string): Promise<void> {
 			if (routes && routes.length > 0) {
 				for (const row of routes) {
 					await db.execute(
-						"INSERT INTO routes_cache (id, wall_id, name, grade, route_type, description, verified, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+						"INSERT INTO routes_cache (id, wall_id, name, grade, route_type, description, status, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
 						[
 							row.id,
 							row.wall_id,
@@ -193,7 +193,7 @@ export async function downloadRegion(regionId: string): Promise<void> {
 							row.grade,
 							row.route_type,
 							row.description,
-							1,
+							"verified",
 							row.created_by,
 							row.created_at,
 						],
