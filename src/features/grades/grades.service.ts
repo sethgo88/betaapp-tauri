@@ -18,9 +18,10 @@ export async function pullGrades(): Promise<void> {
 	if (!data || data.length === 0) return;
 
 	const db = await getDb();
+	await db.execute("DELETE FROM grades_cache");
 	for (const row of data as Grade[]) {
 		await db.execute(
-			`INSERT OR REPLACE INTO grades_cache (id, discipline, grade, sort_order, created_at)
+			`INSERT INTO grades_cache (id, discipline, grade, sort_order, created_at)
        VALUES (?, ?, ?, ?, ?)`,
 			[row.id, row.discipline, row.grade, row.sort_order, row.created_at],
 		);
