@@ -14,6 +14,7 @@ import ClimbDetailView from "@/views/ClimbDetailView";
 import EditClimbView from "@/views/EditClimbView";
 import HomeView from "@/views/HomeView";
 import ProfileView from "@/views/ProfileView";
+import RoutesView from "@/views/RoutesView";
 
 const requireAuth = () => {
 	if (!useAuthStore.getState().isAuthenticated) {
@@ -69,6 +70,13 @@ const profileRoute = createRoute({
 	component: ProfileView,
 });
 
+const routesRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/routes",
+	beforeLoad: requireAuth,
+	component: RoutesView,
+});
+
 const adminLocationsRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/admin/locations",
@@ -82,6 +90,7 @@ const routeTree = rootRoute.addChildren([
 	climbDetailRoute,
 	editClimbRoute,
 	profileRoute,
+	routesRoute,
 	adminLocationsRoute,
 ]);
 
