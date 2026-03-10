@@ -10,19 +10,28 @@ alter table public.routes
 update public.routes set status = 'verified' where verified = true;
 update public.routes set status = 'pending'  where verified = false;
 
+-- Drop old policies that reference the verified column before dropping it
+drop policy if exists "Users can read verified routes or own submissions" on public.routes;
+drop policy if exists "routes_select" on public.routes;
+drop policy if exists "routes_insert" on public.routes;
+drop policy if exists "routes_update" on public.routes;
+
 alter table public.routes drop column verified;
 
 -- Add soft-delete support
 alter table public.routes
   add column if not exists deleted_at timestamptz;
 
--- Update RLS
-drop policy if exists "Users can read verified routes or own submissions" on public.routes;
+-- New RLS using status
 create policy "Users can read verified routes or own submissions"
   on public.routes for select using (
     (status = 'verified' or auth.uid() = created_by)
     and deleted_at is null
   );
+create policy "Users can submit routes"
+  on public.routes for insert with check (auth.uid() = created_by);
+create policy "Users can update own routes"
+  on public.routes for update using (auth.uid() = created_by);
 
 -- ── sub_regions ───────────────────────────────────────────────────────────────
 
