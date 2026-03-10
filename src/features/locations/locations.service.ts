@@ -33,6 +33,43 @@ export async function pullCountries(): Promise<void> {
 	}
 }
 
+// ── Admin writes (go directly to Supabase) ───────────────────────────────────
+
+export async function adminAddCountry(
+	name: string,
+	code: string,
+	sortOrder: number,
+): Promise<void> {
+	const { error } = await supabase
+		.from("countries")
+		.insert({ id: crypto.randomUUID(), name, code, sort_order: sortOrder });
+	if (error) throw error;
+}
+
+export async function adminDeleteCountry(id: string): Promise<void> {
+	const { error } = await supabase.from("countries").delete().eq("id", id);
+	if (error) throw error;
+}
+
+export async function adminAddRegion(
+	countryId: string,
+	name: string,
+	sortOrder: number,
+): Promise<void> {
+	const { error } = await supabase.from("regions").insert({
+		id: crypto.randomUUID(),
+		country_id: countryId,
+		name,
+		sort_order: sortOrder,
+	});
+	if (error) throw error;
+}
+
+export async function adminDeleteRegion(id: string): Promise<void> {
+	const { error } = await supabase.from("regions").delete().eq("id", id);
+	if (error) throw error;
+}
+
 export async function pullRegions(): Promise<void> {
 	const { data, error } = await supabase.from("regions").select("*");
 	if (error) throw error;

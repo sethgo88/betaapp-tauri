@@ -140,6 +140,19 @@ const ProfileView = () => {
 					</Button>
 				</div>
 				<SyncStatusWell />
+				{user.role === "admin" && (
+					<div className="rounded-lg bg-stone-800 p-4 flex flex-col gap-2">
+						<p className="text-xs text-stone-400 uppercase tracking-wide">
+							Admin
+						</p>
+						<Button
+							variant="secondary"
+							onClick={() => navigate({ to: "/admin/locations" })}
+						>
+							Location Manager
+						</Button>
+					</div>
+				)}
 			</div>
 		);
 	}

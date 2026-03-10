@@ -87,15 +87,25 @@ export async function fetchOrCreateSupabaseUser(
 	userId: string,
 	email: string,
 ): Promise<"user" | "admin"> {
-	const { data } = await supabase
-		.from("users")
+	// Check user_roles table for explicit role assignment
+	const { data: roleData } = await supabase
+		.from("user_roles")
 		.select("role")
+		.eq("user_id", userId)
+		.single();
+
+	if (roleData?.role === "admin") return "admin";
+
+	// Ensure user row exists in Supabase
+	const { data: userData } = await supabase
+		.from("users")
+		.select("id")
 		.eq("id", userId)
 		.single();
 
-	if (data?.role) return data.role as "user" | "admin";
+	if (!userData) {
+		await supabase.from("users").insert({ id: userId, email, role: "user" });
+	}
 
-	// First login — create the user row in Supabase
-	await supabase.from("users").insert({ id: userId, email, role: "user" });
 	return "user";
 }
