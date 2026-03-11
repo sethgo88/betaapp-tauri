@@ -149,14 +149,27 @@ export async function updateRouteFields(
 	);
 }
 
-export async function mergeRoute(unverifiedId: string): Promise<void> {
-	// Deletes the unverified duplicate. Climb reference updates deferred to Phase 10.
+export async function mergeRoute(
+	unverifiedId: string,
+	targetId: string,
+): Promise<void> {
+	const db = await getDb();
+	// Reassign climbs referencing the unverified route to the target route
+	const { error: climbError } = await supabase
+		.from("climbs")
+		.update({ route_id: targetId })
+		.eq("route_id", unverifiedId);
+	if (climbError) throw climbError;
+	await db.execute("UPDATE climbs SET route_id = ? WHERE route_id = ?", [
+		targetId,
+		unverifiedId,
+	]);
+	// Delete the unverified route
 	const { error } = await supabase
 		.from("routes")
 		.delete()
 		.eq("id", unverifiedId);
 	if (error) throw error;
-	const db = await getDb();
 	await db.execute("DELETE FROM routes_cache WHERE id = ?", [unverifiedId]);
 }
 

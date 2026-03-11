@@ -233,16 +233,19 @@ const RouteRow = ({ route }: { route: UnverifiedRoute }) => {
 	};
 
 	const handleMerge = (target: VerifiedRouteResult) => {
-		merge(route.id, {
-			onSuccess: () => {
-				setMode("idle");
-				addToast({
-					message: `Merged into "${target.name}"`,
-					type: "success",
-				});
+		merge(
+			{ unverifiedId: route.id, targetId: target.id },
+			{
+				onSuccess: () => {
+					setMode("idle");
+					addToast({
+						message: `Merged into "${target.name}"`,
+						type: "success",
+					});
+				},
+				onError: () => addToast({ message: "Failed to merge", type: "error" }),
 			},
-			onError: () => addToast({ message: "Failed to merge", type: "error" }),
-		});
+		);
 	};
 
 	return (
