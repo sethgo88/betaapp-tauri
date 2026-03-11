@@ -8,6 +8,7 @@ import { Input } from "@/components/atoms/Input";
 import { SyncStatus } from "@/components/molecules/SyncStatus";
 import {
 	fetchOrCreateSupabaseUser,
+	sendMagicLink,
 	signIn,
 	signOut,
 	signUp,
@@ -53,11 +54,85 @@ const PasswordSchema = z
 const DEV_ID = "00000000-0000-0000-0000-000000000001";
 const DEV_EMAIL = "dev@betaapp.local";
 
+const MagicLinkForm = ({
+	onSent,
+	onBack,
+	onError,
+}: {
+	onSent: () => void;
+	onBack: () => void;
+	onError: () => void;
+}) => {
+	const form = useForm({
+		defaultValues: { email: "" },
+		onSubmit: async ({ value }) => {
+			try {
+				await sendMagicLink(value.email);
+				onSent();
+			} catch {
+				onError();
+			}
+		},
+	});
+
+	return (
+		<div className="flex flex-col gap-4">
+			<div className="rounded-lg bg-stone-800 p-4">
+				<p className="font-semibold mb-1">Magic link</p>
+				<p className="text-sm text-stone-400">
+					We'll send a sign-in link to your email.
+				</p>
+			</div>
+
+			<form
+				className="flex flex-col gap-3"
+				onSubmit={(e) => {
+					e.preventDefault();
+					e.stopPropagation();
+					form.handleSubmit();
+				}}
+			>
+				<form.Field
+					name="email"
+					validators={{
+						onChange: ({ value }) =>
+							EmailSchema.safeParse(value).success
+								? undefined
+								: "Valid email required",
+					}}
+				>
+					{(field) => (
+						<Input
+							type="email"
+							placeholder="your@email.com"
+							value={field.state.value}
+							onBlur={field.handleBlur}
+							onChange={(e) => field.handleChange(e.target.value)}
+							errorState={field.state.meta.errors.length > 0}
+						/>
+					)}
+				</form.Field>
+
+				<Button type="submit">Send magic link</Button>
+			</form>
+
+			<button
+				type="button"
+				className="text-sm text-stone-400 text-center"
+				onClick={onBack}
+			>
+				Back to sign in
+			</button>
+		</div>
+	);
+};
+
 const ProfileView = () => {
 	const navigate = useNavigate();
 	const { user, isAuthenticated, setUser, setSession } = useAuthStore();
 	const addToast = useUiStore((s) => s.addToast);
-	const [mode, setMode] = useState<"signin" | "signup">("signin");
+	const [mode, setMode] = useState<"signin" | "signup" | "magic">("signin");
+	const [magicSent, setMagicSent] = useState(false);
 
 	const handleSession = async (session: Session) => {
 		setSession(session);
@@ -237,6 +312,39 @@ const ProfileView = () => {
 		);
 	}
 
+	if (mode === "magic") {
+		if (magicSent) {
+			return (
+				<div className="flex flex-col gap-4">
+					<div className="rounded-lg bg-stone-800 p-4 flex flex-col gap-2">
+						<p className="font-semibold">Check your email</p>
+						<p className="text-sm text-stone-400">
+							A sign-in link has been sent. Tap it to open the app and sign in
+							automatically.
+						</p>
+					</div>
+					<button
+						type="button"
+						className="text-sm text-stone-400 text-center"
+						onClick={() => setMode("signin")}
+					>
+						Back to sign in
+					</button>
+				</div>
+			);
+		}
+
+		return (
+			<MagicLinkForm
+				onSent={() => setMagicSent(true)}
+				onBack={() => setMode("signin")}
+				onError={() =>
+					addToast({ message: "Failed to send magic link", type: "error" })
+				}
+			/>
+		);
+	}
+
 	return (
 		<div className="flex flex-col gap-4">
 			<div className="rounded-lg bg-stone-800 p-4">
@@ -302,6 +410,17 @@ const ProfileView = () => {
 				onClick={() => setMode("signup")}
 			>
 				No account? Create one
+			</button>
+
+			<button
+				type="button"
+				className="text-sm text-stone-400 text-center"
+				onClick={() => {
+					setMode("magic");
+					setMagicSent(false);
+				}}
+			>
+				Sign in with magic link
 			</button>
 
 			{import.meta.env.DEV && (

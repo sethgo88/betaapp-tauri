@@ -81,6 +81,16 @@ export async function upsertLocalUser(
 	return rows[0];
 }
 
+// ── Magic link ───────────────────────────────────────────────────────────────
+
+export async function sendMagicLink(email: string): Promise<void> {
+	const { error } = await supabase.auth.signInWithOtp({
+		email,
+		options: { emailRedirectTo: "betaapp://auth/callback" },
+	});
+	if (error) throw error;
+}
+
 // ── Deep link handler (magic link) ───────────────────────────────────────────
 
 export async function initDeepLinkHandler(
