@@ -100,6 +100,28 @@ src/
 | Tauri command / capability / deep link | `docs/android.md` + `docs/architecture.md` |
 | Dev environment setup | `docs/setup.md` |
 
+## Task Management
+
+GitHub Issues is the task management system for this project (repo: `sethgo88/betaapp`).
+
+### Issue structure
+- Each feature, bug, or work item gets its own issue
+- Use sub-issues to break larger tasks into discrete implementation steps
+- Label every issue by type: `feature`, `bug`, `chore`, `docs`
+- Use milestones to group issues by release or sprint
+
+### Issue format
+- **Title:** short and imperative (e.g. "Add offline map tile caching")
+- **Body:** what needs to be done and why, acceptance criteria, relevant links or context
+- **Sub-issues:** one per distinct implementation step
+
+### Workflow
+1. Before starting any new work, run `list issues` to check open issues and current priorities
+2. Never start work without a corresponding issue — create one first if it doesn't exist
+3. Reference the issue number in every commit message (e.g. `feat: add route snapping, closes #14`)
+4. When a task is complete, close the issue and leave a brief comment summarising what was done
+5. If work reveals new tasks or edge cases, open new issues rather than expanding scope of the current one
+
 ## Phase Status
 - [x] Phase 1: Docs + CLAUDE.md
 - [x] Phase 2: Frontend architecture (TanStack Router, Zustand, TanStack Query, Zod, Add/Edit split)

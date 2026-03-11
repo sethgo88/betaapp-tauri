@@ -86,6 +86,8 @@ async function initSchema(db: Database): Promise<void> {
       region_id TEXT NOT NULL,
       name TEXT NOT NULL,
       sort_order INTEGER NOT NULL DEFAULT 0,
+      status TEXT NOT NULL DEFAULT 'verified',
+      created_by TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
   `);
@@ -96,6 +98,8 @@ async function initSchema(db: Database): Promise<void> {
       sub_region_id TEXT NOT NULL,
       name TEXT NOT NULL,
       sort_order INTEGER NOT NULL DEFAULT 0,
+      status TEXT NOT NULL DEFAULT 'verified',
+      created_by TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
   `);
@@ -106,6 +110,8 @@ async function initSchema(db: Database): Promise<void> {
       crag_id TEXT NOT NULL,
       name TEXT NOT NULL,
       sort_order INTEGER NOT NULL DEFAULT 0,
+      status TEXT NOT NULL DEFAULT 'verified',
+      created_by TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
   `);
