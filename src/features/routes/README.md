@@ -69,7 +69,7 @@ Only populated when the user downloads a region (see [`locations/README.md`](../
 | `verifyRoute(id)` | Sets `status = 'verified'` in Supabase + local cache |
 | `rejectRoute(id)` | Sets `status = 'rejected'` in Supabase + local cache (soft — stays visible to creator) |
 | `updateRouteFields(id, values)` | Updates name/grade/route_type/description in both Supabase and cache |
-| `mergeRoute(unverifiedId)` | Deletes the unverified duplicate (climb `route_id` updates deferred to Phase 10) |
+| `mergeRoute(unverifiedId, targetId)` | Reassigns climbs from unverified to target route (Supabase + local), then deletes the unverified route |
 
 ---
 

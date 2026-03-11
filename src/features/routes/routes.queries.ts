@@ -85,7 +85,13 @@ export function useUpdateRouteFields() {
 export function useMergeRoute() {
 	const qc = useQueryClient();
 	return useMutation({
-		mutationFn: (unverifiedId: string) => mergeRoute(unverifiedId),
+		mutationFn: ({
+			unverifiedId,
+			targetId,
+		}: {
+			unverifiedId: string;
+			targetId: string;
+		}) => mergeRoute(unverifiedId, targetId),
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: ["unverified_routes"] });
 		},
