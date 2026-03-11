@@ -58,10 +58,12 @@ Role is **not** read from `public.users.role` — always fetched from `user_role
 |---|---|
 | `signIn(email, password)` | `signInWithPassword` → returns Session |
 | `signUp(email, password)` | Creates account + returns Session (email confirm must be off) |
+| `sendMagicLink(email)` | `signInWithOtp` — sends magic link email; redirects to `betaapp://auth/callback` |
 | `restoreSession()` | `supabase.auth.getSession()` — call on app launch |
 | `signOut()` | Clears Supabase session |
 | `upsertLocalUser(id, email, role)` | Writes/updates the local `users` row; migrates climbs if a pre-auth UUID exists |
 | `fetchOrCreateSupabaseUser(userId, email)` | Reads role from `user_roles` → returns `'user' \| 'admin'` |
+| `initDeepLinkHandler(onSession)` | Listens for `betaapp://auth/callback`, exchanges `code` for session, calls `onSession` |
 
 ---
 
@@ -87,8 +89,16 @@ interface AuthStore {
 App launch:
   restoreSession() → if session exists → setSession + setUser + run sync
 
-Login:
+Login (password):
   signIn(email, password) → setSession
+  fetchOrCreateSupabaseUser(id) → get role
+  upsertLocalUser(id, email, role) → setUser
+  useSync fires (userId now defined)
+
+Login (magic link):
+  sendMagicLink(email) → email sent; user taps link
+  Deep link opens app → initDeepLinkHandler fires
+  exchangeCodeForSession(code) → session
   fetchOrCreateSupabaseUser(id) → get role
   upsertLocalUser(id, email, role) → setUser
   useSync fires (userId now defined)

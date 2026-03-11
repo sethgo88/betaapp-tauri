@@ -63,13 +63,23 @@ function Bootstrap() {
 	// Handle magic link deep link callbacks
 	useEffect(() => {
 		let cleanup: (() => void) | undefined;
-		initDeepLinkHandler((session) => {
+		initDeepLinkHandler(async (session) => {
 			setSession(session);
+			const role = await fetchOrCreateSupabaseUser(
+				session.user.id,
+				session.user.email ?? "",
+			);
+			const localUser = await upsertLocalUser(
+				session.user.id,
+				session.user.email ?? "",
+				role,
+			);
+			setUser(localUser);
 		}).then((unlisten) => {
 			cleanup = unlisten;
 		});
 		return () => cleanup?.();
-	}, [setSession]);
+	}, [setSession, setUser]);
 
 	if (isLoading) {
 		return (
