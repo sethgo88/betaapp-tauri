@@ -41,9 +41,9 @@ CREATE TABLE IF NOT EXISTS countries_cache (id, name, code, sort_order, created_
 CREATE TABLE IF NOT EXISTS regions_cache   (id, country_id, name, sort_order, created_at);
 
 -- Populated on-demand / region download
-CREATE TABLE IF NOT EXISTS sub_regions_cache (id, region_id, name, sort_order, created_at);
-CREATE TABLE IF NOT EXISTS crags_cache       (id, sub_region_id, name, sort_order, created_at);
-CREATE TABLE IF NOT EXISTS walls_cache       (id, crag_id, name, sort_order, created_at);
+CREATE TABLE IF NOT EXISTS sub_regions_cache (id, region_id, name, sort_order, status, created_by, created_at);
+CREATE TABLE IF NOT EXISTS crags_cache       (id, sub_region_id, name, sort_order, status, created_by, created_at);
+CREATE TABLE IF NOT EXISTS walls_cache       (id, crag_id, name, sort_order, status, created_by, created_at);
 
 -- Download tracking
 CREATE TABLE IF NOT EXISTS downloaded_regions (region_id TEXT PRIMARY KEY, downloaded_at TEXT);
@@ -79,10 +79,30 @@ Both are full replace (DELETE + INSERT).
 1. Sub-regions for the region
 2. Crags for those sub-regions
 3. Walls for those crags
-4. **Verified routes** for those walls (only `verified = true`)
+4. **Verified routes** for those walls (only `status = 'verified'`)
 5. Records `downloaded_regions` row
 
 If any level has no data, the download still completes and records the region as downloaded.
+
+### User submissions (Supabase + local cache)
+
+| Function | What it does |
+|---|---|
+| `submitSubRegion(values, userId)` | Inserts into Supabase `sub_regions` with `status='pending'` + local cache |
+| `submitCrag(values, userId)` | Inserts into Supabase `crags` with `status='pending'` + local cache |
+| `submitWall(values, userId)` | Inserts into Supabase `walls` with `status='pending'` + local cache |
+
+Pending items are visible immediately to the submitting user; hidden from others until admin verifies.
+
+### Admin location verification (Supabase + local cache)
+
+| Function | What it does |
+|---|---|
+| `fetchPendingLocations()` | Parallel Supabase queries for pending sub_regions, crags, and walls; sorted by date |
+| `verifyLocation(table, id)` | Sets `status='verified'` in Supabase + local cache |
+| `rejectLocation(table, id)` | Sets `status='rejected'` + `deleted_at` in Supabase; `status='rejected'` in local cache |
+
+`table` is `'sub_regions' | 'crags' | 'walls'`.
 
 ### Admin writes (Supabase direct)
 
@@ -106,7 +126,13 @@ useSubRegions(regionId)
 useCrags(subRegionId)
 useWalls(cragId)
 useDownloadedRegionIds()
-useDownloadRegion()   // mutation
+useDownloadRegion()         // mutation
+useSubmitSubRegion()        // mutation — user submission
+useSubmitCrag()             // mutation — user submission
+useSubmitWall()             // mutation — user submission
+usePendingLocations()       // admin — all pending items
+useVerifyLocation()         // admin mutation — { table, id }
+useRejectLocation()         // admin mutation — { table, id }
 ```
 
 ---

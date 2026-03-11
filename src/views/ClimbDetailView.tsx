@@ -57,10 +57,15 @@ const ClimbDetailView = () => {
 				</div>
 			</div>
 
-			<div className="flex gap-2">
+			<div className="flex gap-2 flex-wrap">
 				<span className="bg-stone-800 rounded-full px-3 py-1 text-sm capitalize">
 					{climb.sent_status}
 				</span>
+				{climb.route_id && (
+					<span className="bg-emerald-900 text-emerald-300 rounded-full px-3 py-1 text-sm">
+						Linked route
+					</span>
+				)}
 			</div>
 
 			{moves.length > 0 && (
