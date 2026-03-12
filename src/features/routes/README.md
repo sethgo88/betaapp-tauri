@@ -57,6 +57,7 @@ Only populated when the user downloads a region (see [`locations/README.md`](../
 
 | Function | What it does |
 |---|---|
+| `fetchRoute(id)` | Reads a single route from `routes_cache` by id; returns `null` if not found |
 | `fetchRoutes(wallId)` | Reads `routes_cache` for a wall, ordered by name |
 | `submitRoute(values, userId)` | Inserts into Supabase `routes` (unverified) + local `routes_cache` |
 | `searchVerifiedRoutes(query)` | Full-text search against Supabase `routes` (verified only, limit 10) |
@@ -76,6 +77,7 @@ Only populated when the user downloads a region (see [`locations/README.md`](../
 ## routes.queries.ts
 
 ```ts
+useRoute(id)               // single route from local cache (null if not found)
 useRoutes(wallId)          // routes for a wall from local cache
 useSubmitRoute()           // mutation
 useUnverifiedRoutes()      // admin — from Supabase
