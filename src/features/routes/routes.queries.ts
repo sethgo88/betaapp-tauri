@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/features/auth/auth.store";
 import type { RouteSubmitValues } from "./routes.schema";
 import {
+	fetchRoute,
 	fetchRoutes,
 	fetchUnverifiedRoutes,
 	mergeRoute,
@@ -10,6 +11,14 @@ import {
 	updateRouteFields,
 	verifyRoute,
 } from "./routes.service";
+
+export function useRoute(id: string | null | undefined) {
+	return useQuery({
+		queryKey: ["route", id],
+		queryFn: () => fetchRoute(id ?? ""),
+		enabled: !!id,
+	});
+}
 
 export function useRoutes(wallId: string | null) {
 	return useQuery({

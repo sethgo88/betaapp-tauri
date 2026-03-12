@@ -10,6 +10,15 @@ export async function fetchRoutes(wallId: string): Promise<Route[]> {
 	);
 }
 
+export async function fetchRoute(id: string): Promise<Route | null> {
+	const db = await getDb();
+	const rows = await db.select<Route[]>(
+		"SELECT * FROM routes_cache WHERE id = ?",
+		[id],
+	);
+	return rows[0] ?? null;
+}
+
 export async function submitRoute(
 	values: RouteSubmitValues,
 	userId: string,

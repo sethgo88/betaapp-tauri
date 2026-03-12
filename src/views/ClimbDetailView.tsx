@@ -4,12 +4,14 @@ import { Button } from "@/components/atoms/Button";
 import { Spinner } from "@/components/atoms/Spinner";
 import { useClimb } from "@/features/climbs/climbs.queries";
 import { useClimbsStore } from "@/features/climbs/climbs.store";
+import { useRoute } from "@/features/routes/routes.queries";
 import { buildLocationString } from "@/utils/build-location-string";
 
 const ClimbDetailView = () => {
 	const { climbId } = useParams({ from: "/climbs/$climbId" });
 	const navigate = useNavigate();
 	const { data: climb, isLoading } = useClimb(climbId);
+	const { data: linkedRoute } = useRoute(climb?.route_id);
 	const setSelectedClimbId = useClimbsStore((s) => s.setSelectedClimbId);
 
 	useEffect(() => {
@@ -49,8 +51,17 @@ const ClimbDetailView = () => {
 					<h1 className="text-2xl font-bold">{climb.name}</h1>
 					{location && <p className="text-sm text-stone-400">{location}</p>}
 				</div>
-				<div className="text-right">
-					<span className="text-lg font-semibold">{climb.grade}</span>
+				<div className="text-right flex flex-col items-end gap-0.5">
+					<div className="flex items-baseline gap-1.5">
+						<span className="text-xs text-stone-400">Personal</span>
+						<span className="text-lg font-semibold">{climb.grade}</span>
+					</div>
+					{linkedRoute && (
+						<div className="flex items-baseline gap-1.5">
+							<span className="text-xs text-stone-400">Official</span>
+							<span className="text-lg font-semibold">{linkedRoute.grade}</span>
+						</div>
+					)}
 					<p className="text-xs text-stone-400 capitalize">
 						{climb.route_type}
 					</p>

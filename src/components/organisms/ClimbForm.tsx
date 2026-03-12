@@ -174,24 +174,30 @@ export const ClimbForm = ({ defaultValues, onSubmit }: ClimbFormProps) => {
 						)}
 					</form.Field>
 
-					<form.Field name="grade">
-						{(field) => (
-							<Select
-								value={
-									field.state.value ||
-									(grades.length > 0 ? grades[0].grade : "")
-								}
-								onChange={(e) => field.handleChange(e.target.value)}
-								name="grade"
-							>
-								{grades.map((g) => (
-									<option key={g.id} value={g.grade}>
-										{g.grade}
-									</option>
-								))}
-							</Select>
-						)}
-					</form.Field>
+					<div className="flex flex-col gap-1 flex-1">
+						<label htmlFor="grade" className="text-xs text-stone-400">
+							Personal grade
+						</label>
+						<form.Field name="grade">
+							{(field) => (
+								<Select
+									id="grade"
+									value={
+										field.state.value ||
+										(grades.length > 0 ? grades[0].grade : "")
+									}
+									onChange={(e) => field.handleChange(e.target.value)}
+									name="grade"
+								>
+									{grades.map((g) => (
+										<option key={g.id} value={g.grade}>
+											{g.grade}
+										</option>
+									))}
+								</Select>
+							)}
+						</form.Field>
+					</div>
 				</div>
 
 				<div className="flex gap-2">
