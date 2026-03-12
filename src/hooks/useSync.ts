@@ -7,7 +7,12 @@ import {
 	pullCountries,
 	pullRegions,
 } from "@/features/locations/locations.service";
-import { pullClimbs, pushClimbs } from "@/features/sync/sync.service";
+import {
+	getSyncMeta,
+	pullClimbs,
+	pushClimbs,
+	setSyncMeta,
+} from "@/features/sync/sync.service";
 import { useSyncStore } from "@/features/sync/sync.store";
 import { supabase } from "@/lib/supabase";
 
@@ -18,15 +23,24 @@ export function useSync(userId: string | undefined) {
 	useEffect(() => {
 		if (!userId) return;
 
-		// Full push → pull on sign-in or reconnect
+		// Delta push/pull if we have a stored timestamp; full sync on first run.
+		// Reference data (grades, countries, regions) always does a full pull —
+		// it's small and admin-owned so no delta is needed.
 		const runSync = async () => {
 			setSyncing();
 			try {
-				await pushClimbs(userId);
-				await pullClimbs(userId);
+				const { last_synced_at } = await getSyncMeta();
+				const since = last_synced_at ?? undefined;
+
+				await pushClimbs(userId, since);
+				await pullClimbs(userId, since);
 				await pullGrades();
 				await pullCountries();
 				await pullRegions();
+
+				const now = new Date().toISOString();
+				await setSyncMeta(now);
+
 				queryClient.invalidateQueries({ queryKey: ["climbs"] });
 				queryClient.invalidateQueries({ queryKey: ["grades"] });
 				queryClient.invalidateQueries({ queryKey: ["countries"] });
@@ -40,7 +54,8 @@ export function useSync(userId: string | undefined) {
 
 		runSync();
 
-		// Realtime subscription — apply live changes from other sessions
+		// Realtime subscription — applies live server changes between manual syncs.
+		// Handles INSERT and UPDATE events (soft deletes arrive as UPDATE with deleted_at set).
 		const channel = supabase
 			.channel("climbs-realtime")
 			.on(

@@ -137,6 +137,15 @@ async function initSchema(db: Database): Promise<void> {
     )
   `);
 
+	await db.execute(`
+    CREATE TABLE IF NOT EXISTS sync_meta (
+      id TEXT PRIMARY KEY DEFAULT 'singleton',
+      last_synced_at TEXT
+    )
+  `);
+	// Ensure the singleton row exists
+	await db.execute(`INSERT OR IGNORE INTO sync_meta (id) VALUES ('singleton')`);
+
 	// ── Schema migrations for existing installs ────────────────────────────────
 	// routes_cache: verified INTEGER → status TEXT
 	try {
