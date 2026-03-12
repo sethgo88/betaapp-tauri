@@ -32,6 +32,19 @@ try {
 
 **Adding a new table** — append a `CREATE TABLE IF NOT EXISTS` block to `initSchema()`.
 
+### Tables managed by db.ts
+
+| Table | Purpose |
+|---|---|
+| `users` | Local user profile (single row per device) |
+| `climbs` | User climb log (local-first, synced to Supabase) |
+| `grades_cache` | Grade reference data (seeded + Supabase sync) |
+| `countries_cache`, `regions_cache` | Location reference (always synced on launch) |
+| `sub_regions_cache`, `crags_cache`, `walls_cache` | Location reference (on-demand download) |
+| `routes_cache` | Route reference (downloaded per region) |
+| `downloaded_regions` | Tracks which regions have been downloaded |
+| `sync_meta` | Single-row singleton; persists `last_synced_at` for delta sync |
+
 ### Rules
 - Always use `?` positional parameters — never string interpolation (SQL injection)
 - Always filter `WHERE deleted_at IS NULL` on every read

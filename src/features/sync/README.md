@@ -6,15 +6,21 @@ Orchestrates data synchronisation between local SQLite and Supabase. Also manage
 
 ## sync.service.ts
 
-Two functions, always called in order (push before pull):
+### `getSyncMeta()`
+Reads the `sync_meta` singleton row from SQLite. Returns `{ last_synced_at: string | null }`.
 
-### `pushClimbs(userId)`
-Reads **all** local climbs for the user (including soft-deleted) and upserts them to Supabase, matching on `id`. Soft-deleted rows carry their `deleted_at` timestamp to Supabase.
+### `setSyncMeta(lastSyncedAt)`
+Writes the new `last_synced_at` timestamp to the `sync_meta` singleton row.
 
-### `pullClimbs(userId)`
-Fetches **all** climbs from Supabase for `user_id = userId` and applies them locally via `INSERT OR REPLACE`. This bypasses the `updated_at` trigger so the server timestamp is preserved exactly.
+### `pushClimbs(userId, since?)`
+Upserts local climbs to Supabase (matching on `id`), including soft-deleted rows.
+- **Full push** (no `since`): pushes all climbs for the user — used on first sync.
+- **Delta push** (`since` provided): only pushes climbs with `updated_at > since`.
 
-> **No delta sync yet.** Both push and pull are full operations. A checkpoint-based approach (filtering by `last_synced_at`) is planned for a later phase.
+### `pullClimbs(userId, since?)`
+Fetches climbs from Supabase and applies them locally via `INSERT OR REPLACE` (preserves server timestamps, bypasses the `updated_at` trigger).
+- **Full pull** (no `since`): fetches all climbs for the user.
+- **Delta pull** (`since` provided): only fetches climbs with `updated_at > since`.
 
 ---
 
@@ -25,7 +31,7 @@ type SyncStatus = 'idle' | 'syncing' | 'error'
 
 interface SyncStore {
   status: SyncStatus
-  lastSyncedAt: string | null
+  lastSyncedAt: string | null  // in-memory only; persisted copy is in sync_meta SQLite table
   error: string | null
   setSyncing: () => void
   setSuccess: () => void
@@ -42,18 +48,19 @@ interface SyncStore {
 `src/hooks/useSync.ts` — the main sync orchestrator. Call it once in the root layout, passing `userId` from `auth.store`.
 
 **What it does on mount (when `userId` is defined):**
-1. Calls `setSyncing()`
-2. `pushClimbs(userId)` → `pullClimbs(userId)`
-3. `pullGrades()` → `pullCountries()` → `pullRegions()`
-4. Invalidates all relevant query keys
-5. Calls `setSuccess()` (or `setError()` on failure)
-6. Opens a Supabase Realtime channel on `climbs` filtered by `user_id`
+1. Reads `last_synced_at` from `sync_meta` (persisted in SQLite)
+2. **First sync** (`last_synced_at = null`): full `pushClimbs` + full `pullClimbs`
+3. **Subsequent syncs**: delta `pushClimbs(since)` + delta `pullClimbs(since)` — only climbs modified after the last sync timestamp
+4. `pullGrades()` → `pullCountries()` → `pullRegions()` (always full — reference data is small)
+5. Writes new `last_synced_at` to `sync_meta`
+6. Invalidates all relevant query keys → UI refreshes
 
-**Realtime handler:**
+**Realtime subscription (live updates between syncs):**
+- Subscribes to `postgres_changes` on `climbs` filtered by `user_id`
 - On INSERT/UPDATE: calls `applyRemoteClimb(payload.new)` + invalidates `['climbs']`
-- Does not handle DELETE events yet (soft deletes come through as UPDATE with `deleted_at` set)
+- Soft deletes arrive as UPDATE with `deleted_at` set — handled correctly
 
-**Cleanup:** The Realtime channel is removed when `userId` becomes undefined (logout).
+**Cleanup:** Realtime channel is removed when `userId` becomes undefined (logout).
 
 ---
 
@@ -70,10 +77,14 @@ App launch:
   useSync receives userId = undefined → no sync, no Realtime
 
 User logs in → userId set in auth.store:
-  useSync fires: full push → full pull → reference data pull
-  Realtime subscription starts
+  useSync fires
+  Reads last_synced_at from sync_meta
+  → null: full push → full pull → reference data pull → write last_synced_at
+  → set: delta push → delta pull → reference data pull → write last_synced_at
+  Realtime subscription starts (live updates from this point)
 
 User logs out → userId becomes undefined:
   useSync cleanup: Realtime channel removed
   Local data retained (local-first — not deleted on logout)
+  last_synced_at persists in sync_meta for next login
 ```
