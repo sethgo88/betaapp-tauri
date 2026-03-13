@@ -3,6 +3,7 @@ import { Button } from "@/components/atoms/Button";
 import { Spinner } from "@/components/atoms/Spinner";
 import { EditableDescription } from "@/components/molecules/EditableDescription";
 import { useAuthStore } from "@/features/auth/auth.store";
+import { useClimbs } from "@/features/climbs/climbs.queries";
 import {
 	useRoute,
 	useUpdateRouteDescription,
@@ -12,8 +13,10 @@ const RouteDetailView = () => {
 	const { routeId } = useParams({ from: "/routes/$routeId" });
 	const navigate = useNavigate();
 	const { data: route, isLoading } = useRoute(routeId);
+	const { data: climbs = [] } = useClimbs();
 	const updateDescription = useUpdateRouteDescription();
 	const isAdmin = useAuthStore((s) => s.user?.role === "admin");
+	const existingClimb = climbs.find((c) => c.route_id === routeId);
 
 	if (isLoading) {
 		return (
@@ -65,23 +68,38 @@ const RouteDetailView = () => {
 
 			{/* Placeholder for route image — wired in by #11 */}
 
-			<Button
-				type="button"
-				variant="primary"
-				onClick={() =>
-					navigate({
-						to: "/climbs/add",
-						search: {
-							routeId: route.id,
-							routeName: route.name,
-							grade: route.grade,
-							routeType: route.route_type,
-						},
-					})
-				}
-			>
-				Log this climb
-			</Button>
+			{existingClimb ? (
+				<Button
+					type="button"
+					variant="primary"
+					onClick={() =>
+						navigate({
+							to: "/climbs/$climbId",
+							params: { climbId: existingClimb.id },
+						})
+					}
+				>
+					View log
+				</Button>
+			) : (
+				<Button
+					type="button"
+					variant="primary"
+					onClick={() =>
+						navigate({
+							to: "/climbs/add",
+							search: {
+								routeId: route.id,
+								routeName: route.name,
+								grade: route.grade,
+								routeType: route.route_type,
+							},
+						})
+					}
+				>
+					Log this climb
+				</Button>
+			)}
 		</div>
 	);
 };

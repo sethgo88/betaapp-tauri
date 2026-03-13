@@ -1,5 +1,6 @@
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { ChevronDown, ExternalLink } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/atoms/Button";
 import { Spinner } from "@/components/atoms/Spinner";
 import { useClimb } from "@/features/climbs/climbs.queries";
@@ -14,6 +15,7 @@ const ClimbDetailView = () => {
 	const { data: climb, isLoading } = useClimb(climbId);
 	const { data: linkedRoute } = useRoute(climb?.route_id);
 	const setSelectedClimbId = useClimbsStore((s) => s.setSelectedClimbId);
+	const [movesOpen, setMovesOpen] = useState(false);
 
 	useEffect(() => {
 		setSelectedClimbId(climbId);
@@ -49,7 +51,26 @@ const ClimbDetailView = () => {
 		<div className="flex flex-col gap-4">
 			<div className="flex items-start justify-between">
 				<div>
-					<h1 className="text-2xl font-bold">{climb.name}</h1>
+					{climb.route_id ? (
+						<button
+							type="button"
+							className="flex items-center gap-1.5 text-left"
+							onClick={() =>
+								navigate({
+									to: "/routes/$routeId",
+									params: { routeId: climb.route_id as string },
+								})
+							}
+						>
+							<h1 className="text-2xl font-bold">{climb.name}</h1>
+							<ExternalLink
+								size={16}
+								className="text-stone-400 shrink-0 mt-1"
+							/>
+						</button>
+					) : (
+						<h1 className="text-2xl font-bold">{climb.name}</h1>
+					)}
 					{location && <p className="text-sm text-stone-400">{location}</p>}
 				</div>
 				<div className="text-right flex flex-col items-end gap-0.5">
@@ -82,11 +103,6 @@ const ClimbDetailView = () => {
 				>
 					{climb.sent_status}
 				</span>
-				{climb.route_id && (
-					<span className="bg-emerald-900 text-emerald-300 rounded-full px-3 py-1 text-sm">
-						Linked route
-					</span>
-				)}
 			</div>
 
 			<Button
@@ -101,14 +117,30 @@ const ClimbDetailView = () => {
 			</Button>
 
 			{moves.length > 0 && (
-				<div className="rounded-md bg-stone-800 p-3">
-					<ul className="flex flex-col gap-1">
-						{moves.map((move, i) => (
-							<li key={move.id} className="border-l border-white pl-2 text-sm">
-								{i + 1}. {move.text}
-							</li>
-						))}
-					</ul>
+				<div className="rounded-md bg-stone-800">
+					<button
+						type="button"
+						className="flex items-center justify-between w-full p-3 text-sm text-stone-400"
+						onClick={() => setMovesOpen(!movesOpen)}
+					>
+						<span>Moves ({moves.length})</span>
+						<ChevronDown
+							size={16}
+							className={cn("transition-transform", movesOpen && "rotate-180")}
+						/>
+					</button>
+					{movesOpen && (
+						<ul className="flex flex-col gap-1 px-3 pb-3">
+							{moves.map((move, i) => (
+								<li
+									key={move.id}
+									className="border-l border-white pl-2 text-sm"
+								>
+									{i + 1}. {move.text}
+								</li>
+							))}
+						</ul>
+					)}
 				</div>
 			)}
 
