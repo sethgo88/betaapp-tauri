@@ -16,9 +16,9 @@ export const ClimbCard = ({ climb, onClick, onDelete }: ClimbCardProps) => {
 	return (
 		<li
 			className={cn(
-				"relative flex overflow-hidden bg-stone-950/20 rounded-xl p-2.5 shadow-sm cursor-pointer gap-x-4",
-				climb.sent_status === "sent" && "bg-emerald-900/20",
-				climb.sent_status === "todo" && "bg-amber-900/20",
+				"relative flex overflow-hidden bg-status-default rounded-xl p-2.5 shadow-sm cursor-pointer gap-x-4",
+				climb.sent_status === "sent" && "bg-status-sent",
+				climb.sent_status === "todo" && "bg-status-todo",
 			)}
 		>
 			<button
@@ -39,14 +39,14 @@ export const ClimbCard = ({ climb, onClick, onDelete }: ClimbCardProps) => {
 				<>
 					<button
 						type="button"
-						className="p-2.5 text-stone-400"
+						className="p-2.5 text-text-secondary"
 						onClick={() => setShowDelete(true)}
 					>
 						<Trash2 size={16} />
 					</button>
 					<div
 						className={cn(
-							"absolute grid h-full w-full cursor-pointer grid-cols-2 bg-white text-center text-xl font-bold transition-all duration-200 top-0",
+							"absolute grid h-full w-full cursor-pointer grid-cols-2 bg-surface-card text-center text-xl font-bold transition-all duration-200 top-0",
 							showDelete ? "left-0" : "left-full",
 						)}
 					>

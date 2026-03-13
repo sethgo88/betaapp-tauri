@@ -53,7 +53,7 @@ Loads `useClimb(climbId)`. Displays all climb fields. Has "Edit" button → `/cl
 Loads `useClimb(climbId)`. Renders `ClimbForm` in "edit" mode with prefilled values. If `climb.route_id` is null, shows a "Link to route" search section (`useLinkClimbToRoute`). On success navigates back to detail.
 
 ### ProfileView `/profile`
-Public (no auth guard). Shows login form when unauthenticated (`signIn` / `signUp` / `forgot password`). Shows user info + logout when authenticated.
+Public (no auth guard). Shows login form when unauthenticated (`signIn` / `signUp` / `forgot password`). Shows user info + logout when authenticated. Settings panel includes a Dark/Light theme toggle (persisted to localStorage via `ui.store`).
 
 ### ResetPasswordView `/reset-password`
 Public (no auth guard). Shown after user taps a password reset link from email. The `PASSWORD_RECOVERY` auth event in `App.tsx` navigates here automatically. Calls `updatePassword()` on submit, then redirects to `/profile`.

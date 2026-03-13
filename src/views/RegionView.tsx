@@ -27,7 +27,7 @@ const InlineAddForm = ({
 				value={name}
 				onChange={(e) => setName(e.target.value)}
 				placeholder={placeholder}
-				className="flex-1 text-sm bg-stone-700 rounded-lg px-3 py-2 text-stone-100 placeholder-stone-500 outline-none"
+				className="flex-1 text-sm bg-surface-page rounded-lg px-3 py-2 text-text-primary placeholder-text-tertiary outline-none"
 				// biome-ignore lint/a11y/noAutofocus: intentional — form appears on user tap
 				autoFocus
 			/>
@@ -42,7 +42,7 @@ const InlineAddForm = ({
 			<button
 				type="button"
 				onClick={onCancel}
-				className="text-sm px-3 py-2 rounded-lg bg-stone-600 hover:bg-stone-500"
+				className="text-sm px-3 py-2 rounded-lg bg-stone-600 hover:bg-surface-hover"
 			>
 				Cancel
 			</button>
@@ -68,21 +68,23 @@ const RegionView = () => {
 		<div className="flex flex-col gap-3">
 			<button
 				type="button"
-				className="text-stone-400 text-sm text-left"
+				className="text-text-secondary text-sm text-left"
 				onClick={() => navigate({ to: "/routes" })}
 			>
 				← Back to routes
 			</button>
 
 			{subRegions.length === 0 && !showSubRegionForm && (
-				<p className="text-stone-400 text-sm">No areas in this region yet.</p>
+				<p className="text-text-secondary text-sm">
+					No areas in this region yet.
+				</p>
 			)}
 
 			{subRegions.map((sr) => (
 				<button
 					key={sr.id}
 					type="button"
-					className="rounded-lg bg-stone-800 p-4 text-left font-medium flex items-center justify-between"
+					className="rounded-lg bg-surface-card p-4 text-left font-medium flex items-center justify-between"
 					onClick={() =>
 						sr.status === "pending"
 							? undefined
@@ -110,7 +112,7 @@ const RegionView = () => {
 				<button
 					type="button"
 					onClick={() => setShowSubRegionForm(true)}
-					className="text-sm text-stone-400 hover:text-stone-200 text-left"
+					className="text-sm text-text-secondary hover:text-text-primary text-left"
 				>
 					+ Add sub-area
 				</button>

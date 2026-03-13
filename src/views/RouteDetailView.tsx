@@ -27,14 +27,16 @@ const RouteDetailView = () => {
 	}
 
 	if (!route) {
-		return <p className="text-stone-400 text-center pt-12">Route not found</p>;
+		return (
+			<p className="text-text-secondary text-center pt-12">Route not found</p>
+		);
 	}
 
 	return (
 		<div className="flex flex-col gap-4">
 			<button
 				type="button"
-				className="text-stone-400 text-sm text-left"
+				className="text-text-secondary text-sm text-left"
 				onClick={() =>
 					navigate({
 						to: "/walls/$wallId",
@@ -48,8 +50,8 @@ const RouteDetailView = () => {
 			<div>
 				<h1 className="text-xl font-bold">{route.name}</h1>
 				<div className="flex items-center gap-2 mt-1">
-					<span className="text-stone-300">{route.grade}</span>
-					<span className="text-xs px-2 py-0.5 rounded-full bg-stone-700 text-stone-300">
+					<span className="text-text-secondary">{route.grade}</span>
+					<span className="text-xs px-2 py-0.5 rounded-full bg-surface-page text-text-secondary">
 						{route.route_type}
 					</span>
 				</div>

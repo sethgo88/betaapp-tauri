@@ -53,7 +53,7 @@ const EditRouteForm = ({
 	const { data: grades = [] } = useGrades(routeType);
 
 	return (
-		<div className="flex flex-col gap-2 mt-3 pt-3 border-t border-stone-700">
+		<div className="flex flex-col gap-2 mt-3 pt-3 border-t border-border-default">
 			<Input
 				placeholder="Route name"
 				value={name}
@@ -85,7 +85,7 @@ const EditRouteForm = ({
 				value={description}
 				onChange={(e) => setDescription(e.target.value)}
 				rows={2}
-				className="rounded-lg bg-stone-700 p-2 outline-0 w-full border border-stone-600 resize-none text-sm"
+				className="rounded-lg bg-surface-page p-2 outline-0 w-full border border-border-default resize-none text-sm text-text-primary"
 			/>
 			<div className="flex gap-2">
 				<Button
@@ -141,8 +141,8 @@ const MergeSearch = ({
 	};
 
 	return (
-		<div className="flex flex-col gap-2 mt-3 pt-3 border-t border-stone-700">
-			<p className="text-xs text-stone-400">
+		<div className="flex flex-col gap-2 mt-3 pt-3 border-t border-border-default">
+			<p className="text-xs text-text-secondary">
 				Search for the existing verified route to merge into:
 			</p>
 			<div className="flex gap-2">
@@ -168,11 +168,11 @@ const MergeSearch = ({
 						<button
 							key={r.id}
 							type="button"
-							className="flex items-center justify-between py-2 px-2 rounded-lg bg-stone-700 hover:bg-stone-600 text-left"
+							className="flex items-center justify-between py-2 px-2 rounded-lg bg-surface-page hover:bg-surface-hover text-left"
 							onClick={() => onMerge(r)}
 						>
 							<span className="text-sm">{r.name}</span>
-							<span className="text-xs text-stone-400">
+							<span className="text-xs text-text-secondary">
 								{r.grade} · {r.walls?.name}
 							</span>
 						</button>
@@ -180,7 +180,7 @@ const MergeSearch = ({
 				</div>
 			)}
 			{results.length === 0 && query && !searching && (
-				<p className="text-xs text-stone-500">No verified routes found.</p>
+				<p className="text-xs text-text-tertiary">No verified routes found.</p>
 			)}
 			<Button type="button" variant="secondary" size="small" onClick={onCancel}>
 				Cancel
@@ -249,16 +249,16 @@ const RouteRow = ({ route }: { route: UnverifiedRoute }) => {
 	};
 
 	return (
-		<div className="rounded-lg bg-stone-800 p-4 flex flex-col gap-1">
-			<p className="text-xs text-stone-400">{locationLabel(route)}</p>
+		<div className="rounded-lg bg-surface-card p-4 flex flex-col gap-1">
+			<p className="text-xs text-text-secondary">{locationLabel(route)}</p>
 			<div className="flex items-center justify-between">
 				<div>
 					<span className="font-medium">{route.name}</span>
-					<span className="text-xs text-stone-400 ml-2">
+					<span className="text-xs text-text-secondary ml-2">
 						{route.grade} · {route.route_type}
 					</span>
 				</div>
-				<span className="text-xs text-stone-500">
+				<span className="text-xs text-text-tertiary">
 					{new Date(route.created_at).toLocaleDateString()}
 				</span>
 			</div>
@@ -325,7 +325,7 @@ const RouteVerificationView = () => {
 		<div className="flex flex-col gap-4">
 			<button
 				type="button"
-				className="text-stone-400 text-sm text-left"
+				className="text-text-secondary text-sm text-left"
 				onClick={() => router.history.back()}
 			>
 				← Back
@@ -333,10 +333,10 @@ const RouteVerificationView = () => {
 
 			<h1 className="text-lg font-semibold">Route Verification</h1>
 
-			{isLoading && <p className="text-stone-400 text-sm">Loading…</p>}
+			{isLoading && <p className="text-text-secondary text-sm">Loading…</p>}
 
 			{!isLoading && routes.length === 0 && (
-				<p className="text-stone-400 text-sm">No pending routes.</p>
+				<p className="text-text-secondary text-sm">No pending routes.</p>
 			)}
 
 			{routes.map((route) => (

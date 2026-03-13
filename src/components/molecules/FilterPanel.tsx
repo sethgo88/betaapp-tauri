@@ -57,7 +57,7 @@ export const FilterPanel = ({ climbs }: FilterPanelProps) => {
 		<div>
 			<button
 				type="button"
-				className="flex items-center gap-1 text-sm text-stone-400 w-full"
+				className="flex items-center gap-1 text-sm text-text-secondary w-full"
 				onClick={() => setFiltersOpen(!filtersOpen)}
 			>
 				<span>Filters</span>
@@ -68,9 +68,9 @@ export const FilterPanel = ({ climbs }: FilterPanelProps) => {
 			</button>
 
 			{filtersOpen && (
-				<div className="mt-2 flex flex-col gap-3 rounded-lg bg-stone-800 p-3">
+				<div className="mt-2 flex flex-col gap-3 rounded-lg bg-surface-card p-3">
 					<div>
-						<p className="text-xs text-stone-400 uppercase tracking-wide mb-1">
+						<p className="text-xs text-text-secondary uppercase tracking-wide mb-1">
 							Status
 						</p>
 						<div className="flex flex-wrap gap-x-4 gap-y-1">
@@ -95,7 +95,7 @@ export const FilterPanel = ({ climbs }: FilterPanelProps) => {
 						</div>
 					</div>
 					<div>
-						<p className="text-xs text-stone-400 uppercase tracking-wide mb-1">
+						<p className="text-xs text-text-secondary uppercase tracking-wide mb-1">
 							Type
 						</p>
 						<div className="flex flex-wrap gap-x-4 gap-y-1">

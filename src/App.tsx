@@ -94,7 +94,7 @@ function Bootstrap() {
 
 	if (isLoading) {
 		return (
-			<div className="flex justify-center items-center min-h-screen bg-stone-700">
+			<div className="flex justify-center items-center min-h-screen bg-surface-page">
 				<Spinner size="lg" />
 			</div>
 		);

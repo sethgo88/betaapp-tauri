@@ -27,13 +27,17 @@ export const Drawer = ({ isOpen, onClose }: DrawerProps) => {
 				className="fixed inset-0 bg-black/60 z-40 w-full cursor-default"
 				onClick={onClose}
 			/>
-			<div className="fixed top-0 right-0 bottom-0 w-64 bg-stone-900 z-50 flex flex-col pt-[env(safe-area-inset-top)]">
-				<div className="flex items-center justify-between p-4 border-b border-stone-700">
+			<div className="fixed top-0 right-0 bottom-0 w-64 bg-surface-nav z-50 flex flex-col pt-[env(safe-area-inset-top)]">
+				<div className="flex items-center justify-between p-4 border-b border-border-default">
 					<div className="flex items-center gap-2">
 						<Menu size={18} />
 						<span className="font-semibold">Menu</span>
 					</div>
-					<button type="button" onClick={onClose} className="text-stone-400">
+					<button
+						type="button"
+						onClick={onClose}
+						className="text-text-secondary"
+					>
 						<X size={20} />
 					</button>
 				</div>
@@ -41,7 +45,7 @@ export const Drawer = ({ isOpen, onClose }: DrawerProps) => {
 				<nav className="flex flex-col p-4 gap-1">
 					<button
 						type="button"
-						className="flex items-center gap-3 py-3 px-2 text-left rounded-lg hover:bg-stone-800"
+						className="flex items-center gap-3 py-3 px-2 text-left rounded-lg hover:bg-surface-hover"
 						onClick={() => handleNav("/routes")}
 					>
 						<MapPin size={18} />
@@ -50,7 +54,7 @@ export const Drawer = ({ isOpen, onClose }: DrawerProps) => {
 
 					<button
 						type="button"
-						className="flex items-center gap-3 py-3 px-2 text-left rounded-lg hover:bg-stone-800"
+						className="flex items-center gap-3 py-3 px-2 text-left rounded-lg hover:bg-surface-hover"
 						onClick={() => handleNav("/profile")}
 					>
 						<CircleUser size={18} />
@@ -60,13 +64,13 @@ export const Drawer = ({ isOpen, onClose }: DrawerProps) => {
 					{isAdmin && (
 						<>
 							<div className="mt-4 mb-1 px-2">
-								<p className="text-xs text-stone-400 uppercase tracking-wide">
+								<p className="text-xs text-text-secondary uppercase tracking-wide">
 									Admin
 								</p>
 							</div>
 							<button
 								type="button"
-								className="flex items-center gap-3 py-3 px-2 text-left rounded-lg hover:bg-stone-800"
+								className="flex items-center gap-3 py-3 px-2 text-left rounded-lg hover:bg-surface-hover"
 								onClick={() => handleNav("/admin/locations")}
 							>
 								<MapPin size={18} />
@@ -74,7 +78,7 @@ export const Drawer = ({ isOpen, onClose }: DrawerProps) => {
 							</button>
 							<button
 								type="button"
-								className="flex items-center gap-3 py-3 px-2 text-left rounded-lg hover:bg-stone-800"
+								className="flex items-center gap-3 py-3 px-2 text-left rounded-lg hover:bg-surface-hover"
 								onClick={() => handleNav("/admin/routes")}
 							>
 								<MapPin size={18} />
@@ -82,7 +86,7 @@ export const Drawer = ({ isOpen, onClose }: DrawerProps) => {
 							</button>
 							<button
 								type="button"
-								className="flex items-center gap-3 py-3 px-2 text-left rounded-lg hover:bg-stone-800"
+								className="flex items-center gap-3 py-3 px-2 text-left rounded-lg hover:bg-surface-hover"
 								onClick={() => handleNav("/admin/locations/pending")}
 							>
 								<MapPin size={18} />

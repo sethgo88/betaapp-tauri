@@ -24,6 +24,7 @@ import { useAuthStore } from "@/features/auth/auth.store";
 import { useGrades } from "@/features/grades/grades.queries";
 import { useSyncStore } from "@/features/sync/sync.store";
 import { cmToFtIn, cmToIn, ftInToCm, inToCm } from "@/lib/units";
+import type { Theme } from "@/stores/ui.store";
 import { useUiStore } from "@/stores/ui.store";
 
 // ── Password policy — change this to update requirements everywhere ───────────
@@ -42,8 +43,8 @@ const SyncStatusWell = () => {
 		lastSyncedAt || status !== "idle" ? SYNC_LABEL[status] : "Not yet synced";
 
 	return (
-		<div className="rounded-lg bg-stone-800 p-4 flex flex-col gap-2">
-			<p className="text-xs text-stone-400 uppercase tracking-wide">
+		<div className="rounded-lg bg-surface-card p-4 flex flex-col gap-2">
+			<p className="text-xs text-text-secondary uppercase tracking-wide">
 				Sync Status
 			</p>
 			<div className="flex items-center gap-2">
@@ -85,9 +86,9 @@ const MagicLinkForm = ({
 
 	return (
 		<div className="flex flex-col gap-4">
-			<div className="rounded-lg bg-stone-800 p-4">
+			<div className="rounded-lg bg-surface-card p-4">
 				<p className="font-semibold mb-1">Magic link</p>
-				<p className="text-sm text-stone-400">
+				<p className="text-sm text-text-secondary">
 					We'll send a sign-in link to your email.
 				</p>
 			</div>
@@ -126,7 +127,7 @@ const MagicLinkForm = ({
 
 			<button
 				type="button"
-				className="text-sm text-stone-400 text-center"
+				className="text-sm text-text-secondary text-center"
 				onClick={onBack}
 			>
 				Back to sign in
@@ -158,9 +159,9 @@ const ForgotPasswordForm = ({
 
 	return (
 		<div className="flex flex-col gap-4">
-			<div className="rounded-lg bg-stone-800 p-4">
+			<div className="rounded-lg bg-surface-card p-4">
 				<p className="font-semibold mb-1">Forgot password</p>
-				<p className="text-sm text-stone-400">
+				<p className="text-sm text-text-secondary">
 					Enter your email and we'll send a reset link.
 				</p>
 			</div>
@@ -199,7 +200,7 @@ const ForgotPasswordForm = ({
 
 			<button
 				type="button"
-				className="text-sm text-stone-400 text-center"
+				className="text-sm text-text-secondary text-center"
 				onClick={onBack}
 			>
 				Back to sign in
@@ -220,6 +221,8 @@ const AuthenticatedProfile = ({
 	) => void;
 }) => {
 	const addToast = useUiStore((s) => s.addToast);
+	const theme = useUiStore((s) => s.theme);
+	const setTheme = useUiStore((s) => s.setTheme);
 	const unit = user.default_unit ?? "imperial";
 	const { data: sportGrades = [] } = useGrades("sport");
 	const { data: boulderGrades = [] } = useGrades("boulder");
@@ -314,8 +317,8 @@ const AuthenticatedProfile = ({
 	return (
 		<div className="flex flex-col gap-4">
 			{/* Account */}
-			<div className="rounded-lg bg-stone-800 p-4 flex flex-col gap-2">
-				<p className="text-xs text-stone-400 uppercase tracking-wide">
+			<div className="rounded-lg bg-surface-card p-4 flex flex-col gap-2">
+				<p className="text-xs text-text-secondary uppercase tracking-wide">
 					Account
 				</p>
 				<p className="font-semibold">
@@ -323,7 +326,7 @@ const AuthenticatedProfile = ({
 					{user.email}
 				</p>
 				{user.role === "admin" && (
-					<span className="self-start bg-emerald-700 text-xs rounded-full px-2 py-0.5">
+					<span className="self-start bg-emerald-700 text-white text-xs rounded-full px-2 py-0.5">
 						Admin
 					</span>
 				)}
@@ -333,8 +336,8 @@ const AuthenticatedProfile = ({
 			</div>
 
 			{/* Settings */}
-			<div className="rounded-lg bg-stone-800 p-4 flex flex-col gap-3">
-				<p className="text-xs text-stone-400 uppercase tracking-wide">
+			<div className="rounded-lg bg-surface-card p-4 flex flex-col gap-3">
+				<p className="text-xs text-text-secondary uppercase tracking-wide">
 					Settings
 				</p>
 				<div>
@@ -348,11 +351,22 @@ const AuthenticatedProfile = ({
 						onChange={(v) => handleUnitToggle(v as UnitPreference)}
 					/>
 				</div>
+				<div>
+					<p className="text-sm mb-1">Theme</p>
+					<ToggleGroup
+						options={[
+							{ value: "dark", label: "Dark" },
+							{ value: "light", label: "Light" },
+						]}
+						value={theme}
+						onChange={(v) => setTheme(v as Theme)}
+					/>
+				</div>
 			</div>
 
 			{/* Profile */}
-			<div className="rounded-lg bg-stone-800 p-4 flex flex-col gap-3">
-				<p className="text-xs text-stone-400 uppercase tracking-wide">
+			<div className="rounded-lg bg-surface-card p-4 flex flex-col gap-3">
+				<p className="text-xs text-text-secondary uppercase tracking-wide">
 					Profile
 				</p>
 				<Input
@@ -361,7 +375,7 @@ const AuthenticatedProfile = ({
 					onChange={(e) => setDisplayName(e.target.value)}
 				/>
 				<div>
-					<p className="text-xs text-stone-400 mb-1">Height</p>
+					<p className="text-xs text-text-secondary mb-1">Height</p>
 					{defaultUnit === "imperial" ? (
 						<div className="flex gap-2">
 							<Input
@@ -387,7 +401,7 @@ const AuthenticatedProfile = ({
 					)}
 				</div>
 				<div>
-					<p className="text-xs text-stone-400 mb-1">Ape index</p>
+					<p className="text-xs text-text-secondary mb-1">Ape index</p>
 					<Input
 						type="number"
 						placeholder={defaultUnit === "imperial" ? "in" : "cm"}
@@ -397,7 +411,9 @@ const AuthenticatedProfile = ({
 				</div>
 				<div className="flex gap-2">
 					<div className="flex-1">
-						<p className="text-xs text-stone-400 mb-1">Max redpoint (sport)</p>
+						<p className="text-xs text-text-secondary mb-1">
+							Max redpoint (sport)
+						</p>
 						<Select
 							value={maxSport}
 							onChange={(e) => setMaxSport(e.target.value)}
@@ -411,7 +427,7 @@ const AuthenticatedProfile = ({
 						</Select>
 					</div>
 					<div className="flex-1">
-						<p className="text-xs text-stone-400 mb-1">
+						<p className="text-xs text-text-secondary mb-1">
 							Max redpoint (boulder)
 						</p>
 						<Select
@@ -521,9 +537,9 @@ const ProfileView = () => {
 	if (mode === "signup") {
 		return (
 			<div className="flex flex-col gap-4">
-				<div className="rounded-lg bg-stone-800 p-4">
+				<div className="rounded-lg bg-surface-card p-4">
 					<p className="font-semibold mb-1">Create account</p>
-					<p className="text-sm text-stone-400">
+					<p className="text-sm text-text-secondary">
 						Password must be at least {PASSWORD_MIN_LENGTH} characters.
 					</p>
 				</div>
@@ -596,7 +612,7 @@ const ProfileView = () => {
 
 				<button
 					type="button"
-					className="text-sm text-stone-400 text-center"
+					className="text-sm text-text-secondary text-center"
 					onClick={() => setMode("signin")}
 				>
 					Already have an account? Sign in
@@ -615,16 +631,16 @@ const ProfileView = () => {
 		if (resetSent) {
 			return (
 				<div className="flex flex-col gap-4">
-					<div className="rounded-lg bg-stone-800 p-4 flex flex-col gap-2">
+					<div className="rounded-lg bg-surface-card p-4 flex flex-col gap-2">
 						<p className="font-semibold">Check your email</p>
-						<p className="text-sm text-stone-400">
+						<p className="text-sm text-text-secondary">
 							A password reset link has been sent. Tap it to open the app and
 							set a new password.
 						</p>
 					</div>
 					<button
 						type="button"
-						className="text-sm text-stone-400 text-center"
+						className="text-sm text-text-secondary text-center"
 						onClick={() => setMode("signin")}
 					>
 						Back to sign in
@@ -651,16 +667,16 @@ const ProfileView = () => {
 		if (magicSent) {
 			return (
 				<div className="flex flex-col gap-4">
-					<div className="rounded-lg bg-stone-800 p-4 flex flex-col gap-2">
+					<div className="rounded-lg bg-surface-card p-4 flex flex-col gap-2">
 						<p className="font-semibold">Check your email</p>
-						<p className="text-sm text-stone-400">
+						<p className="text-sm text-text-secondary">
 							A sign-in link has been sent. Tap it to open the app and sign in
 							automatically.
 						</p>
 					</div>
 					<button
 						type="button"
-						className="text-sm text-stone-400 text-center"
+						className="text-sm text-text-secondary text-center"
 						onClick={() => setMode("signin")}
 					>
 						Back to sign in
@@ -682,7 +698,7 @@ const ProfileView = () => {
 
 	return (
 		<div className="flex flex-col gap-4">
-			<div className="rounded-lg bg-stone-800 p-4">
+			<div className="rounded-lg bg-surface-card p-4">
 				<p className="font-semibold mb-1">Sign in</p>
 			</div>
 
@@ -741,7 +757,7 @@ const ProfileView = () => {
 
 			<button
 				type="button"
-				className="text-sm text-stone-400 text-center"
+				className="text-sm text-text-secondary text-center"
 				onClick={() => {
 					setMode("forgot");
 					setResetSent(false);
@@ -752,7 +768,7 @@ const ProfileView = () => {
 
 			<button
 				type="button"
-				className="text-sm text-stone-400 text-center"
+				className="text-sm text-text-secondary text-center"
 				onClick={() => setMode("signup")}
 			>
 				No account? Create one
@@ -760,7 +776,7 @@ const ProfileView = () => {
 
 			<button
 				type="button"
-				className="text-sm text-stone-400 text-center"
+				className="text-sm text-text-secondary text-center"
 				onClick={() => {
 					setMode("magic");
 					setMagicSent(false);

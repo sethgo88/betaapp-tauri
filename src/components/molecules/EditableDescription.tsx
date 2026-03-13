@@ -33,7 +33,7 @@ export const EditableDescription = ({
 				<textarea
 					value={draft}
 					onChange={(e) => setDraft(e.target.value)}
-					className="w-full text-sm bg-stone-700 rounded-lg px-3 py-2 text-stone-100 placeholder-stone-500 outline-none min-h-[80px]"
+					className="w-full text-sm bg-surface-page rounded-lg px-3 py-2 text-text-primary placeholder-text-tertiary outline-none min-h-[80px]"
 					placeholder="Add a description…"
 					// biome-ignore lint/a11y/noAutofocus: intentional — editing mode
 					autoFocus
@@ -67,11 +67,11 @@ export const EditableDescription = ({
 	return (
 		<div className="flex items-start gap-2">
 			{description ? (
-				<p className="text-sm text-stone-300 whitespace-pre-wrap">
+				<p className="text-sm text-text-secondary whitespace-pre-wrap">
 					{description}
 				</p>
 			) : (
-				<p className="text-sm text-stone-500 italic">No description</p>
+				<p className="text-sm text-text-tertiary italic">No description</p>
 			)}
 			{isAdmin && (
 				<button
@@ -80,7 +80,7 @@ export const EditableDescription = ({
 						setDraft(description ?? "");
 						setEditing(true);
 					}}
-					className="text-stone-400 hover:text-stone-200 shrink-0 mt-0.5"
+					className="text-text-secondary hover:text-text-primary shrink-0 mt-0.5"
 				>
 					<Pencil size={14} />
 				</button>

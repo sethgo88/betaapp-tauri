@@ -92,8 +92,8 @@ const LocationManagerView = () => {
 			<h1 className="text-lg font-semibold">Location Manager</h1>
 
 			{/* Countries */}
-			<div className="rounded-lg bg-stone-800 p-4 flex flex-col gap-3">
-				<p className="text-xs text-stone-400 uppercase tracking-wide">
+			<div className="rounded-lg bg-surface-card p-4 flex flex-col gap-3">
+				<p className="text-xs text-text-secondary uppercase tracking-wide">
 					Countries
 				</p>
 				<div className="flex gap-2">
@@ -116,11 +116,11 @@ const LocationManagerView = () => {
 					{countries.map((c) => (
 						<div
 							key={c.id}
-							className="flex items-center justify-between py-1 border-b border-stone-700 last:border-0"
+							className="flex items-center justify-between py-1 border-b border-border-default last:border-0"
 						>
 							<button
 								type="button"
-								className={`text-sm text-left flex-1 ${selectedCountryId === c.id ? "text-emerald-400" : "text-white"}`}
+								className={`text-sm text-left flex-1 ${selectedCountryId === c.id ? "text-emerald-400" : "text-text-primary"}`}
 								onClick={() =>
 									setSelectedCountryId(selectedCountryId === c.id ? null : c.id)
 								}
@@ -138,15 +138,15 @@ const LocationManagerView = () => {
 						</div>
 					))}
 					{countries.length === 0 && (
-						<p className="text-sm text-stone-500">No countries yet</p>
+						<p className="text-sm text-text-tertiary">No countries yet</p>
 					)}
 				</div>
 			</div>
 
 			{/* Regions */}
 			{selectedCountryId && (
-				<div className="rounded-lg bg-stone-800 p-4 flex flex-col gap-3">
-					<p className="text-xs text-stone-400 uppercase tracking-wide">
+				<div className="rounded-lg bg-surface-card p-4 flex flex-col gap-3">
+					<p className="text-xs text-text-secondary uppercase tracking-wide">
 						Regions — {countries.find((c) => c.id === selectedCountryId)?.name}
 					</p>
 					<div className="flex gap-2">
@@ -163,7 +163,7 @@ const LocationManagerView = () => {
 						{regions.map((r) => (
 							<div
 								key={r.id}
-								className="flex items-center justify-between py-1 border-b border-stone-700 last:border-0"
+								className="flex items-center justify-between py-1 border-b border-border-default last:border-0"
 							>
 								<span className="text-sm">{r.name}</span>
 								<Button
@@ -177,7 +177,7 @@ const LocationManagerView = () => {
 							</div>
 						))}
 						{regions.length === 0 && (
-							<p className="text-sm text-stone-500">No regions yet</p>
+							<p className="text-sm text-text-tertiary">No regions yet</p>
 						)}
 					</div>
 				</div>

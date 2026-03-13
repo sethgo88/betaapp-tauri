@@ -112,17 +112,29 @@ const form = useForm({
 
 ---
 
-## Tailwind — dark-only
+## Tailwind — semantic color tokens
 
-This app is dark-only. Write dark styles as the base — never use `dark:` variants:
+Colors are defined as CSS custom properties in `src/App.css` and registered via Tailwind v4's `@theme` directive. Dark mode is the default; light mode activates when `:root` has the `.light` class.
 
-```tsx
-// Correct
-<div className="bg-gray-950 text-white">
+**Never use raw stone-* classes for surfaces, text, or borders.** Use the semantic tokens:
 
-// Wrong
-<div className="bg-white dark:bg-gray-950">
-```
+| Token class | Dark maps to | Light maps to |
+|---|---|---|
+| `bg-surface-page` | stone-700 | stone-50 |
+| `bg-surface-card` | stone-800 | white |
+| `bg-surface-nav` | stone-900 | stone-100 |
+| `bg-surface-input` | stone-800 | stone-100 |
+| `bg-surface-hover` | stone-700 | stone-100 |
+| `bg-surface-active` | stone-600 | stone-300 |
+| `border-border-default` | stone-700 | stone-200 |
+| `border-border-input` | stone-900 | stone-300 |
+| `text-text-primary` | white | stone-900 |
+| `text-text-secondary` | stone-400 | stone-500 |
+| `text-text-tertiary` | stone-500 | stone-400 |
+
+Status and badge tokens (`status-default`, `status-sent`, `status-todo`, `badge-sent-bg`, etc.) are also available — see `App.css` for the full list.
+
+Accent colors (emerald, amber, red) stay as raw Tailwind classes — they have good contrast in both themes. Use `text-white` only on colored button backgrounds (e.g. `bg-emerald-600 text-white`).
 
 ---
 

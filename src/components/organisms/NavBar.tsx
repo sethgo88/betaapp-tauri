@@ -10,7 +10,7 @@ export const NavBar = ({ onMenuOpen }: NavBarProps) => {
 	const navigate = useNavigate();
 
 	return (
-		<div className="w-full flex justify-around bg-stone-900 fixed bottom-0 px-[3vw] text-white h-[7vh] items-center">
+		<div className="w-full flex justify-around bg-surface-nav fixed bottom-0 px-[3vw] text-text-primary h-[7vh] items-center">
 			<Button
 				variant="unstyled"
 				type="button"

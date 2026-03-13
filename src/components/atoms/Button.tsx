@@ -15,7 +15,7 @@ const variantClasses: Record<ButtonVariant, string> = {
 	primary: "bg-emerald-600 text-white hover:bg-emerald-700",
 	secondary: "bg-zinc-600 text-white hover:bg-zinc-700",
 	outlined: "border-2 border-emerald-600 text-emerald-600 hover:bg-emerald-50",
-	unstyled: "text-white",
+	unstyled: "text-text-primary",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {

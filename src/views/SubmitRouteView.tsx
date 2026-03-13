@@ -54,15 +54,15 @@ const SubmitRouteView = () => {
 		<div className="flex flex-col gap-4">
 			<button
 				type="button"
-				className="text-stone-400 text-sm text-left"
+				className="text-text-secondary text-sm text-left"
 				onClick={() => router.history.back()}
 			>
 				← Back
 			</button>
 
-			<div className="rounded-lg bg-stone-800 p-4">
+			<div className="rounded-lg bg-surface-card p-4">
 				<p className="font-semibold">Submit a route</p>
-				<p className="text-sm text-stone-400 mt-1">Wall: {wallName}</p>
+				<p className="text-sm text-text-secondary mt-1">Wall: {wallName}</p>
 			</div>
 
 			<form
@@ -132,7 +132,7 @@ const SubmitRouteView = () => {
 							onBlur={field.handleBlur}
 							onChange={(e) => field.handleChange(e.target.value)}
 							rows={3}
-							className="rounded-lg bg-stone-800 p-2 font-bold outline-0 w-full border border-stone-900 resize-none"
+							className="rounded-lg bg-surface-input p-2 font-bold outline-0 w-full border border-border-input resize-none text-text-primary"
 						/>
 					)}
 				</form.Field>

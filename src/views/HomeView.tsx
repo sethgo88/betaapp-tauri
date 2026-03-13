@@ -61,7 +61,7 @@ const HomeView = () => {
 					/>
 				))}
 				{filtered.length === 0 && (
-					<p className="text-stone-400 text-center pt-12">
+					<p className="text-text-secondary text-center pt-12">
 						{climbs.length === 0
 							? "No climbs yet. Add your first!"
 							: "No matching climbs."}

@@ -11,10 +11,13 @@ export const Select = (props: SelectProps) => {
 	const { className, selectClassName, ...rest } = props;
 	return (
 		<div
-			className={cn("rounded-md bg-stone-800 p-2 font-bold w-full", className)}
+			className={cn(
+				"rounded-md bg-surface-input p-2 font-bold w-full text-text-primary",
+				className,
+			)}
 		>
 			<select
-				className={cn("outline-0 w-full bg-stone-800", selectClassName)}
+				className={cn("outline-0 w-full bg-surface-input", selectClassName)}
 				{...rest}
 			/>
 		</div>

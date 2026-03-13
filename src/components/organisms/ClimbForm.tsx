@@ -160,7 +160,7 @@ export const ClimbForm = ({ defaultValues, onSubmit }: ClimbFormProps) => {
 
 				<div className="flex gap-2">
 					<div className="flex flex-col gap-1 flex-1">
-						<label htmlFor="grade" className="text-xs text-stone-400">
+						<label htmlFor="grade" className="text-xs text-text-secondary">
 							Personal grade
 						</label>
 						<form.Field name="grade">
@@ -223,13 +223,13 @@ export const ClimbForm = ({ defaultValues, onSubmit }: ClimbFormProps) => {
 				</Button>
 			</div>
 
-			<div className="w-full rounded-md bg-stone-800 p-2 overflow-y-scroll">
+			<div className="w-full rounded-md bg-surface-card p-2 overflow-y-scroll">
 				{movesList.map((move, index) => (
 					<textarea
 						key={move.id}
 						onKeyDown={(e) => handleTextAreaKeyDown(e, move.id)}
 						onChange={(e) => handleMoveChange(e, move.id)}
-						className="w-full field-sizing-content border-l border-white outline-none px-1 bg-transparent"
+						className="w-full field-sizing-content border-l border-text-primary outline-none px-1 bg-transparent"
 						value={move.text}
 						ref={(el) => {
 							inputRefs.current[index] = el;

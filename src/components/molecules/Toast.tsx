@@ -2,10 +2,10 @@ import { useEffect } from "react";
 import { cn } from "@/lib/cn";
 import { type Toast as ToastType, useUiStore } from "@/stores/ui.store";
 
-const typeStyles: Record<ToastType["type"], string> = {
-	success: "text-emerald-900",
-	error: "text-red-900",
-	warning: "text-yellow-900",
+const borderColor: Record<ToastType["type"], string> = {
+	success: "border-l-emerald-500",
+	error: "border-l-red-500",
+	warning: "border-l-amber-500",
 };
 
 export const Toast = ({ id, message, type }: ToastType) => {
@@ -19,8 +19,8 @@ export const Toast = ({ id, message, type }: ToastType) => {
 	return (
 		<div
 			className={cn(
-				"bg-amber-50 drop-shadow-lg rounded-2xl absolute top-[2vh] left-[calc(50vw)] -translate-x-1/2 p-2.5 whitespace-nowrap",
-				typeStyles[type],
+				"bg-surface-card text-text-primary border-l-4 drop-shadow-lg rounded-2xl absolute top-[2vh] left-[calc(50vw)] -translate-x-1/2 p-2.5 whitespace-nowrap",
+				borderColor[type],
 			)}
 		>
 			{message}

@@ -1,1 +1,68 @@
 @import "tailwindcss";
+
+/* ── Theme tokens ─────────────────────────────────────────────────────────── */
+
+@theme {
+	--color-surface-page: var(--surface-page);
+	--color-surface-card: var(--surface-card);
+	--color-surface-nav: var(--surface-nav);
+	--color-surface-input: var(--surface-input);
+	--color-surface-hover: var(--surface-hover);
+	--color-surface-active: var(--surface-active);
+	--color-border-default: var(--border-default);
+	--color-border-input: var(--border-input);
+	--color-text-primary: var(--text-primary);
+	--color-text-secondary: var(--text-secondary);
+	--color-text-tertiary: var(--text-tertiary);
+	--color-status-default: var(--status-default);
+	--color-status-sent: var(--status-sent);
+	--color-status-todo: var(--status-todo);
+	--color-badge-sent-bg: var(--badge-sent-bg);
+	--color-badge-sent-text: var(--badge-sent-text);
+	--color-badge-todo-bg: var(--badge-todo-bg);
+	--color-badge-todo-text: var(--badge-todo-text);
+}
+
+/* Dark theme (default) */
+:root {
+	--surface-page: #44403c;
+	--surface-card: #292524;
+	--surface-nav: #1c1917;
+	--surface-input: #292524;
+	--surface-hover: #44403c;
+	--surface-active: #57534e;
+	--border-default: #44403c;
+	--border-input: #1c1917;
+	--text-primary: #ffffff;
+	--text-secondary: #a8a29e;
+	--text-tertiary: #78716c;
+	--status-default: rgba(12, 10, 9, 0.2);
+	--status-sent: rgba(6, 78, 59, 0.2);
+	--status-todo: rgba(120, 53, 15, 0.2);
+	--badge-sent-bg: #064e3b;
+	--badge-sent-text: #6ee7b7;
+	--badge-todo-bg: #78350f;
+	--badge-todo-text: #fcd34d;
+}
+
+/* Light theme */
+:root.light {
+	--surface-page: #fafaf9;
+	--surface-card: #ffffff;
+	--surface-nav: #f5f5f4;
+	--surface-input: #f5f5f4;
+	--surface-hover: #f5f5f4;
+	--surface-active: #d6d3d1;
+	--border-default: #e7e5e3;
+	--border-input: #d6d3d1;
+	--text-primary: #1c1917;
+	--text-secondary: #78716c;
+	--text-tertiary: #a8a29e;
+	--status-default: #f5f5f4;
+	--status-sent: #ecfdf5;
+	--status-todo: #fffbeb;
+	--badge-sent-bg: #d1fae5;
+	--badge-sent-text: #065f46;
+	--badge-todo-bg: #fef3c7;
+	--badge-todo-text: #92400e;
+}

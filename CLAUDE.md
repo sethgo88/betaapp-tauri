@@ -61,6 +61,8 @@ src/
 - **updated_at trigger** — never set from app layer on UPDATE; trigger maintains it
 - **Soft deletes** — `deleted_at` column; all reads filter `WHERE deleted_at IS NULL`
 - **Sync: full push/pull** — push all local climbs then pull all server climbs on demand; delta sync + Realtime planned for a later phase
+- **Semantic color tokens** — all surface/text/border colors use CSS custom properties (`src/App.css`) registered via Tailwind v4 `@theme`. Dark is default; `.light` class on `:root` swaps to light palette. Never use raw `stone-*` classes for surfaces/text/borders — use token classes (`bg-surface-page`, `text-text-primary`, etc.). See `src/components/README.md` for the full token table.
+- **Theme persistence** — `ui.store` reads/writes `betaapp-theme` in localStorage; `index.html` has an inline script to apply `.light` before React loads (prevents flash)
 - **Grades seed** — `grades-seed.ts` populates `grades_cache` on first install; Supabase overrides on sync
 - **Admin role** — fetched from `user_roles` Supabase table after login; gates admin views in UI; Supabase RLS enforces on backend
 - **Supabase credentials** — `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` in `.env` / `.env.local` (gitignored)

@@ -30,7 +30,7 @@ const LocationVerificationView = () => {
 		<div className="flex flex-col gap-4">
 			<button
 				type="button"
-				className="text-stone-400 text-sm text-left"
+				className="text-text-secondary text-sm text-left"
 				onClick={() => router.history.back()}
 			>
 				← Back
@@ -38,22 +38,22 @@ const LocationVerificationView = () => {
 
 			<h1 className="text-lg font-semibold">Pending Locations</h1>
 
-			{isLoading && <p className="text-stone-400 text-sm">Loading…</p>}
+			{isLoading && <p className="text-text-secondary text-sm">Loading…</p>}
 
 			{!isLoading && items.length === 0 && (
-				<p className="text-stone-400 text-sm">No pending submissions.</p>
+				<p className="text-text-secondary text-sm">No pending submissions.</p>
 			)}
 
 			<div className="flex flex-col gap-3">
 				{items.map((item) => (
 					<div
 						key={item.id}
-						className="rounded-lg bg-stone-800 p-4 flex flex-col gap-2"
+						className="rounded-lg bg-surface-card p-4 flex flex-col gap-2"
 					>
 						<div className="flex items-start justify-between gap-2">
 							<div>
 								<p className="font-medium">{item.name}</p>
-								<p className="text-xs text-stone-400 mt-0.5">
+								<p className="text-xs text-text-secondary mt-0.5">
 									{typeLabel[item.type]} · in {item.parent_name}
 								</p>
 							</div>

@@ -25,14 +25,14 @@ const SubRegionView = () => {
 	}
 
 	if (!subRegion) {
-		return <p className="text-stone-400 text-center pt-12">Not found</p>;
+		return <p className="text-text-secondary text-center pt-12">Not found</p>;
 	}
 
 	return (
 		<div className="flex flex-col gap-3">
 			<button
 				type="button"
-				className="text-stone-400 text-sm text-left"
+				className="text-text-secondary text-sm text-left"
 				onClick={() =>
 					navigate({
 						to: "/regions/$regionId",
@@ -58,14 +58,16 @@ const SubRegionView = () => {
 			/>
 
 			{crags.length === 0 && (
-				<p className="text-stone-400 text-sm">No crags in this area yet.</p>
+				<p className="text-text-secondary text-sm">
+					No crags in this area yet.
+				</p>
 			)}
 
 			{crags.map((crag) => (
 				<button
 					key={crag.id}
 					type="button"
-					className="rounded-lg bg-stone-800 p-4 text-left flex items-center justify-between"
+					className="rounded-lg bg-surface-card p-4 text-left flex items-center justify-between"
 					onClick={() =>
 						crag.status === "pending"
 							? undefined

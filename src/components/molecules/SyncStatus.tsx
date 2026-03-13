@@ -9,7 +9,7 @@ export const SyncStatus = () => {
 	if (status === "idle" && !lastSyncedAt) return null;
 
 	if (status === "syncing") {
-		return <Loader2 size={12} className="animate-spin text-stone-400" />;
+		return <Loader2 size={12} className="animate-spin text-text-secondary" />;
 	}
 	if (status === "error") {
 		return <WifiOff size={12} className="text-red-400" />;

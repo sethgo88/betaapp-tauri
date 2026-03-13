@@ -16,7 +16,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
 	useAndroidBackButton();
 
 	return (
-		<div className="bg-stone-700 min-h-screen min-w-screen max-w-screen text-white pt-[env(safe-area-inset-top)]">
+		<div className="bg-surface-page min-h-screen min-w-screen max-w-screen text-text-primary pt-[env(safe-area-inset-top)]">
 			<div className="relative">
 				<div className="absolute top-0 left-0 right-0 pointer-events-none">
 					{toasts.map((toast) => (

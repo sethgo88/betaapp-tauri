@@ -18,7 +18,7 @@ export const FormField = ({
 	<div className={cn("flex flex-col gap-1", className)}>
 		<label
 			htmlFor={htmlFor}
-			className="text-xs text-stone-400 uppercase tracking-wide"
+			className="text-xs text-text-secondary uppercase tracking-wide"
 		>
 			{label}
 		</label>

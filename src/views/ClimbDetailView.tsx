@@ -31,7 +31,9 @@ const ClimbDetailView = () => {
 	}
 
 	if (!climb) {
-		return <p className="text-stone-400 text-center pt-12">Climb not found.</p>;
+		return (
+			<p className="text-text-secondary text-center pt-12">Climb not found.</p>
+		);
 	}
 
 	let moves: { id: string; text: string }[] = [];
@@ -65,26 +67,28 @@ const ClimbDetailView = () => {
 							<h1 className="text-2xl font-bold">{climb.name}</h1>
 							<ExternalLink
 								size={16}
-								className="text-stone-400 shrink-0 mt-1"
+								className="text-text-secondary shrink-0 mt-1"
 							/>
 						</button>
 					) : (
 						<h1 className="text-2xl font-bold">{climb.name}</h1>
 					)}
-					{location && <p className="text-sm text-stone-400">{location}</p>}
+					{location && (
+						<p className="text-sm text-text-secondary">{location}</p>
+					)}
 				</div>
 				<div className="text-right flex flex-col items-end gap-0.5">
 					<div className="flex items-baseline gap-1.5">
-						<span className="text-xs text-stone-400">Personal</span>
+						<span className="text-xs text-text-secondary">Personal</span>
 						<span className="text-lg font-semibold">{climb.grade}</span>
 					</div>
 					{linkedRoute && (
 						<div className="flex items-baseline gap-1.5">
-							<span className="text-xs text-stone-400">Official</span>
+							<span className="text-xs text-text-secondary">Official</span>
 							<span className="text-lg font-semibold">{linkedRoute.grade}</span>
 						</div>
 					)}
-					<p className="text-xs text-stone-400 capitalize">
+					<p className="text-xs text-text-secondary capitalize">
 						{climb.route_type}
 					</p>
 				</div>
@@ -94,11 +98,13 @@ const ClimbDetailView = () => {
 				<span
 					className={cn(
 						"rounded-full px-3 py-1 text-sm capitalize",
-						climb.sent_status === "sent" && "bg-emerald-900 text-emerald-300",
-						climb.sent_status === "todo" && "bg-amber-900 text-amber-300",
+						climb.sent_status === "sent" &&
+							"bg-badge-sent-bg text-badge-sent-text",
+						climb.sent_status === "todo" &&
+							"bg-badge-todo-bg text-badge-todo-text",
 						climb.sent_status !== "sent" &&
 							climb.sent_status !== "todo" &&
-							"bg-stone-800",
+							"bg-surface-card",
 					)}
 				>
 					{climb.sent_status}
@@ -117,10 +123,10 @@ const ClimbDetailView = () => {
 			</Button>
 
 			{moves.length > 0 && (
-				<div className="rounded-md bg-stone-800">
+				<div className="rounded-md bg-surface-card">
 					<button
 						type="button"
-						className="flex items-center justify-between w-full p-3 text-sm text-stone-400"
+						className="flex items-center justify-between w-full p-3 text-sm text-text-secondary"
 						onClick={() => setMovesOpen(!movesOpen)}
 					>
 						<span>Moves ({moves.length})</span>
@@ -134,7 +140,7 @@ const ClimbDetailView = () => {
 							{moves.map((move, i) => (
 								<li
 									key={move.id}
-									className="border-l border-white pl-2 text-sm"
+									className="border-l border-text-primary pl-2 text-sm"
 								>
 									{i + 1}. {move.text}
 								</li>

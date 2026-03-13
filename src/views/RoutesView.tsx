@@ -24,7 +24,9 @@ const RegionList = ({
 	} = useDownloadRegion();
 
 	if (regions.length === 0) {
-		return <p className="text-sm text-stone-500 px-2 py-1">No regions yet</p>;
+		return (
+			<p className="text-sm text-text-tertiary px-2 py-1">No regions yet</p>
+		);
 	}
 
 	return (
@@ -36,11 +38,11 @@ const RegionList = ({
 				return (
 					<div
 						key={region.id}
-						className="flex items-center justify-between py-2 px-2 rounded-lg bg-stone-700"
+						className="flex items-center justify-between py-2 px-2 rounded-lg bg-surface-page"
 					>
 						<button
 							type="button"
-							className={`text-sm text-left flex-1 ${isDownloaded ? "text-white" : "text-stone-400"}`}
+							className={`text-sm text-left flex-1 ${isDownloaded ? "text-text-primary" : "text-text-secondary"}`}
 							onClick={() =>
 								isDownloaded &&
 								navigate({
@@ -83,11 +85,13 @@ const RoutesView = () => {
 			<h1 className="text-lg font-semibold">Route Manager</h1>
 
 			{countries.length === 0 && (
-				<p className="text-stone-400 text-sm">No locations available yet.</p>
+				<p className="text-text-secondary text-sm">
+					No locations available yet.
+				</p>
 			)}
 
 			{countries.map((country) => (
-				<div key={country.id} className="rounded-lg bg-stone-800 p-4">
+				<div key={country.id} className="rounded-lg bg-surface-card p-4">
 					<button
 						type="button"
 						className="w-full flex items-center justify-between"
@@ -98,7 +102,7 @@ const RoutesView = () => {
 						}
 					>
 						<span className="font-medium">{country.name}</span>
-						<span className="text-stone-400 text-sm">{country.code}</span>
+						<span className="text-text-secondary text-sm">{country.code}</span>
 					</button>
 
 					{selectedCountryId === country.id && (

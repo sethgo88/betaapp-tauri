@@ -41,8 +41,8 @@ const LinkRouteSection = ({ climbId }: { climbId: string }) => {
 	};
 
 	return (
-		<div className="rounded-lg bg-stone-800 p-4 flex flex-col gap-3">
-			<p className="text-sm font-medium text-stone-300">Link to a route</p>
+		<div className="rounded-lg bg-surface-card p-4 flex flex-col gap-3">
+			<p className="text-sm font-medium text-text-secondary">Link to a route</p>
 			<div className="flex gap-2">
 				<input
 					type="text"
@@ -50,13 +50,13 @@ const LinkRouteSection = ({ climbId }: { climbId: string }) => {
 					onChange={(e) => setQuery(e.target.value)}
 					onKeyDown={(e) => e.key === "Enter" && handleSearch()}
 					placeholder="Search route name…"
-					className="flex-1 text-sm bg-stone-700 rounded-lg px-3 py-2 text-stone-100 placeholder-stone-500 outline-none"
+					className="flex-1 text-sm bg-surface-page rounded-lg px-3 py-2 text-text-primary placeholder-text-tertiary outline-none"
 				/>
 				<button
 					type="button"
 					disabled={!query.trim() || searching}
 					onClick={handleSearch}
-					className="text-sm px-3 py-2 rounded-lg bg-stone-600 hover:bg-stone-500 disabled:opacity-40"
+					className="text-sm px-3 py-2 rounded-lg bg-surface-active hover:bg-surface-hover disabled:opacity-40"
 				>
 					{searching ? "…" : "Search"}
 				</button>
@@ -69,22 +69,26 @@ const LinkRouteSection = ({ climbId }: { climbId: string }) => {
 							key={r.id}
 							type="button"
 							onClick={() => handleLink(r.id)}
-							className="flex items-center justify-between py-2 px-3 rounded-lg bg-stone-700 hover:bg-stone-600 text-left w-full"
+							className="flex items-center justify-between py-2 px-3 rounded-lg bg-surface-page hover:bg-surface-hover text-left w-full"
 						>
 							<div>
 								<p className="text-sm">{r.name}</p>
 								{r.walls && (
-									<p className="text-xs text-stone-400">{r.walls.name}</p>
+									<p className="text-xs text-text-secondary">{r.walls.name}</p>
 								)}
 							</div>
-							<span className="text-xs text-stone-400 ml-2">{r.grade}</span>
+							<span className="text-xs text-text-secondary ml-2">
+								{r.grade}
+							</span>
 						</button>
 					))}
 				</div>
 			)}
 
 			{results.length === 0 && query && !searching && (
-				<p className="text-xs text-stone-500">No results. Try another name.</p>
+				<p className="text-xs text-text-tertiary">
+					No results. Try another name.
+				</p>
 			)}
 		</div>
 	);
@@ -130,7 +134,9 @@ const EditClimbView = () => {
 	}
 
 	if (!climb) {
-		return <p className="text-stone-400 text-center pt-12">Climb not found.</p>;
+		return (
+			<p className="text-text-secondary text-center pt-12">Climb not found.</p>
+		);
 	}
 
 	return (

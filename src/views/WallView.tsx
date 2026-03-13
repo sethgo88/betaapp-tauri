@@ -26,14 +26,14 @@ const WallView = () => {
 	}
 
 	if (!wall) {
-		return <p className="text-stone-400 text-center pt-12">Not found</p>;
+		return <p className="text-text-secondary text-center pt-12">Not found</p>;
 	}
 
 	return (
 		<div className="flex flex-col gap-3">
 			<button
 				type="button"
-				className="text-stone-400 text-sm text-left"
+				className="text-text-secondary text-sm text-left"
 				onClick={() =>
 					navigate({
 						to: "/crags/$cragId",
@@ -59,7 +59,9 @@ const WallView = () => {
 			/>
 
 			{routes.length === 0 && (
-				<p className="text-stone-400 text-sm">No routes on this wall yet.</p>
+				<p className="text-text-secondary text-sm">
+					No routes on this wall yet.
+				</p>
 			)}
 
 			{routes.map((route) => (
@@ -67,7 +69,7 @@ const WallView = () => {
 					key={route.id}
 					type="button"
 					disabled={route.status === "pending"}
-					className="rounded-lg bg-stone-800 p-4 text-left flex items-center justify-between disabled:opacity-60"
+					className="rounded-lg bg-surface-card p-4 text-left flex items-center justify-between disabled:opacity-60"
 					onClick={() =>
 						navigate({
 							to: "/routes/$routeId",
@@ -77,8 +79,10 @@ const WallView = () => {
 				>
 					<span className="font-medium">{route.name}</span>
 					<div className="flex items-center gap-2">
-						<span className="text-xs text-stone-400">{route.grade}</span>
-						<span className="text-xs text-stone-500">{route.route_type}</span>
+						<span className="text-xs text-text-secondary">{route.grade}</span>
+						<span className="text-xs text-text-tertiary">
+							{route.route_type}
+						</span>
 						{route.status === "pending" && (
 							<span className="text-xs text-amber-400">pending</span>
 						)}
