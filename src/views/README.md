@@ -47,7 +47,7 @@ Loads `useClimbs()`. Renders search input, `FilterPanel` molecule, and filtered 
 Renders `ClimbForm` organism in "add" mode. Reads optional search params (`routeId`, `routeName`, `grade`, `routeType`) to pre-fill the form when logging a specific route from `CragView`. On success navigates to `/`.
 
 ### ClimbDetailView `/climbs/$climbId`
-Loads `useClimb(climbId)`. Displays all climb fields. Has "Edit" button → `/climbs/$climbId/edit`.
+Loads `useClimb(climbId)` and `useBurns(climbId)`. Displays all climb fields. Has "Edit" button → `/climbs/$climbId/edit`. Burns section with inline add/edit forms and soft-delete. Each burn has a date and optional notes.
 
 ### EditClimbView `/climbs/$climbId/edit`
 Loads `useClimb(climbId)`. Renders `ClimbForm` in "edit" mode with prefilled values. If `climb.route_id` is null, shows a "Link to route" search section (`useLinkClimbToRoute`). On success navigates back to detail.
