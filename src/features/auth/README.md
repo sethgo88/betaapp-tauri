@@ -12,6 +12,12 @@ UserSchema = {
   id: string          // Supabase auth.users UUID
   email: string
   role: 'user' | 'admin'
+  display_name: string | null
+  height_cm: number | null
+  ape_index_cm: number | null
+  max_redpoint_sport: string | null
+  max_redpoint_boulder: string | null
+  default_unit: 'imperial' | 'metric'   // defaults to 'imperial'
   created_at: string
   updated_at: string
   deleted_at: string | null
@@ -63,6 +69,7 @@ Role is **not** read from `public.users.role` — always fetched from `user_role
 | `sendMagicLink(email)` | `signInWithOtp` — sends magic link email; redirects to `betaapp://auth/callback` |
 | `restoreSession()` | `supabase.auth.getSession()` — call on app launch |
 | `signOut()` | Clears Supabase session |
+| `updateUserProfile(userId, profile)` | Updates profile fields in SQLite + Supabase; returns updated User |
 | `upsertLocalUser(id, email, role)` | Writes/updates the local `users` row; migrates climbs if a pre-auth UUID exists |
 | `fetchOrCreateSupabaseUser(userId, email)` | Reads role from `user_roles` → returns `'user' \| 'admin'` |
 | `initDeepLinkHandler(onSession)` | Listens for `betaapp://auth/callback`, exchanges `code` for session, calls `onSession` |

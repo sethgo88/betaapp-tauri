@@ -1,7 +1,7 @@
 import type { Session } from "@supabase/supabase-js";
 import { getDb } from "@/lib/db";
 import { supabase } from "@/lib/supabase";
-import type { User } from "./auth.schema";
+import type { UnitPreference, User } from "./auth.schema";
 
 // ── Sign in ──────────────────────────────────────────────────────────────────
 
@@ -77,6 +77,48 @@ export async function upsertLocalUser(
 
 	const rows = await db.select<User[]>("SELECT * FROM users WHERE id = ?", [
 		id,
+	]);
+	return rows[0];
+}
+
+// ── User profile ────────────────────────────────────────────────────────────
+
+export interface UserProfileUpdate {
+	display_name: string | null;
+	height_cm: number | null;
+	ape_index_cm: number | null;
+	max_redpoint_sport: string | null;
+	max_redpoint_boulder: string | null;
+	default_unit: UnitPreference;
+}
+
+export async function updateUserProfile(
+	userId: string,
+	profile: UserProfileUpdate,
+): Promise<User> {
+	const db = await getDb();
+
+	await db.execute(
+		`UPDATE users
+     SET display_name = ?, height_cm = ?, ape_index_cm = ?,
+         max_redpoint_sport = ?, max_redpoint_boulder = ?, default_unit = ?
+     WHERE id = ?`,
+		[
+			profile.display_name,
+			profile.height_cm,
+			profile.ape_index_cm,
+			profile.max_redpoint_sport,
+			profile.max_redpoint_boulder,
+			profile.default_unit,
+			userId,
+		],
+	);
+
+	// Push to Supabase
+	await supabase.from("users").update(profile).eq("id", userId);
+
+	const rows = await db.select<User[]>("SELECT * FROM users WHERE id = ?", [
+		userId,
 	]);
 	return rows[0];
 }

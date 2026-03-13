@@ -5,7 +5,10 @@ import { useState } from "react";
 import { z } from "zod";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
+import { Select } from "@/components/atoms/Select";
+import { ToggleGroup } from "@/components/atoms/ToggleGroup";
 import { SyncStatus } from "@/components/molecules/SyncStatus";
+import type { UnitPreference } from "@/features/auth/auth.schema";
 import {
 	fetchOrCreateSupabaseUser,
 	sendMagicLink,
@@ -13,10 +16,14 @@ import {
 	signIn,
 	signOut,
 	signUp,
+	type UserProfileUpdate,
+	updateUserProfile,
 	upsertLocalUser,
 } from "@/features/auth/auth.service";
 import { useAuthStore } from "@/features/auth/auth.store";
+import { useGrades } from "@/features/grades/grades.queries";
 import { useSyncStore } from "@/features/sync/sync.store";
+import { cmToFtIn, cmToIn, ftInToCm, inToCm } from "@/lib/units";
 import { useUiStore } from "@/stores/ui.store";
 
 // ── Password policy — change this to update requirements everywhere ───────────
@@ -201,6 +208,233 @@ const ForgotPasswordForm = ({
 	);
 };
 
+const AuthenticatedProfile = ({
+	user,
+	onSignOut,
+	onUserUpdate,
+}: {
+	user: NonNullable<ReturnType<typeof useAuthStore.getState>["user"]>;
+	onSignOut: () => void;
+	onUserUpdate: (
+		user: NonNullable<ReturnType<typeof useAuthStore.getState>["user"]>,
+	) => void;
+}) => {
+	const addToast = useUiStore((s) => s.addToast);
+	const unit = user.default_unit ?? "imperial";
+	const { data: sportGrades = [] } = useGrades("sport");
+	const { data: boulderGrades = [] } = useGrades("boulder");
+
+	const [displayName, setDisplayName] = useState(user.display_name ?? "");
+	const [defaultUnit, setDefaultUnit] = useState<UnitPreference>(unit);
+	const [heightFt, setHeightFt] = useState(() => {
+		if (user.height_cm == null) return "";
+		return unit === "imperial" ? String(cmToFtIn(user.height_cm).ft) : "";
+	});
+	const [heightIn, setHeightIn] = useState(() => {
+		if (user.height_cm == null) return "";
+		return unit === "imperial" ? String(cmToFtIn(user.height_cm).inches) : "";
+	});
+	const [heightCmVal, setHeightCmVal] = useState(() => {
+		if (user.height_cm == null) return "";
+		return unit === "metric" ? String(user.height_cm) : "";
+	});
+	const [apeVal, setApeVal] = useState(() => {
+		if (user.ape_index_cm == null) return "";
+		return unit === "imperial"
+			? String(cmToIn(user.ape_index_cm))
+			: String(user.ape_index_cm);
+	});
+	const [maxSport, setMaxSport] = useState(user.max_redpoint_sport ?? "");
+	const [maxBoulder, setMaxBoulder] = useState(user.max_redpoint_boulder ?? "");
+
+	const handleUnitToggle = (newUnit: UnitPreference) => {
+		if (newUnit === defaultUnit) return;
+		// Convert height
+		if (newUnit === "metric") {
+			if (heightFt !== "" || heightIn !== "") {
+				const cm = ftInToCm(Number(heightFt) || 0, Number(heightIn) || 0);
+				setHeightCmVal(String(cm));
+			}
+			setHeightFt("");
+			setHeightIn("");
+		} else {
+			if (heightCmVal !== "") {
+				const { ft, inches } = cmToFtIn(Number(heightCmVal));
+				setHeightFt(String(ft));
+				setHeightIn(String(inches));
+			}
+			setHeightCmVal("");
+		}
+		// Convert ape index
+		if (apeVal !== "") {
+			const cm =
+				defaultUnit === "imperial" ? inToCm(Number(apeVal)) : Number(apeVal);
+			setApeVal(newUnit === "imperial" ? String(cmToIn(cm)) : String(cm));
+		}
+		setDefaultUnit(newUnit);
+	};
+
+	const handleSave = async () => {
+		const heightCm =
+			defaultUnit === "imperial"
+				? heightFt !== "" || heightIn !== ""
+					? ftInToCm(Number(heightFt) || 0, Number(heightIn) || 0)
+					: null
+				: heightCmVal !== ""
+					? Number(heightCmVal)
+					: null;
+		const apeCm =
+			apeVal !== ""
+				? defaultUnit === "imperial"
+					? inToCm(Number(apeVal))
+					: Number(apeVal)
+				: null;
+
+		const profile: UserProfileUpdate = {
+			display_name: displayName || null,
+			height_cm: heightCm,
+			ape_index_cm: apeCm,
+			max_redpoint_sport: maxSport || null,
+			max_redpoint_boulder: maxBoulder || null,
+			default_unit: defaultUnit,
+		};
+
+		try {
+			const updated = await updateUserProfile(user.id, profile);
+			onUserUpdate(updated);
+			addToast({ message: "Profile saved", type: "success" });
+		} catch (err) {
+			addToast({
+				message: err instanceof Error ? err.message : "Failed to save profile",
+				type: "error",
+			});
+		}
+	};
+
+	return (
+		<div className="flex flex-col gap-4">
+			{/* Account */}
+			<div className="rounded-lg bg-stone-800 p-4 flex flex-col gap-2">
+				<p className="text-xs text-stone-400 uppercase tracking-wide">
+					Account
+				</p>
+				<p className="font-semibold">
+					{user.display_name ? `${user.display_name} — ` : ""}
+					{user.email}
+				</p>
+				{user.role === "admin" && (
+					<span className="self-start bg-emerald-700 text-xs rounded-full px-2 py-0.5">
+						Admin
+					</span>
+				)}
+				<Button variant="secondary" onClick={onSignOut}>
+					Sign out
+				</Button>
+			</div>
+
+			{/* Settings */}
+			<div className="rounded-lg bg-stone-800 p-4 flex flex-col gap-3">
+				<p className="text-xs text-stone-400 uppercase tracking-wide">
+					Settings
+				</p>
+				<div>
+					<p className="text-sm mb-1">Units</p>
+					<ToggleGroup
+						options={[
+							{ value: "imperial", label: "Imperial" },
+							{ value: "metric", label: "Metric" },
+						]}
+						value={defaultUnit}
+						onChange={(v) => handleUnitToggle(v as UnitPreference)}
+					/>
+				</div>
+			</div>
+
+			{/* Profile */}
+			<div className="rounded-lg bg-stone-800 p-4 flex flex-col gap-3">
+				<p className="text-xs text-stone-400 uppercase tracking-wide">
+					Profile
+				</p>
+				<Input
+					placeholder="Display name"
+					value={displayName}
+					onChange={(e) => setDisplayName(e.target.value)}
+				/>
+				<div>
+					<p className="text-xs text-stone-400 mb-1">Height</p>
+					{defaultUnit === "imperial" ? (
+						<div className="flex gap-2">
+							<Input
+								type="number"
+								placeholder="ft"
+								value={heightFt}
+								onChange={(e) => setHeightFt(e.target.value)}
+							/>
+							<Input
+								type="number"
+								placeholder="in"
+								value={heightIn}
+								onChange={(e) => setHeightIn(e.target.value)}
+							/>
+						</div>
+					) : (
+						<Input
+							type="number"
+							placeholder="cm"
+							value={heightCmVal}
+							onChange={(e) => setHeightCmVal(e.target.value)}
+						/>
+					)}
+				</div>
+				<div>
+					<p className="text-xs text-stone-400 mb-1">Ape index</p>
+					<Input
+						type="number"
+						placeholder={defaultUnit === "imperial" ? "in" : "cm"}
+						value={apeVal}
+						onChange={(e) => setApeVal(e.target.value)}
+					/>
+				</div>
+				<div className="flex gap-2">
+					<div className="flex-1">
+						<p className="text-xs text-stone-400 mb-1">Max redpoint (sport)</p>
+						<Select
+							value={maxSport}
+							onChange={(e) => setMaxSport(e.target.value)}
+						>
+							<option value="">—</option>
+							{sportGrades.map((g) => (
+								<option key={g.id} value={g.grade}>
+									{g.grade}
+								</option>
+							))}
+						</Select>
+					</div>
+					<div className="flex-1">
+						<p className="text-xs text-stone-400 mb-1">
+							Max redpoint (boulder)
+						</p>
+						<Select
+							value={maxBoulder}
+							onChange={(e) => setMaxBoulder(e.target.value)}
+						>
+							<option value="">—</option>
+							{boulderGrades.map((g) => (
+								<option key={g.id} value={g.grade}>
+									{g.grade}
+								</option>
+							))}
+						</Select>
+					</div>
+				</div>
+				<Button onClick={handleSave}>Save</Button>
+			</div>
+
+			<SyncStatusWell />
+		</div>
+	);
+};
+
 const ProfileView = () => {
 	const navigate = useNavigate();
 	const { user, isAuthenticated, setUser, setSession } = useAuthStore();
@@ -276,23 +510,11 @@ const ProfileView = () => {
 
 	if (isAuthenticated && user) {
 		return (
-			<div className="flex flex-col gap-4">
-				<div className="rounded-lg bg-stone-800 p-4 flex flex-col gap-2">
-					<p className="text-xs text-stone-400 uppercase tracking-wide">
-						Signed in as
-					</p>
-					<p className="font-semibold">{user.email}</p>
-					{user.role === "admin" && (
-						<span className="self-start bg-emerald-700 text-xs rounded-full px-2 py-0.5">
-							Admin
-						</span>
-					)}
-					<Button variant="secondary" onClick={handleSignOut}>
-						Sign out
-					</Button>
-				</div>
-				<SyncStatusWell />
-			</div>
+			<AuthenticatedProfile
+				user={user}
+				onSignOut={handleSignOut}
+				onUserUpdate={(u) => setUser(u)}
+			/>
 		);
 	}
 

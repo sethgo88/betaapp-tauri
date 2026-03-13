@@ -108,6 +108,16 @@ Wraps `clsx` + `tailwind-merge`. Use for all conditional Tailwind class composit
 
 ---
 
+## units.ts — imperial/metric conversion
+
+```ts
+import { cmToFt, ftToCm, cmToIn, inToCm } from '@/lib/units'
+```
+
+Helpers for converting between cm and ft/in. Used by the profile page for height and ape index inputs. All values stored as cm in the database.
+
+---
+
 ## database.types.ts
 
 Auto-generated Supabase TypeScript types. Regenerate with:
