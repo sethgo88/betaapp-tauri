@@ -1,16 +1,26 @@
 import Database from "@tauri-apps/plugin-sql";
 
-let _db: Database | null = null;
+export interface DbAdapter {
+	execute(sql: string, params?: unknown[]): Promise<unknown>;
+	select<T>(sql: string, params?: unknown[]): Promise<T>;
+}
 
-export async function getDb(): Promise<Database> {
+let _db: DbAdapter | null = null;
+
+export function setDb(adapter: DbAdapter): void {
+	_db = adapter;
+}
+
+export async function getDb(): Promise<DbAdapter> {
 	if (!_db) {
-		_db = await Database.load("sqlite:betaapp.db");
+		const db = await Database.load("sqlite:betaapp.db");
+		_db = db as unknown as DbAdapter;
 		await runMigrations(_db);
 	}
 	return _db;
 }
 
-type Migration = (db: Database) => Promise<void>;
+type Migration = (db: DbAdapter) => Promise<void>;
 
 const migrations: Migration[] = [
 	// v1: baseline schema
@@ -279,7 +289,7 @@ const migrations: Migration[] = [
 	},
 ];
 
-async function runMigrations(db: Database): Promise<void> {
+export async function runMigrations(db: DbAdapter): Promise<void> {
 	await db.execute(`
     CREATE TABLE IF NOT EXISTS schema_version (
       version INTEGER NOT NULL
