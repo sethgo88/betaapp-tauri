@@ -29,7 +29,7 @@ export const ClimbForm = ({ defaultValues, onSubmit }: ClimbFormProps) => {
 		return [{ id: uuid(), text: "" }];
 	});
 
-	const [routeType, setRouteType] = useState<RouteType>(
+	const [routeType, _setRouteType] = useState<RouteType>(
 		defaultValues?.route_type ?? "sport",
 	);
 
@@ -157,23 +157,6 @@ export const ClimbForm = ({ defaultValues, onSubmit }: ClimbFormProps) => {
 				</form.Field>
 
 				<div className="flex gap-2">
-					<form.Field name="route_type">
-						{(field) => (
-							<Select
-								value={field.state.value}
-								onChange={(e) => {
-									const val = e.target.value as RouteType;
-									field.handleChange(val);
-									setRouteType(val);
-								}}
-								name="route_type"
-							>
-								<option value="sport">Sport</option>
-								<option value="boulder">Boulder</option>
-							</Select>
-						)}
-					</form.Field>
-
 					<div className="flex flex-col gap-1 flex-1">
 						<label htmlFor="grade" className="text-xs text-stone-400">
 							Personal grade

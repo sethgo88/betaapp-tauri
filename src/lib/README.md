@@ -14,28 +14,21 @@ const rows = await db.select<MyType[]>('SELECT * FROM my_table WHERE id = ?', [i
 await db.execute('INSERT INTO my_table (id, name) VALUES (?, ?)', [id, name])
 ```
 
-`getDb()` is lazy — it opens the database connection once, runs `initSchema()` to ensure all tables exist, then returns the same instance on every subsequent call.
+`getDb()` is lazy — it opens the database connection once, runs `runMigrations()` to apply any pending schema migrations, then returns the same instance on every subsequent call.
 
-### initSchema()
+### runMigrations()
 
-Runs `CREATE TABLE IF NOT EXISTS` and `CREATE TRIGGER IF NOT EXISTS` for every table on each cold start. Safe to call multiple times (idempotent).
+Versioned migration runner. Maintains a `schema_version` table (single row) and applies each pending migration in order, incrementing the version after each one.
 
-**Adding a new column** — append a try/catch `ALTER TABLE` after the existing statements:
+**Bootstrapping existing installs** — on first run after upgrading from the old `initSchema()` pattern, if the `climbs` table already exists the runner bootstraps at v3 (the last migration already applied by the old try/catch pattern), then applies only new migrations.
 
-```ts
-try {
-    await db.execute(`ALTER TABLE climbs ADD COLUMN notes TEXT`)
-} catch {
-    // Column already exists — safe to ignore
-}
-```
-
-**Adding a new table** — append a `CREATE TABLE IF NOT EXISTS` block to `initSchema()`.
+**Adding a new migration** — append a new async function to the `migrations` array. Do not modify existing migrations.
 
 ### Tables managed by db.ts
 
 | Table | Purpose |
 |---|---|
+| `schema_version` | Single-row version counter for the migration runner |
 | `users` | Local user profile (single row per device) |
 | `climbs` | User climb log (local-first, synced to Supabase) |
 | `grades_cache` | Grade reference data (seeded + Supabase sync) |
@@ -44,6 +37,26 @@ try {
 | `routes_cache` | Route reference (downloaded per region) |
 | `downloaded_regions` | Tracks which regions have been downloaded |
 | `sync_meta` | Single-row singleton; persists `last_synced_at` for delta sync |
+| `burns` | Individual attempt/send records per climb (#14) |
+| `route_links` | External video/image/beta links attached to routes (#13) |
+| `route_images_cache` | Admin-managed route photos (read-only cache) (#11) |
+| `wall_images_cache` | Admin-managed wall photos (read-only cache) (#11) |
+| `climb_images` | User-uploaded photos per climb log entry (#12) |
+
+### Migration history
+
+| Version | Change |
+|---|---|
+| v1 | Baseline tables: users, climbs, grades/location/routes caches, downloaded_regions, sync_meta, updated_at triggers |
+| v2 | `climbs.route_id` |
+| v3 | `routes_cache.status`; `status` + `created_by` on sub_regions/crags/walls caches |
+| v4 | User profile fields: display_name, height_cm, ape_index_cm, max_redpoint_sport, max_redpoint_boulder, default_unit (#5) |
+| v5 | `description` on sub_regions/crags/walls caches (#8) |
+| v6 | `burns` table + updated_at trigger (#14) |
+| v7 | `route_links` table (#13) |
+| v8 | `route_images_cache` + `wall_images_cache` tables (#11) |
+| v9 | `climb_images` table (#12) |
+| v10 | `lat`, `lng` on crags_cache (#15) |
 
 ### Rules
 - Always use `?` positional parameters — never string interpolation (SQL injection)

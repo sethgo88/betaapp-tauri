@@ -79,6 +79,17 @@ const ClimbDetailView = () => {
 				)}
 			</div>
 
+			<Button
+				onClick={() =>
+					navigate({
+						to: "/climbs/$climbId/edit",
+						params: { climbId: climb.id },
+					})
+				}
+			>
+				Edit
+			</Button>
+
 			{moves.length > 0 && (
 				<div className="rounded-md bg-stone-800 p-3">
 					<ul className="flex flex-col gap-1">
@@ -101,17 +112,6 @@ const ClimbDetailView = () => {
 					{climb.link}
 				</a>
 			)}
-
-			<Button
-				onClick={() =>
-					navigate({
-						to: "/climbs/$climbId/edit",
-						params: { climbId: climb.id },
-					})
-				}
-			>
-				Edit
-			</Button>
 		</div>
 	);
 };

@@ -6,7 +6,7 @@
 		"useIgnoreFile": true
 	},
 	"files": {
-		"includes": ["**", "!!**/dist", "!!src/lib/database.types.ts"]
+		"includes": ["**", "!!**/dist", "!!src/lib/database.types.ts", "!!.claude"]
 	},
 	"formatter": {
 		"enabled": true,

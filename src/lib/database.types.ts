@@ -14,6 +14,91 @@ export type Database = {
   }
   public: {
     Tables: {
+      burns: {
+        Row: {
+          climb_id: string
+          created_at: string
+          date: string
+          deleted_at: string | null
+          id: string
+          notes: string | null
+          outcome: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          climb_id: string
+          created_at?: string
+          date: string
+          deleted_at?: string | null
+          id?: string
+          notes?: string | null
+          outcome?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          climb_id?: string
+          created_at?: string
+          date?: string
+          deleted_at?: string | null
+          id?: string
+          notes?: string | null
+          outcome?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "burns_climb_id_fkey"
+            columns: ["climb_id"]
+            isOneToOne: false
+            referencedRelation: "climbs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      climb_images: {
+        Row: {
+          caption: string | null
+          climb_id: string
+          created_at: string
+          deleted_at: string | null
+          id: string
+          sort_order: number
+          url: string
+          user_id: string
+        }
+        Insert: {
+          caption?: string | null
+          climb_id: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          sort_order?: number
+          url: string
+          user_id: string
+        }
+        Update: {
+          caption?: string | null
+          climb_id?: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          sort_order?: number
+          url?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "climb_images_climb_id_fkey"
+            columns: ["climb_id"]
+            isOneToOne: false
+            referencedRelation: "climbs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       climbs: {
         Row: {
           area: string | null
@@ -108,7 +193,10 @@ export type Database = {
           created_at: string
           created_by: string | null
           deleted_at: string | null
+          description: string | null
           id: string
+          lat: number | null
+          lng: number | null
           name: string
           sort_order: number
           status: string
@@ -118,7 +206,10 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null
+          description?: string | null
           id?: string
+          lat?: number | null
+          lng?: number | null
           name: string
           sort_order?: number
           status?: string
@@ -128,7 +219,10 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null
+          description?: string | null
           id?: string
+          lat?: number | null
+          lng?: number | null
           name?: string
           sort_order?: number
           status?: string
@@ -200,6 +294,82 @@ export type Database = {
           },
         ]
       }
+      route_images: {
+        Row: {
+          caption: string | null
+          created_at: string
+          id: string
+          route_id: string
+          sort_order: number
+          url: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          route_id: string
+          sort_order?: number
+          url: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          route_id?: string
+          sort_order?: number
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "route_images_route_id_fkey"
+            columns: ["route_id"]
+            isOneToOne: false
+            referencedRelation: "routes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      route_links: {
+        Row: {
+          created_at: string
+          deleted_at: string | null
+          id: string
+          link_type: string
+          route_id: string
+          title: string | null
+          url: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          link_type?: string
+          route_id: string
+          title?: string | null
+          url: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          link_type?: string
+          route_id?: string
+          title?: string | null
+          url?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "route_links_route_id_fkey"
+            columns: ["route_id"]
+            isOneToOne: false
+            referencedRelation: "routes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       routes: {
         Row: {
           created_at: string
@@ -252,6 +422,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           deleted_at: string | null
+          description: string | null
           id: string
           name: string
           region_id: string
@@ -262,6 +433,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null
+          description?: string | null
           id?: string
           name: string
           region_id: string
@@ -272,6 +444,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null
+          description?: string | null
           id?: string
           name?: string
           region_id?: string
@@ -303,12 +476,93 @@ export type Database = {
         }
         Relationships: []
       }
+      users: {
+        Row: {
+          ape_index_cm: number | null
+          created_at: string
+          default_unit: string
+          deleted_at: string | null
+          display_name: string | null
+          email: string
+          height_cm: number | null
+          id: string
+          max_redpoint_boulder: string | null
+          max_redpoint_sport: string | null
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          ape_index_cm?: number | null
+          created_at?: string
+          default_unit?: string
+          deleted_at?: string | null
+          display_name?: string | null
+          email: string
+          height_cm?: number | null
+          id: string
+          max_redpoint_boulder?: string | null
+          max_redpoint_sport?: string | null
+          role?: string
+          updated_at?: string
+        }
+        Update: {
+          ape_index_cm?: number | null
+          created_at?: string
+          default_unit?: string
+          deleted_at?: string | null
+          display_name?: string | null
+          email?: string
+          height_cm?: number | null
+          id?: string
+          max_redpoint_boulder?: string | null
+          max_redpoint_sport?: string | null
+          role?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      wall_images: {
+        Row: {
+          caption: string | null
+          created_at: string
+          id: string
+          sort_order: number
+          url: string
+          wall_id: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          sort_order?: number
+          url: string
+          wall_id: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          sort_order?: number
+          url?: string
+          wall_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wall_images_wall_id_fkey"
+            columns: ["wall_id"]
+            isOneToOne: false
+            referencedRelation: "walls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       walls: {
         Row: {
           crag_id: string
           created_at: string
           created_by: string | null
           deleted_at: string | null
+          description: string | null
           id: string
           name: string
           sort_order: number
@@ -319,6 +573,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null
+          description?: string | null
           id?: string
           name: string
           sort_order?: number
@@ -329,6 +584,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null
+          description?: string | null
           id?: string
           name?: string
           sort_order?: number
