@@ -81,6 +81,20 @@ export async function upsertLocalUser(
 	return rows[0];
 }
 
+// ── Password reset ──────────────────────────────────────────────────────────
+
+export async function sendPasswordReset(email: string): Promise<void> {
+	const { error } = await supabase.auth.resetPasswordForEmail(email, {
+		redirectTo: "betaapp://auth/callback",
+	});
+	if (error) throw error;
+}
+
+export async function updatePassword(newPassword: string): Promise<void> {
+	const { error } = await supabase.auth.updateUser({ password: newPassword });
+	if (error) throw error;
+}
+
 // ── Magic link ───────────────────────────────────────────────────────────────
 
 export async function sendMagicLink(email: string): Promise<void> {
@@ -91,7 +105,70 @@ export async function sendMagicLink(email: string): Promise<void> {
 	if (error) throw error;
 }
 
-// ── Deep link handler (magic link) ───────────────────────────────────────────
+// ── Deep link handler ────────────────────────────────────────────────────────
+
+async function handleDeepLinkUrl(
+	url: string,
+	onSession: (session: Session) => void,
+): Promise<void> {
+	console.log("[deep-link] processing:", url);
+	if (!url.startsWith("betaapp://auth/callback")) return;
+
+	const parsed = new URL(url.replace("betaapp://", "https://placeholder/"));
+
+	// PKCE flow: code in query string
+	const code = parsed.searchParams.get("code");
+	if (code) {
+		console.log("[deep-link] exchanging PKCE code");
+		const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+		if (!error && data.session) {
+			onSession(data.session);
+		} else {
+			console.error("[deep-link] code exchange failed:", error);
+		}
+		return;
+	}
+
+	// Implicit flow: tokens in hash fragment
+	const fragment = parsed.hash?.substring(1);
+	if (fragment) {
+		const hashParams = new URLSearchParams(fragment);
+		const accessToken = hashParams.get("access_token");
+		const refreshToken = hashParams.get("refresh_token");
+		if (accessToken && refreshToken) {
+			console.log("[deep-link] setting session from hash tokens");
+			const { data, error } = await supabase.auth.setSession({
+				access_token: accessToken,
+				refresh_token: refreshToken,
+			});
+			if (!error && data.session) {
+				onSession(data.session);
+			} else {
+				console.error("[deep-link] setSession failed:", error);
+			}
+			return;
+		}
+	}
+
+	console.warn("[deep-link] no code or tokens found in URL:", url);
+}
+
+export async function checkPendingDeepLink(
+	onSession: (session: Session) => void,
+): Promise<void> {
+	try {
+		const { getCurrent } = await import("@tauri-apps/plugin-deep-link");
+		const urls = await getCurrent();
+		console.log("[deep-link] getCurrent:", urls);
+		if (urls) {
+			for (const url of urls) {
+				await handleDeepLinkUrl(url, onSession);
+			}
+		}
+	} catch (err) {
+		console.error("[deep-link] getCurrent failed:", err);
+	}
+}
 
 export async function initDeepLinkHandler(
 	onSession: (session: Session) => void,
@@ -99,14 +176,7 @@ export async function initDeepLinkHandler(
 	const { onOpenUrl } = await import("@tauri-apps/plugin-deep-link");
 	const unlisten = await onOpenUrl(async (urls) => {
 		for (const url of urls) {
-			if (!url.startsWith("betaapp://auth/callback")) continue;
-			const params = new URL(url.replace("betaapp://", "https://placeholder/"));
-			const code = params.searchParams.get("code");
-			if (!code) continue;
-			const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-			if (!error && data.session) {
-				onSession(data.session);
-			}
+			await handleDeepLinkUrl(url, onSession);
 		}
 	});
 	return unlisten;

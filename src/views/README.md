@@ -14,7 +14,8 @@ Router defined in `src/router.tsx` using `createMemoryHistory` (required for And
 | `/climbs/add` | `AddClimbView` | required | New climb form; accepts optional `?routeId=&routeName=&grade=&routeType=` to pre-fill from a route |
 | `/climbs/$climbId` | `ClimbDetailView` | required | Full climb detail; navigate to edit |
 | `/climbs/$climbId/edit` | `EditClimbView` | required | Edit existing climb |
-| `/profile` | `ProfileView` | public | Login / logout; shows user info when authenticated |
+| `/profile` | `ProfileView` | public | Login / logout / forgot password; shows user info when authenticated |
+| `/reset-password` | `ResetPasswordView` | public | Set new password after tapping reset link from email |
 | `/routes` | `RoutesView` | required | Browse countries → regions; download regions |
 | `/regions/$regionId` | `RegionView` | required | Sub-regions for a region; shows download status |
 | `/crags/$cragId` | `CragView` | required | Walls → routes; tap a route to log it; "Add wall" inline form |
@@ -48,7 +49,10 @@ Loads `useClimb(climbId)`. Displays all climb fields. Has "Edit" button → `/cl
 Loads `useClimb(climbId)`. Renders `ClimbForm` in "edit" mode with prefilled values. If `climb.route_id` is null, shows a "Link to route" search section (`useLinkClimbToRoute`). On success navigates back to detail.
 
 ### ProfileView `/profile`
-Public (no auth guard). Shows login form when unauthenticated (`signIn` / `signUp`). Shows user info + logout when authenticated.
+Public (no auth guard). Shows login form when unauthenticated (`signIn` / `signUp` / `forgot password`). Shows user info + logout when authenticated.
+
+### ResetPasswordView `/reset-password`
+Public (no auth guard). Shown after user taps a password reset link from email. The `PASSWORD_RECOVERY` auth event in `App.tsx` navigates here automatically. Calls `updatePassword()` on submit, then redirects to `/profile`.
 
 ### RoutesView `/routes`
 Loads `useCountries()` and `useDownloadedRegionIds()`. Renders country list → inline region list per country. Each region shows download status and a download button. Navigates to `/regions/$regionId` on tap.

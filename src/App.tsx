@@ -1,3 +1,4 @@
+import type { Session } from "@supabase/supabase-js";
 import "./App.css";
 import {
 	QueryClient,
@@ -8,6 +9,7 @@ import { RouterProvider } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { Spinner } from "@/components/atoms/Spinner";
 import {
+	checkPendingDeepLink,
 	fetchOrCreateSupabaseUser,
 	initDeepLinkHandler,
 	restoreSession,
@@ -53,17 +55,19 @@ function Bootstrap() {
 	useEffect(() => {
 		const {
 			data: { subscription },
-		} = supabase.auth.onAuthStateChange((_event, session) => {
+		} = supabase.auth.onAuthStateChange((event, session) => {
 			setSession(session);
 			if (!session) setUser(null);
+			if (event === "PASSWORD_RECOVERY" && session) {
+				router.navigate({ to: "/reset-password" });
+			}
 		});
 		return () => subscription.unsubscribe();
 	}, [setSession, setUser]);
 
-	// Handle magic link deep link callbacks
+	// Handle deep link callbacks (magic link + password reset)
 	useEffect(() => {
-		let cleanup: (() => void) | undefined;
-		initDeepLinkHandler(async (session) => {
+		const onDeepLinkSession = async (session: Session) => {
 			setSession(session);
 			const role = await fetchOrCreateSupabaseUser(
 				session.user.id,
@@ -75,7 +79,14 @@ function Bootstrap() {
 				role,
 			);
 			setUser(localUser);
-		}).then((unlisten) => {
+		};
+
+		// Check for a deep link URL that launched/resumed the app
+		checkPendingDeepLink(onDeepLinkSession);
+
+		// Listen for future deep link URLs while the app is running
+		let cleanup: (() => void) | undefined;
+		initDeepLinkHandler(onDeepLinkSession).then((unlisten) => {
 			cleanup = unlisten;
 		});
 		return () => cleanup?.();

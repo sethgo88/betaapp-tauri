@@ -9,6 +9,7 @@ import { SyncStatus } from "@/components/molecules/SyncStatus";
 import {
 	fetchOrCreateSupabaseUser,
 	sendMagicLink,
+	sendPasswordReset,
 	signIn,
 	signOut,
 	signUp,
@@ -127,12 +128,88 @@ const MagicLinkForm = ({
 	);
 };
 
+const ForgotPasswordForm = ({
+	onSent,
+	onBack,
+	onError,
+}: {
+	onSent: () => void;
+	onBack: () => void;
+	onError: () => void;
+}) => {
+	const form = useForm({
+		defaultValues: { email: "" },
+		onSubmit: async ({ value }) => {
+			try {
+				await sendPasswordReset(value.email);
+				onSent();
+			} catch {
+				onError();
+			}
+		},
+	});
+
+	return (
+		<div className="flex flex-col gap-4">
+			<div className="rounded-lg bg-stone-800 p-4">
+				<p className="font-semibold mb-1">Forgot password</p>
+				<p className="text-sm text-stone-400">
+					Enter your email and we'll send a reset link.
+				</p>
+			</div>
+
+			<form
+				className="flex flex-col gap-3"
+				onSubmit={(e) => {
+					e.preventDefault();
+					e.stopPropagation();
+					form.handleSubmit();
+				}}
+			>
+				<form.Field
+					name="email"
+					validators={{
+						onChange: ({ value }) =>
+							EmailSchema.safeParse(value).success
+								? undefined
+								: "Valid email required",
+					}}
+				>
+					{(field) => (
+						<Input
+							type="email"
+							placeholder="your@email.com"
+							value={field.state.value}
+							onBlur={field.handleBlur}
+							onChange={(e) => field.handleChange(e.target.value)}
+							errorState={field.state.meta.errors.length > 0}
+						/>
+					)}
+				</form.Field>
+
+				<Button type="submit">Send reset link</Button>
+			</form>
+
+			<button
+				type="button"
+				className="text-sm text-stone-400 text-center"
+				onClick={onBack}
+			>
+				Back to sign in
+			</button>
+		</div>
+	);
+};
+
 const ProfileView = () => {
 	const navigate = useNavigate();
 	const { user, isAuthenticated, setUser, setSession } = useAuthStore();
 	const addToast = useUiStore((s) => s.addToast);
-	const [mode, setMode] = useState<"signin" | "signup" | "magic">("signin");
+	const [mode, setMode] = useState<"signin" | "signup" | "magic" | "forgot">(
+		"signin",
+	);
 	const [magicSent, setMagicSent] = useState(false);
+	const [resetSent, setResetSent] = useState(false);
 
 	const handleSession = async (session: Session) => {
 		setSession(session);
@@ -312,6 +389,42 @@ const ProfileView = () => {
 		);
 	}
 
+	if (mode === "forgot") {
+		if (resetSent) {
+			return (
+				<div className="flex flex-col gap-4">
+					<div className="rounded-lg bg-stone-800 p-4 flex flex-col gap-2">
+						<p className="font-semibold">Check your email</p>
+						<p className="text-sm text-stone-400">
+							A password reset link has been sent. Tap it to open the app and
+							set a new password.
+						</p>
+					</div>
+					<button
+						type="button"
+						className="text-sm text-stone-400 text-center"
+						onClick={() => setMode("signin")}
+					>
+						Back to sign in
+					</button>
+				</div>
+			);
+		}
+
+		return (
+			<ForgotPasswordForm
+				onSent={() => setResetSent(true)}
+				onBack={() => setMode("signin")}
+				onError={() =>
+					addToast({
+						message: "Failed to send reset email",
+						type: "error",
+					})
+				}
+			/>
+		);
+	}
+
 	if (mode === "magic") {
 		if (magicSent) {
 			return (
@@ -403,6 +516,17 @@ const ProfileView = () => {
 
 				<Button type="submit">Sign in</Button>
 			</form>
+
+			<button
+				type="button"
+				className="text-sm text-stone-400 text-center"
+				onClick={() => {
+					setMode("forgot");
+					setResetSent(false);
+				}}
+			>
+				Forgot password?
+			</button>
 
 			<button
 				type="button"
