@@ -26,3 +26,4 @@ target/rust-analyzer/flycheck0/
 *.sln
 *.sw?
 src-tauri/gen/android/keystore.properties
+.claude/
