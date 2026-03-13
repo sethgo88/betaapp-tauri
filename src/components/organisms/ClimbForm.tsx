@@ -3,10 +3,12 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { Select } from "@/components/atoms/Select";
+import { ToggleGroup } from "@/components/atoms/ToggleGroup";
 import {
 	ClimbFormSchema,
 	type ClimbFormValues,
 	type RouteType,
+	type SentStatus,
 } from "@/features/climbs/climbs.schema";
 import { useGrades } from "@/features/grades/grades.queries";
 
@@ -183,22 +185,19 @@ export const ClimbForm = ({ defaultValues, onSubmit }: ClimbFormProps) => {
 					</div>
 				</div>
 
-				<div className="flex gap-2">
-					<form.Field name="sent_status">
-						{(field) => (
-							<Select
-								value={field.state.value}
-								onChange={(e) =>
-									field.handleChange(e.target.value as "project" | "sent")
-								}
-								name="sent_status"
-							>
-								<option value="project">Project</option>
-								<option value="sent">Sent</option>
-							</Select>
-						)}
-					</form.Field>
-				</div>
+				<form.Field name="sent_status">
+					{(field) => (
+						<ToggleGroup
+							options={[
+								{ value: "todo", label: "Todo" },
+								{ value: "project", label: "Project" },
+								{ value: "sent", label: "Sent" },
+							]}
+							value={field.state.value}
+							onChange={(v) => field.handleChange(v as SentStatus)}
+						/>
+					)}
+				</form.Field>
 
 				<form.Field name="link">
 					{(field) => (

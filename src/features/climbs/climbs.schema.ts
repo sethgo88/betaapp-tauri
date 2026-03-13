@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const SentStatus = z.enum([
+	"todo",
 	"project",
 	"sent",
 	"redpoint",

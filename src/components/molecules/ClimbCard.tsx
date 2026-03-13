@@ -18,6 +18,7 @@ export const ClimbCard = ({ climb, onClick, onDelete }: ClimbCardProps) => {
 			className={cn(
 				"relative flex overflow-hidden bg-stone-950/20 rounded-xl p-2.5 shadow-sm cursor-pointer gap-x-4",
 				climb.sent_status === "sent" && "bg-emerald-900/20",
+				climb.sent_status === "todo" && "bg-amber-900/20",
 			)}
 		>
 			<button

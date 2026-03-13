@@ -5,6 +5,7 @@ import { Spinner } from "@/components/atoms/Spinner";
 import { useClimb } from "@/features/climbs/climbs.queries";
 import { useClimbsStore } from "@/features/climbs/climbs.store";
 import { useRoute } from "@/features/routes/routes.queries";
+import { cn } from "@/lib/cn";
 import { buildLocationString } from "@/utils/build-location-string";
 
 const ClimbDetailView = () => {
@@ -69,7 +70,16 @@ const ClimbDetailView = () => {
 			</div>
 
 			<div className="flex gap-2 flex-wrap">
-				<span className="bg-stone-800 rounded-full px-3 py-1 text-sm capitalize">
+				<span
+					className={cn(
+						"rounded-full px-3 py-1 text-sm capitalize",
+						climb.sent_status === "sent" && "bg-emerald-900 text-emerald-300",
+						climb.sent_status === "todo" && "bg-amber-900 text-amber-300",
+						climb.sent_status !== "sent" &&
+							climb.sent_status !== "todo" &&
+							"bg-stone-800",
+					)}
+				>
 					{climb.sent_status}
 				</span>
 				{climb.route_id && (

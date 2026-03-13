@@ -26,6 +26,7 @@ templates   Layout shells with no real data — just children/slots.
 | `Input` | Text input with label support |
 | `Select` | Dropdown select |
 | `Spinner` | Loading indicator |
+| `ToggleGroup` | Full-width segmented button toggle (e.g. todo/project/sent) |
 
 ### Molecules
 | Component | Purpose |
