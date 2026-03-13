@@ -1,11 +1,14 @@
-import { useNavigate, useParams, useRouter } from "@tanstack/react-router";
+import { useNavigate, useParams } from "@tanstack/react-router";
 import { useState } from "react";
-import { Button } from "@/components/atoms/Button";
+import { Spinner } from "@/components/atoms/Spinner";
+import { EditableDescription } from "@/components/molecules/EditableDescription";
+import { useAuthStore } from "@/features/auth/auth.store";
 import {
+	useCrag,
 	useSubmitWall,
+	useUpdateLocationDescription,
 	useWalls,
 } from "@/features/locations/locations.queries";
-import { useRoutes } from "@/features/routes/routes.queries";
 
 // ── Inline name form ──────────────────────────────────────────────────────────
 
@@ -52,59 +55,16 @@ const InlineAddForm = ({
 	);
 };
 
-// ── Route list ────────────────────────────────────────────────────────────────
-
-const RouteList = ({ wallId }: { wallId: string }) => {
-	const navigate = useNavigate();
-	const { data: routes = [] } = useRoutes(wallId);
-
-	if (routes.length === 0) {
-		return <p className="text-sm text-stone-500 px-2 py-1">No routes yet</p>;
-	}
-
-	return (
-		<div className="flex flex-col gap-1 mt-2">
-			{routes.map((route) => (
-				<button
-					key={route.id}
-					type="button"
-					disabled={route.status === "pending"}
-					onClick={() =>
-						navigate({
-							to: "/climbs/add",
-							search: {
-								routeId: route.id,
-								routeName: route.name,
-								grade: route.grade,
-								routeType: route.route_type as "sport" | "boulder",
-							},
-						})
-					}
-					className="flex items-center justify-between py-2 px-2 rounded-lg bg-stone-700 hover:bg-stone-600 disabled:opacity-60 w-full text-left"
-				>
-					<span className="text-sm">{route.name}</span>
-					<div className="flex items-center gap-2">
-						<span className="text-xs text-stone-400">{route.grade}</span>
-						<span className="text-xs text-stone-500">{route.route_type}</span>
-						{route.status === "pending" && (
-							<span className="text-xs text-amber-400">pending</span>
-						)}
-					</div>
-				</button>
-			))}
-		</div>
-	);
-};
-
 // ── Crag view ─────────────────────────────────────────────────────────────────
 
 const CragView = () => {
 	const { cragId } = useParams({ from: "/crags/$cragId" });
-	const router = useRouter();
 	const navigate = useNavigate();
+	const { data: crag, isLoading } = useCrag(cragId);
 	const { data: walls = [] } = useWalls(cragId);
 	const submitWall = useSubmitWall();
-	const [selectedWallId, setSelectedWallId] = useState<string | null>(null);
+	const updateDescription = useUpdateLocationDescription();
+	const isAdmin = useAuthStore((s) => s.user?.role === "admin");
 	const [showWallForm, setShowWallForm] = useState(false);
 
 	const handleAddWall = async (name: string) => {
@@ -112,55 +72,71 @@ const CragView = () => {
 		setShowWallForm(false);
 	};
 
+	if (isLoading) {
+		return (
+			<div className="flex justify-center pt-12">
+				<Spinner />
+			</div>
+		);
+	}
+
 	return (
 		<div className="flex flex-col gap-3">
 			<button
 				type="button"
 				className="text-stone-400 text-sm text-left"
-				onClick={() => router.history.back()}
+				onClick={() => {
+					if (crag?.sub_region_id) {
+						navigate({
+							to: "/sub-regions/$subRegionId",
+							params: { subRegionId: crag.sub_region_id },
+						});
+					}
+				}}
 			>
-				← Back
+				← Back to area
 			</button>
+
+			{crag && (
+				<>
+					<h1 className="text-xl font-bold">{crag.name}</h1>
+					<EditableDescription
+						description={crag.description}
+						isAdmin={isAdmin}
+						onSave={async (description) => {
+							await updateDescription.mutateAsync({
+								table: "crags",
+								id: cragId,
+								description,
+							});
+						}}
+					/>
+				</>
+			)}
 
 			{walls.length === 0 && !showWallForm && (
 				<p className="text-stone-400 text-sm">No walls in this crag yet.</p>
 			)}
 
 			{walls.map((wall) => (
-				<div key={wall.id} className="rounded-lg bg-stone-800 p-4">
-					<button
-						type="button"
-						className="w-full text-left font-medium flex items-center justify-between"
-						onClick={() =>
-							setSelectedWallId(selectedWallId === wall.id ? null : wall.id)
-						}
-					>
-						<span>{wall.name}</span>
-						{wall.status === "pending" && (
-							<span className="text-xs text-amber-400">pending</span>
-						)}
-					</button>
-
-					{selectedWallId === wall.id && (
-						<>
-							<RouteList wallId={wall.id} />
-							<Button
-								type="button"
-								variant="secondary"
-								size="small"
-								className="mt-3"
-								onClick={() =>
-									navigate({
-										to: "/routes/submit",
-										search: { wallId: wall.id, wallName: wall.name },
-									})
-								}
-							>
-								Submit a route
-							</Button>
-						</>
+				<button
+					key={wall.id}
+					type="button"
+					className="rounded-lg bg-stone-800 p-4 text-left font-medium flex items-center justify-between"
+					onClick={() =>
+						wall.status === "pending"
+							? undefined
+							: navigate({
+									to: "/walls/$wallId",
+									params: { wallId: wall.id },
+								})
+					}
+				>
+					<span>{wall.name}</span>
+					{wall.status === "pending" && (
+						<span className="text-xs text-amber-400">pending</span>
 					)}
-				</div>
+				</button>
 			))}
 
 			{showWallForm ? (

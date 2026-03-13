@@ -8,6 +8,7 @@ import {
 	mergeRoute,
 	rejectRoute,
 	submitRoute,
+	updateRouteDescription,
 	updateRouteFields,
 	verifyRoute,
 } from "./routes.service";
@@ -37,6 +38,17 @@ export function useSubmitRoute() {
 		},
 		onSuccess: (_data, values) => {
 			qc.invalidateQueries({ queryKey: ["routes", values.wall_id] });
+		},
+	});
+}
+
+export function useUpdateRouteDescription() {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: ({ id, description }: { id: string; description: string }) =>
+			updateRouteDescription(id, description),
+		onSuccess: (_data, { id }) => {
+			qc.invalidateQueries({ queryKey: ["route", id] });
 		},
 	});
 }

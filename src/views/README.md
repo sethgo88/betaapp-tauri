@@ -17,8 +17,11 @@ Router defined in `src/router.tsx` using `createMemoryHistory` (required for And
 | `/profile` | `ProfileView` | public | Login / logout / forgot password; shows user info when authenticated |
 | `/reset-password` | `ResetPasswordView` | public | Set new password after tapping reset link from email |
 | `/routes` | `RoutesView` | required | Browse countries → regions; download regions |
-| `/regions/$regionId` | `RegionView` | required | Sub-regions for a region; shows download status |
-| `/crags/$cragId` | `CragView` | required | Walls → routes; tap a route to log it; "Add wall" inline form |
+| `/regions/$regionId` | `RegionView` | required | Sub-regions for a region; tap navigates to SubRegionView |
+| `/sub-regions/$subRegionId` | `SubRegionView` | required | Crags list with admin-editable description |
+| `/crags/$cragId` | `CragView` | required | Walls list with admin-editable description; tap navigates to WallView |
+| `/walls/$wallId` | `WallView` | required | Routes list with admin-editable description; tap navigates to RouteDetailView |
+| `/routes/$routeId` | `RouteDetailView` | required | Route detail with grade, type, description; "Log this climb" button |
 | `/routes/submit` | `SubmitRouteView` | required | Submit a new route (`?wallId=&wallName=`) |
 | `/admin/locations` | `admin/LocationManagerView` | admin | Add/delete countries and regions in Supabase |
 | `/admin/locations/pending` | `admin/LocationVerificationView` | admin | Verify or reject pending sub-area/crag/wall submissions |
@@ -58,10 +61,19 @@ Public (no auth guard). Shown after user taps a password reset link from email. 
 Loads `useCountries()` and `useDownloadedRegionIds()`. Renders country list → inline region list per country. Each region shows download status and a download button. Navigates to `/regions/$regionId` on tap.
 
 ### RegionView `/regions/$regionId`
-Loads `useSubRegions(regionId)`. Lists sub-regions. Navigates to `/crags/$cragId` on tap.
+Loads `useSubRegions(regionId)`. Lists sub-regions as tappable cards. Tap navigates to `/sub-regions/$subRegionId`. Has "Add sub-area" inline form. Back button navigates to `/routes`.
+
+### SubRegionView `/sub-regions/$subRegionId`
+Loads `useSubRegion(id)` and `useCrags(subRegionId)`. Shows name, admin-editable description (`EditableDescription`), and list of crags. Tap navigates to `/crags/$cragId`. Back button navigates up to `/regions/$regionId`.
 
 ### CragView `/crags/$cragId`
-Loads `useWalls(cragId)` and `useRoutes(wallId)`. Lists walls with their routes. Tap a verified route to navigate to `/climbs/add` with route pre-filled. Has "Add wall" inline form (`useSubmitWall`) and "Submit a route" button per wall.
+Loads `useCrag(id)` and `useWalls(cragId)`. Shows name, admin-editable description, and list of walls. Tap navigates to `/walls/$wallId`. Has "Add wall" inline form (`useSubmitWall`). Back button navigates up to `/sub-regions/$subRegionId`.
+
+### WallView `/walls/$wallId`
+Loads `useWall(id)` and `useRoutes(wallId)`. Shows name, admin-editable description, and list of routes. Tap a verified route to navigate to `/routes/$routeId`. Has "Submit a route" button. Back button navigates up to `/crags/$cragId`.
+
+### RouteDetailView `/routes/$routeId`
+Loads `useRoute(id)`. Shows route name, grade, route type badge, and description. "Log this climb" button navigates to `/climbs/add` with route pre-filled. Back button navigates up to `/walls/$wallId`.
 
 ### SubmitRouteView `/routes/submit`
 Reads `wallId` and `wallName` from search params. Renders route submission form. Calls `useSubmitRoute()`. On success navigates back.

@@ -1,8 +1,6 @@
-import { useNavigate, useParams, useRouter } from "@tanstack/react-router";
+import { useNavigate, useParams } from "@tanstack/react-router";
 import { useState } from "react";
 import {
-	useCrags,
-	useSubmitCrag,
 	useSubmitSubRegion,
 	useSubRegions,
 } from "@/features/locations/locations.queries";
@@ -52,78 +50,13 @@ const InlineAddForm = ({
 	);
 };
 
-// ── Crag list with "Add crag" form ────────────────────────────────────────────
-
-const CragList = ({ subRegionId }: { subRegionId: string }) => {
-	const navigate = useNavigate();
-	const { data: crags = [] } = useCrags(subRegionId);
-	const submitCrag = useSubmitCrag();
-	const [showForm, setShowForm] = useState(false);
-
-	const handleAddCrag = async (name: string) => {
-		await submitCrag.mutateAsync({ sub_region_id: subRegionId, name });
-		setShowForm(false);
-	};
-
-	return (
-		<div className="mt-2">
-			{crags.length === 0 && !showForm && (
-				<p className="text-sm text-stone-500 px-2 py-1">No crags yet</p>
-			)}
-
-			<div className="flex flex-col gap-1">
-				{crags.map((crag) => (
-					<button
-						key={crag.id}
-						type="button"
-						className="text-sm text-left py-2 px-2 rounded-lg bg-stone-700 hover:bg-stone-600 flex items-center justify-between"
-						onClick={() =>
-							crag.status === "pending"
-								? undefined
-								: navigate({
-										to: "/crags/$cragId",
-										params: { cragId: crag.id },
-									})
-						}
-					>
-						<span>{crag.name}</span>
-						{crag.status === "pending" && (
-							<span className="text-xs text-amber-400 ml-2">pending</span>
-						)}
-					</button>
-				))}
-			</div>
-
-			{showForm ? (
-				<InlineAddForm
-					placeholder="Crag name"
-					pending={submitCrag.isPending}
-					onSubmit={handleAddCrag}
-					onCancel={() => setShowForm(false)}
-				/>
-			) : (
-				<button
-					type="button"
-					onClick={() => setShowForm(true)}
-					className="mt-2 text-xs text-stone-400 hover:text-stone-200"
-				>
-					+ Add crag
-				</button>
-			)}
-		</div>
-	);
-};
-
 // ── Region view ───────────────────────────────────────────────────────────────
 
 const RegionView = () => {
 	const { regionId } = useParams({ from: "/regions/$regionId" });
-	const router = useRouter();
+	const navigate = useNavigate();
 	const { data: subRegions = [] } = useSubRegions(regionId);
 	const submitSubRegion = useSubmitSubRegion();
-	const [selectedSubRegionId, setSelectedSubRegionId] = useState<string | null>(
-		null,
-	);
 	const [showSubRegionForm, setShowSubRegionForm] = useState(false);
 
 	const handleAddSubRegion = async (name: string) => {
@@ -136,9 +69,9 @@ const RegionView = () => {
 			<button
 				type="button"
 				className="text-stone-400 text-sm text-left"
-				onClick={() => router.history.back()}
+				onClick={() => navigate({ to: "/routes" })}
 			>
-				← Back
+				← Back to routes
 			</button>
 
 			{subRegions.length === 0 && !showSubRegionForm && (
@@ -146,24 +79,24 @@ const RegionView = () => {
 			)}
 
 			{subRegions.map((sr) => (
-				<div key={sr.id} className="rounded-lg bg-stone-800 p-4">
-					<button
-						type="button"
-						className="w-full text-left font-medium flex items-center justify-between"
-						onClick={() =>
-							setSelectedSubRegionId(
-								selectedSubRegionId === sr.id ? null : sr.id,
-							)
-						}
-					>
-						<span>{sr.name}</span>
-						{sr.status === "pending" && (
-							<span className="text-xs text-amber-400">pending</span>
-						)}
-					</button>
-
-					{selectedSubRegionId === sr.id && <CragList subRegionId={sr.id} />}
-				</div>
+				<button
+					key={sr.id}
+					type="button"
+					className="rounded-lg bg-stone-800 p-4 text-left font-medium flex items-center justify-between"
+					onClick={() =>
+						sr.status === "pending"
+							? undefined
+							: navigate({
+									to: "/sub-regions/$subRegionId",
+									params: { subRegionId: sr.id },
+								})
+					}
+				>
+					<span>{sr.name}</span>
+					{sr.status === "pending" && (
+						<span className="text-xs text-amber-400">pending</span>
+					)}
+				</button>
 			))}
 
 			{showSubRegionForm ? (

@@ -20,8 +20,11 @@ import HomeView from "@/views/HomeView";
 import ProfileView from "@/views/ProfileView";
 import RegionView from "@/views/RegionView";
 import ResetPasswordView from "@/views/ResetPasswordView";
+import RouteDetailView from "@/views/RouteDetailView";
 import RoutesView from "@/views/RoutesView";
 import SubmitRouteView from "@/views/SubmitRouteView";
+import SubRegionView from "@/views/SubRegionView";
+import WallView from "@/views/WallView";
 
 const requireAuth = () => {
 	if (!useAuthStore.getState().isAuthenticated) {
@@ -110,6 +113,27 @@ const cragRoute = createRoute({
 	component: CragView,
 });
 
+const subRegionRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/sub-regions/$subRegionId",
+	beforeLoad: requireAuth,
+	component: SubRegionView,
+});
+
+const wallRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/walls/$wallId",
+	beforeLoad: requireAuth,
+	component: WallView,
+});
+
+const routeDetailRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/routes/$routeId",
+	beforeLoad: requireAuth,
+	component: RouteDetailView,
+});
+
 const submitRouteRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/routes/submit",
@@ -152,7 +176,10 @@ const routeTree = rootRoute.addChildren([
 	routesRoute,
 	submitRouteRoute,
 	regionRoute,
+	subRegionRoute,
 	cragRoute,
+	wallRoute,
+	routeDetailRoute,
 	adminLocationsRoute,
 	adminRouteVerificationRoute,
 	adminLocationVerificationRoute,

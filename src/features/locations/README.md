@@ -24,9 +24,9 @@ Country
 ```ts
 CountrySchema    = { id, name, code, sort_order, created_at }
 RegionSchema     = { id, country_id, name, sort_order, created_at }
-SubRegionSchema  = { id, region_id, name, sort_order, status, created_by?, created_at }
-CragSchema       = { id, sub_region_id, name, sort_order, status, created_by?, created_at }
-WallSchema       = { id, crag_id, name, sort_order, status, created_by?, created_at }
+SubRegionSchema  = { id, region_id, name, description?, sort_order, status, created_by?, created_at }
+CragSchema       = { id, sub_region_id, name, description?, sort_order, status, created_by?, created_at }
+WallSchema       = { id, crag_id, name, description?, sort_order, status, created_by?, created_at }
 
 // status: 'pending' | 'verified' | 'rejected'
 ```
@@ -41,9 +41,9 @@ CREATE TABLE IF NOT EXISTS countries_cache (id, name, code, sort_order, created_
 CREATE TABLE IF NOT EXISTS regions_cache   (id, country_id, name, sort_order, created_at);
 
 -- Populated on-demand / region download
-CREATE TABLE IF NOT EXISTS sub_regions_cache (id, region_id, name, sort_order, status, created_by, created_at);
-CREATE TABLE IF NOT EXISTS crags_cache       (id, sub_region_id, name, sort_order, status, created_by, created_at);
-CREATE TABLE IF NOT EXISTS walls_cache       (id, crag_id, name, sort_order, status, created_by, created_at);
+CREATE TABLE IF NOT EXISTS sub_regions_cache (id, region_id, name, description, sort_order, status, created_by, created_at);
+CREATE TABLE IF NOT EXISTS crags_cache       (id, sub_region_id, name, description, sort_order, status, created_by, created_at);
+CREATE TABLE IF NOT EXISTS walls_cache       (id, crag_id, name, description, sort_order, status, created_by, created_at);
 
 -- Download tracking
 CREATE TABLE IF NOT EXISTS downloaded_regions (region_id TEXT PRIMARY KEY, downloaded_at TEXT);
@@ -62,6 +62,9 @@ CREATE TABLE IF NOT EXISTS downloaded_regions (region_id TEXT PRIMARY KEY, downl
 | `fetchSubRegions(regionId)` | Sub-regions for a region |
 | `fetchCrags(subRegionId)` | Crags for a sub-region |
 | `fetchWalls(cragId)` | Walls for a crag |
+| `fetchSubRegion(id)` | Single sub-region by ID |
+| `fetchCrag(id)` | Single crag by ID |
+| `fetchWall(id)` | Single wall by ID |
 | `fetchDownloadedRegionIds()` | IDs of all downloaded regions |
 
 ### Sync pulls (Supabase → cache)
@@ -101,6 +104,7 @@ Pending items are visible immediately to the submitting user; hidden from others
 | `fetchPendingLocations()` | Parallel Supabase queries for pending sub_regions, crags, and walls; sorted by date |
 | `verifyLocation(table, id)` | Sets `status='verified'` in Supabase + local cache |
 | `rejectLocation(table, id)` | Sets `status='rejected'` + `deleted_at` in Supabase; `status='rejected'` in local cache |
+| `updateLocationDescription(table, id, description)` | Admin: updates description in Supabase + local cache |
 
 `table` is `'sub_regions' | 'crags' | 'walls'`.
 
@@ -125,11 +129,15 @@ useRegions(countryId)
 useSubRegions(regionId)
 useCrags(subRegionId)
 useWalls(cragId)
+useSubRegion(id)            // single entity
+useCrag(id)                 // single entity
+useWall(id)                 // single entity
 useDownloadedRegionIds()
 useDownloadRegion()         // mutation
 useSubmitSubRegion()        // mutation — user submission
 useSubmitCrag()             // mutation — user submission
 useSubmitWall()             // mutation — user submission
+useUpdateLocationDescription() // admin mutation — { table, id, description }
 usePendingLocations()       // admin — all pending items
 useVerifyLocation()         // admin mutation — { table, id }
 useRejectLocation()         // admin mutation — { table, id }

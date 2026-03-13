@@ -50,6 +50,62 @@ export async function fetchWalls(cragId: string): Promise<Wall[]> {
 	);
 }
 
+// ── Single-entity fetches ────────────────────────────────────────────────────
+
+export async function fetchSubRegion(id: string): Promise<SubRegion | null> {
+	const db = await getDb();
+	const rows = await db.select<SubRegion[]>(
+		"SELECT * FROM sub_regions_cache WHERE id = ?",
+		[id],
+	);
+	return rows[0] ?? null;
+}
+
+export async function fetchCrag(id: string): Promise<Crag | null> {
+	const db = await getDb();
+	const rows = await db.select<Crag[]>(
+		"SELECT * FROM crags_cache WHERE id = ?",
+		[id],
+	);
+	return rows[0] ?? null;
+}
+
+export async function fetchWall(id: string): Promise<Wall | null> {
+	const db = await getDb();
+	const rows = await db.select<Wall[]>(
+		"SELECT * FROM walls_cache WHERE id = ?",
+		[id],
+	);
+	return rows[0] ?? null;
+}
+
+// ── Admin description update ─────────────────────────────────────────────────
+
+type LocationTable = "sub_regions" | "crags" | "walls";
+type LocationCacheTable = "sub_regions_cache" | "crags_cache" | "walls_cache";
+
+function cacheTableForUpdate(table: LocationTable): LocationCacheTable {
+	return `${table}_cache` as LocationCacheTable;
+}
+
+export async function updateLocationDescription(
+	table: LocationTable,
+	id: string,
+	description: string,
+): Promise<void> {
+	const { error } = await supabase
+		.from(table)
+		.update({ description })
+		.eq("id", id);
+	if (error) throw error;
+
+	const db = await getDb();
+	await db.execute(
+		`UPDATE ${cacheTableForUpdate(table)} SET description = ? WHERE id = ?`,
+		[description, id],
+	);
+}
+
 export async function fetchDownloadedRegionIds(): Promise<string[]> {
 	const db = await getDb();
 	const rows = await db.select<{ region_id: string }[]>(
@@ -118,8 +174,17 @@ export async function downloadRegion(regionId: string): Promise<void> {
 
 	for (const row of subRegions as SubRegion[]) {
 		await db.execute(
-			"INSERT INTO sub_regions_cache (id, region_id, name, sort_order, created_at) VALUES (?, ?, ?, ?, ?)",
-			[row.id, row.region_id, row.name, row.sort_order, row.created_at],
+			"INSERT INTO sub_regions_cache (id, region_id, name, description, sort_order, status, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+			[
+				row.id,
+				row.region_id,
+				row.name,
+				row.description ?? null,
+				row.sort_order,
+				row.status ?? "verified",
+				row.created_by ?? null,
+				row.created_at,
+			],
 		);
 	}
 
@@ -141,8 +206,17 @@ export async function downloadRegion(regionId: string): Promise<void> {
 	if (crags && crags.length > 0) {
 		for (const row of crags as Crag[]) {
 			await db.execute(
-				"INSERT INTO crags_cache (id, sub_region_id, name, sort_order, created_at) VALUES (?, ?, ?, ?, ?)",
-				[row.id, row.sub_region_id, row.name, row.sort_order, row.created_at],
+				"INSERT INTO crags_cache (id, sub_region_id, name, description, sort_order, status, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+				[
+					row.id,
+					row.sub_region_id,
+					row.name,
+					row.description ?? null,
+					row.sort_order,
+					row.status ?? "verified",
+					row.created_by ?? null,
+					row.created_at,
+				],
 			);
 		}
 
@@ -164,8 +238,17 @@ export async function downloadRegion(regionId: string): Promise<void> {
 		if (walls && walls.length > 0) {
 			for (const row of walls as Wall[]) {
 				await db.execute(
-					"INSERT INTO walls_cache (id, crag_id, name, sort_order, created_at) VALUES (?, ?, ?, ?, ?)",
-					[row.id, row.crag_id, row.name, row.sort_order, row.created_at],
+					"INSERT INTO walls_cache (id, crag_id, name, description, sort_order, status, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+					[
+						row.id,
+						row.crag_id,
+						row.name,
+						row.description ?? null,
+						row.sort_order,
+						row.status ?? "verified",
+						row.created_by ?? null,
+						row.created_at,
+					],
 				);
 			}
 
@@ -282,13 +365,6 @@ export async function submitWall(
 
 // ── Admin location verification ───────────────────────────────────────────────
 
-type LocationTable = "sub_regions" | "crags" | "walls";
-type LocationCacheTable = "sub_regions_cache" | "crags_cache" | "walls_cache";
-
-function cacheTableFor(table: LocationTable): LocationCacheTable {
-	return `${table}_cache` as LocationCacheTable;
-}
-
 export async function verifyLocation(
 	table: LocationTable,
 	id: string,
@@ -301,7 +377,7 @@ export async function verifyLocation(
 
 	const db = await getDb();
 	await db.execute(
-		`UPDATE ${cacheTableFor(table)} SET status = 'verified' WHERE id = ?`,
+		`UPDATE ${cacheTableForUpdate(table)} SET status = 'verified' WHERE id = ?`,
 		[id],
 	);
 }
@@ -318,7 +394,7 @@ export async function rejectLocation(
 
 	const db = await getDb();
 	await db.execute(
-		`UPDATE ${cacheTableFor(table)} SET status = 'rejected' WHERE id = ?`,
+		`UPDATE ${cacheTableForUpdate(table)} SET status = 'rejected' WHERE id = ?`,
 		[id],
 	);
 }

@@ -55,6 +55,22 @@ export async function submitRoute(
 	);
 }
 
+export async function updateRouteDescription(
+	id: string,
+	description: string,
+): Promise<void> {
+	const { error } = await supabase
+		.from("routes")
+		.update({ description })
+		.eq("id", id);
+	if (error) throw error;
+	const db = await getDb();
+	await db.execute("UPDATE routes_cache SET description = ? WHERE id = ?", [
+		description,
+		id,
+	]);
+}
+
 // ── Admin verification ────────────────────────────────────────────────────────
 
 export type UnverifiedRoute = {

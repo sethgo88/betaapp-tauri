@@ -12,11 +12,14 @@ import {
 	adminDeleteRegion,
 	downloadRegion,
 	fetchCountries,
+	fetchCrag,
 	fetchCrags,
 	fetchDownloadedRegionIds,
 	fetchPendingLocations,
 	fetchRegions,
+	fetchSubRegion,
 	fetchSubRegions,
+	fetchWall,
 	fetchWalls,
 	pullCountries,
 	pullRegions,
@@ -24,6 +27,7 @@ import {
 	submitCrag,
 	submitSubRegion,
 	submitWall,
+	updateLocationDescription,
 	verifyLocation,
 } from "./locations.service";
 
@@ -63,6 +67,55 @@ export function useWalls(cragId: string | null) {
 		queryKey: ["walls", cragId],
 		queryFn: () => fetchWalls(cragId ?? ""),
 		enabled: !!cragId,
+	});
+}
+
+// ── Single-entity hooks ───────────────────────────────────────────────────────
+
+export function useSubRegion(id: string | null) {
+	return useQuery({
+		queryKey: ["sub_region", id],
+		queryFn: () => fetchSubRegion(id ?? ""),
+		enabled: !!id,
+	});
+}
+
+export function useCrag(id: string | null) {
+	return useQuery({
+		queryKey: ["crag", id],
+		queryFn: () => fetchCrag(id ?? ""),
+		enabled: !!id,
+	});
+}
+
+export function useWall(id: string | null) {
+	return useQuery({
+		queryKey: ["wall", id],
+		queryFn: () => fetchWall(id ?? ""),
+		enabled: !!id,
+	});
+}
+
+export function useUpdateLocationDescription() {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: ({
+			table,
+			id,
+			description,
+		}: {
+			table: "sub_regions" | "crags" | "walls";
+			id: string;
+			description: string;
+		}) => updateLocationDescription(table, id, description),
+		onSuccess: (_data, { table, id }) => {
+			const keyMap = {
+				sub_regions: "sub_region",
+				crags: "crag",
+				walls: "wall",
+			} as const;
+			qc.invalidateQueries({ queryKey: [keyMap[table], id] });
+		},
 	});
 }
 
