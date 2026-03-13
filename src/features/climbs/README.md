@@ -8,7 +8,7 @@ Personal climb log. The user's primary data — local-first, synced bidirectiona
 
 ```ts
 // climbs.schema.ts
-SentStatus = 'project' | 'sent' | 'redpoint' | 'flash' | 'onsight'
+SentStatus = 'todo' | 'project' | 'sent' | 'redpoint' | 'flash' | 'onsight'
 RouteType  = 'sport' | 'boulder'
 
 ClimbSchema = {
@@ -99,6 +99,16 @@ After each mutation a **silent push** fires: `pushClimbs(userId)` runs in the ba
 interface ClimbsStore {
   selectedClimbId: string | null
   setSelectedClimbId: (id: string | null) => void
+
+  // Filter state — persists across navigation
+  searchText: string
+  setSearchText: (text: string) => void
+  filtersOpen: boolean
+  setFiltersOpen: (open: boolean) => void
+  statusFilters: Set<string>          // default: sent, project
+  toggleStatusFilter: (status: string) => void
+  typeFilters: Set<string>            // default: sport, boulder
+  toggleTypeFilter: (type: string) => void
 }
 ```
 

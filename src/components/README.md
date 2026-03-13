@@ -32,6 +32,7 @@ templates   Layout shells with no real data — just children/slots.
 | Component | Purpose |
 |---|---|
 | `ClimbCard` | Displays a single climb summary; handles tap + delete |
+| `FilterPanel` | Collapsible status/type filter checkboxes with cross-filtered counts |
 | `FormField` | Label + input/select + error message wrapper |
 | `SyncStatus` | Reads `sync.store` and renders sync state indicator |
 | `Toast` | Single toast notification; rendered by `AppLayout` |

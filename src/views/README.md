@@ -37,7 +37,7 @@ Router defined in `src/router.tsx` using `createMemoryHistory` (required for And
 ## View responsibilities
 
 ### HomeView `/`
-Loads `useClimbs()`. Renders a list of `ClimbCard` molecules. Navigates to `/climbs/$climbId` on tap. Calls `useDeleteClimb()` for inline delete.
+Loads `useClimbs()`. Renders search input, `FilterPanel` molecule, and filtered list of `ClimbCard` molecules. Filters by status (sent/project/todo), type (sport/boulder), and free-text search across name, grade, country, area, and sub-area. Filter state lives in `climbs.store` and persists across navigation. Navigates to `/climbs/$climbId` on tap. Calls `useDeleteClimb()` for inline delete.
 
 ### AddClimbView `/climbs/add`
 Renders `ClimbForm` organism in "add" mode. Reads optional search params (`routeId`, `routeName`, `grade`, `routeType`) to pre-fill the form when logging a specific route from `CragView`. On success navigates to `/`.
