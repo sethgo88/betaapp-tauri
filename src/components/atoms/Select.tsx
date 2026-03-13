@@ -12,7 +12,7 @@ export const Select = (props: SelectProps) => {
 	return (
 		<div
 			className={cn(
-				"rounded-md bg-surface-input p-2 font-bold w-full text-text-primary",
+				"rounded-[--radius-md] bg-surface-input p-2.5 font-medium w-full text-text-primary",
 				className,
 			)}
 		>

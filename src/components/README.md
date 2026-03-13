@@ -112,29 +112,58 @@ const form = useForm({
 
 ---
 
-## Tailwind — semantic color tokens
+## Design preset system
+
+The app uses a **design preset** infrastructure for visual styling. The current preset is "Earth" — warm browns, greens, and amber inspired by the natural world of climbing.
+
+### Font pairing
+
+**Lora** (serif) — display font for page titles, route/climb names, grade displays, section headings. Self-hosted woff2 in `public/fonts/`.
+
+**Source Sans 3** (sans-serif) — body font for text, labels, buttons, form fields. Self-hosted woff2 in `public/fonts/`.
+
+Usage:
+- `font-display` — Lora (headings, climb/route names, grades)
+- `font-body` — Source Sans 3 (set on `body`, used by default)
+
+### Semantic color tokens
 
 Colors are defined as CSS custom properties in `src/App.css` and registered via Tailwind v4's `@theme` directive. Dark mode is the default; light mode activates when `:root` has the `.light` class.
 
 **Never use raw stone-* classes for surfaces, text, or borders.** Use the semantic tokens:
 
-| Token class | Dark maps to | Light maps to |
+| Token class | Dark hex | Light hex |
 |---|---|---|
-| `bg-surface-page` | stone-700 | stone-50 |
-| `bg-surface-card` | stone-800 | white |
-| `bg-surface-nav` | stone-900 | stone-100 |
-| `bg-surface-input` | stone-800 | stone-100 |
-| `bg-surface-hover` | stone-700 | stone-100 |
-| `bg-surface-active` | stone-600 | stone-300 |
-| `border-border-default` | stone-700 | stone-200 |
-| `border-border-input` | stone-900 | stone-300 |
-| `text-text-primary` | white | stone-900 |
-| `text-text-secondary` | stone-400 | stone-500 |
-| `text-text-tertiary` | stone-500 | stone-400 |
+| `bg-surface-page` | `#3b3228` | `#faf6f1` |
+| `bg-surface-card` | `#2a2420` | `#ffffff` |
+| `bg-surface-nav` | `#1e1a16` | `#f5efe8` |
+| `bg-surface-input` | `#2a2420` | `#f5efe8` |
+| `bg-surface-hover` | `#3b3228` | `#f0e9e0` |
+| `bg-surface-active` | `#4a3f34` | `#e0d6ca` |
+| `border-border-default` | `#4a3f34` | `#e0d6ca` |
+| `border-border-input` | `#1e1a16` | `#d4c9bc` |
+| `text-text-primary` | `#f5f0eb` | `#2a2420` |
+| `text-text-secondary` | `#b5a99b` | `#78716c` |
+| `text-text-tertiary` | `#8a7e72` | `#a8a29e` |
+
+### Accent tokens
+
+| Token class | Value | Usage |
+|---|---|---|
+| `bg-accent-primary` / `text-accent-primary` | `#059669` (emerald-600) | Primary actions, active nav, checkboxes |
+| `bg-accent-secondary` / `text-accent-secondary` | `#d97706` (amber-600) | Secondary buttons, secondary actions |
 
 Status and badge tokens (`status-default`, `status-sent`, `status-todo`, `badge-sent-bg`, etc.) are also available — see `App.css` for the full list.
 
-Accent colors (emerald, amber, red) stay as raw Tailwind classes — they have good contrast in both themes. Use `text-white` only on colored button backgrounds (e.g. `bg-emerald-600 text-white`).
+### Preset tokens
+
+| Token | Usage |
+|---|---|
+| `--radius-sm/md/lg/xl/full` | Border radius via `rounded-[--radius-md]` etc. |
+| `shadow-card` / `shadow-elevated` / `shadow-toast` | Shadows via `shadow-card` etc. |
+| `border-card-border` | Card/toast border color |
+
+Future presets (Glass, Minimal) override these same CSS variables — no component changes needed.
 
 ---
 

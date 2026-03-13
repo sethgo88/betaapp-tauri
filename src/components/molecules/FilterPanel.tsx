@@ -23,7 +23,7 @@ const FilterCheckbox = ({
 			type="checkbox"
 			checked={checked}
 			onChange={onChange}
-			className="accent-emerald-500 w-4 h-4"
+			className="accent-accent-primary w-4 h-4"
 		/>
 		<span>
 			{label} ({count})
@@ -68,7 +68,7 @@ export const FilterPanel = ({ climbs }: FilterPanelProps) => {
 			</button>
 
 			{filtersOpen && (
-				<div className="mt-2 flex flex-col gap-3 rounded-lg bg-surface-card p-3">
+				<div className="mt-2 flex flex-col gap-3 rounded-[--radius-lg] bg-surface-card border border-card-border p-3">
 					<div>
 						<p className="text-xs text-text-secondary uppercase tracking-wide mb-1">
 							Status

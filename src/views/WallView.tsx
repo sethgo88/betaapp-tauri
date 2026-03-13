@@ -44,7 +44,7 @@ const WallView = () => {
 				← Back to crag
 			</button>
 
-			<h1 className="text-xl font-bold">{wall.name}</h1>
+			<h1 className="text-xl font-display font-bold">{wall.name}</h1>
 
 			<EditableDescription
 				description={wall.description}

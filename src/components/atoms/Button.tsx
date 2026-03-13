@@ -12,9 +12,10 @@ interface ButtonProps extends BaseButtonAttributes {
 }
 
 const variantClasses: Record<ButtonVariant, string> = {
-	primary: "bg-emerald-600 text-white hover:bg-emerald-700",
-	secondary: "bg-zinc-600 text-white hover:bg-zinc-700",
-	outlined: "border-2 border-emerald-600 text-emerald-600 hover:bg-emerald-50",
+	primary: "bg-accent-primary text-white hover:bg-accent-primary/90",
+	secondary: "bg-accent-secondary text-white hover:bg-accent-secondary/90",
+	outlined:
+		"border-2 border-accent-primary text-accent-primary hover:bg-accent-primary/10",
 	unstyled: "text-text-primary",
 };
 
@@ -29,7 +30,7 @@ export const Button = (props: ButtonProps) => {
 	return (
 		<button
 			className={cn(
-				"cursor-pointer rounded-md font-medium transition-colors",
+				"cursor-pointer rounded-[--radius-md] font-semibold transition-colors",
 				variantClasses[variant],
 				size && sizeClasses[size],
 				className,

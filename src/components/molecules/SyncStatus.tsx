@@ -14,5 +14,5 @@ export const SyncStatus = () => {
 	if (status === "error") {
 		return <WifiOff size={12} className="text-red-400" />;
 	}
-	return <CheckCircle size={12} className="text-emerald-500" />;
+	return <CheckCircle size={12} className="text-accent-primary" />;
 };

@@ -49,7 +49,7 @@ const SearchView = () => {
 						type="checkbox"
 						checked={showLocations}
 						onChange={() => setShowLocations(!showLocations)}
-						className="accent-emerald-500 w-4 h-4"
+						className="accent-accent-primary w-4 h-4"
 					/>
 					<span>Locations</span>
 				</label>
@@ -58,7 +58,7 @@ const SearchView = () => {
 						type="checkbox"
 						checked={showRoutes}
 						onChange={() => setShowRoutes(!showRoutes)}
-						className="accent-emerald-500 w-4 h-4"
+						className="accent-accent-primary w-4 h-4"
 					/>
 					<span>Routes</span>
 				</label>

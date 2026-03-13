@@ -43,7 +43,7 @@ const SubRegionView = () => {
 				← Back to region
 			</button>
 
-			<h1 className="text-xl font-bold">{subRegion.name}</h1>
+			<h1 className="text-xl font-display font-bold">{subRegion.name}</h1>
 
 			<EditableDescription
 				description={subRegion.description}

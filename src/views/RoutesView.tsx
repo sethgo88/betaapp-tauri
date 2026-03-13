@@ -54,7 +54,7 @@ const RegionList = ({
 							{region.name}
 						</button>
 						{isDownloaded ? (
-							<span className="text-xs text-emerald-400">Downloaded</span>
+							<span className="text-xs text-accent-primary">Downloaded</span>
 						) : (
 							<Button
 								type="button"
@@ -82,7 +82,7 @@ const RoutesView = () => {
 
 	return (
 		<div className="flex flex-col gap-3">
-			<h1 className="text-lg font-semibold">Route Manager</h1>
+			<h1 className="text-lg font-display font-semibold">Route Manager</h1>
 
 			{countries.length === 0 && (
 				<p className="text-text-secondary text-sm">

@@ -61,7 +61,7 @@ const SubmitRouteView = () => {
 			</button>
 
 			<div className="rounded-lg bg-surface-card p-4">
-				<p className="font-semibold">Submit a route</p>
+				<p className="font-display font-semibold">Submit a route</p>
 				<p className="text-sm text-text-secondary mt-1">Wall: {wallName}</p>
 			</div>
 
@@ -132,7 +132,7 @@ const SubmitRouteView = () => {
 							onBlur={field.handleBlur}
 							onChange={(e) => field.handleChange(e.target.value)}
 							rows={3}
-							className="rounded-lg bg-surface-input p-2 font-bold outline-0 w-full border border-border-input resize-none text-text-primary"
+							className="rounded-[--radius-lg] bg-surface-input p-2.5 font-medium outline-0 w-full border border-border-input focus:border-accent-primary transition-colors resize-none text-text-primary"
 						/>
 					)}
 				</form.Field>

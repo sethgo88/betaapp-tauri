@@ -27,7 +27,7 @@ export const Drawer = ({ isOpen, onClose }: DrawerProps) => {
 				className="fixed inset-0 bg-black/60 z-40 w-full cursor-default"
 				onClick={onClose}
 			/>
-			<div className="fixed top-0 right-0 bottom-0 w-64 bg-surface-nav z-50 flex flex-col pt-[env(safe-area-inset-top)]">
+			<div className="fixed top-0 right-0 bottom-0 w-64 bg-surface-nav border-l border-card-border z-50 flex flex-col pt-[env(safe-area-inset-top)]">
 				<div className="flex items-center justify-between p-4 border-b border-border-default">
 					<div className="flex items-center gap-2">
 						<Menu size={18} />

@@ -331,7 +331,7 @@ const RouteVerificationView = () => {
 				← Back
 			</button>
 
-			<h1 className="text-lg font-semibold">Route Verification</h1>
+			<h1 className="text-lg font-display font-semibold">Route Verification</h1>
 
 			{isLoading && <p className="text-text-secondary text-sm">Loading…</p>}
 

@@ -61,7 +61,9 @@ src/
 - **updated_at trigger** — never set from app layer on UPDATE; trigger maintains it
 - **Soft deletes** — `deleted_at` column; all reads filter `WHERE deleted_at IS NULL`
 - **Sync: full push/pull** — push all local climbs then pull all server climbs on demand; delta sync + Realtime planned for a later phase
-- **Semantic color tokens** — all surface/text/border colors use CSS custom properties (`src/App.css`) registered via Tailwind v4 `@theme`. Dark is default; `.light` class on `:root` swaps to light palette. Never use raw `stone-*` classes for surfaces/text/borders — use token classes (`bg-surface-page`, `text-text-primary`, etc.). See `src/components/README.md` for the full token table.
+- **Semantic color tokens** — all surface/text/border colors use CSS custom properties (`src/App.css`) registered via Tailwind v4 `@theme`. Dark is default; `.light` class on `:root` swaps to light palette. Never use raw `stone-*` classes for surfaces/text/borders — use token classes (`bg-surface-page`, `text-text-primary`, etc.). Accent colors use `accent-primary` (emerald) and `accent-secondary` (amber) tokens — never raw `emerald-*`/`zinc-*` for buttons. See `src/components/README.md` for the full token table.
+- **Design preset system** — typography, radius, shadows, and card borders are driven by CSS custom properties (`--font-display`, `--font-body`, `--radius-*`, `--shadow-*`, `--card-border`). Current preset is "Earth" (warm browns + serif/sans-serif pairing). Future presets override the same variables with no component changes.
+- **Font pairing** — Lora (serif, `font-display`) for headings/names/grades + Source Sans 3 (sans-serif, `font-body`) for body text. Self-hosted woff2 in `public/fonts/` (~111KB total). No Google Fonts CDN.
 - **Theme persistence** — `ui.store` reads/writes `betaapp-theme` in localStorage; `index.html` has an inline script to apply `.light` before React loads (prevents flash)
 - **Grades seed** — `grades-seed.ts` populates `grades_cache` on first install; Supabase overrides on sync
 - **Admin role** — fetched from `user_roles` Supabase table after login; gates admin views in UI; Supabase RLS enforces on backend

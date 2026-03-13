@@ -54,6 +54,23 @@ useAndroidBackButton()
 
 ---
 
+## useCurrentRoute
+
+**File:** `useCurrentRoute.ts`
+**Call from:** `NavBar` — used to highlight the active tab.
+
+```ts
+import { useCurrentRoute } from '@/hooks/useCurrentRoute'
+
+const currentRoute = useCurrentRoute() // e.g. "/" or "/search"
+```
+
+**What it does:**
+- Returns the current pathname from TanStack Router state via `useRouterState`
+- Used by `NavBar` to apply `text-accent-primary` to the active icon
+
+---
+
 ## Planned hooks
 
 | Hook | Purpose |

@@ -23,7 +23,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
 						<Toast key={toast.id} {...toast} />
 					))}
 				</div>
-				<main className="pt-4 px-[1vh] pb-[calc(7vh+1rem)]">{children}</main>
+				<main className="pt-4 px-4 pb-[calc(7vh+1.5rem)]">{children}</main>
 			</div>
 			<NavBar onMenuOpen={() => setDrawerOpen(true)} />
 			<Drawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} />

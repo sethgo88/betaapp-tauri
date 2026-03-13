@@ -326,7 +326,7 @@ const AuthenticatedProfile = ({
 					{user.email}
 				</p>
 				{user.role === "admin" && (
-					<span className="self-start bg-emerald-700 text-white text-xs rounded-full px-2 py-0.5">
+					<span className="self-start bg-accent-primary text-white text-xs rounded-full px-2 py-0.5">
 						Admin
 					</span>
 				)}

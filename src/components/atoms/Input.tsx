@@ -12,7 +12,7 @@ export const Input = (props: InputProps) => {
 	return (
 		<input
 			className={cn(
-				"rounded-lg bg-surface-input p-2 font-bold outline-0 w-full border border-border-input text-text-primary",
+				"rounded-[--radius-lg] bg-surface-input p-2.5 font-medium outline-0 w-full border border-border-input text-text-primary focus:border-accent-primary transition-colors",
 				errorState && "border-red-500 placeholder:text-red-400",
 				className,
 			)}
