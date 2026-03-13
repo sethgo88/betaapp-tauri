@@ -22,6 +22,7 @@ import RegionView from "@/views/RegionView";
 import ResetPasswordView from "@/views/ResetPasswordView";
 import RouteDetailView from "@/views/RouteDetailView";
 import RoutesView from "@/views/RoutesView";
+import SearchView from "@/views/SearchView";
 import SubmitRouteView from "@/views/SubmitRouteView";
 import SubRegionView from "@/views/SubRegionView";
 import WallView from "@/views/WallView";
@@ -90,6 +91,13 @@ const resetPasswordRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/reset-password",
 	component: ResetPasswordView,
+});
+
+const searchRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/search",
+	beforeLoad: requireAuth,
+	component: SearchView,
 });
 
 const routesRoute = createRoute({
@@ -173,6 +181,7 @@ const routeTree = rootRoute.addChildren([
 	editClimbRoute,
 	profileRoute,
 	resetPasswordRoute,
+	searchRoute,
 	routesRoute,
 	submitRouteRoute,
 	regionRoute,

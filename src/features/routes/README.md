@@ -61,6 +61,8 @@ Only populated when the user downloads a region (see [`locations/README.md`](../
 | `fetchRoutes(wallId)` | Reads `routes_cache` for a wall, ordered by name |
 | `submitRoute(values, userId)` | Inserts into Supabase `routes` (unverified) + local `routes_cache` |
 | `searchVerifiedRoutes(query)` | Full-text search against Supabase `routes` (verified only, limit 10) |
+| `searchLocalRoutes(query)` | LIKE search on local `routes_cache` by name or grade (verified only, limit 30) |
+| `updateRouteDescription(id, description)` | Updates description in Supabase + local cache |
 
 ### Admin-only
 
@@ -79,6 +81,8 @@ Only populated when the user downloads a region (see [`locations/README.md`](../
 ```ts
 useRoute(id)               // single route from local cache (null if not found)
 useRoutes(wallId)          // routes for a wall from local cache
+useSearchLocalRoutes(query) // LIKE search on local cache (min 2 chars)
+useUpdateRouteDescription() // mutation — { id, description }
 useSubmitRoute()           // mutation
 useUnverifiedRoutes()      // admin — from Supabase
 useVerifyRoute()           // admin mutation

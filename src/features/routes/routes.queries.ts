@@ -7,6 +7,7 @@ import {
 	fetchUnverifiedRoutes,
 	mergeRoute,
 	rejectRoute,
+	searchLocalRoutes,
 	submitRoute,
 	updateRouteDescription,
 	updateRouteFields,
@@ -39,6 +40,14 @@ export function useSubmitRoute() {
 		onSuccess: (_data, values) => {
 			qc.invalidateQueries({ queryKey: ["routes", values.wall_id] });
 		},
+	});
+}
+
+export function useSearchLocalRoutes(query: string) {
+	return useQuery({
+		queryKey: ["search_local_routes", query],
+		queryFn: () => searchLocalRoutes(query),
+		enabled: query.length >= 2,
 	});
 }
 

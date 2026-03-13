@@ -24,6 +24,7 @@ import {
 	pullCountries,
 	pullRegions,
 	rejectLocation,
+	searchLocations,
 	submitCrag,
 	submitSubRegion,
 	submitWall,
@@ -116,6 +117,14 @@ export function useUpdateLocationDescription() {
 			} as const;
 			qc.invalidateQueries({ queryKey: [keyMap[table], id] });
 		},
+	});
+}
+
+export function useSearchLocations(query: string) {
+	return useQuery({
+		queryKey: ["search_locations", query],
+		queryFn: () => searchLocations(query),
+		enabled: query.length >= 2,
 	});
 }
 

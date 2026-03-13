@@ -114,6 +114,40 @@ export async function fetchDownloadedRegionIds(): Promise<string[]> {
 	return rows.map((r) => r.region_id);
 }
 
+// ── Search (local cache only) ─────────────────────────────────────────────────
+
+export type LocationSearchResult = {
+	id: string;
+	name: string;
+	kind: "sub_region" | "crag" | "wall";
+};
+
+export async function searchLocations(
+	query: string,
+): Promise<LocationSearchResult[]> {
+	const db = await getDb();
+	const like = `%${query}%`;
+	const [subRegions, crags, walls] = await Promise.all([
+		db.select<{ id: string; name: string }[]>(
+			"SELECT id, name FROM sub_regions_cache WHERE name LIKE ? ORDER BY name ASC LIMIT 20",
+			[like],
+		),
+		db.select<{ id: string; name: string }[]>(
+			"SELECT id, name FROM crags_cache WHERE name LIKE ? ORDER BY name ASC LIMIT 20",
+			[like],
+		),
+		db.select<{ id: string; name: string }[]>(
+			"SELECT id, name FROM walls_cache WHERE name LIKE ? ORDER BY name ASC LIMIT 20",
+			[like],
+		),
+	]);
+	return [
+		...subRegions.map((r) => ({ ...r, kind: "sub_region" as const })),
+		...crags.map((r) => ({ ...r, kind: "crag" as const })),
+		...walls.map((r) => ({ ...r, kind: "wall" as const })),
+	].sort((a, b) => a.name.localeCompare(b.name));
+}
+
 // ── Sync pulls ────────────────────────────────────────────────────────────────
 
 export async function pullCountries(): Promise<void> {

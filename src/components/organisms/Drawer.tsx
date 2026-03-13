@@ -1,5 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
-import { MapPin, Menu, X } from "lucide-react";
+import { CircleUser, MapPin, Menu, X } from "lucide-react";
 import { useAuthStore } from "@/features/auth/auth.store";
 
 interface DrawerProps {
@@ -45,7 +45,16 @@ export const Drawer = ({ isOpen, onClose }: DrawerProps) => {
 						onClick={() => handleNav("/routes")}
 					>
 						<MapPin size={18} />
-						<span>Routes</span>
+						<span>Route Manager</span>
+					</button>
+
+					<button
+						type="button"
+						className="flex items-center gap-3 py-3 px-2 text-left rounded-lg hover:bg-stone-800"
+						onClick={() => handleNav("/profile")}
+					>
+						<CircleUser size={18} />
+						<span>Profile</span>
 					</button>
 
 					{isAdmin && (

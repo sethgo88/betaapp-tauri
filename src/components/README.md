@@ -42,7 +42,7 @@ templates   Layout shells with no real data — just children/slots.
 | Component | Purpose |
 |---|---|
 | `ClimbForm` | Full add/edit form — used by both `AddClimbView` and `EditClimbView` |
-| `NavBar` | Bottom navigation bar with route tabs |
+| `NavBar` | Bottom navigation bar: Home, Add, Search, Menu |
 | `Drawer` | Slide-up modal sheet |
 
 ### Templates

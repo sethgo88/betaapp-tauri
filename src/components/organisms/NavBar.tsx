@@ -1,5 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
-import { CircleUser, Home, Menu, PlusSquare } from "lucide-react";
+import { Home, Menu, PlusSquare, Search } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 
 interface NavBarProps {
@@ -33,9 +33,9 @@ export const NavBar = ({ onMenuOpen }: NavBarProps) => {
 				variant="unstyled"
 				type="button"
 				className="w-full text-center"
-				onClick={() => navigate({ to: "/profile" })}
+				onClick={() => navigate({ to: "/search" })}
 			>
-				<CircleUser className="mx-auto" size={22} />
+				<Search className="mx-auto" size={22} />
 			</Button>
 
 			<Button

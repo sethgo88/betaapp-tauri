@@ -55,6 +55,15 @@ export async function submitRoute(
 	);
 }
 
+export async function searchLocalRoutes(query: string): Promise<Route[]> {
+	const db = await getDb();
+	const like = `%${query}%`;
+	return db.select<Route[]>(
+		"SELECT * FROM routes_cache WHERE (name LIKE ? OR grade LIKE ?) AND status = 'verified' ORDER BY name ASC LIMIT 30",
+		[like, like],
+	);
+}
+
 export async function updateRouteDescription(
 	id: string,
 	description: string,

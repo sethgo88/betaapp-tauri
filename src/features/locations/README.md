@@ -66,6 +66,7 @@ CREATE TABLE IF NOT EXISTS downloaded_regions (region_id TEXT PRIMARY KEY, downl
 | `fetchCrag(id)` | Single crag by ID |
 | `fetchWall(id)` | Single wall by ID |
 | `fetchDownloadedRegionIds()` | IDs of all downloaded regions |
+| `searchLocations(query)` | LIKE search across sub_regions/crags/walls cache; returns typed results with `kind` |
 
 ### Sync pulls (Supabase → cache)
 
@@ -137,6 +138,7 @@ useDownloadRegion()         // mutation
 useSubmitSubRegion()        // mutation — user submission
 useSubmitCrag()             // mutation — user submission
 useSubmitWall()             // mutation — user submission
+useSearchLocations(query)      // LIKE search across location caches (min 2 chars)
 useUpdateLocationDescription() // admin mutation — { table, id, description }
 usePendingLocations()       // admin — all pending items
 useVerifyLocation()         // admin mutation — { table, id }

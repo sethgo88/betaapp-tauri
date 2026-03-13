@@ -16,7 +16,8 @@ Router defined in `src/router.tsx` using `createMemoryHistory` (required for And
 | `/climbs/$climbId/edit` | `EditClimbView` | required | Edit existing climb |
 | `/profile` | `ProfileView` | public | Login / logout / forgot password; shows user info when authenticated |
 | `/reset-password` | `ResetPasswordView` | public | Set new password after tapping reset link from email |
-| `/routes` | `RoutesView` | required | Browse countries → regions; download regions |
+| `/search` | `SearchView` | required | Real-time search across downloaded locations and routes |
+| `/routes` | `RoutesView` | required | Route Manager — browse countries → regions; download regions |
 | `/regions/$regionId` | `RegionView` | required | Sub-regions for a region; tap navigates to SubRegionView |
 | `/sub-regions/$subRegionId` | `SubRegionView` | required | Crags list with admin-editable description |
 | `/crags/$cragId` | `CragView` | required | Walls list with admin-editable description; tap navigates to WallView |
@@ -57,8 +58,11 @@ Public (no auth guard). Shows login form when unauthenticated (`signIn` / `signU
 ### ResetPasswordView `/reset-password`
 Public (no auth guard). Shown after user taps a password reset link from email. The `PASSWORD_RECOVERY` auth event in `App.tsx` navigates here automatically. Calls `updatePassword()` on submit, then redirects to `/profile`.
 
+### SearchView `/search`
+Real-time search across all downloaded locations (sub-regions, crags, walls) and routes. Two checkboxes filter by Locations and Routes. Minimum 2 characters to search. Results link to their respective detail views. Local SQLite cache only — no network requests.
+
 ### RoutesView `/routes`
-Loads `useCountries()` and `useDownloadedRegionIds()`. Renders country list → inline region list per country. Each region shows download status and a download button. Navigates to `/regions/$regionId` on tap.
+Route Manager. Loads `useCountries()` and `useDownloadedRegionIds()`. Renders country list → inline region list per country. Each region shows download status and a download button. Navigates to `/regions/$regionId` on tap.
 
 ### RegionView `/regions/$regionId`
 Loads `useSubRegions(regionId)`. Lists sub-regions as tappable cards. Tap navigates to `/sub-regions/$subRegionId`. Has "Add sub-area" inline form. Back button navigates to `/routes`.

@@ -80,7 +80,7 @@ const RoutesView = () => {
 
 	return (
 		<div className="flex flex-col gap-3">
-			<h1 className="text-lg font-semibold">Routes</h1>
+			<h1 className="text-lg font-semibold">Route Manager</h1>
 
 			{countries.length === 0 && (
 				<p className="text-stone-400 text-sm">No locations available yet.</p>
