@@ -1,5 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
+import type { Burn } from "@/features/burns/burns.schema";
+import { applyRemoteBurn } from "@/features/burns/burns.service";
 import type { Climb } from "@/features/climbs/climbs.schema";
 import { applyRemoteClimb } from "@/features/climbs/climbs.service";
 import { pullGrades } from "@/features/grades/grades.service";
@@ -9,7 +11,9 @@ import {
 } from "@/features/locations/locations.service";
 import {
 	getSyncMeta,
+	pullBurns,
 	pullClimbs,
+	pushBurns,
 	pushClimbs,
 	setSyncMeta,
 } from "@/features/sync/sync.service";
@@ -34,6 +38,8 @@ export function useSync(userId: string | undefined) {
 
 				await pushClimbs(userId, since);
 				await pullClimbs(userId, since);
+				await pushBurns(userId, since);
+				await pullBurns(userId, since);
 				await pullGrades();
 				await pullCountries();
 				await pullRegions();
@@ -42,6 +48,7 @@ export function useSync(userId: string | undefined) {
 				await setSyncMeta(now);
 
 				queryClient.invalidateQueries({ queryKey: ["climbs"] });
+				queryClient.invalidateQueries({ queryKey: ["burns"] });
 				queryClient.invalidateQueries({ queryKey: ["grades"] });
 				queryClient.invalidateQueries({ queryKey: ["countries"] });
 				queryClient.invalidateQueries({ queryKey: ["regions"] });
@@ -57,7 +64,7 @@ export function useSync(userId: string | undefined) {
 		// Realtime subscription — applies live server changes between manual syncs.
 		// Handles INSERT and UPDATE events (soft deletes arrive as UPDATE with deleted_at set).
 		const channel = supabase
-			.channel("climbs-realtime")
+			.channel("user-realtime")
 			.on(
 				"postgres_changes",
 				{
@@ -71,6 +78,21 @@ export function useSync(userId: string | undefined) {
 						await applyRemoteClimb(payload.new as Climb);
 					}
 					queryClient.invalidateQueries({ queryKey: ["climbs"] });
+				},
+			)
+			.on(
+				"postgres_changes",
+				{
+					event: "*",
+					schema: "public",
+					table: "burns",
+					filter: `user_id=eq.${userId}`,
+				},
+				async (payload) => {
+					if (payload.new && Object.keys(payload.new).length > 0) {
+						await applyRemoteBurn(payload.new as Burn);
+					}
+					queryClient.invalidateQueries({ queryKey: ["burns"] });
 				},
 			)
 			.subscribe();

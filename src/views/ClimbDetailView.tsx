@@ -1,8 +1,15 @@
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { ChevronDown, ExternalLink } from "lucide-react";
+import { ChevronDown, ExternalLink, Pencil, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/atoms/Button";
+import { Input } from "@/components/atoms/Input";
 import { Spinner } from "@/components/atoms/Spinner";
+import {
+	useAddBurn,
+	useBurns,
+	useDeleteBurn,
+	useUpdateBurn,
+} from "@/features/burns/burns.queries";
 import { useClimb } from "@/features/climbs/climbs.queries";
 import { useClimbsStore } from "@/features/climbs/climbs.store";
 import { useRoute } from "@/features/routes/routes.queries";
@@ -14,8 +21,21 @@ const ClimbDetailView = () => {
 	const navigate = useNavigate();
 	const { data: climb, isLoading } = useClimb(climbId);
 	const { data: linkedRoute } = useRoute(climb?.route_id);
+	const { data: burns } = useBurns(climbId);
+	const addBurn = useAddBurn();
+	const updateBurn = useUpdateBurn();
+	const deleteBurn = useDeleteBurn();
 	const setSelectedClimbId = useClimbsStore((s) => s.setSelectedClimbId);
 	const [movesOpen, setMovesOpen] = useState(false);
+	const [burnsOpen, setBurnsOpen] = useState(false);
+	const [showAddBurn, setShowAddBurn] = useState(false);
+	const [addDate, setAddDate] = useState(() =>
+		new Date().toISOString().slice(0, 10),
+	);
+	const [addNotes, setAddNotes] = useState("");
+	const [editingBurnId, setEditingBurnId] = useState<string | null>(null);
+	const [editDate, setEditDate] = useState("");
+	const [editNotes, setEditNotes] = useState("");
 
 	useEffect(() => {
 		setSelectedClimbId(climbId);
@@ -125,6 +145,185 @@ const ClimbDetailView = () => {
 			>
 				Edit
 			</Button>
+
+			{/* Burns section */}
+			<div className="rounded-md bg-surface-card">
+				<button
+					type="button"
+					className="flex items-center justify-between w-full p-3 text-sm text-text-secondary"
+					onClick={() => setBurnsOpen(!burnsOpen)}
+				>
+					<span>Burns ({burns?.length ?? 0})</span>
+					<ChevronDown
+						size={16}
+						className={cn(
+							"transition-transform",
+							burnsOpen && "rotate-180",
+						)}
+					/>
+				</button>
+				{burnsOpen && (
+					<div className="flex flex-col gap-2 px-3 pb-3">
+						<button
+							type="button"
+							className="flex items-center gap-1 text-sm text-accent-primary self-start"
+							onClick={() => {
+								setShowAddBurn(!showAddBurn);
+								setAddDate(new Date().toISOString().slice(0, 10));
+								setAddNotes("");
+							}}
+						>
+							<Plus size={16} />
+							Add burn
+						</button>
+
+						{showAddBurn && (
+							<div className="rounded-[--radius-md] bg-surface-input p-3 flex flex-col gap-2">
+								<Input
+									type="date"
+									value={addDate}
+									onChange={(e) => setAddDate(e.target.value)}
+								/>
+								<Input
+									placeholder="Notes (optional)"
+									value={addNotes}
+									onChange={(e) => setAddNotes(e.target.value)}
+								/>
+								<Button
+									size="small"
+									disabled={!addDate || addBurn.isPending}
+									onClick={() => {
+										addBurn.mutate(
+											{
+												climbId,
+												data: {
+													date: addDate,
+													notes: addNotes || undefined,
+												},
+											},
+											{
+												onSuccess: () => {
+													setShowAddBurn(false);
+													setAddDate(
+														new Date().toISOString().slice(0, 10),
+													);
+													setAddNotes("");
+												},
+											},
+										);
+									}}
+								>
+									Save
+								</Button>
+							</div>
+						)}
+
+						{burns && burns.length > 0 ? (
+							<ul className="flex flex-col gap-2">
+								{burns.map((burn) => (
+									<li
+										key={burn.id}
+										className="border-l border-text-primary pl-2"
+									>
+										{editingBurnId === burn.id ? (
+											<div className="flex flex-col gap-2">
+												<Input
+													type="date"
+													value={editDate}
+													onChange={(e) =>
+														setEditDate(e.target.value)
+													}
+												/>
+												<Input
+													placeholder="Notes (optional)"
+													value={editNotes}
+													onChange={(e) =>
+														setEditNotes(e.target.value)
+													}
+												/>
+												<div className="flex gap-2">
+													<Button
+														size="small"
+														disabled={
+															!editDate || updateBurn.isPending
+														}
+														onClick={() => {
+															updateBurn.mutate(
+																{
+																	id: burn.id,
+																	data: {
+																		date: editDate,
+																		notes:
+																			editNotes || undefined,
+																	},
+																},
+																{
+																	onSuccess: () =>
+																		setEditingBurnId(null),
+																},
+															);
+														}}
+													>
+														Save
+													</Button>
+													<Button
+														size="small"
+														variant="outlined"
+														onClick={() =>
+															setEditingBurnId(null)
+														}
+													>
+														Cancel
+													</Button>
+												</div>
+											</div>
+										) : (
+											<div className="flex items-center justify-between">
+												<div>
+													<p className="text-sm font-semibold">
+														{burn.date}
+													</p>
+													{burn.notes && (
+														<p className="text-sm text-text-secondary">
+															{burn.notes}
+														</p>
+													)}
+												</div>
+												<div className="flex items-center gap-3">
+													<button
+														type="button"
+														className="text-text-secondary"
+														onClick={() => {
+															setEditingBurnId(burn.id);
+															setEditDate(burn.date);
+															setEditNotes(burn.notes ?? "");
+														}}
+													>
+														<Pencil size={16} />
+													</button>
+													<button
+														type="button"
+														className="text-text-secondary"
+														onClick={() =>
+															deleteBurn.mutate(burn.id)
+														}
+													>
+														<Trash2 size={16} />
+													</button>
+												</div>
+											</div>
+										)}
+									</li>
+								))}
+							</ul>
+						) : (
+							<p className="text-sm text-text-secondary">
+								No burns logged yet.
+							</p>
+						)}
+					</div>
+				)}
+			</div>
 
 			{moves.length > 0 && (
 				<div className="rounded-md bg-surface-card">

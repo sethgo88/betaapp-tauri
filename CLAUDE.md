@@ -2,6 +2,11 @@
 
 > Global rules (workflow, git, TypeScript, Biome) are in `/c/web/CLAUDE.md`. This file covers only what's specific to this project.
 
+## Git Workflow
+- **Never commit or write code directly on `master`.** Always create a feature branch first (`feat/`, `fix/`, `chore/`, `docs/`) and check it out before making any changes.
+- Branch from `master` for all new work.
+- Merge back to `master` via PR.
+
 ## Project Overview
 Tauri 2 + React 19 + TypeScript **Android-only** app for personal climbing route logging and beta tracking.
 Local-first SQLite. Supabase for cloud sync and auth (email/password; magic link planned). Admin-managed reference data (grades, location hierarchy, routes).
@@ -31,6 +36,7 @@ src/
                            # ProfileView, SettingsView
                            # admin/LocationManagerView, GradesManagerView, RouteVerificationView
   features/climbs/         # climbs.store, climbs.queries, climbs.service, climbs.schema
+  features/burns/          # burns.queries, burns.service, burns.schema
   features/routes/         # routes.queries, routes.service, routes.schema
   features/locations/      # locations.queries, locations.service, downloads.service
   features/grades/         # grades.queries, grades.service, grades.schema, grades-seed.ts
@@ -47,6 +53,7 @@ src/
 | Domain | Owner | Sync direction |
 |---|---|---|
 | `climbs` | Current user | Bidirectional, full push/pull (Realtime planned) |
+| `burns` | Current user | Bidirectional, full push/pull |
 | `users` | Current user | Bidirectional |
 | `grades_cache` | Admin | One-way pull; seeded from `grades-seed.ts` |
 | `countries_cache`, `regions_cache` | Admin | One-way pull; always synced on launch |
