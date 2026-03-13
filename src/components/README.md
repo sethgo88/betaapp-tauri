@@ -165,6 +165,62 @@ Status and badge tokens (`status-default`, `status-sent`, `status-todo`, `badge-
 
 Future presets (Glass, Minimal) override these same CSS variables — no component changes needed.
 
+### Design system rules (new / updated components)
+
+Follow these rules when creating or modifying any component:
+
+**Typography:**
+- All `<h1>`, `<h2>`, page titles, climb/route names, and grade displays must use `font-display`
+- Body text, labels, form fields, and buttons use the default body font (no class needed)
+- Use `font-semibold` on buttons, `font-medium` on inputs/selects
+- Never use `font-bold` on inputs/selects (use `font-medium`)
+
+**Colors — never use raw Tailwind color classes for:**
+- Surfaces → use `bg-surface-*` tokens
+- Text → use `text-text-*` tokens
+- Borders → use `border-border-*` or `border-card-border` tokens
+- Primary actions (buttons, active states, checkboxes) → use `accent-primary` token
+- Secondary actions → use `accent-secondary` token
+- Never use raw `emerald-*`, `zinc-*`, or `stone-*` for buttons, accents, or surfaces
+
+**Exceptions** — raw Tailwind colors are OK for:
+- Status indicators: `border-l-emerald-500` (success), `border-l-red-500` (error), `border-l-amber-500` (warning)
+- Spinner border: `border-t-emerald-500`
+- Destructive actions: `bg-red-800` (reject buttons)
+- Overlay backdrops: `bg-black/60`
+
+**Border radius:**
+- Use preset tokens: `rounded-[--radius-sm]`, `rounded-[--radius-md]`, `rounded-[--radius-lg]`, `rounded-[--radius-xl]`, `rounded-[--radius-full]`
+- Never use raw `rounded-md`, `rounded-lg`, etc. in new/modified components
+
+**Shadows:**
+- Cards: `shadow-card`
+- Elevated elements (modals, popovers): `shadow-elevated`
+- Toasts: `shadow-toast`
+
+**Cards and containers:**
+- Add `border border-card-border` to card-like surfaces
+- Use `shadow-card` on cards
+- Use `p-3.5` for card padding (or `p-4` for larger containers)
+
+**Inputs/selects:**
+- Use `p-2.5` padding
+- Add `focus:border-accent-primary transition-colors` for focus states
+- Wrap with `rounded-[--radius-lg]`
+
+**Buttons (use `Button` atom):**
+- `primary` variant → `bg-accent-primary text-white`
+- `secondary` variant → `bg-accent-secondary text-white`
+- `outlined` variant → `border-accent-primary text-accent-primary`
+- All variants use `rounded-[--radius-md]` and `font-semibold`
+
+**ToggleGroup:**
+- Active state: `bg-accent-primary text-white`
+- Wrap with `border border-border-default`
+
+**NavBar:**
+- Active tab icon: `text-accent-primary`
+
 ---
 
 ## Touch targets
