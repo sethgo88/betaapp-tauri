@@ -64,14 +64,14 @@ const ClimbDetailView = () => {
 								})
 							}
 						>
-							<h1 className="text-2xl font-bold">{climb.name}</h1>
+							<h1 className="text-2xl font-display font-bold">{climb.name}</h1>
 							<ExternalLink
 								size={16}
 								className="text-text-secondary shrink-0 mt-1"
 							/>
 						</button>
 					) : (
-						<h1 className="text-2xl font-bold">{climb.name}</h1>
+						<h1 className="text-2xl font-display font-bold">{climb.name}</h1>
 					)}
 					{location && (
 						<p className="text-sm text-text-secondary">{location}</p>
@@ -80,12 +80,16 @@ const ClimbDetailView = () => {
 				<div className="text-right flex flex-col items-end gap-0.5">
 					<div className="flex items-baseline gap-1.5">
 						<span className="text-xs text-text-secondary">Personal</span>
-						<span className="text-lg font-semibold">{climb.grade}</span>
+						<span className="text-lg font-display font-semibold">
+							{climb.grade}
+						</span>
 					</div>
 					{linkedRoute && (
 						<div className="flex items-baseline gap-1.5">
 							<span className="text-xs text-text-secondary">Official</span>
-							<span className="text-lg font-semibold">{linkedRoute.grade}</span>
+							<span className="text-lg font-display font-semibold">
+								{linkedRoute.grade}
+							</span>
 						</div>
 					)}
 					<p className="text-xs text-text-secondary capitalize">
@@ -155,7 +159,7 @@ const ClimbDetailView = () => {
 					href={climb.link}
 					target="_blank"
 					rel="noreferrer"
-					className="text-emerald-400 text-sm underline"
+					className="text-accent-primary text-sm underline"
 				>
 					{climb.link}
 				</a>

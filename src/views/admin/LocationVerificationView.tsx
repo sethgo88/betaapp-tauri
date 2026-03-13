@@ -36,7 +36,7 @@ const LocationVerificationView = () => {
 				← Back
 			</button>
 
-			<h1 className="text-lg font-semibold">Pending Locations</h1>
+			<h1 className="text-lg font-display font-semibold">Pending Locations</h1>
 
 			{isLoading && <p className="text-text-secondary text-sm">Loading…</p>}
 
@@ -67,7 +67,7 @@ const LocationVerificationView = () => {
 								onClick={() =>
 									verify.mutate({ table: tableFor(item.type), id: item.id })
 								}
-								className="flex-1 text-sm py-2 rounded-lg bg-emerald-700 hover:bg-emerald-600 disabled:opacity-40"
+								className="flex-1 text-sm py-2 rounded-lg bg-accent-primary hover:bg-accent-primary/90 disabled:opacity-40"
 							>
 								Verify
 							</button>

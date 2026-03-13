@@ -48,7 +48,7 @@ const RouteDetailView = () => {
 			</button>
 
 			<div>
-				<h1 className="text-xl font-bold">{route.name}</h1>
+				<h1 className="text-xl font-display font-bold">{route.name}</h1>
 				<div className="flex items-center gap-2 mt-1">
 					<span className="text-text-secondary">{route.grade}</span>
 					<span className="text-xs px-2 py-0.5 rounded-full bg-surface-page text-text-secondary">

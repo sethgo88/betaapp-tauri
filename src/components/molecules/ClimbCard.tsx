@@ -16,7 +16,7 @@ export const ClimbCard = ({ climb, onClick, onDelete }: ClimbCardProps) => {
 	return (
 		<li
 			className={cn(
-				"relative flex overflow-hidden bg-status-default rounded-xl p-2.5 shadow-sm cursor-pointer gap-x-4",
+				"relative flex overflow-hidden bg-status-default rounded-[--radius-xl] p-3.5 shadow-card border border-card-border cursor-pointer gap-x-4",
 				climb.sent_status === "sent" && "bg-status-sent",
 				climb.sent_status === "todo" && "bg-status-todo",
 			)}
@@ -27,8 +27,8 @@ export const ClimbCard = ({ climb, onClick, onDelete }: ClimbCardProps) => {
 				onClick={onClick}
 			>
 				<div className="flex flex-row items-start justify-between leading-none w-full">
-					<span className="font-bold">{climb.name}</span>
-					<span className="text-sm">{climb.grade}</span>
+					<span className="font-display font-bold">{climb.name}</span>
+					<span className="font-display text-sm">{climb.grade}</span>
 				</div>
 				<div className="text-xs text-current/70">
 					{buildLocationString([climb.country, climb.area, climb.sub_area])}

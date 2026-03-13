@@ -90,6 +90,12 @@ Admin only. Loads `useUnverifiedRoutes()`. For each route: verify, edit fields i
 
 ---
 
+## Typography
+
+All view-level `<h1>` headings, route/climb names, and grade displays use `font-display` (Lora serif). Body text, labels, and form elements use the default `font-body` (Source Sans 3 sans-serif, set on `<body>`).
+
+---
+
 ## Navigation patterns
 
 ```ts

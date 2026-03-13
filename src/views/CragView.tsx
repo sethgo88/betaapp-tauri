@@ -47,7 +47,7 @@ const InlineAddForm = ({
 			<button
 				type="button"
 				onClick={onCancel}
-				className="text-sm px-3 py-2 rounded-lg bg-stone-600 hover:bg-surface-hover"
+				className="text-sm px-3 py-2 rounded-lg bg-surface-active hover:bg-surface-hover"
 			>
 				Cancel
 			</button>
@@ -99,7 +99,7 @@ const CragView = () => {
 
 			{crag && (
 				<>
-					<h1 className="text-xl font-bold">{crag.name}</h1>
+					<h1 className="text-xl font-display font-bold">{crag.name}</h1>
 					<EditableDescription
 						description={crag.description}
 						isAdmin={isAdmin}

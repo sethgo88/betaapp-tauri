@@ -89,7 +89,7 @@ const LocationManagerView = () => {
 
 	return (
 		<div className="flex flex-col gap-6">
-			<h1 className="text-lg font-semibold">Location Manager</h1>
+			<h1 className="text-lg font-display font-semibold">Location Manager</h1>
 
 			{/* Countries */}
 			<div className="rounded-lg bg-surface-card p-4 flex flex-col gap-3">
@@ -120,7 +120,7 @@ const LocationManagerView = () => {
 						>
 							<button
 								type="button"
-								className={`text-sm text-left flex-1 ${selectedCountryId === c.id ? "text-emerald-400" : "text-text-primary"}`}
+								className={`text-sm text-left flex-1 ${selectedCountryId === c.id ? "text-accent-primary" : "text-text-primary"}`}
 								onClick={() =>
 									setSelectedCountryId(selectedCountryId === c.id ? null : c.id)
 								}
