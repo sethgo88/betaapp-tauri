@@ -3,9 +3,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 // Mock supabase before any module that imports it is loaded.
 vi.mock("@/lib/supabase", () => ({ supabase: {} }));
 
+import type BetterSqlite3 from "better-sqlite3";
 import { setupTestDb } from "@/test/setup-db";
 import { fetchGrades } from "./grades.service";
-import type BetterSqlite3 from "better-sqlite3";
 
 function seedGrades(sqlite: BetterSqlite3.Database): void {
 	const insert = sqlite.prepare(

@@ -58,6 +58,8 @@ Role is **not** read from `public.users.role` — always fetched from `user_role
 |---|---|
 | `signIn(email, password)` | `signInWithPassword` → returns Session |
 | `signUp(email, password)` | Creates account + returns Session (email confirm must be off) |
+| `sendPasswordReset(email)` | `resetPasswordForEmail` — sends reset link; redirects to `betaapp://auth/callback` |
+| `updatePassword(newPassword)` | `updateUser({ password })` — call from ResetPasswordView after `PASSWORD_RECOVERY` event |
 | `sendMagicLink(email)` | `signInWithOtp` — sends magic link email; redirects to `betaapp://auth/callback` |
 | `restoreSession()` | `supabase.auth.getSession()` — call on app launch |
 | `signOut()` | Clears Supabase session |
@@ -102,6 +104,13 @@ Login (magic link):
   fetchOrCreateSupabaseUser(id) → get role
   upsertLocalUser(id, email, role) → setUser
   useSync fires (userId now defined)
+
+Password reset:
+  sendPasswordReset(email) → email sent; user taps link
+  Deep link opens app → onAuthStateChange fires PASSWORD_RECOVERY event
+  App navigates to /reset-password
+  User enters new password → updatePassword(newPassword)
+  Redirected to /profile
 
 Logout:
   signOut() → setSession(null) → setUser(null)

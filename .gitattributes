@@ -1,0 +1,3 @@
+# Auto-detect text files and normalize line endings to LF on commit.
+# Checkout uses OS-native endings (CRLF on Windows, LF on Mac/Linux).
+* text=auto

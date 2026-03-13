@@ -1,6 +1,6 @@
 import BetterSqlite3 from "better-sqlite3";
-import { createTestAdapter } from "@/lib/db.test-adapter";
 import { runMigrations, setDb } from "@/lib/db";
+import { createTestAdapter } from "@/lib/db.test-adapter";
 
 /**
  * Creates a fresh in-memory SQLite database, runs all migrations,

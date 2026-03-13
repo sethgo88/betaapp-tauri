@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { setupTestDb } from "@/test/setup-db";
+import type { ClimbFormValues } from "./climbs.schema";
 import {
 	fetchClimb,
 	fetchClimbs,
@@ -7,7 +8,6 @@ import {
 	softDeleteClimb,
 	updateClimb,
 } from "./climbs.service";
-import type { ClimbFormValues } from "./climbs.schema";
 
 const USER_A = "user-a";
 const USER_B = "user-b";

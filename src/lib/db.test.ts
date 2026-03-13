@@ -1,7 +1,7 @@
 import BetterSqlite3 from "better-sqlite3";
 import { beforeEach, describe, expect, it } from "vitest";
-import { createTestAdapter } from "./db.test-adapter";
 import { runMigrations, setDb } from "./db";
+import { createTestAdapter } from "./db.test-adapter";
 
 describe("runMigrations", () => {
 	let sqlite: BetterSqlite3.Database;

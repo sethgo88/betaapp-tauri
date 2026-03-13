@@ -102,7 +102,7 @@ src/
 
 ## Task Management
 
-GitHub Issues is the task management system for this project (repo: `sethgo88/betaapp`).
+GitHub Issues is the task management system for this project (repo: `sethgo88/betaapp-tauri`).
 
 ### Issue structure
 - Each feature, bug, or work item gets its own issue
