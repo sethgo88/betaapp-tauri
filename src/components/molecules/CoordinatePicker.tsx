@@ -72,12 +72,12 @@ function MapControls({
 				<button
 					type="button"
 					onClick={() => setLayerPanelOpen((p) => !p)}
-					className="flex items-center justify-center w-10 h-10 rounded-[--radius-md] bg-surface-card border border-border-default shadow-sm"
+					className="flex items-center justify-center w-10 h-10 rounded-[var(--radius-md)] bg-surface-card border border-border-default shadow-sm"
 				>
 					<Layers size={18} className="text-text-primary" />
 				</button>
 				{layerPanelOpen && (
-					<div className="absolute right-0 top-12 w-36 bg-surface-card border border-border-default rounded-[--radius-md] shadow-md overflow-hidden">
+					<div className="absolute right-0 top-12 w-36 bg-surface-card border border-border-default rounded-[var(--radius-md)] shadow-md overflow-hidden">
 						{tileLayers.map((layer) => (
 							<button
 								key={layer.id}
@@ -104,14 +104,14 @@ function MapControls({
 			<button
 				type="button"
 				onClick={() => map.zoomIn()}
-				className="flex items-center justify-center w-10 h-10 rounded-[--radius-md] bg-surface-card border border-border-default shadow-sm"
+				className="flex items-center justify-center w-10 h-10 rounded-[var(--radius-md)] bg-surface-card border border-border-default shadow-sm"
 			>
 				<Plus size={18} className="text-text-primary" />
 			</button>
 			<button
 				type="button"
 				onClick={() => map.zoomOut()}
-				className="flex items-center justify-center w-10 h-10 rounded-[--radius-md] bg-surface-card border border-border-default shadow-sm"
+				className="flex items-center justify-center w-10 h-10 rounded-[var(--radius-md)] bg-surface-card border border-border-default shadow-sm"
 			>
 				<Minus size={18} className="text-text-primary" />
 			</button>
@@ -121,7 +121,7 @@ function MapControls({
 				type="button"
 				onClick={handleLocate}
 				disabled={locating}
-				className="flex items-center justify-center w-10 h-10 rounded-[--radius-md] bg-surface-card border border-border-default shadow-sm"
+				className="flex items-center justify-center w-10 h-10 rounded-[var(--radius-md)] bg-surface-card border border-border-default shadow-sm"
 			>
 				<Crosshair
 					size={18}
@@ -251,7 +251,7 @@ export const CoordinatePicker = ({
 				<button
 					type="button"
 					onClick={handleConfirm}
-					className="w-full flex items-center justify-center gap-2 py-3 rounded-[--radius-md] bg-accent-primary hover:bg-accent-primary/90 font-semibold text-white"
+					className="w-full flex items-center justify-center gap-2 py-3 rounded-[var(--radius-md)] bg-accent-primary hover:bg-accent-primary/90 font-semibold text-white"
 				>
 					<Check size={18} />
 					Confirm Location

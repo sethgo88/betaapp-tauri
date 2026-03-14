@@ -175,7 +175,7 @@ const ClimbDetailView = () => {
 						</button>
 
 						{showAddBurn && (
-							<div className="rounded-[--radius-md] bg-surface-input p-3 flex flex-col gap-2">
+							<div className="rounded-[var(--radius-md)] bg-surface-input p-3 flex flex-col gap-2">
 								<Input
 									type="date"
 									value={addDate}

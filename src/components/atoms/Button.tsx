@@ -30,7 +30,7 @@ export const Button = (props: ButtonProps) => {
 	return (
 		<button
 			className={cn(
-				"cursor-pointer rounded-[--radius-md] font-semibold transition-colors",
+				"cursor-pointer rounded-[var(--radius-md)] font-semibold transition-colors",
 				variantClasses[variant],
 				size && sizeClasses[size],
 				className,

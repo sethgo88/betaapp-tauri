@@ -117,7 +117,7 @@ const SubRegionView = () => {
 							value={cragName}
 							onChange={(e) => setCragName(e.target.value)}
 							placeholder="Crag name"
-							className="flex-1 text-sm bg-surface-page rounded-[--radius-lg] px-3 py-2 text-text-primary placeholder-text-tertiary outline-none"
+							className="flex-1 text-sm bg-surface-page rounded-[var(--radius-lg)] px-3 py-2 text-text-primary placeholder-text-tertiary outline-none"
 							// biome-ignore lint/a11y/noAutofocus: intentional — form appears on user tap
 							autoFocus
 						/>
@@ -146,7 +146,7 @@ const SubRegionView = () => {
 							type="button"
 							disabled={!cragName.trim() || submitCrag.isPending}
 							onClick={handleAddCrag}
-							className="text-sm px-3 py-2 rounded-[--radius-md] bg-accent-secondary hover:bg-accent-secondary/90 disabled:opacity-40 font-semibold"
+							className="text-sm px-3 py-2 rounded-[var(--radius-md)] bg-accent-secondary hover:bg-accent-secondary/90 disabled:opacity-40 font-semibold"
 						>
 							{submitCrag.isPending ? "..." : "Add"}
 						</button>
@@ -158,7 +158,7 @@ const SubRegionView = () => {
 								setCragCoords(null);
 								setShowCoordPicker(false);
 							}}
-							className="text-sm px-3 py-2 rounded-[--radius-md] bg-surface-active hover:bg-surface-hover"
+							className="text-sm px-3 py-2 rounded-[var(--radius-md)] bg-surface-active hover:bg-surface-hover"
 						>
 							Cancel
 						</button>

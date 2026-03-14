@@ -132,7 +132,7 @@ const SubmitRouteView = () => {
 							onBlur={field.handleBlur}
 							onChange={(e) => field.handleChange(e.target.value)}
 							rows={3}
-							className="rounded-[--radius-lg] bg-surface-input p-2.5 font-medium outline-0 w-full border border-border-input focus:border-accent-primary transition-colors resize-none text-text-primary"
+							className="rounded-[var(--radius-lg)] bg-surface-input p-2.5 font-medium outline-0 w-full border border-border-input focus:border-accent-primary transition-colors resize-none text-text-primary"
 						/>
 					)}
 				</form.Field>

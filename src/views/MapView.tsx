@@ -103,12 +103,12 @@ const MapControls = ({
 				<button
 					type="button"
 					onClick={() => setLayerPanelOpen((p) => !p)}
-					className="flex items-center justify-center w-10 h-10 rounded-[--radius-md] bg-surface-card border border-border-default shadow-sm"
+					className="flex items-center justify-center w-10 h-10 rounded-[var(--radius-md)] bg-surface-card border border-border-default shadow-sm"
 				>
 					<Layers size={18} className="text-text-primary" />
 				</button>
 				{layerPanelOpen && (
-					<div className="absolute right-0 top-12 w-36 bg-surface-card border border-border-default rounded-[--radius-md] shadow-md overflow-hidden">
+					<div className="absolute right-0 top-12 w-36 bg-surface-card border border-border-default rounded-[var(--radius-md)] shadow-md overflow-hidden">
 						{tileLayers.map((layer) => (
 							<button
 								key={layer.id}
@@ -135,7 +135,7 @@ const MapControls = ({
 			<button
 				type="button"
 				onClick={handleZoomIn}
-				className="flex items-center justify-center w-10 h-10 rounded-[--radius-md] bg-surface-card border border-border-default shadow-sm"
+				className="flex items-center justify-center w-10 h-10 rounded-[var(--radius-md)] bg-surface-card border border-border-default shadow-sm"
 			>
 				<Plus size={18} className="text-text-primary" />
 			</button>
@@ -144,7 +144,7 @@ const MapControls = ({
 			<button
 				type="button"
 				onClick={handleZoomOut}
-				className="flex items-center justify-center w-10 h-10 rounded-[--radius-md] bg-surface-card border border-border-default shadow-sm"
+				className="flex items-center justify-center w-10 h-10 rounded-[var(--radius-md)] bg-surface-card border border-border-default shadow-sm"
 			>
 				<Minus size={18} className="text-text-primary" />
 			</button>
@@ -154,7 +154,7 @@ const MapControls = ({
 				type="button"
 				onClick={handleLocate}
 				disabled={locating}
-				className="flex items-center justify-center w-10 h-10 rounded-[--radius-md] bg-surface-card border border-border-default shadow-sm"
+				className="flex items-center justify-center w-10 h-10 rounded-[var(--radius-md)] bg-surface-card border border-border-default shadow-sm"
 			>
 				<Crosshair
 					size={18}
@@ -211,7 +211,7 @@ const TileErrorBanner = () => {
 
 	if (!tileError) return null;
 	return (
-		<div className="absolute top-3 left-3 z-[1000] bg-surface-card/90 px-3 py-1.5 rounded-[--radius-md] text-xs text-text-secondary pointer-events-none">
+		<div className="absolute top-3 left-3 z-[1000] bg-surface-card/90 px-3 py-1.5 rounded-[var(--radius-md)] text-xs text-text-secondary pointer-events-none">
 			Map tiles unavailable — check your connection
 		</div>
 	);
@@ -371,7 +371,7 @@ const MapView = () => {
 		>
 			{/* Controls bar */}
 			<div className="flex flex-col gap-2 px-4 py-2 bg-surface-nav border-b border-border-default">
-				<div className="flex rounded-[--radius-md] border border-border-default overflow-hidden self-start">
+				<div className="flex rounded-[var(--radius-md)] border border-border-default overflow-hidden self-start">
 					<button
 						type="button"
 						className={`px-3 py-1.5 text-sm font-semibold ${
@@ -603,7 +603,7 @@ const MapView = () => {
 					((mode === "discovery" && filteredDiscoveryCrags.length === 0) ||
 						(mode === "personal" && filteredPersonal.length === 0)) && (
 						<div className="absolute inset-0 flex items-center justify-center z-[1000] pointer-events-none">
-							<p className="text-text-secondary text-sm bg-surface-card/90 px-4 py-2 rounded-[--radius-md]">
+							<p className="text-text-secondary text-sm bg-surface-card/90 px-4 py-2 rounded-[var(--radius-md)]">
 								{mode === "discovery"
 									? "No downloaded crags with coordinates yet."
 									: "No crags with logged climbs found."}

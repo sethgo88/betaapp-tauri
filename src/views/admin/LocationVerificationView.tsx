@@ -56,7 +56,7 @@ const CragCoordEditor = ({ itemId }: { itemId: string }) => {
 								lng: coords.lng,
 							})
 						}
-						className="text-sm px-3 py-1.5 rounded-[--radius-md] bg-accent-primary hover:bg-accent-primary/90 disabled:opacity-40 font-semibold"
+						className="text-sm px-3 py-1.5 rounded-[var(--radius-md)] bg-accent-primary hover:bg-accent-primary/90 disabled:opacity-40 font-semibold"
 					>
 						{updateCoords.isPending ? "..." : "Save"}
 					</button>

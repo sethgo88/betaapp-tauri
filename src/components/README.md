@@ -160,7 +160,7 @@ Status and badge tokens (`status-default`, `status-sent`, `status-todo`, `badge-
 
 | Token | Usage |
 |---|---|
-| `--radius-sm/md/lg/xl/full` | Border radius via `rounded-[--radius-md]` etc. |
+| `--radius-sm/md/lg/xl/full` | Border radius via `rounded-[var(--radius-md)]` etc. |
 | `shadow-card` / `shadow-elevated` / `shadow-toast` | Shadows via `shadow-card` etc. |
 | `border-card-border` | Card/toast border color |
 
@@ -191,7 +191,7 @@ Follow these rules when creating or modifying any component:
 - Overlay backdrops: `bg-black/60`
 
 **Border radius:**
-- Use preset tokens: `rounded-[--radius-sm]`, `rounded-[--radius-md]`, `rounded-[--radius-lg]`, `rounded-[--radius-xl]`, `rounded-[--radius-full]`
+- Use preset tokens: `rounded-[var(--radius-sm)]`, `rounded-[var(--radius-md)]`, `rounded-[var(--radius-lg)]`, `rounded-[var(--radius-xl)]`, `rounded-[var(--radius-full)]`
 - Never use raw `rounded-md`, `rounded-lg`, etc. in new/modified components
 
 **Shadows:**
@@ -207,13 +207,13 @@ Follow these rules when creating or modifying any component:
 **Inputs/selects:**
 - Use `p-2.5` padding
 - Add `focus:border-accent-primary transition-colors` for focus states
-- Wrap with `rounded-[--radius-lg]`
+- Wrap with `rounded-[var(--radius-lg)]`
 
 **Buttons (use `Button` atom):**
 - `primary` variant → `bg-accent-primary text-white`
 - `secondary` variant → `bg-accent-secondary text-white`
 - `outlined` variant → `border-accent-primary text-accent-primary`
-- All variants use `rounded-[--radius-md]` and `font-semibold`
+- All variants use `rounded-[var(--radius-md)]` and `font-semibold`
 
 **ToggleGroup:**
 - Active state: `bg-accent-primary text-white`

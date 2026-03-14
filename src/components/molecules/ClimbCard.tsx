@@ -16,7 +16,7 @@ export const ClimbCard = ({ climb, onClick, onDelete }: ClimbCardProps) => {
   return (
     <li
       className={cn(
-        'relative flex overflow-hidden bg-status-default rounded-[--radius-xl] p-3.5 shadow-card border border-card-border cursor-pointer gap-x-4',
+        'relative flex overflow-hidden bg-status-default rounded-md p-3.5 shadow-card border border-card-border cursor-pointer gap-x-4',
         climb.sent_status === 'sent' && 'bg-status-sent',
         climb.sent_status === 'todo' && 'bg-status-todo',
       )}

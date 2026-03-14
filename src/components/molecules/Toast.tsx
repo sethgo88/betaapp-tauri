@@ -19,7 +19,7 @@ export const Toast = ({ id, message, type }: ToastType) => {
 	return (
 		<div
 			className={cn(
-				"bg-surface-card text-text-primary border-l-4 shadow-toast rounded-[--radius-xl] border border-card-border absolute top-[2vh] left-[calc(50vw)] -translate-x-1/2 p-2.5 whitespace-nowrap",
+				"bg-surface-card text-text-primary border-l-4 shadow-toast rounded-[var(--radius-xl)] border border-card-border absolute top-[2vh] left-[calc(50vw)] -translate-x-1/2 p-2.5 whitespace-nowrap",
 				borderColor[type],
 			)}
 		>
