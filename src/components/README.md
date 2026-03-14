@@ -36,7 +36,7 @@ templates   Layout shells with no real data — just children/slots.
 | `FilterPanel` | Collapsible status/type filter checkboxes with cross-filtered counts |
 | `FormField` | Label + input/select + error message wrapper |
 | `SyncStatus` | Reads `sync.store` and renders sync state indicator |
-| `CoordinatePicker` | Small Leaflet map for picking coordinates; click to place/move pin; used in crag submission and admin editing |
+| `CoordinatePicker` | Fullscreen Leaflet overlay for picking coordinates; fixed center pin with drag-to-position pattern. Props: `value`, `defaultCenter`, `defaultZoom`, `markers` (reference pins), `onChange`, `onClose`. Exports `PickerMarker` type. |
 | `Toast` | Single toast notification; rendered by `AppLayout` |
 
 ### Organisms

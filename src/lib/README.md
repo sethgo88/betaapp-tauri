@@ -57,6 +57,7 @@ Versioned migration runner. Maintains a `schema_version` table (single row) and 
 | v8 | `route_images_cache` + `wall_images_cache` tables (#11) |
 | v9 | `climb_images` table (#12) |
 | v10 | `lat`, `lng` on crags_cache (#15) |
+| v11 | `lat`, `lng` on walls_cache (#15) |
 
 ### Rules
 - Always use `?` positional parameters — never string interpolation (SQL injection)
@@ -115,6 +116,16 @@ import { cmToFt, ftToCm, cmToIn, inToCm } from '@/lib/units'
 ```
 
 Helpers for converting between cm and ft/in. Used by the profile page for height and ape index inputs. All values stored as cm in the database.
+
+---
+
+## map-tiles.ts — shared tile layer definitions
+
+```ts
+import { tileLayers } from '@/lib/map-tiles'
+```
+
+Array of `TileLayerDef` objects (id, name, url, attribution, icon) used by both `MapView` and `CoordinatePicker`. Layers: Street (OSM), Topo (OpenTopoMap), Satellite (ArcGIS).
 
 ---
 

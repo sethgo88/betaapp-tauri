@@ -25,8 +25,8 @@ Country
 CountrySchema    = { id, name, code, sort_order, created_at }
 RegionSchema     = { id, country_id, name, sort_order, created_at }
 SubRegionSchema  = { id, region_id, name, description?, sort_order, status, created_by?, created_at }
-CragSchema       = { id, sub_region_id, name, description?, sort_order, status, created_by?, created_at }
-WallSchema       = { id, crag_id, name, description?, sort_order, status, created_by?, created_at }
+CragSchema       = { id, sub_region_id, name, description?, sort_order, status, created_by?, created_at, lat?, lng? }
+WallSchema       = { id, crag_id, name, description?, sort_order, status, created_by?, created_at, lat?, lng? }
 
 // status: 'pending' | 'verified' | 'rejected'
 ```
@@ -42,8 +42,8 @@ CREATE TABLE IF NOT EXISTS regions_cache   (id, country_id, name, sort_order, cr
 
 -- Populated on-demand / region download
 CREATE TABLE IF NOT EXISTS sub_regions_cache (id, region_id, name, description, sort_order, status, created_by, created_at);
-CREATE TABLE IF NOT EXISTS crags_cache       (id, sub_region_id, name, description, sort_order, status, created_by, created_at);
-CREATE TABLE IF NOT EXISTS walls_cache       (id, crag_id, name, description, sort_order, status, created_by, created_at);
+CREATE TABLE IF NOT EXISTS crags_cache       (id, sub_region_id, name, description, sort_order, status, created_by, created_at, lat, lng);
+CREATE TABLE IF NOT EXISTS walls_cache       (id, crag_id, name, description, sort_order, status, created_by, created_at, lat, lng);
 
 -- Download tracking
 CREATE TABLE IF NOT EXISTS downloaded_regions (region_id TEXT PRIMARY KEY, downloaded_at TEXT);
@@ -67,6 +67,8 @@ CREATE TABLE IF NOT EXISTS downloaded_regions (region_id TEXT PRIMARY KEY, downl
 | `fetchWall(id)` | Single wall by ID |
 | `fetchDownloadedRegionIds()` | IDs of all downloaded regions |
 | `searchLocations(query)` | LIKE search across sub_regions/crags/walls cache; returns typed results with `kind` |
+| `fetchAllCragsWithCoords()` | All crags with non-null lat/lng + route_count (for map Discovery mode) |
+| `fetchAllWallsWithCoords()` | All walls with non-null lat/lng + route_count + crag_name (for map Discovery mode) |
 
 ### Sync pulls (Supabase → cache)
 
@@ -117,6 +119,9 @@ Pending items are visible immediately to the submitting user; hidden from others
 | `adminDeleteCountry(id)` | Deletes from Supabase `countries` |
 | `adminAddRegion(countryId, name, sortOrder)` | Inserts into Supabase `regions` |
 | `adminDeleteRegion(id)` | Deletes from Supabase `regions` |
+| `adminUpdateCragCoords(id, lat, lng)` | Sets crag lat/lng in Supabase + local cache |
+| `adminUpdateWallCoords(id, lat, lng, cragId)` | Sets wall lat/lng in local cache + Supabase (warns on Supabase failure); triggers `inheritWallCoordsToCrag` |
+| `inheritWallCoordsToCrag(cragId, lat, lng)` | One-time write-back: copies wall coords to crag if crag has no coords |
 
 Admin writes go directly to Supabase. The local cache refreshes on next `pullCountries()` / `pullRegions()`.
 
@@ -143,6 +148,10 @@ useUpdateLocationDescription() // admin mutation — { table, id, description }
 usePendingLocations()       // admin — all pending items
 useVerifyLocation()         // admin mutation — { table, id }
 useRejectLocation()         // admin mutation — { table, id }
+useAllCragsWithCoords()     // map Discovery mode — crags with lat/lng
+useAllWallsWithCoords()     // map Discovery mode — walls with lat/lng
+useAdminUpdateCragCoords()  // admin mutation — { id, lat, lng }
+useAdminUpdateWallCoords()  // admin mutation — { id, lat, lng, cragId }
 ```
 
 ---
@@ -154,6 +163,7 @@ public.countries   (id, name, code, sort_order, created_at)
 public.regions     (id, country_id, name, sort_order, created_at)
 public.sub_regions (id, region_id, name, sort_order, created_at)
 public.crags       (id, sub_region_id, name, sort_order, created_at)
-public.walls       (id, crag_id, name, sort_order, created_at)
+public.walls       (id, crag_id, name, sort_order, created_at, lat, lng)
 -- RLS: authenticated users SELECT only; service role writes
+-- crags and walls have optional lat/lng REAL columns for map coordinates
 ```
