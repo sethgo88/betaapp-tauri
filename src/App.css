@@ -1,166 +1,166 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /* ── Font faces ──────────────────────────────────────────────────────────── */
 
 @font-face {
-	font-family: "Lora";
-	font-style: normal;
-	font-weight: 400;
-	font-display: swap;
-	src: url("/fonts/lora-400.woff2") format("woff2");
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/lora-400.woff2') format('woff2');
 }
 
 @font-face {
-	font-family: "Lora";
-	font-style: normal;
-	font-weight: 600;
-	font-display: swap;
-	src: url("/fonts/lora-600.woff2") format("woff2");
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/lora-600.woff2') format('woff2');
 }
 
 @font-face {
-	font-family: "Lora";
-	font-style: normal;
-	font-weight: 700;
-	font-display: swap;
-	src: url("/fonts/lora-700.woff2") format("woff2");
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/lora-700.woff2') format('woff2');
 }
 
 @font-face {
-	font-family: "Source Sans 3";
-	font-style: normal;
-	font-weight: 400;
-	font-display: swap;
-	src: url("/fonts/source-sans-3-400.woff2") format("woff2");
+  font-family: 'Source Sans 3';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/source-sans-3-400.woff2') format('woff2');
 }
 
 @font-face {
-	font-family: "Source Sans 3";
-	font-style: normal;
-	font-weight: 600;
-	font-display: swap;
-	src: url("/fonts/source-sans-3-600.woff2") format("woff2");
+  font-family: 'Source Sans 3';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/source-sans-3-600.woff2') format('woff2');
 }
 
 @font-face {
-	font-family: "Source Sans 3";
-	font-style: normal;
-	font-weight: 700;
-	font-display: swap;
-	src: url("/fonts/source-sans-3-700.woff2") format("woff2");
+  font-family: 'Source Sans 3';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/source-sans-3-700.woff2') format('woff2');
 }
 
 /* ── Theme tokens ─────────────────────────────────────────────────────────── */
 
 @theme {
-	/* Surfaces & text */
-	--color-surface-page: var(--surface-page);
-	--color-surface-card: var(--surface-card);
-	--color-surface-nav: var(--surface-nav);
-	--color-surface-input: var(--surface-input);
-	--color-surface-hover: var(--surface-hover);
-	--color-surface-active: var(--surface-active);
-	--color-border-default: var(--border-default);
-	--color-border-input: var(--border-input);
-	--color-text-primary: var(--text-primary);
-	--color-text-secondary: var(--text-secondary);
-	--color-text-tertiary: var(--text-tertiary);
+  /* Surfaces & text */
+  --color-surface-page: var(--surface-page);
+  --color-surface-card: var(--surface-card);
+  --color-surface-nav: var(--surface-nav);
+  --color-surface-input: var(--surface-input);
+  --color-surface-hover: var(--surface-hover);
+  --color-surface-active: var(--surface-active);
+  --color-border-default: var(--border-default);
+  --color-border-input: var(--border-input);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
 
-	/* Status & badges */
-	--color-status-default: var(--status-default);
-	--color-status-sent: var(--status-sent);
-	--color-status-todo: var(--status-todo);
-	--color-badge-sent-bg: var(--badge-sent-bg);
-	--color-badge-sent-text: var(--badge-sent-text);
-	--color-badge-todo-bg: var(--badge-todo-bg);
-	--color-badge-todo-text: var(--badge-todo-text);
+  /* Status & badges */
+  --color-status-default: var(--status-default);
+  --color-status-sent: var(--status-sent);
+  --color-status-todo: var(--status-todo);
+  --color-badge-sent-bg: var(--badge-sent-bg);
+  --color-badge-sent-text: var(--badge-sent-text);
+  --color-badge-todo-bg: var(--badge-todo-bg);
+  --color-badge-todo-text: var(--badge-todo-text);
 
-	/* Accents */
-	--color-accent-primary: var(--accent-primary);
-	--color-accent-secondary: var(--accent-secondary);
+  /* Accents */
+  --color-accent-primary: var(--accent-primary);
+  --color-accent-secondary: var(--accent-secondary);
 
-	/* Typography */
-	--font-display: "Lora", Georgia, serif;
-	--font-body: "Source Sans 3", system-ui, sans-serif;
+  /* Typography */
+  --font-display: 'Lora', Georgia, serif;
+  --font-body: 'Source Sans 3', system-ui, sans-serif;
 
-	/* Preset: radius */
-	--radius-sm: 0.25rem;
-	--radius-md: 0.5rem;
-	--radius-lg: 0.75rem;
-	--radius-xl: 1rem;
-	--radius-full: 9999px;
+  /* Preset: radius */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-full: 9999px;
 
-	/* Preset: shadows */
-	--shadow-card: var(--preset-shadow-card);
-	--shadow-elevated: var(--preset-shadow-elevated);
-	--shadow-toast: var(--preset-shadow-toast);
+  /* Preset: shadows */
+  --shadow-card: var(--preset-shadow-card);
+  --shadow-elevated: var(--preset-shadow-elevated);
+  --shadow-toast: var(--preset-shadow-toast);
 
-	/* Preset: card border */
-	--color-card-border: var(--card-border);
+  /* Preset: card border */
+  --color-card-border: var(--card-border);
 }
 
 /* Dark theme (default) — Warm Earth */
 :root {
-	--surface-page: #3b3228;
-	--surface-card: #2a2420;
-	--surface-nav: #1e1a16;
-	--surface-input: #2a2420;
-	--surface-hover: #3b3228;
-	--surface-active: #4a3f34;
-	--border-default: #4a3f34;
-	--border-input: #1e1a16;
-	--text-primary: #f5f0eb;
-	--text-secondary: #b5a99b;
-	--text-tertiary: #8a7e72;
-	--status-default: rgba(30, 26, 22, 0.3);
-	--status-sent: rgba(6, 78, 59, 0.2);
-	--status-todo: rgba(120, 53, 15, 0.2);
-	--badge-sent-bg: #064e3b;
-	--badge-sent-text: #6ee7b7;
-	--badge-todo-bg: #78350f;
-	--badge-todo-text: #fcd34d;
-	--accent-primary: #059669;
-	--accent-secondary: #d97706;
-	--preset-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.3);
-	--preset-shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.4);
-	--preset-shadow-toast: 0 4px 16px rgba(0, 0, 0, 0.5);
-	--card-border: #4a3f34;
-	--preset-card-border-width: 1px;
+  --surface-page: #3b3228;
+  --surface-card: #2a2420;
+  --surface-nav: #1e1a16;
+  --surface-input: #2a2420;
+  --surface-hover: #3b3228;
+  --surface-active: #4a3f34;
+  --border-default: #4a3f34;
+  --border-input: #1e1a16;
+  --text-primary: #f5f0eb;
+  --text-secondary: #b5a99b;
+  --text-tertiary: #8a7e72;
+  --status-default: rgba(30, 26, 22, 0.3);
+  --status-sent: rgba(6, 78, 59, 0.2);
+  --status-todo: rgba(120, 53, 15, 0.2);
+  --badge-sent-bg: #064e3b;
+  --badge-sent-text: #6ee7b7;
+  --badge-todo-bg: #78350f;
+  --badge-todo-text: #fcd34d;
+  --accent-primary: #059669;
+  --accent-secondary: #d97706;
+  --preset-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --preset-shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --preset-shadow-toast: 0 4px 16px rgba(0, 0, 0, 0.5);
+  --card-border: #4a3f34;
+  --preset-card-border-width: 1px;
 }
 
 /* Light theme — Warm Earth */
 :root.light {
-	--surface-page: #faf6f1;
-	--surface-card: #ffffff;
-	--surface-nav: #f5efe8;
-	--surface-input: #f5efe8;
-	--surface-hover: #f0e9e0;
-	--surface-active: #e0d6ca;
-	--border-default: #e0d6ca;
-	--border-input: #d4c9bc;
-	--text-primary: #2a2420;
-	--text-secondary: #78716c;
-	--text-tertiary: #a8a29e;
-	--status-default: #f5efe8;
-	--status-sent: #ecfdf5;
-	--status-todo: #fffbeb;
-	--badge-sent-bg: #d1fae5;
-	--badge-sent-text: #065f46;
-	--badge-todo-bg: #fef3c7;
-	--badge-todo-text: #92400e;
-	--accent-primary: #059669;
-	--accent-secondary: #d97706;
-	--preset-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08);
-	--preset-shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.1);
-	--preset-shadow-toast: 0 4px 16px rgba(0, 0, 0, 0.12);
-	--card-border: #e0d6ca;
-	--preset-card-border-width: 1px;
+  --surface-page: #faf6f1;
+  --surface-card: #ffffff;
+  --surface-nav: #f5efe8;
+  --surface-input: #f5efe8;
+  --surface-hover: #f0e9e0;
+  --surface-active: #e0d6ca;
+  --border-default: #e0d6ca;
+  --border-input: #d4c9bc;
+  --text-primary: #2a2420;
+  --text-secondary: #78716c;
+  --text-tertiary: #a8a29e;
+  --status-default: #f5efe8;
+  --status-sent: #ecfdf5;
+  --status-todo: #fffbeb;
+  --badge-sent-bg: #d1fae5;
+  --badge-sent-text: #065f46;
+  --badge-todo-bg: #fef3c7;
+  --badge-todo-text: #92400e;
+  --accent-primary: #059669;
+  --accent-secondary: #d97706;
+  --preset-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --preset-shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --preset-shadow-toast: 0 4px 16px rgba(0, 0, 0, 0.12);
+  --card-border: #e0d6ca;
+  --preset-card-border-width: 1px;
 }
 
 /* ── Base layer ───────────────────────────────────────────────────────────── */
 
 @layer base {
-	body {
-		font-family: var(--font-body);
-	}
+  body {
+    font-family: var(--font-body);
+  }
 }
