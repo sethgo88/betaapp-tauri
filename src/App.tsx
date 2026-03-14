@@ -6,6 +6,11 @@ import {
 	useQuery,
 } from "@tanstack/react-query";
 import { RouterProvider } from "@tanstack/react-router";
+import {
+	checkPermissions,
+	getCurrentPosition,
+	requestPermissions,
+} from "@tauri-apps/plugin-geolocation";
 import { useEffect } from "react";
 import { Spinner } from "@/components/atoms/Spinner";
 import {
@@ -20,17 +25,44 @@ import { seedGrades } from "@/features/grades/grades-seed";
 import { useSync } from "@/hooks/useSync";
 import { supabase } from "@/lib/supabase";
 import { router } from "@/router";
+import { useUiStore } from "@/stores/ui.store";
 
 const queryClient = new QueryClient();
 
+async function refreshUserLocation(
+	setUserLocation: (loc: { lat: number; lng: number }) => void,
+) {
+	try {
+		let perms = await checkPermissions();
+		if (
+			perms.location === "prompt" ||
+			perms.location === "prompt-with-rationale"
+		) {
+			perms = await requestPermissions(["location"]);
+		}
+		if (perms.location !== "granted") return;
+		const pos = await getCurrentPosition();
+		setUserLocation({
+			lat: pos.coords.latitude,
+			lng: pos.coords.longitude,
+		});
+	} catch {
+		// Location unavailable — keep using cached value
+	}
+}
+
 function Bootstrap() {
 	const { setUser, setSession, user } = useAuthStore();
+	const setUserLocation = useUiStore((s) => s.setUserLocation);
 	useSync(user?.id);
 
 	const { isLoading } = useQuery({
 		queryKey: ["bootstrap"],
 		queryFn: async () => {
 			await seedGrades();
+
+			// Refresh user location in background (don't block startup)
+			refreshUserLocation(setUserLocation);
 
 			const session = await restoreSession();
 			if (session) {

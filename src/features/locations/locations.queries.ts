@@ -11,8 +11,10 @@ import {
 	adminDeleteCountry,
 	adminDeleteRegion,
 	adminUpdateCragCoords,
+	adminUpdateWallCoords,
 	downloadRegion,
 	fetchAllCragsWithCoords,
+	fetchAllWallsWithCoords,
 	fetchCountries,
 	fetchCrag,
 	fetchCrags,
@@ -272,6 +274,36 @@ export function useAdminUpdateCragCoords() {
 		}) => adminUpdateCragCoords(id, lat, lng),
 		onSuccess: (_data, { id }) => {
 			qc.invalidateQueries({ queryKey: ["crag", id] });
+			qc.invalidateQueries({ queryKey: ["crags_with_coords"] });
+		},
+	});
+}
+
+export function useAllWallsWithCoords() {
+	return useQuery({
+		queryKey: ["walls_with_coords"],
+		queryFn: fetchAllWallsWithCoords,
+	});
+}
+
+export function useAdminUpdateWallCoords() {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: ({
+			id,
+			lat,
+			lng,
+			cragId,
+		}: {
+			id: string;
+			lat: number;
+			lng: number;
+			cragId: string;
+		}) => adminUpdateWallCoords(id, lat, lng, cragId),
+		onSuccess: (_data, { id, cragId }) => {
+			qc.invalidateQueries({ queryKey: ["wall", id] });
+			qc.invalidateQueries({ queryKey: ["walls_with_coords"] });
+			qc.invalidateQueries({ queryKey: ["crag", cragId] });
 			qc.invalidateQueries({ queryKey: ["crags_with_coords"] });
 		},
 	});

@@ -1,21 +1,68 @@
 import { useNavigate, useParams } from "@tanstack/react-router";
+import { MapPin } from "lucide-react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/atoms/Button";
 import { Spinner } from "@/components/atoms/Spinner";
+import {
+	CoordinatePicker,
+	type PickerMarker,
+} from "@/components/molecules/CoordinatePicker";
 import { EditableDescription } from "@/components/molecules/EditableDescription";
 import { useAuthStore } from "@/features/auth/auth.store";
 import {
+	useAdminUpdateWallCoords,
+	useCrag,
 	useUpdateLocationDescription,
 	useWall,
+	useWalls,
 } from "@/features/locations/locations.queries";
 import { useRoutes } from "@/features/routes/routes.queries";
+
+const ViewOnMap = ({ lat, lng }: { lat: number; lng: number }) => {
+	const navigate = useNavigate();
+	return (
+		<div className="flex items-center gap-3">
+			<p className="text-xs text-text-secondary">
+				{lat.toFixed(5)}, {lng.toFixed(5)}
+			</p>
+			<button
+				type="button"
+				onClick={() => navigate({ to: "/map", search: { lat, lng, zoom: 15 } })}
+				className="flex items-center gap-1 text-xs text-accent-primary font-semibold"
+			>
+				<MapPin size={12} />
+				View on map
+			</button>
+		</div>
+	);
+};
 
 const WallView = () => {
 	const { wallId } = useParams({ from: "/walls/$wallId" });
 	const navigate = useNavigate();
 	const { data: wall, isLoading } = useWall(wallId);
+	const { data: crag } = useCrag(wall?.crag_id ?? null);
+	const { data: siblingWalls = [] } = useWalls(wall?.crag_id ?? null);
 	const { data: routes = [] } = useRoutes(wallId);
 	const updateDescription = useUpdateLocationDescription();
+	const updateCoords = useAdminUpdateWallCoords();
 	const isAdmin = useAuthStore((s) => s.user?.role === "admin");
+	const [showCoordEditor, setShowCoordEditor] = useState(false);
+
+	const siblingMarkers = useMemo<PickerMarker[]>(() => {
+		const result: PickerMarker[] = [];
+		for (const w of siblingWalls) {
+			if (w.id !== wallId && w.lat != null && w.lng != null) {
+				result.push({ lat: w.lat, lng: w.lng, label: w.name });
+			}
+		}
+		return result;
+	}, [siblingWalls, wallId]);
+
+	const cragCoords =
+		crag?.lat != null && crag?.lng != null
+			? { lat: crag.lat, lng: crag.lng }
+			: null;
 
 	if (isLoading) {
 		return (
@@ -57,6 +104,43 @@ const WallView = () => {
 					});
 				}}
 			/>
+
+			{wall.lat != null && wall.lng != null && (
+				<ViewOnMap lat={wall.lat} lng={wall.lng} />
+			)}
+
+			{isAdmin && (
+				<div className="flex flex-col gap-2">
+					<button
+						type="button"
+						onClick={() => setShowCoordEditor(true)}
+						className="text-sm text-text-secondary hover:text-text-primary text-left"
+					>
+						{wall.lat != null ? "Edit coordinates" : "+ Add coordinates"}
+					</button>
+					{showCoordEditor && (
+						<CoordinatePicker
+							value={
+								wall.lat != null && wall.lng != null
+									? { lat: wall.lat, lng: wall.lng }
+									: null
+							}
+							defaultCenter={cragCoords}
+							defaultZoom={cragCoords ? 15 : 12}
+							markers={siblingMarkers}
+							onChange={async (coords) => {
+								await updateCoords.mutateAsync({
+									id: wallId,
+									lat: coords.lat,
+									lng: coords.lng,
+									cragId: wall.crag_id,
+								});
+							}}
+							onClose={() => setShowCoordEditor(false)}
+						/>
+					)}
+				</div>
+			)}
 
 			{routes.length === 0 && (
 				<p className="text-text-secondary text-sm">

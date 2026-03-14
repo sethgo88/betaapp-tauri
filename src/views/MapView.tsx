@@ -7,11 +7,22 @@ import {
 import L from "leaflet";
 import { Crosshair, Layers, MapPin, Minus, Plus } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
-import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
+import {
+	MapContainer,
+	Marker,
+	Popup,
+	TileLayer,
+	useMap,
+	useMapEvents,
+} from "react-leaflet";
 import { Spinner } from "@/components/atoms/Spinner";
-import { useAllCragsWithCoords } from "@/features/locations/locations.queries";
-import { usePersonalCrags } from "@/features/map/map.queries";
+import {
+	useAllCragsWithCoords,
+	useAllWallsWithCoords,
+} from "@/features/locations/locations.queries";
+import { usePersonalCrags, usePersonalWalls } from "@/features/map/map.queries";
 import { tileLayers } from "@/lib/map-tiles";
+import { useUiStore } from "@/stores/ui.store";
 
 // ── Marker icon with route count ────────────────────────────────────────────
 
@@ -156,6 +167,35 @@ const MapControls = ({
 	);
 };
 
+// ── Zoom tracker ────────────────────────────────────────────────────────────
+
+const WALL_ZOOM_THRESHOLD = 15;
+
+const ZoomTracker = ({ onZoom }: { onZoom: (zoom: number) => void }) => {
+	const map = useMap();
+	useMapEvents({
+		zoomend() {
+			onZoom(map.getZoom());
+		},
+	});
+	return null;
+};
+
+// ── Zoom-to button (rendered inside a Popup) ────────────────────────────────
+
+const ZoomToButton = ({ lat, lng }: { lat: number; lng: number }) => {
+	const map = useMap();
+	return (
+		<button
+			type="button"
+			className="text-xs text-text-secondary"
+			onClick={() => map.setView([lat, lng], 15)}
+		>
+			Zoom to crag
+		</button>
+	);
+};
+
 // ── Filter checkbox ─────────────────────────────────────────────────────────
 
 const FilterCheck = ({
@@ -184,13 +224,17 @@ type Mode = "discovery" | "personal";
 
 const MapView = () => {
 	const navigate = useNavigate();
+	const userLocation = useUiStore((s) => s.userLocation);
 	const {
 		lat: searchLat,
 		lng: searchLng,
 		zoom: searchZoom,
 	} = useSearch({ from: "/map" });
+	const hasSearchCoords = searchLat != null && searchLng != null;
 	const [mode, setMode] = useState<Mode>("discovery");
 	const [activeLayerId, setActiveLayerId] = useState("osm");
+	const [zoom, setZoom] = useState(hasSearchCoords ? (searchZoom ?? 14) : 6);
+	const showWalls = zoom >= WALL_ZOOM_THRESHOLD;
 
 	// Discovery filters
 	const [showSport, setShowSport] = useState(true);
@@ -203,8 +247,10 @@ const MapView = () => {
 
 	const { data: allCrags = [], isLoading: loadingDiscovery } =
 		useAllCragsWithCoords();
+	const { data: allWalls = [] } = useAllWallsWithCoords();
 	const { data: personalCrags = [], isLoading: loadingPersonal } =
 		usePersonalCrags();
+	const { data: personalWalls = [] } = usePersonalWalls();
 
 	const isLoading = mode === "discovery" ? loadingDiscovery : loadingPersonal;
 
@@ -221,16 +267,54 @@ const MapView = () => {
 	);
 
 	// Compute map center — search params override marker-based center
-	const hasSearchCoords = searchLat != null && searchLng != null;
 	const center = useMemo<[number, number]>(() => {
 		if (hasSearchCoords) return [searchLat, searchLng];
 		const items = mode === "discovery" ? allCrags : filteredPersonal;
-		if (items.length === 0) return [43.0, 12.0]; // Default: Europe
+		if (items.length === 0)
+			return userLocation ? [userLocation.lat, userLocation.lng] : [43.0, 12.0];
 		const avgLat = items.reduce((s, c) => s + (c.lat ?? 0), 0) / items.length;
 		const avgLng = items.reduce((s, c) => s + (c.lng ?? 0), 0) / items.length;
 		return [avgLat, avgLng];
-	}, [hasSearchCoords, searchLat, searchLng, mode, allCrags, filteredPersonal]);
+	}, [
+		hasSearchCoords,
+		searchLat,
+		searchLng,
+		mode,
+		allCrags,
+		filteredPersonal,
+		userLocation,
+	]);
 	const initialZoom = hasSearchCoords ? (searchZoom ?? 14) : 6;
+
+	// Crags that have walls with coordinates — hide crag pin at high zoom
+	const cragsWithWallCoords = useMemo(() => {
+		const set = new Set<string>();
+		for (const w of allWalls) set.add(w.crag_id);
+		return set;
+	}, [allWalls]);
+
+	const personalCragsWithWallCoords = useMemo(() => {
+		const set = new Set<string>();
+		for (const w of personalWalls) set.add(w.crag_id);
+		return set;
+	}, [personalWalls]);
+
+	// At high zoom: show wall pins, hide crag pins for crags that have wall coords
+	const visibleCrags = useMemo(
+		() =>
+			showWalls
+				? allCrags.filter((c) => !cragsWithWallCoords.has(c.id))
+				: allCrags,
+		[allCrags, showWalls, cragsWithWallCoords],
+	);
+
+	const visiblePersonalCrags = useMemo(
+		() =>
+			showWalls
+				? filteredPersonal.filter((c) => !personalCragsWithWallCoords.has(c.id))
+				: filteredPersonal,
+		[filteredPersonal, showWalls, personalCragsWithWallCoords],
+	);
 
 	const activeLayer =
 		tileLayers.find((l) => l.id === activeLayerId) ?? tileLayers[0];
@@ -329,33 +413,72 @@ const MapView = () => {
 						onLayerChange={setActiveLayerId}
 					/>
 
+					<ZoomTracker onZoom={setZoom} />
+
+					{/* Crag pins (hidden for crags with wall coords at high zoom) */}
 					{mode === "discovery" &&
-						allCrags.map((crag) => (
+						visibleCrags.map((crag) => (
 							<Marker
 								key={crag.id}
 								position={[crag.lat, crag.lng]}
 								icon={countIcon(crag.route_count, "#059669")}
 							>
 								<Popup>
-									<button
-										type="button"
-										className="text-sm font-medium text-accent-primary"
-										onClick={() =>
-											navigate({
-												to: "/crags/$cragId",
-												params: { cragId: crag.id },
-											})
-										}
-									>
-										<MapPin size={14} className="inline mr-1" />
-										{crag.name}
-									</button>
+									<div className="flex flex-col gap-1">
+										<button
+											type="button"
+											className="text-sm font-medium text-accent-primary"
+											onClick={() =>
+												navigate({
+													to: "/crags/$cragId",
+													params: { cragId: crag.id },
+												})
+											}
+										>
+											<MapPin size={14} className="inline mr-1" />
+											{crag.name}
+										</button>
+										<ZoomToButton lat={crag.lat} lng={crag.lng} />
+									</div>
 								</Popup>
 							</Marker>
 						))}
 
+					{/* Wall pins at high zoom */}
+					{mode === "discovery" &&
+						showWalls &&
+						allWalls.map((wall) => (
+							<Marker
+								key={wall.id}
+								position={[wall.lat, wall.lng]}
+								icon={countIcon(wall.route_count, "#eab308")}
+							>
+								<Popup>
+									<div className="flex flex-col gap-0.5">
+										<button
+											type="button"
+											className="text-sm font-medium text-yellow-500"
+											onClick={() =>
+												navigate({
+													to: "/walls/$wallId",
+													params: { wallId: wall.id },
+												})
+											}
+										>
+											<MapPin size={14} className="inline mr-1" />
+											{wall.name}
+										</button>
+										<span className="text-xs text-gray-500">
+											{wall.crag_name}
+										</span>
+									</div>
+								</Popup>
+							</Marker>
+						))}
+
+					{/* Personal crag pins */}
 					{mode === "personal" &&
-						filteredPersonal.map((crag) => (
+						visiblePersonalCrags.map((crag) => (
 							<Marker
 								key={crag.id}
 								position={[crag.lat, crag.lng]}
@@ -377,11 +500,54 @@ const MapView = () => {
 											{crag.name}
 										</button>
 										<span className="text-xs text-gray-500">
-											{crag.climb_count} climb
-											{crag.climb_count !== 1 ? "s" : ""}
-											{crag.has_sent && " · sent"}
-											{crag.has_project && " · project"}
-											{crag.has_todo && " · todo"}
+											{[
+												crag.sent_count > 0 && `${crag.sent_count} Sent`,
+												crag.project_count > 0 &&
+													`${crag.project_count} Project`,
+												crag.todo_count > 0 && `${crag.todo_count} Todo`,
+											]
+												.filter(Boolean)
+												.join(" · ")}
+										</span>
+										<ZoomToButton lat={crag.lat} lng={crag.lng} />
+									</div>
+								</Popup>
+							</Marker>
+						))}
+
+					{/* Personal wall pins at high zoom */}
+					{mode === "personal" &&
+						showWalls &&
+						personalWalls.map((wall) => (
+							<Marker
+								key={wall.id}
+								position={[wall.lat, wall.lng]}
+								icon={countIcon(wall.route_count, "#eab308")}
+							>
+								<Popup>
+									<div className="flex flex-col gap-0.5">
+										<button
+											type="button"
+											className="text-sm font-medium text-yellow-500"
+											onClick={() =>
+												navigate({
+													to: "/walls/$wallId",
+													params: { wallId: wall.id },
+												})
+											}
+										>
+											<MapPin size={14} className="inline mr-1" />
+											{wall.name}
+										</button>
+										<span className="text-xs text-gray-500">
+											{[
+												wall.sent_count > 0 && `${wall.sent_count} Sent`,
+												wall.project_count > 0 &&
+													`${wall.project_count} Project`,
+												wall.todo_count > 0 && `${wall.todo_count} Todo`,
+											]
+												.filter(Boolean)
+												.join(" · ")}
 										</span>
 									</div>
 								</Popup>

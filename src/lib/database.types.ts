@@ -564,6 +564,8 @@ export type Database = {
           deleted_at: string | null
           description: string | null
           id: string
+          lat: number | null
+          lng: number | null
           name: string
           sort_order: number
           status: string
@@ -575,6 +577,8 @@ export type Database = {
           deleted_at?: string | null
           description?: string | null
           id?: string
+          lat?: number | null
+          lng?: number | null
           name: string
           sort_order?: number
           status?: string
@@ -586,6 +590,8 @@ export type Database = {
           deleted_at?: string | null
           description?: string | null
           id?: string
+          lat?: number | null
+          lng?: number | null
           name?: string
           sort_order?: number
           status?: string

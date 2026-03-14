@@ -287,6 +287,12 @@ const migrations: Migration[] = [
 		await db.execute(`ALTER TABLE crags_cache ADD COLUMN lat REAL`);
 		await db.execute(`ALTER TABLE crags_cache ADD COLUMN lng REAL`);
 	},
+
+	// v11: lat/lng on walls_cache (#15)
+	async (db) => {
+		await db.execute(`ALTER TABLE walls_cache ADD COLUMN lat REAL`);
+		await db.execute(`ALTER TABLE walls_cache ADD COLUMN lng REAL`);
+	},
 ];
 
 export async function runMigrations(db: DbAdapter): Promise<void> {

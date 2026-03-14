@@ -50,6 +50,8 @@ export const WallSchema = z.object({
 	status: SubmissionStatus.default("verified"),
 	created_by: z.string().nullable().optional(),
 	created_at: z.string(),
+	lat: z.number().nullable().optional(),
+	lng: z.number().nullable().optional(),
 });
 
 export type Country = z.infer<typeof CountrySchema>;
@@ -75,6 +77,8 @@ export const CragSubmitSchema = z.object({
 export const WallSubmitSchema = z.object({
 	crag_id: z.string().min(1, "Crag is required"),
 	name: z.string().min(1, "Name is required"),
+	lat: z.number().optional(),
+	lng: z.number().optional(),
 });
 
 export type SubRegionSubmitValues = z.infer<typeof SubRegionSubmitSchema>;

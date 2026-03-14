@@ -3,10 +3,19 @@ import {
 	getCurrentPosition,
 	requestPermissions,
 } from "@tauri-apps/plugin-geolocation";
+import L from "leaflet";
 import { Check, Crosshair, Layers, Minus, Plus, X } from "lucide-react";
 import { useCallback, useState } from "react";
-import { MapContainer, TileLayer, useMap, useMapEvents } from "react-leaflet";
+import {
+	MapContainer,
+	Marker,
+	TileLayer,
+	Tooltip,
+	useMap,
+	useMapEvents,
+} from "react-leaflet";
 import { tileLayers } from "@/lib/map-tiles";
+import { useUiStore } from "@/stores/ui.store";
 
 type Coords = { lat: number; lng: number };
 
@@ -150,18 +159,36 @@ function CenterPin() {
 
 // ── Full-screen picker overlay ──────────────────────────────────────────────
 
+export type PickerMarker = { lat: number; lng: number; label: string };
+
+const markerIcon = L.divIcon({
+	className: "",
+	iconSize: [12, 12],
+	iconAnchor: [6, 6],
+	html: '<div style="width:12px;height:12px;border-radius:50%;background:#eab308;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.4)"></div>',
+});
+
 interface CoordinatePickerProps {
 	value?: Coords | null;
+	defaultCenter?: Coords | null;
+	defaultZoom?: number;
+	markers?: PickerMarker[];
 	onChange: (coords: Coords) => void;
 	onClose?: () => void;
 }
 
 export const CoordinatePicker = ({
 	value,
+	defaultCenter,
+	defaultZoom,
+	markers,
 	onChange,
 	onClose,
 }: CoordinatePickerProps) => {
-	const initial: Coords = value ?? { lat: 39.0, lng: -98.0 };
+	const userLocation = useUiStore((s) => s.userLocation);
+	const initial: Coords = value ??
+		defaultCenter ??
+		userLocation ?? { lat: 39.0, lng: -98.0 };
 	const [coords, setCoords] = useState<Coords>(initial);
 	const [activeLayerId, setActiveLayerId] = useState("osm");
 
@@ -190,7 +217,7 @@ export const CoordinatePicker = ({
 			<div className="flex-1 relative">
 				<MapContainer
 					center={[initial.lat, initial.lng]}
-					zoom={value ? 12 : 4}
+					zoom={value ? 15 : (defaultZoom ?? 4)}
 					className="h-full w-full"
 					zoomControl={false}
 				>
@@ -200,6 +227,13 @@ export const CoordinatePicker = ({
 						url={activeLayer.url}
 					/>
 					<CenterTracker onMove={setCoords} />
+					{markers?.map((m) => (
+						<Marker key={m.label} position={[m.lat, m.lng]} icon={markerIcon}>
+							<Tooltip direction="top" offset={[0, -8]} permanent>
+								{m.label}
+							</Tooltip>
+						</Marker>
+					))}
 					<MapControls
 						activeLayerId={activeLayerId}
 						onLayerChange={setActiveLayerId}

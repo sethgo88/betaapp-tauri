@@ -274,7 +274,7 @@ export async function downloadRegion(regionId: string): Promise<void> {
 		if (walls && walls.length > 0) {
 			for (const row of walls as Wall[]) {
 				await db.execute(
-					"INSERT INTO walls_cache (id, crag_id, name, description, sort_order, status, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+					"INSERT INTO walls_cache (id, crag_id, name, description, sort_order, status, created_by, created_at, lat, lng) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 					[
 						row.id,
 						row.crag_id,
@@ -284,6 +284,8 @@ export async function downloadRegion(regionId: string): Promise<void> {
 						row.status ?? "verified",
 						row.created_by ?? null,
 						row.created_at,
+						row.lat ?? null,
+						row.lng ?? null,
 					],
 				);
 			}
@@ -395,6 +397,8 @@ export async function submitWall(
 		id,
 		crag_id: values.crag_id,
 		name: values.name,
+		lat: values.lat ?? null,
+		lng: values.lng ?? null,
 		sort_order: 9999,
 		status: "pending",
 		created_by: userId,
@@ -403,9 +407,21 @@ export async function submitWall(
 
 	const db = await getDb();
 	await db.execute(
-		"INSERT INTO walls_cache (id, crag_id, name, sort_order, status, created_by, created_at) VALUES (?, ?, ?, 9999, 'pending', ?, datetime('now'))",
-		[id, values.crag_id, values.name, userId],
+		"INSERT INTO walls_cache (id, crag_id, name, sort_order, status, created_by, created_at, lat, lng) VALUES (?, ?, ?, 9999, 'pending', ?, datetime('now'), ?, ?)",
+		[
+			id,
+			values.crag_id,
+			values.name,
+			userId,
+			values.lat ?? null,
+			values.lng ?? null,
+		],
 	);
+
+	// Inherit wall coords to crag if crag has no coordinates
+	if (values.lat != null && values.lng != null) {
+		await inheritWallCoordsToCrag(values.crag_id, values.lat, values.lng);
+	}
 }
 
 // ── Admin location verification ───────────────────────────────────────────────
@@ -595,4 +611,79 @@ export async function adminUpdateCragCoords(
 		lng,
 		id,
 	]);
+}
+
+// ── Map: admin wall coordinate editing ──────────────────────────────────────
+
+export async function adminUpdateWallCoords(
+	id: string,
+	lat: number,
+	lng: number,
+	cragId: string,
+): Promise<void> {
+	// Update local cache first (always works)
+	const db = await getDb();
+	await db.execute("UPDATE walls_cache SET lat = ?, lng = ? WHERE id = ?", [
+		lat,
+		lng,
+		id,
+	]);
+
+	// Sync to Supabase
+	const { error } = await supabase
+		.from("walls")
+		.update({ lat, lng })
+		.eq("id", id);
+	if (error) {
+		console.warn("Failed to sync wall coords to Supabase:", error.message);
+	}
+
+	// Inherit to crag if crag has no coordinates
+	await inheritWallCoordsToCrag(cragId, lat, lng);
+}
+
+async function inheritWallCoordsToCrag(
+	cragId: string,
+	lat: number,
+	lng: number,
+): Promise<void> {
+	const db = await getDb();
+	const rows = await db.select<{ lat: number | null }[]>(
+		"SELECT lat FROM crags_cache WHERE id = ?",
+		[cragId],
+	);
+	if (rows.length > 0 && rows[0].lat == null) {
+		await db.execute("UPDATE crags_cache SET lat = ?, lng = ? WHERE id = ?", [
+			lat,
+			lng,
+			cragId,
+		]);
+		await supabase.from("crags").update({ lat, lng }).eq("id", cragId);
+	}
+}
+
+// ── Map: all walls with coordinates ─────────────────────────────────────────
+
+export type MapWall = {
+	id: string;
+	crag_id: string;
+	name: string;
+	crag_name: string;
+	lat: number;
+	lng: number;
+	route_count: number;
+};
+
+export async function fetchAllWallsWithCoords(): Promise<MapWall[]> {
+	const db = await getDb();
+	return db.select<MapWall[]>(
+		`SELECT
+			w.id, w.crag_id, w.name, c.name AS crag_name, w.lat, w.lng,
+			COUNT(DISTINCT r.id) AS route_count
+		FROM walls_cache w
+		JOIN crags_cache c ON c.id = w.crag_id
+		LEFT JOIN routes_cache r ON r.wall_id = w.id
+		WHERE w.lat IS NOT NULL AND w.lng IS NOT NULL
+		GROUP BY w.id`,
+	);
 }
