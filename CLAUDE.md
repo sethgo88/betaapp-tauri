@@ -22,7 +22,7 @@ pnpm typecheck     # tsc --noEmit
 ```
 
 ## Stack
-React 19, TanStack Router (memory history), TanStack Query, TanStack Form, Zustand, Zod v4, Tailwind CSS, Biome, tauri-plugin-sql (SQLite), tauri-plugin-deep-link, @supabase/supabase-js
+React 19, TanStack Router (memory history), TanStack Query, TanStack Form, Zustand, Zod v4, Tailwind CSS, Biome, tauri-plugin-sql (SQLite), tauri-plugin-deep-link, @supabase/supabase-js, Leaflet + react-leaflet (interactive maps)
 
 ## Folder Structure
 ```
@@ -39,6 +39,7 @@ src/
   features/burns/          # burns.queries, burns.service, burns.schema
   features/routes/         # routes.queries, routes.service, routes.schema
   features/locations/      # locations.queries, locations.service, downloads.service
+  features/map/            # map.service, map.queries (personal crags for map view)
   features/grades/         # grades.queries, grades.service, grades.schema, grades-seed.ts
   features/sync/           # sync.store, sync.service
   features/auth/           # auth.store, auth.service, auth.schema

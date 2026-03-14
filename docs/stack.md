@@ -18,6 +18,7 @@ Technology choices for BetaApp. For usage patterns, see the relevant README in `
 | **tauri-plugin-sql** | True embedded SQLite; works offline; data survives app restarts | All access via `src/lib/db.ts` — never import plugin directly in feature code |
 | **Supabase** | Hosted Postgres with Auth, Realtime, RLS, and web dashboard as admin CMS | Credentials via `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` in `.env` (gitignored) |
 | **tauri-plugin-deep-link** | Handles `betaapp://` URL scheme on Android | Plugin registered; magic link auth wiring planned for Phase 11 |
+| **Leaflet + react-leaflet** | Interactive maps with OpenStreetMap tiles; zero API key required | CSS imported in `main.tsx`; custom SVG marker icons (no default marker image workaround needed) |
 | **pnpm** | Fast, strict dependency resolution | Never use `npm` or `yarn` |
 
 ---

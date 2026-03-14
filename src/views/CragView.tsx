@@ -1,9 +1,12 @@
 import { useNavigate, useParams } from "@tanstack/react-router";
+import { MapPin } from "lucide-react";
 import { useState } from "react";
 import { Spinner } from "@/components/atoms/Spinner";
+import { CoordinatePicker } from "@/components/molecules/CoordinatePicker";
 import { EditableDescription } from "@/components/molecules/EditableDescription";
 import { useAuthStore } from "@/features/auth/auth.store";
 import {
+	useAdminUpdateCragCoords,
 	useCrag,
 	useSubmitWall,
 	useUpdateLocationDescription,
@@ -55,6 +58,27 @@ const InlineAddForm = ({
 	);
 };
 
+// ── View on map link ────────────────────────────────────────────────────────
+
+const ViewOnMap = ({ lat, lng }: { lat: number; lng: number }) => {
+	const navigate = useNavigate();
+	return (
+		<div className="flex items-center gap-3">
+			<p className="text-xs text-text-secondary">
+				{lat.toFixed(5)}, {lng.toFixed(5)}
+			</p>
+			<button
+				type="button"
+				onClick={() => navigate({ to: "/map", search: { lat, lng, zoom: 14 } })}
+				className="flex items-center gap-1 text-xs text-accent-primary font-semibold"
+			>
+				<MapPin size={12} />
+				View on map
+			</button>
+		</div>
+	);
+};
+
 // ── Crag view ─────────────────────────────────────────────────────────────────
 
 const CragView = () => {
@@ -65,7 +89,9 @@ const CragView = () => {
 	const submitWall = useSubmitWall();
 	const updateDescription = useUpdateLocationDescription();
 	const isAdmin = useAuthStore((s) => s.user?.role === "admin");
+	const updateCoords = useAdminUpdateCragCoords();
 	const [showWallForm, setShowWallForm] = useState(false);
+	const [showCoordEditor, setShowCoordEditor] = useState(false);
 
 	const handleAddWall = async (name: string) => {
 		await submitWall.mutateAsync({ crag_id: cragId, name });
@@ -111,6 +137,39 @@ const CragView = () => {
 							});
 						}}
 					/>
+
+					{crag.lat != null && crag.lng != null && (
+						<ViewOnMap lat={crag.lat} lng={crag.lng} />
+					)}
+
+					{isAdmin && (
+						<div className="flex flex-col gap-2">
+							<button
+								type="button"
+								onClick={() => setShowCoordEditor(true)}
+								className="text-sm text-text-secondary hover:text-text-primary text-left"
+							>
+								{crag.lat != null ? "Edit coordinates" : "+ Add coordinates"}
+							</button>
+							{showCoordEditor && (
+								<CoordinatePicker
+									value={
+										crag.lat != null && crag.lng != null
+											? { lat: crag.lat, lng: crag.lng }
+											: null
+									}
+									onChange={async (coords) => {
+										await updateCoords.mutateAsync({
+											id: cragId,
+											lat: coords.lat,
+											lng: coords.lng,
+										});
+									}}
+									onClose={() => setShowCoordEditor(false)}
+								/>
+							)}
+						</div>
+					)}
 				</>
 			)}
 

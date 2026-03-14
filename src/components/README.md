@@ -36,6 +36,7 @@ templates   Layout shells with no real data — just children/slots.
 | `FilterPanel` | Collapsible status/type filter checkboxes with cross-filtered counts |
 | `FormField` | Label + input/select + error message wrapper |
 | `SyncStatus` | Reads `sync.store` and renders sync state indicator |
+| `CoordinatePicker` | Small Leaflet map for picking coordinates; click to place/move pin; used in crag submission and admin editing |
 | `Toast` | Single toast notification; rendered by `AppLayout` |
 
 ### Organisms

@@ -156,10 +156,7 @@ const ClimbDetailView = () => {
 					<span>Burns ({burns?.length ?? 0})</span>
 					<ChevronDown
 						size={16}
-						className={cn(
-							"transition-transform",
-							burnsOpen && "rotate-180",
-						)}
+						className={cn("transition-transform", burnsOpen && "rotate-180")}
 					/>
 				</button>
 				{burnsOpen && (
@@ -204,9 +201,7 @@ const ClimbDetailView = () => {
 											{
 												onSuccess: () => {
 													setShowAddBurn(false);
-													setAddDate(
-														new Date().toISOString().slice(0, 10),
-													);
+													setAddDate(new Date().toISOString().slice(0, 10));
 													setAddNotes("");
 												},
 											},
@@ -230,36 +225,28 @@ const ClimbDetailView = () => {
 												<Input
 													type="date"
 													value={editDate}
-													onChange={(e) =>
-														setEditDate(e.target.value)
-													}
+													onChange={(e) => setEditDate(e.target.value)}
 												/>
 												<Input
 													placeholder="Notes (optional)"
 													value={editNotes}
-													onChange={(e) =>
-														setEditNotes(e.target.value)
-													}
+													onChange={(e) => setEditNotes(e.target.value)}
 												/>
 												<div className="flex gap-2">
 													<Button
 														size="small"
-														disabled={
-															!editDate || updateBurn.isPending
-														}
+														disabled={!editDate || updateBurn.isPending}
 														onClick={() => {
 															updateBurn.mutate(
 																{
 																	id: burn.id,
 																	data: {
 																		date: editDate,
-																		notes:
-																			editNotes || undefined,
+																		notes: editNotes || undefined,
 																	},
 																},
 																{
-																	onSuccess: () =>
-																		setEditingBurnId(null),
+																	onSuccess: () => setEditingBurnId(null),
 																},
 															);
 														}}
@@ -269,9 +256,7 @@ const ClimbDetailView = () => {
 													<Button
 														size="small"
 														variant="outlined"
-														onClick={() =>
-															setEditingBurnId(null)
-														}
+														onClick={() => setEditingBurnId(null)}
 													>
 														Cancel
 													</Button>
@@ -280,9 +265,7 @@ const ClimbDetailView = () => {
 										) : (
 											<div className="flex items-center justify-between">
 												<div>
-													<p className="text-sm font-semibold">
-														{burn.date}
-													</p>
+													<p className="text-sm font-semibold">{burn.date}</p>
 													{burn.notes && (
 														<p className="text-sm text-text-secondary">
 															{burn.notes}
@@ -304,9 +287,7 @@ const ClimbDetailView = () => {
 													<button
 														type="button"
 														className="text-text-secondary"
-														onClick={() =>
-															deleteBurn.mutate(burn.id)
-														}
+														onClick={() => deleteBurn.mutate(burn.id)}
 													>
 														<Trash2 size={16} />
 													</button>

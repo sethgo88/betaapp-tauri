@@ -14,11 +14,13 @@ specifiers:
   '@tauri-apps/api': ^2
   '@tauri-apps/cli': ^2
   '@tauri-apps/plugin-deep-link': ^2.4.7
+  '@tauri-apps/plugin-geolocation': ^2.3.2
   '@tauri-apps/plugin-opener': ^2
   '@tauri-apps/plugin-sql': ^2.3.0
   '@testing-library/jest-dom': ^6.9.1
   '@testing-library/react': ^16.3.2
   '@types/better-sqlite3': ^7.6.13
+  '@types/leaflet': ^1.9.21
   '@types/node': ^24.8.1
   '@types/react': ^18.3.1
   '@types/react-dom': ^18.3.1
@@ -26,9 +28,11 @@ specifiers:
   '@vitest/coverage-v8': ^4.1.0
   better-sqlite3: ^12.6.2
   jsdom: ^28.1.0
+  leaflet: ^1.9.4
   lucide-react: ^0.577.0
   react: ^18.3.1
   react-dom: ^18.3.1
+  react-leaflet: '4'
   tailwind-merge: ^3.3.1
   tailwindcss: ^4.1.15
   typescript: ~5.6.2
@@ -45,11 +49,14 @@ dependencies:
   '@tanstack/react-router': 1.166.7_nnrd3gsncyragczmpvfhocinkq
   '@tauri-apps/api': 2.10.1
   '@tauri-apps/plugin-deep-link': 2.4.7
+  '@tauri-apps/plugin-geolocation': 2.3.2
   '@tauri-apps/plugin-opener': 2.5.3
   '@tauri-apps/plugin-sql': 2.3.2
+  leaflet: 1.9.4
   lucide-react: 0.577.0_react@18.3.1
   react: 18.3.1
   react-dom: 18.3.1_react@18.3.1
+  react-leaflet: 4.2.1_6vzcrdvihry4phxw5cyobll4ay
   tailwind-merge: 3.5.0
   tailwindcss: 4.2.1
   zod: 4.3.6
@@ -61,6 +68,7 @@ devDependencies:
   '@testing-library/jest-dom': 6.9.1
   '@testing-library/react': 16.3.2_vgjtmu5g52dd7aolrd4gasxklm
   '@types/better-sqlite3': 7.6.13
+  '@types/leaflet': 1.9.21
   '@types/node': 24.12.0
   '@types/react': 18.3.28
   '@types/react-dom': 18.3.7_@types+react@18.3.28
@@ -643,6 +651,18 @@ packages:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
+  /@react-leaflet/core/2.1.0_6vzcrdvihry4phxw5cyobll4ay:
+    resolution: {integrity: sha512-Qk7Pfu8BSarKGqILj4x7bCSZ1pjuAPZ+qmRwH5S7mDS91VSbVVsJSrW4qA+GPrro8t69gFYVMWb1Zc4yFmPiVg==}
+    peerDependencies:
+      leaflet: ^1.9.0
+      react: ^18.0.0
+      react-dom: ^18.0.0
+    dependencies:
+      leaflet: 1.9.4
+      react: 18.3.1
+      react-dom: 18.3.1_react@18.3.1
+    dev: false
+
   /@rolldown/pluginutils/1.0.0-beta.27:
     resolution: {integrity: sha512-+d0F4MKMCbeVUJwG96uQ4SgAznZNSq93I3V+9NHA4OpvqG8mRCpGdKmK8l/dl02h2CCDHwW2FqilnTyDcAnqjA==}
     dev: true
@@ -1215,6 +1235,12 @@ packages:
       '@tauri-apps/api': 2.10.1
     dev: false
 
+  /@tauri-apps/plugin-geolocation/2.3.2:
+    resolution: {integrity: sha512-ONCwav1monafjeO8/JdXtRlbhZ3xgAdBYxo/62qgw99u9+y6xGsohy3avZgFZsBHA0JVNe1uJnMi+vfT5ZSFUA==}
+    dependencies:
+      '@tauri-apps/api': 2.10.1
+    dev: false
+
   /@tauri-apps/plugin-opener/2.5.3:
     resolution: {integrity: sha512-CCcUltXMOfUEArbf3db3kCE7Ggy1ExBEBl51Ko2ODJ6GDYHRp1nSNlQm5uNCFY5k7/ufaK5Ib3Du/Zir19IYQQ==}
     dependencies:
@@ -1309,6 +1335,16 @@ packages:
 
   /@types/estree/1.0.8:
     resolution: {integrity: sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==}
+
+  /@types/geojson/7946.0.16:
+    resolution: {integrity: sha512-6C8nqWur3j98U6+lXDfTUWIfgvZU+EumvpHKcYjujKH7woYyLj2sUmff0tRhrqM7BohUw7Pz3ZB1jj2gW9Fvmg==}
+    dev: true
+
+  /@types/leaflet/1.9.21:
+    resolution: {integrity: sha512-TbAd9DaPGSnzp6QvtYngntMZgcRk+igFELwR2N99XZn7RXUdKgsXMR+28bUO0rPsWp8MIu/f47luLIQuSLYv/w==}
+    dependencies:
+      '@types/geojson': 7946.0.16
+    dev: true
 
   /@types/node/24.12.0:
     resolution: {integrity: sha512-GYDxsZi3ChgmckRT9HPU0WEhKLP08ev/Yfcq2AstjrDASOYCSXeyjDsHg4v5t4jOj7cyDX3vmprafKlWIG9MXQ==}
@@ -1885,6 +1921,10 @@ packages:
     hasBin: true
     dev: true
 
+  /leaflet/1.9.4:
+    resolution: {integrity: sha512-nxS1ynzJOmOlHp+iL3FyWqK89GtNL8U8rvlMOsQdTTssxZwCXh8N2NB3GDQOL+YR3XnWyZAxwQixURb+FA74PA==}
+    dev: false
+
   /lightningcss-android-arm64/1.31.1:
     resolution: {integrity: sha512-HXJF3x8w9nQ4jbXRiNppBCqeZPIAfUo8zE/kOEGbW5NZvGc/K7nMxbhIr+YlFlHW5mpbg/YFPdbnCh1wAXCKFg==}
     engines: {node: '>= 12.0.0'}
@@ -2168,6 +2208,19 @@ packages:
       loose-envify: 1.4.0
       react: 18.3.1
       scheduler: 0.23.2
+
+  /react-leaflet/4.2.1_6vzcrdvihry4phxw5cyobll4ay:
+    resolution: {integrity: sha512-p9chkvhcKrWn/H/1FFeVSqLdReGwn2qmiobOQGO3BifX+/vV/39qhY8dGqbdcPh1e6jxh/QHriLXr7a4eLFK4Q==}
+    peerDependencies:
+      leaflet: ^1.9.0
+      react: ^18.0.0
+      react-dom: ^18.0.0
+    dependencies:
+      '@react-leaflet/core': 2.1.0_6vzcrdvihry4phxw5cyobll4ay
+      leaflet: 1.9.4
+      react: 18.3.1
+      react-dom: 18.3.1_react@18.3.1
+    dev: false
 
   /react-refresh/0.17.0:
     resolution: {integrity: sha512-z6F7K9bV85EfseRCp2bzrpyQ0Gkw1uLoCel9XBVWPg/TjRj94SkJzUTGfOa4bs7iJvBWtQG0Wq7wnI0syw3EBQ==}

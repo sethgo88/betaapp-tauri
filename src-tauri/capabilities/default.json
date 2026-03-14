@@ -17,6 +17,10 @@
 		"deep-link:allow-get-current",
 		"deep-link:allow-is-registered",
 		"deep-link:allow-register",
-		"deep-link:allow-unregister"
+		"deep-link:allow-unregister",
+		"geolocation:allow-check-permissions",
+		"geolocation:allow-request-permissions",
+		"geolocation:allow-get-current-position",
+		"geolocation:allow-watch-position"
 	]
 }

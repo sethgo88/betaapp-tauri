@@ -10,7 +10,9 @@ import {
 	adminAddRegion,
 	adminDeleteCountry,
 	adminDeleteRegion,
+	adminUpdateCragCoords,
 	downloadRegion,
+	fetchAllCragsWithCoords,
 	fetchCountries,
 	fetchCrag,
 	fetchCrags,
@@ -243,6 +245,34 @@ export function useSubmitWall() {
 		mutationFn: (values: WallSubmitValues) => submitWall(values, userId),
 		onSuccess: (_data, values) => {
 			qc.invalidateQueries({ queryKey: ["walls", values.crag_id] });
+		},
+	});
+}
+
+// ── Map hooks ────────────────────────────────────────────────────────────────
+
+export function useAllCragsWithCoords() {
+	return useQuery({
+		queryKey: ["crags_with_coords"],
+		queryFn: fetchAllCragsWithCoords,
+	});
+}
+
+export function useAdminUpdateCragCoords() {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: ({
+			id,
+			lat,
+			lng,
+		}: {
+			id: string;
+			lat: number | null;
+			lng: number | null;
+		}) => adminUpdateCragCoords(id, lat, lng),
+		onSuccess: (_data, { id }) => {
+			qc.invalidateQueries({ queryKey: ["crag", id] });
+			qc.invalidateQueries({ queryKey: ["crags_with_coords"] });
 		},
 	});
 }

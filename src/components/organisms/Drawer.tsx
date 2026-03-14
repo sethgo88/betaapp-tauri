@@ -1,5 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
-import { CircleUser, MapPin, Menu, X } from "lucide-react";
+import { CircleUser, Map as MapIcon, MapPin, Menu, X } from "lucide-react";
 import { useAuthStore } from "@/features/auth/auth.store";
 
 interface DrawerProps {
@@ -24,10 +24,10 @@ export const Drawer = ({ isOpen, onClose }: DrawerProps) => {
 			<button
 				type="button"
 				aria-label="Close menu"
-				className="fixed inset-0 bg-black/60 z-40 w-full cursor-default"
+				className="fixed inset-0 bg-black/60 z-[2000] w-full cursor-default"
 				onClick={onClose}
 			/>
-			<div className="fixed top-0 right-0 bottom-0 w-64 bg-surface-nav border-l border-card-border z-50 flex flex-col pt-[env(safe-area-inset-top)]">
+			<div className="fixed top-0 right-0 bottom-0 w-64 bg-surface-nav border-l border-card-border z-[2001] flex flex-col pt-[env(safe-area-inset-top)]">
 				<div className="flex items-center justify-between p-4 border-b border-border-default">
 					<div className="flex items-center gap-2">
 						<Menu size={18} />
@@ -43,6 +43,15 @@ export const Drawer = ({ isOpen, onClose }: DrawerProps) => {
 				</div>
 
 				<nav className="flex flex-col p-4 gap-1">
+					<button
+						type="button"
+						className="flex items-center gap-3 py-3 px-2 text-left rounded-lg hover:bg-surface-hover"
+						onClick={() => handleNav("/map")}
+					>
+						<MapIcon size={18} />
+						<span>Map</span>
+					</button>
+
 					<button
 						type="button"
 						className="flex items-center gap-3 py-3 px-2 text-left rounded-lg hover:bg-surface-hover"

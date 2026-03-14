@@ -37,6 +37,8 @@ export const CragSchema = z.object({
 	status: SubmissionStatus.default("verified"),
 	created_by: z.string().nullable().optional(),
 	created_at: z.string(),
+	lat: z.number().nullable().optional(),
+	lng: z.number().nullable().optional(),
 });
 
 export const WallSchema = z.object({
@@ -66,6 +68,8 @@ export const SubRegionSubmitSchema = z.object({
 export const CragSubmitSchema = z.object({
 	sub_region_id: z.string().min(1, "Sub-region is required"),
 	name: z.string().min(1, "Name is required"),
+	lat: z.number().optional(),
+	lng: z.number().optional(),
 });
 
 export const WallSubmitSchema = z.object({

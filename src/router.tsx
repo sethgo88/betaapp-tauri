@@ -17,6 +17,7 @@ import ClimbDetailView from "@/views/ClimbDetailView";
 import CragView from "@/views/CragView";
 import EditClimbView from "@/views/EditClimbView";
 import HomeView from "@/views/HomeView";
+import MapView from "@/views/MapView";
 import ProfileView from "@/views/ProfileView";
 import RegionView from "@/views/RegionView";
 import ResetPasswordView from "@/views/ResetPasswordView";
@@ -91,6 +92,18 @@ const resetPasswordRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/reset-password",
 	component: ResetPasswordView,
+});
+
+const mapRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/map",
+	beforeLoad: requireAuth,
+	validateSearch: z.object({
+		lat: z.number().optional(),
+		lng: z.number().optional(),
+		zoom: z.number().optional(),
+	}),
+	component: MapView,
 });
 
 const searchRoute = createRoute({
@@ -181,6 +194,7 @@ const routeTree = rootRoute.addChildren([
 	editClimbRoute,
 	profileRoute,
 	resetPasswordRoute,
+	mapRoute,
 	searchRoute,
 	routesRoute,
 	submitRouteRoute,

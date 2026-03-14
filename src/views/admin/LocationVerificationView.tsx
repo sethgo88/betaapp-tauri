@@ -1,5 +1,8 @@
 import { useRouter } from "@tanstack/react-router";
+import { useState } from "react";
+import { CoordinatePicker } from "@/components/molecules/CoordinatePicker";
 import {
+	useAdminUpdateCragCoords,
 	usePendingLocations,
 	useRejectLocation,
 	useVerifyLocation,
@@ -18,6 +21,56 @@ const tableFor = (
 	if (type === "sub_region") return "sub_regions";
 	if (type === "crag") return "crags";
 	return "walls";
+};
+
+const CragCoordEditor = ({ itemId }: { itemId: string }) => {
+	const updateCoords = useAdminUpdateCragCoords();
+	const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
+		null,
+	);
+	const [showPicker, setShowPicker] = useState(false);
+
+	return (
+		<div className="flex flex-col gap-2 mt-2">
+			{coords && (
+				<p className="text-xs text-text-secondary">
+					Location: {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}
+				</p>
+			)}
+			<div className="flex gap-2">
+				<button
+					type="button"
+					onClick={() => setShowPicker(true)}
+					className="text-sm text-accent-primary text-left"
+				>
+					{coords ? "Change location" : "+ Set location"}
+				</button>
+				{coords && (
+					<button
+						type="button"
+						disabled={updateCoords.isPending}
+						onClick={() =>
+							updateCoords.mutate({
+								id: itemId,
+								lat: coords.lat,
+								lng: coords.lng,
+							})
+						}
+						className="text-sm px-3 py-1.5 rounded-[--radius-md] bg-accent-primary hover:bg-accent-primary/90 disabled:opacity-40 font-semibold"
+					>
+						{updateCoords.isPending ? "..." : "Save"}
+					</button>
+				)}
+			</div>
+			{showPicker && (
+				<CoordinatePicker
+					value={coords}
+					onChange={setCoords}
+					onClose={() => setShowPicker(false)}
+				/>
+			)}
+		</div>
+	);
 };
 
 const LocationVerificationView = () => {
@@ -59,6 +112,8 @@ const LocationVerificationView = () => {
 							</div>
 							<span className="text-xs text-amber-400 shrink-0">pending</span>
 						</div>
+
+						{item.type === "crag" && <CragCoordEditor itemId={item.id} />}
 
 						<div className="flex gap-2 mt-1">
 							<button

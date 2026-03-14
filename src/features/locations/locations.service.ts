@@ -240,7 +240,7 @@ export async function downloadRegion(regionId: string): Promise<void> {
 	if (crags && crags.length > 0) {
 		for (const row of crags as Crag[]) {
 			await db.execute(
-				"INSERT INTO crags_cache (id, sub_region_id, name, description, sort_order, status, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+				"INSERT INTO crags_cache (id, sub_region_id, name, description, sort_order, status, created_by, created_at, lat, lng) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 				[
 					row.id,
 					row.sub_region_id,
@@ -250,6 +250,8 @@ export async function downloadRegion(regionId: string): Promise<void> {
 					row.status ?? "verified",
 					row.created_by ?? null,
 					row.created_at,
+					row.lat ?? null,
+					row.lng ?? null,
 				],
 			);
 		}
@@ -365,13 +367,22 @@ export async function submitCrag(
 		sort_order: 9999,
 		status: "pending",
 		created_by: userId,
+		lat: values.lat ?? null,
+		lng: values.lng ?? null,
 	});
 	if (error) throw error;
 
 	const db = await getDb();
 	await db.execute(
-		"INSERT INTO crags_cache (id, sub_region_id, name, sort_order, status, created_by, created_at) VALUES (?, ?, ?, 9999, 'pending', ?, datetime('now'))",
-		[id, values.sub_region_id, values.name, userId],
+		"INSERT INTO crags_cache (id, sub_region_id, name, sort_order, status, created_by, created_at, lat, lng) VALUES (?, ?, ?, 9999, 'pending', ?, datetime('now'), ?, ?)",
+		[
+			id,
+			values.sub_region_id,
+			values.name,
+			userId,
+			values.lat ?? null,
+			values.lng ?? null,
+		],
 	);
 }
 
@@ -539,4 +550,49 @@ export async function adminAddRegion(
 export async function adminDeleteRegion(id: string): Promise<void> {
 	const { error } = await supabase.from("regions").delete().eq("id", id);
 	if (error) throw error;
+}
+
+// ── Map: all crags with coordinates ─────────────────────────────────────────
+
+export type MapCrag = {
+	id: string;
+	name: string;
+	lat: number;
+	lng: number;
+	route_count: number;
+};
+
+export async function fetchAllCragsWithCoords(): Promise<MapCrag[]> {
+	const db = await getDb();
+	return db.select<MapCrag[]>(
+		`SELECT
+			c.id, c.name, c.lat, c.lng,
+			COUNT(DISTINCT r.id) AS route_count
+		FROM crags_cache c
+		LEFT JOIN walls_cache w ON w.crag_id = c.id
+		LEFT JOIN routes_cache r ON r.wall_id = w.id
+		WHERE c.lat IS NOT NULL AND c.lng IS NOT NULL
+		GROUP BY c.id`,
+	);
+}
+
+// ── Map: admin coordinate editing ───────────────────────────────────────────
+
+export async function adminUpdateCragCoords(
+	id: string,
+	lat: number | null,
+	lng: number | null,
+): Promise<void> {
+	const { error } = await supabase
+		.from("crags")
+		.update({ lat, lng })
+		.eq("id", id);
+	if (error) throw error;
+
+	const db = await getDb();
+	await db.execute("UPDATE crags_cache SET lat = ?, lng = ? WHERE id = ?", [
+		lat,
+		lng,
+		id,
+	]);
 }

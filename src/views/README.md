@@ -16,6 +16,7 @@ Router defined in `src/router.tsx` using `createMemoryHistory` (required for And
 | `/climbs/$climbId/edit` | `EditClimbView` | required | Edit existing climb |
 | `/profile` | `ProfileView` | public | Login / logout / forgot password; shows user info when authenticated |
 | `/reset-password` | `ResetPasswordView` | public | Set new password after tapping reset link from email |
+| `/map` | `MapView` | required | Interactive map with Discovery (all downloaded crags) and Personal (crags with user's climbs) modes |
 | `/search` | `SearchView` | required | Real-time search across downloaded locations and routes |
 | `/routes` | `RoutesView` | required | Route Manager — browse countries → regions; download regions |
 | `/regions/$regionId` | `RegionView` | required | Sub-regions for a region; tap navigates to SubRegionView |
@@ -57,6 +58,9 @@ Public (no auth guard). Shows login form when unauthenticated (`signIn` / `signU
 
 ### ResetPasswordView `/reset-password`
 Public (no auth guard). Shown after user taps a password reset link from email. The `PASSWORD_RECOVERY` auth event in `App.tsx` navigates here automatically. Calls `updatePassword()` on submit, then redirects to `/profile`.
+
+### MapView `/map`
+Loads `useAllCragsWithCoords()` and `usePersonalCrags()`. Two modes: Discovery shows all downloaded crags with coordinates as emerald pins; Personal shows crags where user has logged climbs as amber pins with climb count and sent/project badges. Mode toggle and filter checkboxes (Sport/Boulder for Discovery, Sent/Project for Personal). Tapping a pin popup navigates to `/crags/$cragId`. Uses Leaflet + OpenStreetMap tiles via `react-leaflet`.
 
 ### SearchView `/search`
 Real-time search across all downloaded locations (sub-regions, crags, walls) and routes. Two checkboxes filter by Locations and Routes. Minimum 2 characters to search. Results link to their respective detail views. Local SQLite cache only — no network requests.
