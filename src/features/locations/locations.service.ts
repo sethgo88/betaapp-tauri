@@ -576,20 +576,39 @@ export type MapCrag = {
 	lat: number;
 	lng: number;
 	route_count: number;
+	has_sport: boolean;
+	has_boulder: boolean;
 };
 
 export async function fetchAllCragsWithCoords(): Promise<MapCrag[]> {
 	const db = await getDb();
-	return db.select<MapCrag[]>(
+	const rows = await db.select<
+		{
+			id: string;
+			name: string;
+			lat: number;
+			lng: number;
+			route_count: number;
+			sport_count: number;
+			boulder_count: number;
+		}[]
+	>(
 		`SELECT
 			c.id, c.name, c.lat, c.lng,
-			COUNT(DISTINCT r.id) AS route_count
+			COUNT(DISTINCT r.id) AS route_count,
+			SUM(CASE WHEN r.route_type = 'sport' THEN 1 ELSE 0 END) AS sport_count,
+			SUM(CASE WHEN r.route_type = 'boulder' THEN 1 ELSE 0 END) AS boulder_count
 		FROM crags_cache c
 		LEFT JOIN walls_cache w ON w.crag_id = c.id
 		LEFT JOIN routes_cache r ON r.wall_id = w.id
 		WHERE c.lat IS NOT NULL AND c.lng IS NOT NULL
 		GROUP BY c.id`,
 	);
+	return rows.map((r) => ({
+		...r,
+		has_sport: r.sport_count > 0,
+		has_boulder: r.boulder_count > 0,
+	}));
 }
 
 // ── Map: admin coordinate editing ───────────────────────────────────────────
@@ -672,18 +691,39 @@ export type MapWall = {
 	lat: number;
 	lng: number;
 	route_count: number;
+	has_sport: boolean;
+	has_boulder: boolean;
 };
 
 export async function fetchAllWallsWithCoords(): Promise<MapWall[]> {
 	const db = await getDb();
-	return db.select<MapWall[]>(
+	const rows = await db.select<
+		{
+			id: string;
+			crag_id: string;
+			name: string;
+			crag_name: string;
+			lat: number;
+			lng: number;
+			route_count: number;
+			sport_count: number;
+			boulder_count: number;
+		}[]
+	>(
 		`SELECT
 			w.id, w.crag_id, w.name, c.name AS crag_name, w.lat, w.lng,
-			COUNT(DISTINCT r.id) AS route_count
+			COUNT(DISTINCT r.id) AS route_count,
+			SUM(CASE WHEN r.route_type = 'sport' THEN 1 ELSE 0 END) AS sport_count,
+			SUM(CASE WHEN r.route_type = 'boulder' THEN 1 ELSE 0 END) AS boulder_count
 		FROM walls_cache w
 		JOIN crags_cache c ON c.id = w.crag_id
 		LEFT JOIN routes_cache r ON r.wall_id = w.id
 		WHERE w.lat IS NOT NULL AND w.lng IS NOT NULL
 		GROUP BY w.id`,
 	);
+	return rows.map((r) => ({
+		...r,
+		has_sport: r.sport_count > 0,
+		has_boulder: r.boulder_count > 0,
+	}));
 }

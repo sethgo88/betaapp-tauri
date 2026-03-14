@@ -196,6 +196,27 @@ const ZoomToButton = ({ lat, lng }: { lat: number; lng: number }) => {
 	);
 };
 
+// ── Tile error tracker ───────────────────────────────────────────────────────
+
+const TileErrorBanner = () => {
+	const [tileError, setTileError] = useState(false);
+	useMapEvents({
+		tileerror() {
+			setTileError(true);
+		},
+		layeradd() {
+			setTileError(false);
+		},
+	});
+
+	if (!tileError) return null;
+	return (
+		<div className="absolute top-3 left-3 z-[1000] bg-surface-card/90 px-3 py-1.5 rounded-[--radius-md] text-xs text-text-secondary pointer-events-none">
+			Map tiles unavailable — check your connection
+		</div>
+	);
+};
+
 // ── Filter checkbox ─────────────────────────────────────────────────────────
 
 const FilterCheck = ({
@@ -254,6 +275,27 @@ const MapView = () => {
 
 	const isLoading = mode === "discovery" ? loadingDiscovery : loadingPersonal;
 
+	// Filter discovery crags by route type
+	const filteredDiscoveryCrags = useMemo(
+		() =>
+			allCrags.filter((c) => {
+				if (showSport && c.has_sport) return true;
+				if (showBoulder && c.has_boulder) return true;
+				return !showSport && !showBoulder;
+			}),
+		[allCrags, showSport, showBoulder],
+	);
+
+	const filteredDiscoveryWalls = useMemo(
+		() =>
+			allWalls.filter((w) => {
+				if (showSport && w.has_sport) return true;
+				if (showBoulder && w.has_boulder) return true;
+				return !showSport && !showBoulder;
+			}),
+		[allWalls, showSport, showBoulder],
+	);
+
 	// Filter personal crags
 	const filteredPersonal = useMemo(
 		() =>
@@ -269,7 +311,8 @@ const MapView = () => {
 	// Compute map center — search params override marker-based center
 	const center = useMemo<[number, number]>(() => {
 		if (hasSearchCoords) return [searchLat, searchLng];
-		const items = mode === "discovery" ? allCrags : filteredPersonal;
+		const items =
+			mode === "discovery" ? filteredDiscoveryCrags : filteredPersonal;
 		if (items.length === 0)
 			return userLocation ? [userLocation.lat, userLocation.lng] : [43.0, 12.0];
 		const avgLat = items.reduce((s, c) => s + (c.lat ?? 0), 0) / items.length;
@@ -280,7 +323,7 @@ const MapView = () => {
 		searchLat,
 		searchLng,
 		mode,
-		allCrags,
+		filteredDiscoveryCrags,
 		filteredPersonal,
 		userLocation,
 	]);
@@ -289,9 +332,9 @@ const MapView = () => {
 	// Crags that have walls with coordinates — hide crag pin at high zoom
 	const cragsWithWallCoords = useMemo(() => {
 		const set = new Set<string>();
-		for (const w of allWalls) set.add(w.crag_id);
+		for (const w of filteredDiscoveryWalls) set.add(w.crag_id);
 		return set;
-	}, [allWalls]);
+	}, [filteredDiscoveryWalls]);
 
 	const personalCragsWithWallCoords = useMemo(() => {
 		const set = new Set<string>();
@@ -303,9 +346,9 @@ const MapView = () => {
 	const visibleCrags = useMemo(
 		() =>
 			showWalls
-				? allCrags.filter((c) => !cragsWithWallCoords.has(c.id))
-				: allCrags,
-		[allCrags, showWalls, cragsWithWallCoords],
+				? filteredDiscoveryCrags.filter((c) => !cragsWithWallCoords.has(c.id))
+				: filteredDiscoveryCrags,
+		[filteredDiscoveryCrags, showWalls, cragsWithWallCoords],
 	);
 
 	const visiblePersonalCrags = useMemo(
@@ -414,6 +457,7 @@ const MapView = () => {
 					/>
 
 					<ZoomTracker onZoom={setZoom} />
+					<TileErrorBanner />
 
 					{/* Crag pins (hidden for crags with wall coords at high zoom) */}
 					{mode === "discovery" &&
@@ -447,7 +491,7 @@ const MapView = () => {
 					{/* Wall pins at high zoom */}
 					{mode === "discovery" &&
 						showWalls &&
-						allWalls.map((wall) => (
+						filteredDiscoveryWalls.map((wall) => (
 							<Marker
 								key={wall.id}
 								position={[wall.lat, wall.lng]}
@@ -556,7 +600,7 @@ const MapView = () => {
 				</MapContainer>
 
 				{!isLoading &&
-					((mode === "discovery" && allCrags.length === 0) ||
+					((mode === "discovery" && filteredDiscoveryCrags.length === 0) ||
 						(mode === "personal" && filteredPersonal.length === 0)) && (
 						<div className="absolute inset-0 flex items-center justify-center z-[1000] pointer-events-none">
 							<p className="text-text-secondary text-sm bg-surface-card/90 px-4 py-2 rounded-[--radius-md]">

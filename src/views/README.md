@@ -60,7 +60,12 @@ Public (no auth guard). Shows login form when unauthenticated (`signIn` / `signU
 Public (no auth guard). Shown after user taps a password reset link from email. The `PASSWORD_RECOVERY` auth event in `App.tsx` navigates here automatically. Calls `updatePassword()` on submit, then redirects to `/profile`.
 
 ### MapView `/map`
-Loads `useAllCragsWithCoords()` and `usePersonalCrags()`. Two modes: Discovery shows all downloaded crags with coordinates as emerald pins; Personal shows crags where user has logged climbs as amber pins with climb count and sent/project badges. Mode toggle and filter checkboxes (Sport/Boulder for Discovery, Sent/Project for Personal). Tapping a pin popup navigates to `/crags/$cragId`. Uses Leaflet + OpenStreetMap tiles via `react-leaflet`.
+Loads `useAllCragsWithCoords()`, `useAllWallsWithCoords()`, `usePersonalCrags()`, and `usePersonalWalls()`. Two modes:
+
+- **Discovery** — emerald crag pins + yellow wall pins at high zoom. Sport/Boulder filter checkboxes filter by route type. Crag popups include "Zoom to crag" button to reveal wall pins.
+- **Personal** — amber crag pins + yellow wall pins at high zoom. Sent/Project/Todo filter checkboxes. Popups show per-status counts (e.g. "2 Sent · 1 Project").
+
+At zoom ≥15, crag pins hide for crags that have wall coordinates and wall pins appear instead. Accepts optional `?lat=&lng=&zoom=` search params for deep-linking from "View on map" buttons. Defaults map center to user's cached geolocation when no crags are loaded. Offline tile error banner shown when tiles fail to load. Layer switcher: Street/Topo/Satellite.
 
 ### SearchView `/search`
 Real-time search across all downloaded locations (sub-regions, crags, walls) and routes. Two checkboxes filter by Locations and Routes. Minimum 2 characters to search. Results link to their respective detail views. Local SQLite cache only — no network requests.
@@ -78,7 +83,7 @@ Loads `useSubRegion(id)` and `useCrags(subRegionId)`. Shows name, admin-editable
 Loads `useCrag(id)` and `useWalls(cragId)`. Shows name, admin-editable description, and list of walls. Tap navigates to `/walls/$wallId`. Has "Add wall" inline form (`useSubmitWall`). Back button navigates up to `/sub-regions/$subRegionId`.
 
 ### WallView `/walls/$wallId`
-Loads `useWall(id)` and `useRoutes(wallId)`. Shows name, admin-editable description, and list of routes. Tap a verified route to navigate to `/routes/$routeId`. Has "Submit a route" button. Back button navigates up to `/crags/$cragId`.
+Loads `useWall(id)`, `useCrag(cragId)`, `useWalls(cragId)`, and `useRoutes(wallId)`. Shows name, admin-editable description, coordinates with "View on map" link, and list of routes. Admin coordinate editor defaults to crag location and shows sibling wall pins as reference markers. Tap a verified route to navigate to `/routes/$routeId`. Has "Submit a route" button. Back button navigates up to `/crags/$cragId`.
 
 ### RouteDetailView `/routes/$routeId`
 Loads `useRoute(id)`. Shows route name, grade, route type badge, and description. "Log this climb" button navigates to `/climbs/add` with route pre-filled. Back button navigates up to `/walls/$wallId`.
