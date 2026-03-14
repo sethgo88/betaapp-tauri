@@ -1,4 +1,4 @@
-import { Layers, Mountain, Satellite } from "lucide-react";
+import { Layers, Satellite } from "lucide-react";
 
 export type TileLayerDef = {
 	id: string;
@@ -7,6 +7,8 @@ export type TileLayerDef = {
 	attribution: string;
 	icon: typeof Layers;
 };
+
+const stadiaApiKey = import.meta.env.VITE_STADIA_API_KEY as string;
 
 export const tileLayers: TileLayerDef[] = [
 	{
@@ -18,19 +20,11 @@ export const tileLayers: TileLayerDef[] = [
 		icon: Layers,
 	},
 	{
-		id: "topo",
-		name: "Topo",
-		url: "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
-		attribution:
-			'&copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)',
-		icon: Mountain,
-	},
-	{
 		id: "satellite",
 		name: "Satellite",
-		url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+		url: `https://tiles.stadiamaps.com/tiles/alidade_satellite/{z}/{x}/{y}{r}.jpg?api_key=${stadiaApiKey}`,
 		attribution:
-			'&copy; <a href="https://www.esri.com">Esri</a>, Maxar, Earthstar Geographics',
+			'&copy; CNES, Distribution Airbus DS, © Airbus DS, © PlanetObserver (Contains Copernicus Data) | &copy; <a href="https://www.stadiamaps.com/">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
 		icon: Satellite,
 	},
 ];

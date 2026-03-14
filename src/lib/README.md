@@ -125,7 +125,7 @@ Helpers for converting between cm and ft/in. Used by the profile page for height
 import { tileLayers } from '@/lib/map-tiles'
 ```
 
-Array of `TileLayerDef` objects (id, name, url, attribution, icon) used by both `MapView` and `CoordinatePicker`. Layers: Street (OSM), Topo (OpenTopoMap), Satellite (ArcGIS).
+Array of `TileLayerDef` objects (id, name, url, attribution, icon) used by both `MapView` and `CoordinatePicker`. Layers: Street (OSM), Satellite (Stadia Alidade Satellite — requires `VITE_STADIA_API_KEY` in `.env`).
 
 ---
 
