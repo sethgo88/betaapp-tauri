@@ -293,6 +293,31 @@ const migrations: Migration[] = [
 		await db.execute(`ALTER TABLE walls_cache ADD COLUMN lat REAL`);
 		await db.execute(`ALTER TABLE walls_cache ADD COLUMN lng REAL`);
 	},
+
+	// v12: wall_type + climbing type counts on walls_cache and crags_cache (#25)
+	async (db) => {
+		await db.execute(
+			`ALTER TABLE walls_cache ADD COLUMN wall_type TEXT NOT NULL DEFAULT 'wall'`,
+		);
+		await db.execute(
+			`ALTER TABLE walls_cache ADD COLUMN sport_count INTEGER NOT NULL DEFAULT 0`,
+		);
+		await db.execute(
+			`ALTER TABLE walls_cache ADD COLUMN trad_count INTEGER NOT NULL DEFAULT 0`,
+		);
+		await db.execute(
+			`ALTER TABLE walls_cache ADD COLUMN boulder_count INTEGER NOT NULL DEFAULT 0`,
+		);
+		await db.execute(
+			`ALTER TABLE crags_cache ADD COLUMN sport_count INTEGER NOT NULL DEFAULT 0`,
+		);
+		await db.execute(
+			`ALTER TABLE crags_cache ADD COLUMN trad_count INTEGER NOT NULL DEFAULT 0`,
+		);
+		await db.execute(
+			`ALTER TABLE crags_cache ADD COLUMN boulder_count INTEGER NOT NULL DEFAULT 0`,
+		);
+	},
 ];
 
 export async function runMigrations(db: DbAdapter): Promise<void> {

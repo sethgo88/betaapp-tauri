@@ -238,9 +238,9 @@ export async function downloadRegion(regionId: string): Promise<void> {
 	);
 
 	if (crags && crags.length > 0) {
-		for (const row of crags as Crag[]) {
+		for (const row of crags as unknown as Crag[]) {
 			await db.execute(
-				"INSERT INTO crags_cache (id, sub_region_id, name, description, sort_order, status, created_by, created_at, lat, lng) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+				"INSERT INTO crags_cache (id, sub_region_id, name, description, sort_order, status, created_by, created_at, lat, lng, sport_count, trad_count, boulder_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 				[
 					row.id,
 					row.sub_region_id,
@@ -252,6 +252,9 @@ export async function downloadRegion(regionId: string): Promise<void> {
 					row.created_at,
 					row.lat ?? null,
 					row.lng ?? null,
+					row.sport_count ?? 0,
+					row.trad_count ?? 0,
+					row.boulder_count ?? 0,
 				],
 			);
 		}
@@ -272,9 +275,9 @@ export async function downloadRegion(regionId: string): Promise<void> {
 		);
 
 		if (walls && walls.length > 0) {
-			for (const row of walls as Wall[]) {
+			for (const row of walls as unknown as Wall[]) {
 				await db.execute(
-					"INSERT INTO walls_cache (id, crag_id, name, description, sort_order, status, created_by, created_at, lat, lng) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+					"INSERT INTO walls_cache (id, crag_id, name, description, sort_order, status, created_by, created_at, lat, lng, wall_type, sport_count, trad_count, boulder_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 					[
 						row.id,
 						row.crag_id,
@@ -286,6 +289,10 @@ export async function downloadRegion(regionId: string): Promise<void> {
 						row.created_at,
 						row.lat ?? null,
 						row.lng ?? null,
+						row.wall_type ?? "wall",
+						row.sport_count ?? 0,
+						row.trad_count ?? 0,
+						row.boulder_count ?? 0,
 					],
 				);
 			}
@@ -393,10 +400,12 @@ export async function submitWall(
 	userId: string,
 ): Promise<void> {
 	const id = crypto.randomUUID();
-	const { error } = await supabase.from("walls").insert({
+	// biome-ignore lint/suspicious/noExplicitAny: wall_type not yet in generated Supabase types
+	const { error } = await (supabase.from("walls") as any).insert({
 		id,
 		crag_id: values.crag_id,
 		name: values.name,
+		wall_type: values.wall_type ?? "wall",
 		lat: values.lat ?? null,
 		lng: values.lng ?? null,
 		sort_order: 9999,
@@ -407,7 +416,7 @@ export async function submitWall(
 
 	const db = await getDb();
 	await db.execute(
-		"INSERT INTO walls_cache (id, crag_id, name, sort_order, status, created_by, created_at, lat, lng) VALUES (?, ?, ?, 9999, 'pending', ?, datetime('now'), ?, ?)",
+		"INSERT INTO walls_cache (id, crag_id, name, sort_order, status, created_by, created_at, lat, lng, wall_type) VALUES (?, ?, ?, 9999, 'pending', ?, datetime('now'), ?, ?, ?)",
 		[
 			id,
 			values.crag_id,
@@ -415,6 +424,7 @@ export async function submitWall(
 			userId,
 			values.lat ?? null,
 			values.lng ?? null,
+			values.wall_type ?? "wall",
 		],
 	);
 
@@ -575,8 +585,11 @@ export type MapCrag = {
 	name: string;
 	lat: number;
 	lng: number;
-	route_count: number;
+	sport_count: number;
+	trad_count: number;
+	boulder_count: number;
 	has_sport: boolean;
+	has_trad: boolean;
 	has_boulder: boolean;
 };
 
@@ -588,25 +601,19 @@ export async function fetchAllCragsWithCoords(): Promise<MapCrag[]> {
 			name: string;
 			lat: number;
 			lng: number;
-			route_count: number;
 			sport_count: number;
+			trad_count: number;
 			boulder_count: number;
 		}[]
 	>(
-		`SELECT
-			c.id, c.name, c.lat, c.lng,
-			COUNT(DISTINCT r.id) AS route_count,
-			SUM(CASE WHEN r.route_type = 'sport' THEN 1 ELSE 0 END) AS sport_count,
-			SUM(CASE WHEN r.route_type = 'boulder' THEN 1 ELSE 0 END) AS boulder_count
-		FROM crags_cache c
-		LEFT JOIN walls_cache w ON w.crag_id = c.id
-		LEFT JOIN routes_cache r ON r.wall_id = w.id
-		WHERE c.lat IS NOT NULL AND c.lng IS NOT NULL
-		GROUP BY c.id`,
+		`SELECT id, name, lat, lng, sport_count, trad_count, boulder_count
+		FROM crags_cache
+		WHERE lat IS NOT NULL AND lng IS NOT NULL`,
 	);
 	return rows.map((r) => ({
 		...r,
 		has_sport: r.sport_count > 0,
+		has_trad: r.trad_count > 0,
 		has_boulder: r.boulder_count > 0,
 	}));
 }
@@ -690,8 +697,12 @@ export type MapWall = {
 	crag_name: string;
 	lat: number;
 	lng: number;
-	route_count: number;
+	wall_type: string;
+	sport_count: number;
+	trad_count: number;
+	boulder_count: number;
 	has_sport: boolean;
+	has_trad: boolean;
 	has_boulder: boolean;
 };
 
@@ -705,25 +716,41 @@ export async function fetchAllWallsWithCoords(): Promise<MapWall[]> {
 			crag_name: string;
 			lat: number;
 			lng: number;
-			route_count: number;
+			wall_type: string;
 			sport_count: number;
+			trad_count: number;
 			boulder_count: number;
 		}[]
 	>(
-		`SELECT
-			w.id, w.crag_id, w.name, c.name AS crag_name, w.lat, w.lng,
-			COUNT(DISTINCT r.id) AS route_count,
-			SUM(CASE WHEN r.route_type = 'sport' THEN 1 ELSE 0 END) AS sport_count,
-			SUM(CASE WHEN r.route_type = 'boulder' THEN 1 ELSE 0 END) AS boulder_count
+		`SELECT w.id, w.crag_id, w.name, c.name AS crag_name, w.lat, w.lng,
+			w.wall_type, w.sport_count, w.trad_count, w.boulder_count
 		FROM walls_cache w
 		JOIN crags_cache c ON c.id = w.crag_id
-		LEFT JOIN routes_cache r ON r.wall_id = w.id
-		WHERE w.lat IS NOT NULL AND w.lng IS NOT NULL
-		GROUP BY w.id`,
+		WHERE w.lat IS NOT NULL AND w.lng IS NOT NULL`,
 	);
 	return rows.map((r) => ({
 		...r,
 		has_sport: r.sport_count > 0,
+		has_trad: r.trad_count > 0,
 		has_boulder: r.boulder_count > 0,
 	}));
+}
+
+// ── Admin: update wall type ──────────────────────────────────────────────────
+
+export async function adminUpdateWallType(
+	id: string,
+	wallType: string,
+): Promise<void> {
+	// biome-ignore lint/suspicious/noExplicitAny: wall_type not yet in generated Supabase types
+	const { error } = await (supabase.from("walls") as any)
+		.update({ wall_type: wallType })
+		.eq("id", id);
+	if (error) throw error;
+
+	const db = await getDb();
+	await db.execute("UPDATE walls_cache SET wall_type = ? WHERE id = ?", [
+		wallType,
+		id,
+	]);
 }

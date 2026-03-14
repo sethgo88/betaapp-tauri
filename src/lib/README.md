@@ -58,6 +58,7 @@ Versioned migration runner. Maintains a `schema_version` table (single row) and 
 | v9 | `climb_images` table (#12) |
 | v10 | `lat`, `lng` on crags_cache (#15) |
 | v11 | `lat`, `lng` on walls_cache (#15) |
+| v12 | `wall_type`, `sport_count`, `trad_count`, `boulder_count` on walls_cache; `sport_count`, `trad_count`, `boulder_count` on crags_cache (#25) |
 
 ### Rules
 - Always use `?` positional parameters — never string interpolation (SQL injection)

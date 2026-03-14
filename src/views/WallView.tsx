@@ -11,6 +11,7 @@ import { EditableDescription } from "@/components/molecules/EditableDescription"
 import { useAuthStore } from "@/features/auth/auth.store";
 import {
 	useAdminUpdateWallCoords,
+	useAdminUpdateWallType,
 	useCrag,
 	useUpdateLocationDescription,
 	useWall,
@@ -46,6 +47,7 @@ const WallView = () => {
 	const { data: routes = [] } = useRoutes(wallId);
 	const updateDescription = useUpdateLocationDescription();
 	const updateCoords = useAdminUpdateWallCoords();
+	const updateWallType = useAdminUpdateWallType();
 	const isAdmin = useAuthStore((s) => s.user?.role === "admin");
 	const [showCoordEditor, setShowCoordEditor] = useState(false);
 
@@ -92,6 +94,23 @@ const WallView = () => {
 			</button>
 
 			<h1 className="text-xl font-display font-bold">{wall.name}</h1>
+
+			{isAdmin ? (
+				<select
+					value={wall.wall_type ?? "wall"}
+					onChange={(e) =>
+						updateWallType.mutate({ id: wallId, wallType: e.target.value })
+					}
+					className="self-start text-xs bg-surface-page text-text-secondary rounded-[var(--radius-sm)] px-2 py-1 border border-border-default"
+				>
+					<option value="wall">Wall</option>
+					<option value="boulder">Boulder</option>
+				</select>
+			) : (
+				<span className="text-xs text-text-secondary capitalize">
+					{wall.wall_type ?? "wall"}
+				</span>
+			)}
 
 			<EditableDescription
 				description={wall.description}

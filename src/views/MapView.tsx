@@ -259,6 +259,7 @@ const MapView = () => {
 
 	// Discovery filters
 	const [showSport, setShowSport] = useState(true);
+	const [showTrad, setShowTrad] = useState(true);
 	const [showBoulder, setShowBoulder] = useState(true);
 
 	// Personal filters
@@ -275,25 +276,41 @@ const MapView = () => {
 
 	const isLoading = mode === "discovery" ? loadingDiscovery : loadingPersonal;
 
-	// Filter discovery crags by route type
+	const allChecked = showSport && showTrad && showBoulder;
+
+	// Filtered count: sum only the checked discipline counts
+	const filteredCount = useCallback(
+		(pin: { sport_count: number; trad_count: number; boulder_count: number }) =>
+			(showSport ? pin.sport_count : 0) +
+			(showTrad ? pin.trad_count : 0) +
+			(showBoulder ? pin.boulder_count : 0),
+		[showSport, showTrad, showBoulder],
+	);
+
+	// Filter discovery crags/walls by route type.
+	// Zero-count pins only show when all three checkboxes are checked.
 	const filteredDiscoveryCrags = useMemo(
 		() =>
 			allCrags.filter((c) => {
+				if (!c.has_sport && !c.has_trad && !c.has_boulder) return allChecked;
 				if (showSport && c.has_sport) return true;
+				if (showTrad && c.has_trad) return true;
 				if (showBoulder && c.has_boulder) return true;
-				return !showSport && !showBoulder;
+				return false;
 			}),
-		[allCrags, showSport, showBoulder],
+		[allCrags, allChecked, showSport, showTrad, showBoulder],
 	);
 
 	const filteredDiscoveryWalls = useMemo(
 		() =>
 			allWalls.filter((w) => {
+				if (!w.has_sport && !w.has_trad && !w.has_boulder) return allChecked;
 				if (showSport && w.has_sport) return true;
+				if (showTrad && w.has_trad) return true;
 				if (showBoulder && w.has_boulder) return true;
-				return !showSport && !showBoulder;
+				return false;
 			}),
-		[allWalls, showSport, showBoulder],
+		[allWalls, allChecked, showSport, showTrad, showBoulder],
 	);
 
 	// Filter personal crags
@@ -404,6 +421,11 @@ const MapView = () => {
 							onChange={setShowSport}
 						/>
 						<FilterCheck
+							label="Trad"
+							checked={showTrad}
+							onChange={setShowTrad}
+						/>
+						<FilterCheck
 							label="Boulder"
 							checked={showBoulder}
 							onChange={setShowBoulder}
@@ -465,7 +487,7 @@ const MapView = () => {
 							<Marker
 								key={crag.id}
 								position={[crag.lat, crag.lng]}
-								icon={countIcon(crag.route_count, "#059669")}
+								icon={countIcon(filteredCount(crag), "#059669")}
 							>
 								<Popup>
 									<div className="flex flex-col gap-1">
@@ -495,7 +517,7 @@ const MapView = () => {
 							<Marker
 								key={wall.id}
 								position={[wall.lat, wall.lng]}
-								icon={countIcon(wall.route_count, "#eab308")}
+								icon={countIcon(filteredCount(wall), "#eab308")}
 							>
 								<Popup>
 									<div className="flex flex-col gap-0.5">

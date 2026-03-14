@@ -12,6 +12,7 @@ import {
 	useUpdateLocationDescription,
 	useWalls,
 } from "@/features/locations/locations.queries";
+import type { WallType } from "@/features/locations/locations.schema";
 
 // ── Inline name form ──────────────────────────────────────────────────────────
 
@@ -23,37 +24,64 @@ const InlineAddForm = ({
 }: {
 	placeholder: string;
 	pending: boolean;
-	onSubmit: (name: string) => void;
+	onSubmit: (name: string, wallType: WallType) => void;
 	onCancel: () => void;
 }) => {
 	const [name, setName] = useState("");
+	const [wallType, setWallType] = useState<WallType>("wall");
 
 	return (
-		<div className="flex gap-2 mt-2">
-			<input
-				type="text"
-				value={name}
-				onChange={(e) => setName(e.target.value)}
-				placeholder={placeholder}
-				className="flex-1 text-sm bg-surface-page rounded-lg px-3 py-2 text-text-primary placeholder-text-tertiary outline-none"
-				// biome-ignore lint/a11y/noAutofocus: intentional — form appears on user tap
-				autoFocus
-			/>
-			<button
-				type="button"
-				disabled={!name.trim() || pending}
-				onClick={() => onSubmit(name.trim())}
-				className="text-sm px-3 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:opacity-40"
-			>
-				{pending ? "…" : "Add"}
-			</button>
-			<button
-				type="button"
-				onClick={onCancel}
-				className="text-sm px-3 py-2 rounded-lg bg-surface-active hover:bg-surface-hover"
-			>
-				Cancel
-			</button>
+		<div className="flex flex-col gap-2 mt-2">
+			<div className="flex rounded-[var(--radius-md)] border border-border-default overflow-hidden self-start">
+				<button
+					type="button"
+					className={`px-3 py-1.5 text-sm font-semibold ${
+						wallType === "wall"
+							? "bg-accent-primary text-white"
+							: "bg-surface-card text-text-secondary"
+					}`}
+					onClick={() => setWallType("wall")}
+				>
+					Wall
+				</button>
+				<button
+					type="button"
+					className={`px-3 py-1.5 text-sm font-semibold ${
+						wallType === "boulder"
+							? "bg-accent-primary text-white"
+							: "bg-surface-card text-text-secondary"
+					}`}
+					onClick={() => setWallType("boulder")}
+				>
+					Boulder
+				</button>
+			</div>
+			<div className="flex gap-2">
+				<input
+					type="text"
+					value={name}
+					onChange={(e) => setName(e.target.value)}
+					placeholder={placeholder}
+					className="flex-1 text-sm bg-surface-page rounded-lg px-3 py-2 text-text-primary placeholder-text-tertiary outline-none"
+					// biome-ignore lint/a11y/noAutofocus: intentional — form appears on user tap
+					autoFocus
+				/>
+				<button
+					type="button"
+					disabled={!name.trim() || pending}
+					onClick={() => onSubmit(name.trim(), wallType)}
+					className="text-sm px-3 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:opacity-40"
+				>
+					{pending ? "…" : "Add"}
+				</button>
+				<button
+					type="button"
+					onClick={onCancel}
+					className="text-sm px-3 py-2 rounded-lg bg-surface-active hover:bg-surface-hover"
+				>
+					Cancel
+				</button>
+			</div>
 		</div>
 	);
 };
@@ -93,8 +121,12 @@ const CragView = () => {
 	const [showWallForm, setShowWallForm] = useState(false);
 	const [showCoordEditor, setShowCoordEditor] = useState(false);
 
-	const handleAddWall = async (name: string) => {
-		await submitWall.mutateAsync({ crag_id: cragId, name });
+	const handleAddWall = async (name: string, wallType: WallType) => {
+		await submitWall.mutateAsync({
+			crag_id: cragId,
+			name,
+			wall_type: wallType,
+		});
 		setShowWallForm(false);
 	};
 
@@ -193,7 +225,12 @@ const CragView = () => {
 								})
 					}
 				>
-					<span>{wall.name}</span>
+					<div className="flex items-center gap-2">
+						<span>{wall.name}</span>
+						{wall.wall_type === "boulder" && (
+							<span className="text-xs text-text-tertiary">Boulder</span>
+						)}
+					</div>
 					{wall.status === "pending" && (
 						<span className="text-xs text-amber-400">pending</span>
 					)}

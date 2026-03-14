@@ -12,6 +12,7 @@ import {
 	adminDeleteRegion,
 	adminUpdateCragCoords,
 	adminUpdateWallCoords,
+	adminUpdateWallType,
 	downloadRegion,
 	fetchAllCragsWithCoords,
 	fetchAllWallsWithCoords,
@@ -283,6 +284,18 @@ export function useAllWallsWithCoords() {
 	return useQuery({
 		queryKey: ["walls_with_coords"],
 		queryFn: fetchAllWallsWithCoords,
+	});
+}
+
+export function useAdminUpdateWallType() {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: ({ id, wallType }: { id: string; wallType: string }) =>
+			adminUpdateWallType(id, wallType),
+		onSuccess: (_data, { id }) => {
+			qc.invalidateQueries({ queryKey: ["wall", id] });
+			qc.invalidateQueries({ queryKey: ["walls_with_coords"] });
+		},
 	});
 }
 

@@ -1,6 +1,9 @@
 import { z } from "zod";
 import { SubmissionStatus } from "@/features/routes/routes.schema";
 
+export const WallType = z.enum(["wall", "boulder"]);
+export type WallType = z.infer<typeof WallType>;
+
 export const CountrySchema = z.object({
 	id: z.string(),
 	name: z.string(),
@@ -39,6 +42,9 @@ export const CragSchema = z.object({
 	created_at: z.string(),
 	lat: z.number().nullable().optional(),
 	lng: z.number().nullable().optional(),
+	sport_count: z.number().default(0),
+	trad_count: z.number().default(0),
+	boulder_count: z.number().default(0),
 });
 
 export const WallSchema = z.object({
@@ -52,6 +58,10 @@ export const WallSchema = z.object({
 	created_at: z.string(),
 	lat: z.number().nullable().optional(),
 	lng: z.number().nullable().optional(),
+	wall_type: WallType.default("wall"),
+	sport_count: z.number().default(0),
+	trad_count: z.number().default(0),
+	boulder_count: z.number().default(0),
 });
 
 export type Country = z.infer<typeof CountrySchema>;
@@ -77,6 +87,7 @@ export const CragSubmitSchema = z.object({
 export const WallSubmitSchema = z.object({
 	crag_id: z.string().min(1, "Crag is required"),
 	name: z.string().min(1, "Name is required"),
+	wall_type: WallType.default("wall"),
 	lat: z.number().optional(),
 	lng: z.number().optional(),
 });

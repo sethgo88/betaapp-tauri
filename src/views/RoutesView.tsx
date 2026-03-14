@@ -54,7 +54,18 @@ const RegionList = ({
 							{region.name}
 						</button>
 						{isDownloaded ? (
-							<span className="text-xs text-accent-primary">Downloaded</span>
+							<div className="flex items-center gap-2">
+								<span className="text-xs text-accent-primary">Downloaded</span>
+								<Button
+									type="button"
+									variant="secondary"
+									size="small"
+									onClick={() => download(region.id)}
+									disabled={isThisDownloading}
+								>
+									{isThisDownloading ? "…" : "Refresh"}
+								</Button>
+							</div>
 						) : (
 							<Button
 								type="button"
