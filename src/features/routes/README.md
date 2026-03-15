@@ -68,7 +68,8 @@ Only populated when the user downloads a region (see [`locations/README.md`](../
 
 | Function | What it does |
 |---|---|
-| `fetchUnverifiedRoutes()` | Supabase query — all unverified routes with nested location names |
+| `fetchUnverifiedRoutes()` | Supabase query — pending routes only with nested location names |
+| `fetchAllRoutes()` | Supabase query — all routes (all statuses) with nested location names, ordered by created_at desc |
 | `verifyRoute(id)` | Sets `status = 'verified'` in Supabase + local cache |
 | `rejectRoute(id)` | Sets `status = 'rejected'` in Supabase + local cache (soft — stays visible to creator) |
 | `updateRouteFields(id, values)` | Updates name/grade/route_type/description in both Supabase and cache |
@@ -84,10 +85,12 @@ useRoutes(wallId)          // routes for a wall from local cache
 useSearchLocalRoutes(query) // LIKE search on local cache (min 2 chars)
 useUpdateRouteDescription() // mutation — { id, description }
 useSubmitRoute()           // mutation
-useUnverifiedRoutes()      // admin — from Supabase
+useUnverifiedRoutes()      // admin — pending routes only, from Supabase
+useAllRoutes()             // admin — all routes (all statuses), from Supabase
 useVerifyRoute()           // admin mutation
 useRejectRoute()           // admin mutation
-useUpdateRoute()           // admin mutation
+useUpdateRouteFields()     // admin mutation
+useMergeRoute()            // admin mutation
 ```
 
 ---
@@ -109,17 +112,17 @@ Unverified routes appear in the user's local cache immediately but are not visib
 
 ---
 
-## Admin verification flow
+## Admin route manager flow
 
 ```
 Admin navigates to /admin/routes
-  → fetchUnverifiedRoutes() — shows all pending with location breadcrumb
+  → fetchAllRoutes() — shows all routes with status badges
 
 For each route, admin can:
-  Verify  → verifyRoute(id)      — makes visible to all
-  Edit    → updateRouteFields()  — fix grade/name before verifying
-  Reject  → rejectRoute(id)      — hard delete
-  Merge   → mergeRoute(id)       — remove duplicate (Phase 10: update climb references)
+  Edit    → updateRouteFields()  — always available
+  Approve → verifyRoute(id)      — pending only; makes visible to all
+  Reject  → rejectRoute(id)      — pending only
+  Merge   → mergeRoute(id)       — pending only; reassign climbs + delete duplicate
 ```
 
 ---

@@ -5,11 +5,14 @@ import {
 	createRouter,
 	Outlet,
 	redirect,
+	useParams,
 } from "@tanstack/react-router";
 import { z } from "zod";
 import { AppLayout } from "@/components/templates/AppLayout";
 import { useAuthStore } from "@/features/auth/auth.store";
 import AddClimbView from "@/views/AddClimbView";
+import AddEditRouteView from "@/views/AddEditRouteView";
+import AddLocationView from "@/views/AddLocationView";
 import LocationManagerView from "@/views/admin/LocationManagerView";
 import LocationVerificationView from "@/views/admin/LocationVerificationView";
 import RouteVerificationView from "@/views/admin/RouteVerificationView";
@@ -166,6 +169,32 @@ const submitRouteRoute = createRoute({
 	component: SubmitRouteView,
 });
 
+const addRouteRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/routes/add",
+	beforeLoad: requireAuth,
+	component: AddEditRouteView,
+});
+
+const EditRouteWrapper = () => {
+	const { routeId } = useParams({ from: "/routes/$routeId/edit" });
+	return <AddEditRouteView routeId={routeId} />;
+};
+
+const editRouteRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/routes/$routeId/edit",
+	beforeLoad: requireAuth,
+	component: EditRouteWrapper,
+});
+
+const addLocationRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/locations/add",
+	beforeLoad: requireAuth,
+	component: AddLocationView,
+});
+
 const adminLocationsRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/admin/locations",
@@ -197,12 +226,15 @@ const routeTree = rootRoute.addChildren([
 	mapRoute,
 	searchRoute,
 	routesRoute,
+	addRouteRoute,
 	submitRouteRoute,
+	editRouteRoute,
 	regionRoute,
 	subRegionRoute,
 	cragRoute,
 	wallRoute,
 	routeDetailRoute,
+	addLocationRoute,
 	adminLocationsRoute,
 	adminRouteVerificationRoute,
 	adminLocationVerificationRoute,

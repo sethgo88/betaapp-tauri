@@ -7,9 +7,18 @@ import type {
 } from "./locations.schema";
 import {
 	adminAddCountry,
+	adminAddCrag,
 	adminAddRegion,
+	adminAddSubRegion,
+	adminAddWall,
 	adminDeleteCountry,
+	adminDeleteCrag,
 	adminDeleteRegion,
+	adminDeleteSubRegion,
+	adminDeleteWall,
+	adminMoveCrag,
+	adminMoveWall,
+	adminRenameLocation,
 	adminUpdateCragCoords,
 	adminUpdateWallCoords,
 	adminUpdateWallType,
@@ -21,6 +30,7 @@ import {
 	fetchCrags,
 	fetchDownloadedRegionIds,
 	fetchPendingLocations,
+	fetchRegion,
 	fetchRegions,
 	fetchSubRegion,
 	fetchSubRegions,
@@ -77,6 +87,14 @@ export function useWalls(cragId: string | null) {
 }
 
 // ── Single-entity hooks ───────────────────────────────────────────────────────
+
+export function useRegion(id: string | null) {
+	return useQuery({
+		queryKey: ["region", id],
+		queryFn: () => fetchRegion(id ?? ""),
+		enabled: !!id,
+	});
+}
 
 export function useSubRegion(id: string | null) {
 	return useQuery({
@@ -151,6 +169,110 @@ export function useDownloadRegion() {
 	});
 }
 
+// ── Admin rename/delete mutations ─────────────────────────────────────────────
+
+export function useAdminRenameLocation() {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: ({
+			table,
+			id,
+			name,
+		}: {
+			table: "sub_regions" | "crags" | "walls";
+			id: string;
+			name: string;
+			parentId: string;
+		}) => adminRenameLocation(table, id, name),
+		onSuccess: (_data, { table, id, parentId }) => {
+			const singleKeyMap = {
+				sub_regions: "sub_region",
+				crags: "crag",
+				walls: "wall",
+			} as const;
+			const listKeyMap = {
+				sub_regions: "sub_regions",
+				crags: "crags",
+				walls: "walls",
+			} as const;
+			qc.invalidateQueries({ queryKey: [singleKeyMap[table], id] });
+			qc.invalidateQueries({ queryKey: [listKeyMap[table], parentId] });
+		},
+	});
+}
+
+export function useAdminDeleteSubRegion() {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: ({ id }: { id: string; regionId: string }) =>
+			adminDeleteSubRegion(id),
+		onSuccess: (_data, { regionId }) => {
+			qc.invalidateQueries({ queryKey: ["sub_regions", regionId] });
+		},
+	});
+}
+
+export function useAdminDeleteCrag() {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: ({ id }: { id: string; subRegionId: string }) =>
+			adminDeleteCrag(id),
+		onSuccess: (_data, { subRegionId }) => {
+			qc.invalidateQueries({ queryKey: ["crags", subRegionId] });
+		},
+	});
+}
+
+export function useAdminDeleteWall() {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: ({ id }: { id: string; cragId: string }) => adminDeleteWall(id),
+		onSuccess: (_data, { cragId }) => {
+			qc.invalidateQueries({ queryKey: ["walls", cragId] });
+		},
+	});
+}
+
+// ── Admin move mutations ──────────────────────────────────────────────────────
+
+export function useAdminMoveCrag() {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: ({
+			cragId,
+			newSubRegionId,
+		}: {
+			cragId: string;
+			newSubRegionId: string;
+			oldSubRegionId: string;
+		}) => adminMoveCrag(cragId, newSubRegionId),
+		onSuccess: (_data, { newSubRegionId, oldSubRegionId }) => {
+			qc.invalidateQueries({ queryKey: ["crags", oldSubRegionId] });
+			qc.invalidateQueries({ queryKey: ["crags", newSubRegionId] });
+			qc.invalidateQueries({ queryKey: ["crag"] });
+		},
+	});
+}
+
+export function useAdminMoveWall() {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: ({
+			wallId,
+			newCragId,
+		}: {
+			wallId: string;
+			newCragId: string;
+			oldCragId: string;
+		}) => adminMoveWall(wallId, newCragId),
+		onSuccess: (_data, { newCragId, oldCragId }) => {
+			qc.invalidateQueries({ queryKey: ["walls", oldCragId] });
+			qc.invalidateQueries({ queryKey: ["walls", newCragId] });
+			qc.invalidateQueries({ queryKey: ["wall"] });
+		},
+	});
+}
+
 // ── Admin mutations ───────────────────────────────────────────────────────────
 
 export function useAdminAddCountry() {
@@ -162,11 +284,10 @@ export function useAdminAddCountry() {
 			sortOrder,
 		}: {
 			name: string;
-			code: string;
-			sortOrder: number;
+			code?: string;
+			sortOrder?: number;
 		}) => adminAddCountry(name, code, sortOrder),
-		onSuccess: async () => {
-			await pullCountries();
+		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: ["countries"] });
 		},
 	});
@@ -193,10 +314,9 @@ export function useAdminAddRegion() {
 		}: {
 			countryId: string;
 			name: string;
-			sortOrder: number;
+			sortOrder?: number;
 		}) => adminAddRegion(countryId, name, sortOrder),
-		onSuccess: async (_data, { countryId }) => {
-			await pullRegions();
+		onSuccess: (_data, { countryId }) => {
 			qc.invalidateQueries({ queryKey: ["regions", countryId] });
 		},
 	});
@@ -246,6 +366,44 @@ export function useSubmitWall() {
 	const userId = useAuthStore((s) => s.user?.id ?? "");
 	return useMutation({
 		mutationFn: (values: WallSubmitValues) => submitWall(values, userId),
+		onSuccess: (_data, values) => {
+			qc.invalidateQueries({ queryKey: ["walls", values.crag_id] });
+		},
+	});
+}
+
+// ── Admin location add mutations ──────────────────────────────────────────────
+
+export function useAdminAddSubRegion() {
+	const qc = useQueryClient();
+	const userId = useAuthStore((s) => s.user?.id ?? "");
+	return useMutation({
+		mutationFn: (values: SubRegionSubmitValues) =>
+			adminAddSubRegion(values, userId),
+		onSuccess: (_data, values) => {
+			qc.invalidateQueries({ queryKey: ["sub_regions", values.region_id] });
+		},
+	});
+}
+
+export function useAdminAddCrag() {
+	const qc = useQueryClient();
+	const userId = useAuthStore((s) => s.user?.id ?? "");
+	return useMutation({
+		mutationFn: (values: CragSubmitValues) => adminAddCrag(values, userId),
+		onSuccess: (_data, values) => {
+			qc.invalidateQueries({
+				queryKey: ["crags", values.sub_region_id],
+			});
+		},
+	});
+}
+
+export function useAdminAddWall() {
+	const qc = useQueryClient();
+	const userId = useAuthStore((s) => s.user?.id ?? "");
+	return useMutation({
+		mutationFn: (values: WallSubmitValues) => adminAddWall(values, userId),
 		onSuccess: (_data, values) => {
 			qc.invalidateQueries({ queryKey: ["walls", values.crag_id] });
 		},

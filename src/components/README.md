@@ -37,6 +37,7 @@ templates   Layout shells with no real data — just children/slots.
 | `FormField` | Label + input/select + error message wrapper |
 | `SyncStatus` | Reads `sync.store` and renders sync state indicator |
 | `CoordinatePicker` | Fullscreen Leaflet overlay for picking coordinates; fixed center pin with drag-to-position pattern. Props: `value`, `defaultCenter`, `defaultZoom`, `markers` (reference pins), `onChange`, `onClose`. Exports `PickerMarker` type. |
+| `LocationDrillDown` | Cascading location selector: Country → Region → Sub-Region → Crag → Wall. Uses existing location query hooks. Props: `onChange(selection)`, `stopAt` (defaults to `"wall"`), `initial` (for edit mode pre-population). Exports `LocationSelection` and `LocationDrillDownProps` types. |
 | `Toast` | Single toast notification; rendered by `AppLayout` |
 
 ### Organisms

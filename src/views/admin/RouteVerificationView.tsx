@@ -5,9 +5,9 @@ import { Input } from "@/components/atoms/Input";
 import { Select } from "@/components/atoms/Select";
 import { useGrades } from "@/features/grades/grades.queries";
 import {
+	useAllRoutes,
 	useMergeRoute,
 	useRejectRoute,
-	useUnverifiedRoutes,
 	useUpdateRouteFields,
 	useVerifyRoute,
 } from "@/features/routes/routes.queries";
@@ -189,6 +189,22 @@ const MergeSearch = ({
 	);
 };
 
+// ── Status badge ──────────────────────────────────────────────────────────────
+
+const STATUS_STYLES: Record<string, string> = {
+	pending: "bg-amber-500/20 text-amber-400",
+	verified: "bg-emerald-500/20 text-emerald-400",
+	rejected: "bg-red-500/20 text-red-400",
+};
+
+const StatusBadge = ({ status }: { status: string }) => (
+	<span
+		className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${STATUS_STYLES[status] ?? "bg-surface-page text-text-secondary"}`}
+	>
+		{status}
+	</span>
+);
+
 // ── Route row ─────────────────────────────────────────────────────────────────
 
 const RouteRow = ({ route }: { route: UnverifiedRoute }) => {
@@ -199,6 +215,8 @@ const RouteRow = ({ route }: { route: UnverifiedRoute }) => {
 	const { mutate: reject } = useRejectRoute();
 	const { mutate: updateFields } = useUpdateRouteFields();
 	const { mutate: merge } = useMergeRoute();
+
+	const isPending = route.status === "pending";
 
 	const handleVerify = () => {
 		verify(route.id, {
@@ -258,21 +276,26 @@ const RouteRow = ({ route }: { route: UnverifiedRoute }) => {
 						{route.grade} · {route.route_type}
 					</span>
 				</div>
-				<span className="text-xs text-text-tertiary">
-					{new Date(route.created_at).toLocaleDateString()}
-				</span>
+				<div className="flex items-center gap-2">
+					<StatusBadge status={route.status} />
+					<span className="text-xs text-text-tertiary">
+						{new Date(route.created_at).toLocaleDateString()}
+					</span>
+				</div>
 			</div>
 
 			{mode === "idle" && (
 				<div className="flex gap-2 mt-2 flex-wrap">
-					<Button
-						type="button"
-						variant="primary"
-						size="small"
-						onClick={handleVerify}
-					>
-						Approve
-					</Button>
+					{isPending && (
+						<Button
+							type="button"
+							variant="primary"
+							size="small"
+							onClick={handleVerify}
+						>
+							Approve
+						</Button>
+					)}
 					<Button
 						type="button"
 						variant="secondary"
@@ -281,22 +304,26 @@ const RouteRow = ({ route }: { route: UnverifiedRoute }) => {
 					>
 						Edit
 					</Button>
-					<Button
-						type="button"
-						variant="secondary"
-						size="small"
-						onClick={() => setMode("merge")}
-					>
-						Merge
-					</Button>
-					<Button
-						type="button"
-						variant="secondary"
-						size="small"
-						onClick={handleReject}
-					>
-						Reject
-					</Button>
+					{isPending && (
+						<Button
+							type="button"
+							variant="secondary"
+							size="small"
+							onClick={() => setMode("merge")}
+						>
+							Merge
+						</Button>
+					)}
+					{isPending && (
+						<Button
+							type="button"
+							variant="secondary"
+							size="small"
+							onClick={handleReject}
+						>
+							Reject
+						</Button>
+					)}
 				</div>
 			)}
 
@@ -319,7 +346,7 @@ const RouteRow = ({ route }: { route: UnverifiedRoute }) => {
 
 const RouteVerificationView = () => {
 	const router = useRouter();
-	const { data: routes = [], isLoading } = useUnverifiedRoutes();
+	const { data: routes = [], isLoading } = useAllRoutes();
 
 	return (
 		<div className="flex flex-col gap-4">
@@ -331,12 +358,12 @@ const RouteVerificationView = () => {
 				← Back
 			</button>
 
-			<h1 className="text-lg font-display font-semibold">Route Verification</h1>
+			<h1 className="text-lg font-display font-semibold">Route Manager</h1>
 
 			{isLoading && <p className="text-text-secondary text-sm">Loading…</p>}
 
 			{!isLoading && routes.length === 0 && (
-				<p className="text-text-secondary text-sm">No pending routes.</p>
+				<p className="text-text-secondary text-sm">No routes yet.</p>
 			)}
 
 			{routes.map((route) => (

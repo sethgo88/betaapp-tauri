@@ -1,5 +1,12 @@
 import { useNavigate } from "@tanstack/react-router";
-import { CircleUser, Map as MapIcon, MapPin, Menu, X } from "lucide-react";
+import {
+	CircleUser,
+	Map as MapIcon,
+	MapPin,
+	Menu,
+	PlusCircle,
+	X,
+} from "lucide-react";
 import { useAuthStore } from "@/features/auth/auth.store";
 
 interface DrawerProps {
@@ -60,6 +67,26 @@ export const Drawer = ({ isOpen, onClose }: DrawerProps) => {
 						<MapPin size={18} />
 						<span>Route Manager</span>
 					</button>
+
+					<button
+						type="button"
+						className="flex items-center gap-3 py-3 px-2 text-left rounded-lg hover:bg-surface-hover"
+						onClick={() => handleNav("/routes/add")}
+					>
+						<PlusCircle size={18} />
+						<span>Add Route</span>
+					</button>
+
+					{isAdmin && (
+						<button
+							type="button"
+							className="flex items-center gap-3 py-3 px-2 text-left rounded-lg hover:bg-surface-hover"
+							onClick={() => handleNav("/locations/add")}
+						>
+							<PlusCircle size={18} />
+							<span>Add Location</span>
+						</button>
+					)}
 
 					<button
 						type="button"

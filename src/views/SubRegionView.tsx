@@ -1,15 +1,98 @@
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { useState } from "react";
+import { useCallback, useState } from "react";
+import { Button } from "@/components/atoms/Button";
 import { Spinner } from "@/components/atoms/Spinner";
 import { CoordinatePicker } from "@/components/molecules/CoordinatePicker";
 import { EditableDescription } from "@/components/molecules/EditableDescription";
+import {
+	LocationDrillDown,
+	type LocationSelection,
+} from "@/components/molecules/LocationDrillDown";
 import { useAuthStore } from "@/features/auth/auth.store";
 import {
+	useAdminDeleteCrag,
+	useAdminMoveCrag,
+	useAdminRenameLocation,
 	useCrags,
 	useSubmitCrag,
 	useSubRegion,
 	useUpdateLocationDescription,
 } from "@/features/locations/locations.queries";
+import { useUiStore } from "@/stores/ui.store";
+
+// ── Move crag panel ───────────────────────────────────────────────────────────
+
+const MoveCragPanel = ({
+	cragId,
+	currentSubRegionId,
+	onClose,
+}: {
+	cragId: string;
+	currentSubRegionId: string;
+	onClose: () => void;
+}) => {
+	const addToast = useUiStore((s) => s.addToast);
+	const { mutateAsync: moveCrag, isPending } = useAdminMoveCrag();
+	const [selection, setSelection] = useState<LocationSelection>({
+		countryId: null,
+		regionId: null,
+		subRegionId: null,
+		cragId: null,
+		wallId: null,
+		wall: null,
+	});
+
+	const handleChange = useCallback((sel: LocationSelection) => {
+		setSelection(sel);
+	}, []);
+
+	const canMove =
+		!!selection.subRegionId && selection.subRegionId !== currentSubRegionId;
+
+	const handleMove = async () => {
+		if (!selection.subRegionId) return;
+		try {
+			await moveCrag({
+				cragId,
+				newSubRegionId: selection.subRegionId,
+				oldSubRegionId: currentSubRegionId,
+			});
+			addToast({ message: "Crag moved", type: "success" });
+			onClose();
+		} catch {
+			addToast({ message: "Failed to move crag", type: "error" });
+		}
+	};
+
+	return (
+		<div className="rounded-lg bg-surface-card border border-card-border p-4 flex flex-col gap-3">
+			<p className="text-sm font-medium text-text-primary">Move to sub-area</p>
+			<LocationDrillDown onChange={handleChange} stopAt="sub_region" />
+			<div className="flex gap-2">
+				<Button
+					type="button"
+					variant="primary"
+					size="small"
+					onClick={handleMove}
+					disabled={!canMove || isPending}
+				>
+					{isPending ? "Moving…" : "Move here"}
+				</Button>
+				<Button
+					type="button"
+					variant="secondary"
+					size="small"
+					onClick={onClose}
+					disabled={isPending}
+				>
+					Cancel
+				</Button>
+			</div>
+		</div>
+	);
+};
+
+// ── Sub-region view ───────────────────────────────────────────────────────────
 
 const SubRegionView = () => {
 	const { subRegionId } = useParams({ from: "/sub-regions/$subRegionId" });
@@ -18,8 +101,17 @@ const SubRegionView = () => {
 	const { data: crags = [] } = useCrags(subRegionId);
 	const updateDescription = useUpdateLocationDescription();
 	const submitCrag = useSubmitCrag();
+	const renameCrag = useAdminRenameLocation();
+	const deleteCrag = useAdminDeleteCrag();
 	const isAdmin = useAuthStore((s) => s.user?.role === "admin");
+	const addToast = useUiStore((s) => s.addToast);
 	const [showCragForm, setShowCragForm] = useState(false);
+	const [movingCragId, setMovingCragId] = useState<string | null>(null);
+	const [renamingCragId, setRenamingCragId] = useState<string | null>(null);
+	const [renameValue, setRenameValue] = useState("");
+	const [confirmDeleteCragId, setConfirmDeleteCragId] = useState<string | null>(
+		null,
+	);
 	const [cragName, setCragName] = useState("");
 	const [cragCoords, setCragCoords] = useState<{
 		lat: number;
@@ -87,26 +179,158 @@ const SubRegionView = () => {
 			)}
 
 			{crags.map((crag) => (
-				<button
-					key={crag.id}
-					type="button"
-					className="rounded-lg bg-surface-card p-4 text-left flex items-center justify-between"
-					onClick={() =>
-						crag.status === "pending"
-							? undefined
-							: navigate({
-									to: "/crags/$cragId",
-									params: { cragId: crag.id },
-								})
-					}
-				>
-					<span className="font-medium">{crag.name}</span>
-					<div className="flex items-center gap-2">
-						{crag.status === "pending" && (
-							<span className="text-xs text-amber-400">pending</span>
-						)}
-					</div>
-				</button>
+				<div key={crag.id} className="flex flex-col gap-1">
+					{renamingCragId === crag.id ? (
+						<div className="rounded-lg bg-surface-card p-3 flex gap-2 items-center">
+							<input
+								type="text"
+								value={renameValue}
+								onChange={(e) => setRenameValue(e.target.value)}
+								className="flex-1 text-sm bg-surface-page rounded-lg px-3 py-2 text-text-primary outline-none"
+								// biome-ignore lint/a11y/noAutofocus: intentional — form appears on user tap
+								autoFocus
+							/>
+							<button
+								type="button"
+								disabled={!renameValue.trim() || renameCrag.isPending}
+								onClick={async () => {
+									try {
+										await renameCrag.mutateAsync({
+											table: "crags",
+											id: crag.id,
+											name: renameValue.trim(),
+											parentId: subRegionId,
+										});
+										setRenamingCragId(null);
+									} catch {
+										addToast({
+											message: "Failed to rename crag",
+											type: "error",
+										});
+									}
+								}}
+								className="text-xs px-3 py-1.5 rounded-lg bg-accent-primary disabled:opacity-40"
+							>
+								Save
+							</button>
+							<button
+								type="button"
+								onClick={() => setRenamingCragId(null)}
+								className="text-xs px-3 py-1.5 rounded-lg bg-surface-active"
+							>
+								Cancel
+							</button>
+						</div>
+					) : (
+						<div className="rounded-lg bg-surface-card p-4 text-left flex items-center justify-between">
+							<button
+								type="button"
+								className="flex-1 text-left"
+								onClick={() =>
+									crag.status === "pending"
+										? undefined
+										: navigate({
+												to: "/crags/$cragId",
+												params: { cragId: crag.id },
+											})
+								}
+							>
+								<span className="font-medium">{crag.name}</span>
+							</button>
+							<div className="flex items-center gap-2">
+								{crag.status === "pending" && (
+									<span className="text-xs text-amber-400">pending</span>
+								)}
+								{isAdmin && (
+									<>
+										<button
+											type="button"
+											className="text-xs text-text-secondary hover:text-text-primary"
+											onClick={() => {
+												setRenamingCragId(crag.id);
+												setRenameValue(crag.name);
+												setMovingCragId(null);
+												setConfirmDeleteCragId(null);
+											}}
+										>
+											Rename
+										</button>
+										<button
+											type="button"
+											className="text-xs text-text-secondary hover:text-text-primary"
+											onClick={() =>
+												setMovingCragId(
+													movingCragId === crag.id ? null : crag.id,
+												)
+											}
+										>
+											{movingCragId === crag.id ? "Cancel" : "Move"}
+										</button>
+										<button
+											type="button"
+											className="text-xs text-red-400 hover:text-red-300"
+											onClick={() => {
+												setConfirmDeleteCragId(crag.id);
+												setMovingCragId(null);
+												setRenamingCragId(null);
+											}}
+										>
+											Delete
+										</button>
+									</>
+								)}
+							</div>
+						</div>
+					)}
+					{confirmDeleteCragId === crag.id && (
+						<div className="rounded-lg bg-surface-card border border-red-800 p-3 flex flex-col gap-2">
+							<p className="text-sm text-text-primary">
+								Delete <span className="font-medium">{crag.name}</span>? This
+								cannot be undone.
+							</p>
+							<div className="flex gap-2">
+								<button
+									type="button"
+									disabled={deleteCrag.isPending}
+									onClick={async () => {
+										try {
+											await deleteCrag.mutateAsync({
+												id: crag.id,
+												subRegionId,
+											});
+											setConfirmDeleteCragId(null);
+											addToast({ message: "Crag deleted", type: "success" });
+										} catch (e) {
+											addToast({
+												message:
+													e instanceof Error ? e.message : "Failed to delete",
+												type: "error",
+											});
+											setConfirmDeleteCragId(null);
+										}
+									}}
+									className="text-xs px-3 py-1.5 rounded-lg bg-red-800 hover:bg-red-700 disabled:opacity-40"
+								>
+									{deleteCrag.isPending ? "Deleting…" : "Delete"}
+								</button>
+								<button
+									type="button"
+									onClick={() => setConfirmDeleteCragId(null)}
+									className="text-xs px-3 py-1.5 rounded-lg bg-surface-active"
+								>
+									Cancel
+								</button>
+							</div>
+						</div>
+					)}
+					{movingCragId === crag.id && (
+						<MoveCragPanel
+							cragId={crag.id}
+							currentSubRegionId={subRegionId}
+							onClose={() => setMovingCragId(null)}
+						/>
+					)}
+				</div>
 			))}
 
 			{showCragForm ? (
