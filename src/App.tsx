@@ -111,6 +111,7 @@ function Bootstrap() {
 				role,
 			);
 			setUser(localUser);
+			router.navigate({ to: "/" });
 		};
 
 		// Check for a deep link URL that launched/resumed the app
