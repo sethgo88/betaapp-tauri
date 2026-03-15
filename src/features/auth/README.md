@@ -64,9 +64,9 @@ Role is **not** read from `public.users.role` — always fetched from `user_role
 |---|---|
 | `signIn(email, password)` | `signInWithPassword` → returns Session |
 | `signUp(email, password)` | Creates account + returns Session (email confirm must be off) |
-| `sendPasswordReset(email)` | `resetPasswordForEmail` — sends reset link; redirects to `betaapp://auth/callback` |
+| `sendPasswordReset(email)` | `resetPasswordForEmail` — sends reset link; redirects via Supabase Edge Function → `betaapp://auth/callback` |
 | `updatePassword(newPassword)` | `updateUser({ password })` — call from ResetPasswordView after `PASSWORD_RECOVERY` event |
-| `sendMagicLink(email)` | `signInWithOtp` — sends magic link email; redirects to `betaapp://auth/callback` |
+| `sendMagicLink(email)` | `signInWithOtp` — sends magic link email; redirects via Supabase Edge Function → `betaapp://auth/callback` |
 | `restoreSession()` | `supabase.auth.getSession()` — call on app launch |
 | `signOut()` | Clears Supabase session |
 | `updateUserProfile(userId, profile)` | Updates profile fields in SQLite + Supabase; returns updated User |
@@ -105,11 +105,15 @@ Login (password):
   useSync fires (userId now defined)
 
 Login (magic link):
-  sendMagicLink(email) → email sent; user taps link
-  Deep link opens app → initDeepLinkHandler fires
+  sendMagicLink(email) → email sent (emailRedirectTo = Supabase Edge Function URL)
+  User taps link in Gmail → HTTPS link opens (Gmail blocks custom schemes)
+  Edge Function (supabase/functions/auth-redirect) → 302 to betaapp://auth/callback?code=...
+  Android intent filter catches betaapp:// → app opens
+  checkPendingDeepLink / initDeepLinkHandler fires
   exchangeCodeForSession(code) → session
   fetchOrCreateSupabaseUser(id) → get role
   upsertLocalUser(id, email, role) → setUser
+  router.navigate({ to: '/' }) — explicit nav needed; router already redirected to /profile
   useSync fires (userId now defined)
 
 Password reset:
