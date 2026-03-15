@@ -125,9 +125,12 @@ export async function updateUserProfile(
 
 // ── Password reset ──────────────────────────────────────────────────────────
 
+const AUTH_REDIRECT_URL =
+	"https://tkiacbpbfwzhvschjavh.supabase.co/functions/v1/auth-redirect";
+
 export async function sendPasswordReset(email: string): Promise<void> {
 	const { error } = await supabase.auth.resetPasswordForEmail(email, {
-		redirectTo: "betaapp://auth/callback",
+		redirectTo: AUTH_REDIRECT_URL,
 	});
 	if (error) throw error;
 }
@@ -142,7 +145,7 @@ export async function updatePassword(newPassword: string): Promise<void> {
 export async function sendMagicLink(email: string): Promise<void> {
 	const { error } = await supabase.auth.signInWithOtp({
 		email,
-		options: { emailRedirectTo: "betaapp://auth/callback" },
+		options: { emailRedirectTo: AUTH_REDIRECT_URL },
 	});
 	if (error) throw error;
 }
