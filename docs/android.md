@@ -30,12 +30,18 @@ For device development: enable **Developer Options** and **USB Debugging** on th
 
 ---
 
-## Bundle Identifier
+## Application IDs
 
-`com.betaapp.app` — set in `src-tauri/tauri.conf.json`.
+| Build type | Application ID | Launcher name |
+|---|---|---|
+| Debug / dev | `com.betaapp.app.dev` | BetaApp Dev |
+| Release | `com.betaapp.app` | BetaApp |
 
-This identifier is used for:
-- Android package name
+The base ID (`com.betaapp.app`) is set in `src-tauri/tauri.conf.json`. The `.dev` suffix is appended via `applicationIdSuffix` in `build.gradle.kts`.
+
+**Why separate IDs?** Different application IDs allow both builds to be installed on the same device simultaneously. Use the dev build for day-to-day development and the release build to verify production behaviour without uninstalling.
+
+The application ID is also used for:
 - Deep link intent filter registration
 - APK signing
 
@@ -181,31 +187,34 @@ If a Tauri API call silently fails on Android, check the capabilities file first
 
 ## APK Signing
 
-### Debug builds
-Auto-signed with the debug keystore at `~/.android/debug.keystore`. No configuration needed.
+Both debug and release builds are signed with the **same keystore**. This lets the two builds coexist on a device (different application IDs) and avoids `INSTALL_FAILED_UPDATE_INCOMPATIBLE` when switching between them.
 
-### Release builds
+### One-time setup
 
-1. Generate a release keystore (do this once, store it safely outside the project):
+1. Generate the keystore (once — store it somewhere safe outside the repo):
    ```bash
-   keytool -genkey -v -keystore betaapp-release.keystore -alias betaapp -keyalg RSA -keysize 2048 -validity 10000
+   keytool -genkey -v -keystore betaapp-release.jks -alias betaapp -keyalg RSA -keysize 2048 -validity 10000
    ```
 
-2. Create `.env` in project root (never commit this file):
-   ```
-   TAURI_SIGNING_PRIVATE_KEY=/path/to/betaapp-release.keystore
-   TAURI_SIGNING_PRIVATE_KEY_PASSWORD=your-keystore-password
-   ```
-   Or set the equivalent Tauri Android signing config in `src-tauri/tauri.conf.json`.
-
-3. Build:
-   ```bash
-   cargo tauri android build --release
+2. Create `src-tauri/gen/android/keystore.properties` (gitignored):
+   ```properties
+   storeFile=C:\\Users\\<you>\\keys\\betaapp-release.jks
+   keyAlias=betaapp
+   password=<your password>
    ```
 
-4. APK output: `src-tauri/gen/android/app/build/outputs/apk/universal/release/`
+3. `build.gradle.kts` reads `keystore.properties` and applies the signing config to both `debug` and `release` build types.
 
-**Never commit:** the keystore file, `.env` with credentials, or any file containing the signing password.
+### APK output paths
+
+| Build | Command | APK path |
+|---|---|---|
+| Debug | `cargo tauri android build --debug` | `src-tauri/gen/android/app/build/outputs/apk/debug/app-debug.apk` |
+| Release | `cargo tauri android build --release` | `src-tauri/gen/android/app/build/outputs/apk/release/app-release.apk` |
+
+**Never commit:** the keystore file or `keystore.properties`.
+
+> **If you re-run `cargo tauri android init`:** `build.gradle.kts` is regenerated — re-apply the `applicationIdSuffix`, `resValue`, `keystoreProperties`, and `signingConfigs` blocks. `keystore.properties` is not touched.
 
 ---
 
@@ -249,4 +258,5 @@ Supabase domains must be allowed in the CSP. Set in `src-tauri/tauri.conf.json`:
 | Supabase call silently fails | Check CSP allows `*.supabase.co`, check capabilities file |
 | Back button closes app instead of navigating | Ensure `useAndroidBackButton()` is called in root layout |
 | SQLite migration fails | Check migration SQL for syntax errors; migrations run on every launch |
-| Release APK won't install | Verify signing keystore and password are correct; debug and release keystores are different |
+| Release APK won't install over dev | Different application IDs (`com.betaapp.app` vs `.dev`) — they install side by side, not over each other |
+| `INSTALL_FAILED_UPDATE_INCOMPATIBLE` | APK signed with a different key than what's installed — uninstall the app first, or confirm keystore.properties points to the correct file |
