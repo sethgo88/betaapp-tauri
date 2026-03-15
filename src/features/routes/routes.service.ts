@@ -19,11 +19,13 @@ export async function fetchRoute(id: string): Promise<Route | null> {
 	return rows[0] ?? null;
 }
 
-export async function submitRoute(
+export async function addRoute(
 	values: RouteSubmitValues,
 	userId: string,
+	isAdmin: boolean,
 ): Promise<void> {
 	const id = crypto.randomUUID();
+	const status = isAdmin ? "verified" : "pending";
 
 	const { error } = await supabase.from("routes").insert({
 		id,
@@ -32,7 +34,7 @@ export async function submitRoute(
 		grade: values.grade,
 		route_type: values.route_type,
 		description: values.description ?? null,
-		status: "pending",
+		status,
 		created_by: userId,
 	});
 	if (error) throw error;
@@ -49,8 +51,44 @@ export async function submitRoute(
 			values.grade,
 			values.route_type,
 			values.description ?? null,
-			"pending",
+			status,
 			userId,
+		],
+	);
+}
+
+export async function editRoute(
+	id: string,
+	values: {
+		wall_id: string;
+		name: string;
+		grade: string;
+		route_type: "sport" | "boulder";
+		description?: string;
+	},
+): Promise<void> {
+	const { error } = await supabase
+		.from("routes")
+		.update({
+			wall_id: values.wall_id,
+			name: values.name,
+			grade: values.grade,
+			route_type: values.route_type,
+			description: values.description ?? null,
+		})
+		.eq("id", id);
+	if (error) throw error;
+
+	const db = await getDb();
+	await db.execute(
+		"UPDATE routes_cache SET wall_id = ?, name = ?, grade = ?, route_type = ?, description = ? WHERE id = ?",
+		[
+			values.wall_id,
+			values.name,
+			values.grade,
+			values.route_type,
+			values.description ?? null,
+			id,
 		],
 	);
 }
@@ -89,6 +127,7 @@ export type UnverifiedRoute = {
 	grade: string;
 	route_type: "sport" | "boulder";
 	description: string | null;
+	status: "pending" | "verified" | "rejected";
 	created_by: string;
 	created_at: string;
 	walls: {
@@ -119,9 +158,21 @@ export async function fetchUnverifiedRoutes(): Promise<UnverifiedRoute[]> {
 	const { data, error } = await supabase
 		.from("routes")
 		.select(
-			"id, wall_id, name, grade, route_type, description, created_by, created_at, walls(name, crags(name, sub_regions(name, regions(id, name, countries(name)))))",
+			"id, wall_id, name, grade, route_type, description, status, created_by, created_at, walls(name, crags(name, sub_regions(name, regions(id, name, countries(name)))))",
 		)
 		.eq("status", "pending")
+		.order("created_at", { ascending: false });
+	if (error) throw error;
+	return (data ?? []) as UnverifiedRoute[];
+}
+
+export async function fetchAllRoutes(): Promise<UnverifiedRoute[]> {
+	const { data, error } = await supabase
+		.from("routes")
+		.select(
+			"id, wall_id, name, grade, route_type, description, status, created_by, created_at, walls(name, crags(name, sub_regions(name, regions(id, name, countries(name)))))",
+		)
+		.is("deleted_at", null)
 		.order("created_at", { ascending: false });
 	if (error) throw error;
 	return (data ?? []) as UnverifiedRoute[];
@@ -205,6 +256,26 @@ export async function mergeRoute(
 		.eq("id", unverifiedId);
 	if (error) throw error;
 	await db.execute("DELETE FROM routes_cache WHERE id = ?", [unverifiedId]);
+}
+
+export async function adminDeleteRoute(id: string): Promise<void> {
+	const db = await getDb();
+	// Check if any climbs reference this route
+	const [linked] = await db.select<{ count: number }[]>(
+		"SELECT COUNT(*) as count FROM climbs WHERE route_id = ?",
+		[id],
+	);
+	if (linked.count > 0) {
+		throw new Error(
+			`Cannot delete: ${linked.count} climb(s) are linked to this route. Unlink them first.`,
+		);
+	}
+	const { error } = await supabase
+		.from("routes")
+		.update({ deleted_at: new Date().toISOString() })
+		.eq("id", id);
+	if (error) throw error;
+	await db.execute("DELETE FROM routes_cache WHERE id = ?", [id]);
 }
 
 export async function searchVerifiedRoutes(

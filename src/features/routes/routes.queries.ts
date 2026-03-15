@@ -2,13 +2,16 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/features/auth/auth.store";
 import type { RouteSubmitValues } from "./routes.schema";
 import {
+	addRoute,
+	adminDeleteRoute,
+	editRoute,
+	fetchAllRoutes,
 	fetchRoute,
 	fetchRoutes,
 	fetchUnverifiedRoutes,
 	mergeRoute,
 	rejectRoute,
 	searchLocalRoutes,
-	submitRoute,
 	updateRouteDescription,
 	updateRouteFields,
 	verifyRoute,
@@ -34,11 +37,14 @@ export function useSubmitRoute() {
 	const qc = useQueryClient();
 	return useMutation({
 		mutationFn: (values: RouteSubmitValues) => {
-			const userId = useAuthStore.getState().user?.id ?? "";
-			return submitRoute(values, userId);
+			const { user } = useAuthStore.getState();
+			const userId = user?.id ?? "";
+			const isAdmin = user?.role === "admin";
+			return addRoute(values, userId, isAdmin);
 		},
 		onSuccess: (_data, values) => {
 			qc.invalidateQueries({ queryKey: ["routes", values.wall_id] });
+			qc.invalidateQueries({ queryKey: ["all_routes"] });
 		},
 	});
 }
@@ -62,6 +68,61 @@ export function useUpdateRouteDescription() {
 	});
 }
 
+export function useAddRoute() {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: ({
+			values,
+			userId,
+			isAdmin,
+		}: {
+			values: RouteSubmitValues;
+			userId: string;
+			isAdmin: boolean;
+		}) => addRoute(values, userId, isAdmin),
+		onSuccess: (_data, { values }) => {
+			qc.invalidateQueries({ queryKey: ["routes", values.wall_id] });
+			qc.invalidateQueries({ queryKey: ["all_routes"] });
+		},
+	});
+}
+
+export function useEditRoute() {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: ({
+			id,
+			values,
+		}: {
+			id: string;
+			values: {
+				wall_id: string;
+				name: string;
+				grade: string;
+				route_type: "sport" | "boulder";
+				description?: string;
+			};
+		}) => editRoute(id, values),
+		onSuccess: (_data, { id, values }) => {
+			qc.invalidateQueries({ queryKey: ["route", id] });
+			qc.invalidateQueries({ queryKey: ["routes", values.wall_id] });
+			qc.invalidateQueries({ queryKey: ["all_routes"] });
+		},
+	});
+}
+
+export function useAdminDeleteRoute() {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: ({ id }: { id: string; wallId: string }) =>
+			adminDeleteRoute(id),
+		onSuccess: (_data, { wallId }) => {
+			qc.invalidateQueries({ queryKey: ["routes", wallId] });
+			qc.invalidateQueries({ queryKey: ["all_routes"] });
+		},
+	});
+}
+
 // ── Admin queries ─────────────────────────────────────────────────────────────
 
 export function useUnverifiedRoutes() {
@@ -71,12 +132,20 @@ export function useUnverifiedRoutes() {
 	});
 }
 
+export function useAllRoutes() {
+	return useQuery({
+		queryKey: ["all_routes"],
+		queryFn: fetchAllRoutes,
+	});
+}
+
 export function useVerifyRoute() {
 	const qc = useQueryClient();
 	return useMutation({
 		mutationFn: (id: string) => verifyRoute(id),
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: ["unverified_routes"] });
+			qc.invalidateQueries({ queryKey: ["all_routes"] });
 		},
 	});
 }
@@ -87,6 +156,7 @@ export function useRejectRoute() {
 		mutationFn: (id: string) => rejectRoute(id),
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: ["unverified_routes"] });
+			qc.invalidateQueries({ queryKey: ["all_routes"] });
 		},
 	});
 }
@@ -108,6 +178,7 @@ export function useUpdateRouteFields() {
 		}) => updateRouteFields(id, values),
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: ["unverified_routes"] });
+			qc.invalidateQueries({ queryKey: ["all_routes"] });
 		},
 	});
 }
@@ -124,6 +195,7 @@ export function useMergeRoute() {
 		}) => mergeRoute(unverifiedId, targetId),
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: ["unverified_routes"] });
+			qc.invalidateQueries({ queryKey: ["all_routes"] });
 		},
 	});
 }

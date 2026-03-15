@@ -52,6 +52,15 @@ export async function fetchWalls(cragId: string): Promise<Wall[]> {
 
 // ── Single-entity fetches ────────────────────────────────────────────────────
 
+export async function fetchRegion(id: string): Promise<Region | null> {
+	const db = await getDb();
+	const rows = await db.select<Region[]>(
+		"SELECT * FROM regions_cache WHERE id = ?",
+		[id],
+	);
+	return rows[0] ?? null;
+}
+
 export async function fetchSubRegion(id: string): Promise<SubRegion | null> {
 	const db = await getDb();
 	const rows = await db.select<SubRegion[]>(
@@ -434,6 +443,102 @@ export async function submitWall(
 	}
 }
 
+// ── Admin location add (creates verified directly) ────────────────────────────
+
+export async function adminAddSubRegion(
+	values: SubRegionSubmitValues,
+	userId: string,
+): Promise<{ id: string }> {
+	const id = crypto.randomUUID();
+	const { error } = await supabase.from("sub_regions").insert({
+		id,
+		region_id: values.region_id,
+		name: values.name,
+		sort_order: 9999,
+		status: "verified",
+		created_by: userId,
+	});
+	if (error) throw error;
+
+	const db = await getDb();
+	await db.execute(
+		"INSERT INTO sub_regions_cache (id, region_id, name, sort_order, status, created_by, created_at) VALUES (?, ?, ?, 9999, 'verified', ?, datetime('now'))",
+		[id, values.region_id, values.name, userId],
+	);
+	return { id };
+}
+
+export async function adminAddCrag(
+	values: CragSubmitValues,
+	userId: string,
+): Promise<{ id: string }> {
+	const id = crypto.randomUUID();
+	const { error } = await supabase.from("crags").insert({
+		id,
+		sub_region_id: values.sub_region_id,
+		name: values.name,
+		sort_order: 9999,
+		status: "verified",
+		created_by: userId,
+		lat: values.lat ?? null,
+		lng: values.lng ?? null,
+	});
+	if (error) throw error;
+
+	const db = await getDb();
+	await db.execute(
+		"INSERT INTO crags_cache (id, sub_region_id, name, sort_order, status, created_by, created_at, lat, lng) VALUES (?, ?, ?, 9999, 'verified', ?, datetime('now'), ?, ?)",
+		[
+			id,
+			values.sub_region_id,
+			values.name,
+			userId,
+			values.lat ?? null,
+			values.lng ?? null,
+		],
+	);
+	return { id };
+}
+
+export async function adminAddWall(
+	values: WallSubmitValues,
+	userId: string,
+): Promise<{ id: string }> {
+	const id = crypto.randomUUID();
+	// biome-ignore lint/suspicious/noExplicitAny: wall_type not yet in generated Supabase types
+	const { error } = await (supabase.from("walls") as any).insert({
+		id,
+		crag_id: values.crag_id,
+		name: values.name,
+		wall_type: values.wall_type ?? "wall",
+		lat: values.lat ?? null,
+		lng: values.lng ?? null,
+		sort_order: 9999,
+		status: "verified",
+		created_by: userId,
+	});
+	if (error) throw error;
+
+	const db = await getDb();
+	await db.execute(
+		"INSERT INTO walls_cache (id, crag_id, name, sort_order, status, created_by, created_at, lat, lng, wall_type) VALUES (?, ?, ?, 9999, 'verified', ?, datetime('now'), ?, ?, ?)",
+		[
+			id,
+			values.crag_id,
+			values.name,
+			userId,
+			values.lat ?? null,
+			values.lng ?? null,
+			values.wall_type ?? "wall",
+		],
+	);
+
+	if (values.lat != null && values.lng != null) {
+		await inheritWallCoordsToCrag(values.crag_id, values.lat, values.lng);
+	}
+	return { id };
+}
+
 // ── Admin location verification ───────────────────────────────────────────────
 
 export async function verifyLocation(
@@ -545,13 +650,20 @@ export async function fetchPendingLocations(): Promise<PendingLocationItem[]> {
 
 export async function adminAddCountry(
 	name: string,
-	code: string,
-	sortOrder: number,
-): Promise<void> {
+	code = "",
+	sortOrder = 9999,
+): Promise<{ id: string }> {
+	const id = crypto.randomUUID();
 	const { error } = await supabase
 		.from("countries")
-		.insert({ id: crypto.randomUUID(), name, code, sort_order: sortOrder });
+		.insert({ id, name, code, sort_order: sortOrder });
 	if (error) throw error;
+	const db = await getDb();
+	await db.execute(
+		"INSERT INTO countries_cache (id, name, code, sort_order, created_at) VALUES (?, ?, ?, ?, datetime('now'))",
+		[id, name, code, sortOrder],
+	);
+	return { id };
 }
 
 export async function adminDeleteCountry(id: string): Promise<void> {
@@ -562,15 +674,22 @@ export async function adminDeleteCountry(id: string): Promise<void> {
 export async function adminAddRegion(
 	countryId: string,
 	name: string,
-	sortOrder: number,
-): Promise<void> {
+	sortOrder = 9999,
+): Promise<{ id: string }> {
+	const id = crypto.randomUUID();
 	const { error } = await supabase.from("regions").insert({
-		id: crypto.randomUUID(),
+		id,
 		country_id: countryId,
 		name,
 		sort_order: sortOrder,
 	});
 	if (error) throw error;
+	const db = await getDb();
+	await db.execute(
+		"INSERT INTO regions_cache (id, country_id, name, sort_order, created_at) VALUES (?, ?, ?, ?, datetime('now'))",
+		[id, countryId, name, sortOrder],
+	);
+	return { id };
 }
 
 export async function adminDeleteRegion(id: string): Promise<void> {
@@ -734,6 +853,118 @@ export async function fetchAllWallsWithCoords(): Promise<MapWall[]> {
 		has_trad: r.trad_count > 0,
 		has_boulder: r.boulder_count > 0,
 	}));
+}
+
+// ── Admin: rename locations ───────────────────────────────────────────────────
+
+export async function adminRenameLocation(
+	table: LocationTable,
+	id: string,
+	name: string,
+): Promise<void> {
+	const { error } = await supabase.from(table).update({ name }).eq("id", id);
+	if (error) throw error;
+
+	const db = await getDb();
+	await db.execute(
+		`UPDATE ${cacheTableForUpdate(table)} SET name = ? WHERE id = ?`,
+		[name, id],
+	);
+}
+
+// ── Admin: delete locations (blocked if children exist) ───────────────────────
+
+export async function adminDeleteSubRegion(id: string): Promise<void> {
+	const db = await getDb();
+	const [children] = await db.select<{ count: number }[]>(
+		"SELECT COUNT(*) as count FROM crags_cache WHERE sub_region_id = ?",
+		[id],
+	);
+	if (children.count > 0) {
+		throw new Error(
+			`Cannot delete: has ${children.count} crag(s). Move them first.`,
+		);
+	}
+	const { error } = await supabase
+		.from("sub_regions")
+		.update({ deleted_at: new Date().toISOString() })
+		.eq("id", id);
+	if (error) throw error;
+	await db.execute("DELETE FROM sub_regions_cache WHERE id = ?", [id]);
+}
+
+export async function adminDeleteCrag(id: string): Promise<void> {
+	const db = await getDb();
+	const [children] = await db.select<{ count: number }[]>(
+		"SELECT COUNT(*) as count FROM walls_cache WHERE crag_id = ?",
+		[id],
+	);
+	if (children.count > 0) {
+		throw new Error(
+			`Cannot delete: has ${children.count} wall(s). Move them first.`,
+		);
+	}
+	const { error } = await supabase
+		.from("crags")
+		.update({ deleted_at: new Date().toISOString() })
+		.eq("id", id);
+	if (error) throw error;
+	await db.execute("DELETE FROM crags_cache WHERE id = ?", [id]);
+}
+
+export async function adminDeleteWall(id: string): Promise<void> {
+	const db = await getDb();
+	const [children] = await db.select<{ count: number }[]>(
+		"SELECT COUNT(*) as count FROM routes_cache WHERE wall_id = ?",
+		[id],
+	);
+	if (children.count > 0) {
+		throw new Error(
+			`Cannot delete: has ${children.count} route(s). Move them first.`,
+		);
+	}
+	// biome-ignore lint/suspicious/noExplicitAny: deleted_at not yet in generated Supabase types
+	const { error } = await (supabase.from("walls") as any)
+		.update({ deleted_at: new Date().toISOString() })
+		.eq("id", id);
+	if (error) throw error;
+	await db.execute("DELETE FROM walls_cache WHERE id = ?", [id]);
+}
+
+// ── Admin: move crag/wall to a new parent ────────────────────────────────────
+
+export async function adminMoveCrag(
+	cragId: string,
+	newSubRegionId: string,
+): Promise<void> {
+	const { error } = await supabase
+		.from("crags")
+		.update({ sub_region_id: newSubRegionId })
+		.eq("id", cragId);
+	if (error) throw error;
+
+	const db = await getDb();
+	await db.execute("UPDATE crags_cache SET sub_region_id = ? WHERE id = ?", [
+		newSubRegionId,
+		cragId,
+	]);
+}
+
+export async function adminMoveWall(
+	wallId: string,
+	newCragId: string,
+): Promise<void> {
+	// biome-ignore lint/suspicious/noExplicitAny: crag_id not yet in generated Supabase types
+	const { error } = await (supabase.from("walls") as any)
+		.update({ crag_id: newCragId })
+		.eq("id", wallId);
+	if (error) throw error;
+
+	const db = await getDb();
+	await db.execute("UPDATE walls_cache SET crag_id = ? WHERE id = ?", [
+		newCragId,
+		wallId,
+	]);
 }
 
 // ── Admin: update wall type ──────────────────────────────────────────────────

@@ -7,7 +7,7 @@ export type WallType = z.infer<typeof WallType>;
 export const CountrySchema = z.object({
 	id: z.string(),
 	name: z.string(),
-	code: z.string(),
+	code: z.string().default(""),
 	sort_order: z.number(),
 	created_at: z.string(),
 });

@@ -5,6 +5,7 @@ import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { Select } from "@/components/atoms/Select";
 import { useGrades } from "@/features/grades/grades.queries";
+import { useAuthStore } from "@/features/auth/auth.store";
 import { useSubmitRoute } from "@/features/routes/routes.queries";
 import { RouteSubmitSchema } from "@/features/routes/routes.schema";
 import { useUiStore } from "@/stores/ui.store";
@@ -13,6 +14,7 @@ const SubmitRouteView = () => {
 	const { wallId, wallName } = useSearch({ from: "/routes/submit" });
 	const router = useRouter();
 	const addToast = useUiStore((s) => s.addToast);
+	const isAdmin = useAuthStore((s) => s.user?.role === "admin");
 	const { mutateAsync: submitRoute } = useSubmitRoute();
 
 	const [routeType, setRouteType] = useState<"sport" | "boulder">("sport");
@@ -42,7 +44,10 @@ const SubmitRouteView = () => {
 			}
 			try {
 				await submitRoute(parsed.data);
-				addToast({ message: "Route submitted for review", type: "success" });
+				addToast({
+					message: isAdmin ? "Route added" : "Route submitted for review",
+					type: "success",
+				});
 				router.history.back();
 			} catch {
 				addToast({ message: "Failed to submit route", type: "error" });

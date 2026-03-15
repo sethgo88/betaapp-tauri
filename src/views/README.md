@@ -24,10 +24,13 @@ Router defined in `src/router.tsx` using `createMemoryHistory` (required for And
 | `/crags/$cragId` | `CragView` | required | Walls list with admin-editable description; tap navigates to WallView |
 | `/walls/$wallId` | `WallView` | required | Routes list with admin-editable description; tap navigates to RouteDetailView |
 | `/routes/$routeId` | `RouteDetailView` | required | Route detail with grade, type, description; "Log this climb" button |
-| `/routes/submit` | `SubmitRouteView` | required | Submit a new route (`?wallId=&wallName=`) |
+| `/routes/submit` | `SubmitRouteView` | required | Submit a new route (`?wallId=&wallName=`) — legacy; use `/routes/add` |
+| `/locations/add` | `AddLocationView` | required | Add a sub-area/crag/wall using location drill-down; admin creates verified, user creates pending |
+| `/routes/add` | `AddEditRouteView` | required | Add a new route with location drill-down; admin creates verified, user creates pending |
+| `/routes/$routeId/edit` | `AddEditRouteView` | required | Edit an existing route including changing its wall |
 | `/admin/locations` | `admin/LocationManagerView` | admin | Add/delete countries and regions in Supabase |
 | `/admin/locations/pending` | `admin/LocationVerificationView` | admin | Verify or reject pending sub-area/crag/wall submissions |
-| `/admin/routes` | `admin/RouteVerificationView` | admin | Verify, edit, reject, or merge pending routes |
+| `/admin/routes` | `admin/RouteVerificationView` | admin | View all routes with status badges; verify, edit, reject, or merge |
 
 ---
 
@@ -88,14 +91,20 @@ Loads `useWall(id)`, `useCrag(cragId)`, `useWalls(cragId)`, and `useRoutes(wallI
 ### RouteDetailView `/routes/$routeId`
 Loads `useRoute(id)`. Shows route name, grade, route type badge, and description. "Log this climb" button navigates to `/climbs/add` with route pre-filled. Back button navigates up to `/walls/$wallId`.
 
+### AddLocationView `/locations/add`
+Unified add location view with cascading `LocationDrillDown` picker (stops at crag). Shows "Add sub-area here", "Add crag here", and "Add wall here" buttons as the user drills down. Clicking a button opens an inline form with a name field (and wall type for walls). Admin creates locations as `verified`; users create as `pending`. After adding, the drill-down resets so the user can select the new item. Calls `useAdminAddSubRegion/Crag/Wall` (admin) or `useSubmitSubRegion/Crag/Wall` (user).
+
 ### SubmitRouteView `/routes/submit`
-Reads `wallId` and `wallName` from search params. Renders route submission form. Calls `useSubmitRoute()`. On success navigates back.
+Legacy route submission view. Reads `wallId` and `wallName` from search params. Calls `useSubmitRoute()`. On success navigates back. Superseded by `AddEditRouteView`.
+
+### AddEditRouteView `/routes/add` and `/routes/$routeId/edit`
+Unified add/edit route form with cascading location picker (`LocationDrillDown` molecule). Resolves the full location chain (wall → crag → sub_region → region → country) for edit mode pre-population. Admin creates routes as `verified`; users create as `pending`. Calls `useAddRoute()` or `useEditRoute()`. On success navigates back.
 
 ### admin/LocationManagerView `/admin/locations`
 Admin only. Loads countries + regions. Inline forms to add/delete entries. Calls admin mutation functions from `locations.service`.
 
 ### admin/RouteVerificationView `/admin/routes`
-Admin only. Loads `useUnverifiedRoutes()`. For each route: verify, edit fields inline, reject, or merge duplicate.
+Admin only. Loads `useAllRoutes()`. Shows all routes (all statuses) with status badges (Pending/Verified/Rejected). Approve, Reject, and Merge actions are shown only for pending routes; Edit is always shown.
 
 ---
 
