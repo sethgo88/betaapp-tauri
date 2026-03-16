@@ -69,13 +69,10 @@ src/
 - **updated_at trigger** — never set from app layer on UPDATE; trigger maintains it
 - **Soft deletes** — `deleted_at` column; all reads filter `WHERE deleted_at IS NULL`
 - **Sync: full push/pull** — push all local climbs then pull all server climbs on demand; delta sync + Realtime planned for a later phase
-- **Semantic color tokens** — all surface/text/border colors use CSS custom properties (`src/App.css`) registered via Tailwind v4 `@theme`. Dark is default; `.light` class on `:root` swaps to light palette. Never use raw `stone-*` classes for surfaces/text/borders — use token classes (`bg-surface-page`, `text-text-primary`, etc.). Accent colors use `accent-primary` (emerald) and `accent-secondary` (amber) tokens — never raw `emerald-*`/`zinc-*` for buttons. See `src/components/README.md` for the full token table.
-- **Design preset system** — typography, radius, shadows, and card borders are driven by CSS custom properties (`--font-display`, `--font-body`, `--radius-*`, `--shadow-*`, `--card-border`). Current preset is "Earth" (warm browns + serif/sans-serif pairing). Future presets override the same variables with no component changes.
-- **Font pairing** — Lora (serif, `font-display`) for headings/names/grades + Source Sans 3 (sans-serif, `font-body`) for body text. Self-hosted woff2 in `public/fonts/` (~111KB total). No Google Fonts CDN.
-- **Theme persistence** — `ui.store` reads/writes `betaapp-theme` in localStorage; `index.html` has an inline script to apply `.light` before React loads (prevents flash)
+- **Design tokens** — see `.claude/rules/design.md` for full token/theme/font rules
 - **Grades seed** — `grades-seed.ts` populates `grades_cache` on first install; Supabase overrides on sync
 - **Admin role** — fetched from `user_roles` Supabase table after login; gates admin views in UI; Supabase RLS enforces on backend
-- **Supabase credentials** — `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` in `.env` / `.env.local` (gitignored)
+- **Auth details** — see `.claude/rules/auth.md` for Supabase auth, credentials, and RLS rules
 
 ## Android
 - Bundle ID: `com.betaapp.app`
@@ -134,15 +131,3 @@ GitHub Issues is the task management system for this project (repo: `sethgo88/be
 4. When a task is complete, close the issue and leave a brief comment summarising what was done
 5. If work reveals new tasks or edge cases, open new issues rather than expanding scope of the current one
 
-## Phase Status
-- [x] Phase 1: Docs + CLAUDE.md
-- [x] Phase 2: Frontend architecture (TanStack Router, Zustand, TanStack Query, Zod, Add/Edit split)
-- [x] Phase 3: SQLite schema (updated_at triggers, soft deletes, reference cache tables)
-- [x] Phase 4: Supabase setup + auth (email/password, session restore, role detection via user_roles)
-- [x] Phase 5: Climb sync (full push/pull ↔ Supabase)
-- [x] Phase 6: Grades (seed + Supabase sync)
-- [x] Phase 7: Location metadata sync (countries + regions on launch; sub-regions/crags/walls on demand)
-- [x] Phase 8: Admin — location management views
-- [x] Phase 9: Route system (browse → download → submit → admin verification)
-- [x] Phase 10: Route linking — log from CragView, route_id on climbs, upgrade flow in edit
-- [x] Phase 11: Android polish (CSP, back button hook, magic link deep link handler)
