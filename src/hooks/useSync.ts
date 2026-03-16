@@ -13,6 +13,8 @@ import {
 	getSyncMeta,
 	pullBurns,
 	pullClimbs,
+	pullRouteImages,
+	pullWallImages,
 	pushBurns,
 	pushClimbs,
 	setSyncMeta,
@@ -43,6 +45,8 @@ export function useSync(userId: string | undefined) {
 				await pullGrades();
 				await pullCountries();
 				await pullRegions();
+				await pullRouteImages(since);
+				await pullWallImages(since);
 
 				const now = new Date().toISOString();
 				await setSyncMeta(now);
@@ -52,6 +56,8 @@ export function useSync(userId: string | undefined) {
 				queryClient.invalidateQueries({ queryKey: ["grades"] });
 				queryClient.invalidateQueries({ queryKey: ["countries"] });
 				queryClient.invalidateQueries({ queryKey: ["regions"] });
+				queryClient.invalidateQueries({ queryKey: ["route-images"] });
+				queryClient.invalidateQueries({ queryKey: ["wall-images"] });
 				setSuccess();
 			} catch (err) {
 				console.error("Sync error:", err);

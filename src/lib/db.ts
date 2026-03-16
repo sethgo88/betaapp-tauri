@@ -318,6 +318,34 @@ const migrations: Migration[] = [
 			`ALTER TABLE crags_cache ADD COLUMN boulder_count INTEGER NOT NULL DEFAULT 0`,
 		);
 	},
+
+	// v13: restructure route_images_cache + wall_images_cache (#11)
+	// Drop the v8 stubs (url/caption) and recreate with image_url + uploaded_by.
+	// Safe to drop — these are admin-managed cache tables with no user data.
+	async (db) => {
+		await db.execute(`DROP TABLE IF EXISTS route_images_cache`);
+		await db.execute(`
+      CREATE TABLE route_images_cache (
+        id          TEXT PRIMARY KEY,
+        route_id    TEXT NOT NULL,
+        image_url   TEXT NOT NULL,
+        sort_order  INTEGER NOT NULL DEFAULT 0,
+        uploaded_by TEXT NOT NULL,
+        created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+      )
+    `);
+		await db.execute(`DROP TABLE IF EXISTS wall_images_cache`);
+		await db.execute(`
+      CREATE TABLE wall_images_cache (
+        id          TEXT PRIMARY KEY,
+        wall_id     TEXT NOT NULL,
+        image_url   TEXT NOT NULL,
+        sort_order  INTEGER NOT NULL DEFAULT 0,
+        uploaded_by TEXT NOT NULL,
+        created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+      )
+    `);
+	},
 ];
 
 export async function runMigrations(db: DbAdapter): Promise<void> {

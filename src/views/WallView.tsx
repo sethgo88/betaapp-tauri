@@ -3,6 +3,7 @@ import { MapPin } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/atoms/Button";
 import { Spinner } from "@/components/atoms/Spinner";
+import { AdminImageGallery } from "@/components/molecules/AdminImageGallery";
 import {
 	CoordinatePicker,
 	type PickerMarker,
@@ -17,6 +18,11 @@ import {
 	useWall,
 	useWalls,
 } from "@/features/locations/locations.queries";
+import {
+	useAddWallImage,
+	useDeleteWallImage,
+	useWallImages,
+} from "@/features/route-images/route-images.queries";
 import { useRoutes } from "@/features/routes/routes.queries";
 
 const ViewOnMap = ({ lat, lng }: { lat: number; lng: number }) => {
@@ -45,9 +51,12 @@ const WallView = () => {
 	const { data: crag } = useCrag(wall?.crag_id ?? null);
 	const { data: siblingWalls = [] } = useWalls(wall?.crag_id ?? null);
 	const { data: routes = [] } = useRoutes(wallId);
+	const { data: wallImages = [] } = useWallImages(wallId);
 	const updateDescription = useUpdateLocationDescription();
 	const updateCoords = useAdminUpdateWallCoords();
 	const updateWallType = useAdminUpdateWallType();
+	const addWallImage = useAddWallImage(wallId);
+	const deleteWallImage = useDeleteWallImage(wallId);
 	const isAdmin = useAuthStore((s) => s.user?.role === "admin");
 	const [showCoordEditor, setShowCoordEditor] = useState(false);
 
@@ -122,6 +131,14 @@ const WallView = () => {
 						description,
 					});
 				}}
+			/>
+
+			<AdminImageGallery
+				images={wallImages}
+				isAdmin={isAdmin ?? false}
+				onAdd={(file) => addWallImage.mutate(file)}
+				onDelete={(id, imageUrl) => deleteWallImage.mutate({ id, imageUrl })}
+				isAdding={addWallImage.isPending}
 			/>
 
 			{wall.lat != null && wall.lng != null && (

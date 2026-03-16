@@ -1,9 +1,15 @@
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { Button } from "@/components/atoms/Button";
 import { Spinner } from "@/components/atoms/Spinner";
+import { AdminImageGallery } from "@/components/molecules/AdminImageGallery";
 import { EditableDescription } from "@/components/molecules/EditableDescription";
 import { useAuthStore } from "@/features/auth/auth.store";
 import { useClimbs } from "@/features/climbs/climbs.queries";
+import {
+	useAddRouteImage,
+	useDeleteRouteImage,
+	useRouteImages,
+} from "@/features/route-images/route-images.queries";
 import {
 	useRoute,
 	useUpdateRouteDescription,
@@ -14,7 +20,10 @@ const RouteDetailView = () => {
 	const navigate = useNavigate();
 	const { data: route, isLoading } = useRoute(routeId);
 	const { data: climbs = [] } = useClimbs();
+	const { data: routeImages = [] } = useRouteImages(routeId);
 	const updateDescription = useUpdateRouteDescription();
+	const addRouteImage = useAddRouteImage(routeId);
+	const deleteRouteImage = useDeleteRouteImage(routeId);
 	const isAdmin = useAuthStore((s) => s.user?.role === "admin");
 	const existingClimb = climbs.find((c) => c.route_id === routeId);
 
@@ -68,7 +77,13 @@ const RouteDetailView = () => {
 				}}
 			/>
 
-			{/* Placeholder for route image — wired in by #11 */}
+			<AdminImageGallery
+				images={routeImages}
+				isAdmin={isAdmin ?? false}
+				onAdd={(file) => addRouteImage.mutate(file)}
+				onDelete={(id, imageUrl) => deleteRouteImage.mutate({ id, imageUrl })}
+				isAdding={addRouteImage.isPending}
+			/>
 
 			{existingClimb ? (
 				<Button

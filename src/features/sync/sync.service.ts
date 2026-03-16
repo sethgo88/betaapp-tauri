@@ -1,5 +1,13 @@
 import type { Burn } from "@/features/burns/burns.schema";
 import type { Climb } from "@/features/climbs/climbs.schema";
+import type {
+	RouteImage,
+	WallImage,
+} from "@/features/route-images/route-images.schema";
+import {
+	applyRemoteRouteImage,
+	applyRemoteWallImage,
+} from "@/features/route-images/route-images.service";
 import { getDb } from "@/lib/db";
 import { supabase } from "@/lib/supabase";
 
@@ -140,5 +148,36 @@ export async function pullBurns(userId: string, since?: string): Promise<void> {
 				row.deleted_at ?? null,
 			],
 		);
+	}
+}
+
+// ── Route images pull (one-way — admin-managed content) ───────────────────────
+
+export async function pullRouteImages(since?: string): Promise<void> {
+	let query = supabase.from("route_images").select("*");
+	if (since) query = query.gt("created_at", since);
+
+	const { data, error } = await query;
+	if (error) throw error;
+	if (!data || data.length === 0) return;
+
+	for (const row of data) {
+		// Cast via unknown: database.types.ts reflects the old schema until Supabase tables are updated
+		await applyRemoteRouteImage(row as unknown as RouteImage);
+	}
+}
+
+// ── Wall images pull (one-way — admin-managed content) ────────────────────────
+
+export async function pullWallImages(since?: string): Promise<void> {
+	let query = supabase.from("wall_images").select("*");
+	if (since) query = query.gt("created_at", since);
+
+	const { data, error } = await query;
+	if (error) throw error;
+	if (!data || data.length === 0) return;
+
+	for (const row of data) {
+		await applyRemoteWallImage(row as unknown as WallImage);
 	}
 }

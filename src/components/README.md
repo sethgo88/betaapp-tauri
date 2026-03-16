@@ -39,6 +39,7 @@ templates   Layout shells with no real data — just children/slots.
 | `CoordinatePicker` | Fullscreen Leaflet overlay for picking coordinates; fixed center pin with drag-to-position pattern. Props: `value`, `defaultCenter`, `defaultZoom`, `markers` (reference pins), `onChange`, `onClose`. Exports `PickerMarker` type. |
 | `LocationDrillDown` | Cascading location selector: Country → Region → Sub-Region → Crag → Wall. Uses existing location query hooks. Props: `onChange(selection)`, `stopAt` (defaults to `"wall"`), `initial` (for edit mode pre-population). Exports `LocationSelection` and `LocationDrillDownProps` types. |
 | `Toast` | Single toast notification; rendered by `AppLayout` |
+| `AdminImageGallery` | Horizontal-scroll image strip with admin upload/delete controls. Non-admins see read-only gallery; returns `null` when empty for non-admins. Props: `images`, `isAdmin`, `onAdd(file)`, `onDelete(id, imageUrl)`, `isAdding?`. Includes fullscreen viewer and delete-confirmation bottom sheet. |
 
 ### Organisms
 | Component | Purpose |
