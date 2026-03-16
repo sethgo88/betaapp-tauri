@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Select } from "@/components/atoms/Select";
 import { Spinner } from "@/components/atoms/Spinner";
-import { useUiStore } from "@/stores/ui.store";
 import {
 	useAdminAddCountry,
 	useAdminAddCrag,
@@ -21,6 +20,7 @@ import type {
 	SubRegion,
 	Wall,
 } from "@/features/locations/locations.schema";
+import { useUiStore } from "@/stores/ui.store";
 
 // Stable empty-array references — avoids infinite useEffect loops caused by
 // new `[]` literals on every render when query data is undefined.

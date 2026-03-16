@@ -59,6 +59,7 @@ Versioned migration runner. Maintains a `schema_version` table (single row) and 
 | v10 | `lat`, `lng` on crags_cache (#15) |
 | v11 | `lat`, `lng` on walls_cache (#15) |
 | v12 | `wall_type`, `sport_count`, `trad_count`, `boulder_count` on walls_cache; `sport_count`, `trad_count`, `boulder_count` on crags_cache (#25) |
+| v13 | Restructure `climb_images` (`url`→`image_url`, drop `caption`); add `climb_image_pins` table (#32) |
 
 ### Rules
 - Always use `?` positional parameters — never string interpolation (SQL injection)
@@ -76,6 +77,43 @@ Versioned migration runner. Maintains a `schema_version` table (single row) and 
 | `boolean` | `INTEGER` | 0 = false, 1 = true |
 | `number` | `REAL` or `INTEGER` | |
 | `string \| null` | `TEXT` | Nullable columns |
+
+---
+
+## image-utils.ts — image resize, compress, and upload
+
+```ts
+import { resizeAndCompress, uploadToStorage } from '@/lib/image-utils'
+```
+
+### `resizeAndCompress(file, maxPx?, quality?): Promise<Blob>`
+
+Resizes and compresses an image file using the Canvas API. Caps the longest dimension at `maxPx` (default 1920px) and encodes as JPEG at `quality` (default 0.8 ≈ 80%). Returns a `Blob`. No external libraries.
+
+```ts
+const blob = await resizeAndCompress(file)           // ~400KB average output
+const blob = await resizeAndCompress(file, 800, 0.7) // thumbnail variant
+```
+
+### `uploadToStorage(bucket, path, file): Promise<string>`
+
+Calls `resizeAndCompress` then uploads the result to Supabase Storage. Returns the **storage path** (e.g. `userId/climbId/uuid.jpg`) — not a full URL. Callers derive a displayable URL:
+
+```ts
+// Public bucket (e.g. route-images):
+const { data } = supabase.storage.from(bucket).getPublicUrl(path)
+const url = data.publicUrl
+
+// Private bucket (e.g. climb-images):
+const { data } = await supabase.storage.from(bucket).createSignedUrl(path, 3600)
+const url = data?.signedUrl
+```
+
+Storage buckets used by this app:
+| Bucket | Access | Used by |
+|---|---|---|
+| `route-images` | Public | #11 — admin route/wall photos |
+| `climb-images` | Private (RLS: `user_id`) | #32 — user climb beta photos |
 
 ---
 
