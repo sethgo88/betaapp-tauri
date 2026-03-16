@@ -58,35 +58,73 @@ export type Database = {
           },
         ]
       }
+      climb_image_pins: {
+        Row: {
+          climb_image_id: string
+          created_at: string
+          description: string | null
+          id: string
+          pin_type: string
+          sort_order: number
+          x_pct: number
+          y_pct: number
+        }
+        Insert: {
+          climb_image_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          pin_type: string
+          sort_order?: number
+          x_pct: number
+          y_pct: number
+        }
+        Update: {
+          climb_image_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          pin_type?: string
+          sort_order?: number
+          x_pct?: number
+          y_pct?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "climb_image_pins_climb_image_id_fkey"
+            columns: ["climb_image_id"]
+            isOneToOne: false
+            referencedRelation: "climb_images"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       climb_images: {
         Row: {
-          caption: string | null
           climb_id: string
           created_at: string
           deleted_at: string | null
           id: string
+          image_url: string
           sort_order: number
-          url: string
           user_id: string
         }
         Insert: {
-          caption?: string | null
           climb_id: string
           created_at?: string
           deleted_at?: string | null
           id?: string
+          image_url: string
           sort_order?: number
-          url: string
           user_id: string
         }
         Update: {
-          caption?: string | null
           climb_id?: string
           created_at?: string
           deleted_at?: string | null
           id?: string
+          image_url?: string
           sort_order?: number
-          url?: string
           user_id?: string
         }
         Relationships: [

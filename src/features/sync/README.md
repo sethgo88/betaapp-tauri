@@ -22,6 +22,12 @@ Fetches climbs from Supabase and applies them locally via `INSERT OR REPLACE` (p
 - **Full pull** (no `since`): fetches all climbs for the user.
 - **Delta pull** (`since` provided): only fetches climbs with `updated_at > since`.
 
+### `pushClimbImages(userId, since?)` / `pullClimbImages(userId, since?)`
+Push/pull `climb_images` rows scoped by `user_id`. Delta uses `created_at` (images are immutable once created — only soft-deleted).
+
+### `pushClimbImagePins(userId, since?)` / `pullClimbImagePins(userId, since?)`
+Push/pull `climb_image_pins` rows scoped to the user's images (via JOIN on `climb_images.user_id`). Pull strips the JOIN column before applying locally.
+
 ---
 
 ## sync.store.ts

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { Spinner } from "@/components/atoms/Spinner";
+import { ClimbImageGallery } from "@/components/molecules/ClimbImageGallery";
 import {
 	useAddBurn,
 	useBurns,
@@ -71,6 +72,8 @@ const ClimbDetailView = () => {
 
 	return (
 		<div className="flex flex-col gap-4">
+			<ClimbImageGallery climbId={climbId} />
+
 			<div className="flex items-start justify-between">
 				<div>
 					{climb.route_id ? (

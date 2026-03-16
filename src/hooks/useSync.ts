@@ -12,10 +12,14 @@ import {
 import {
 	getSyncMeta,
 	pullBurns,
+	pullClimbImagePins,
+	pullClimbImages,
 	pullClimbs,
 	pullRouteImages,
 	pullWallImages,
 	pushBurns,
+	pushClimbImagePins,
+	pushClimbImages,
 	pushClimbs,
 	setSyncMeta,
 } from "@/features/sync/sync.service";
@@ -42,6 +46,10 @@ export function useSync(userId: string | undefined) {
 				await pullClimbs(userId, since);
 				await pushBurns(userId, since);
 				await pullBurns(userId, since);
+				await pushClimbImages(userId, since);
+				await pullClimbImages(userId, since);
+				await pushClimbImagePins(userId, since);
+				await pullClimbImagePins(userId, since);
 				await pullGrades();
 				await pullCountries();
 				await pullRegions();
@@ -53,6 +61,8 @@ export function useSync(userId: string | undefined) {
 
 				queryClient.invalidateQueries({ queryKey: ["climbs"] });
 				queryClient.invalidateQueries({ queryKey: ["burns"] });
+				queryClient.invalidateQueries({ queryKey: ["climb-images"] });
+				queryClient.invalidateQueries({ queryKey: ["climb-image-pins"] });
 				queryClient.invalidateQueries({ queryKey: ["grades"] });
 				queryClient.invalidateQueries({ queryKey: ["countries"] });
 				queryClient.invalidateQueries({ queryKey: ["regions"] });

@@ -346,6 +346,35 @@ const migrations: Migration[] = [
       )
     `);
 	},
+
+	// v14: rebuild climb_images (v9 used 'url'; rename to 'image_url' for consistency)
+	// and add climb_image_pins (#32). Safe to drop — feature was never shipped.
+	async (db) => {
+		await db.execute(`DROP TABLE IF EXISTS climb_images`);
+		await db.execute(`
+      CREATE TABLE climb_images (
+        id          TEXT PRIMARY KEY,
+        climb_id    TEXT NOT NULL,
+        user_id     TEXT NOT NULL,
+        image_url   TEXT NOT NULL,
+        sort_order  INTEGER NOT NULL DEFAULT 0,
+        created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+        deleted_at  TEXT
+      )
+    `);
+		await db.execute(`
+      CREATE TABLE IF NOT EXISTS climb_image_pins (
+        id             TEXT PRIMARY KEY,
+        climb_image_id TEXT NOT NULL,
+        pin_type       TEXT NOT NULL,
+        x_pct          REAL NOT NULL,
+        y_pct          REAL NOT NULL,
+        description    TEXT,
+        sort_order     INTEGER NOT NULL DEFAULT 0,
+        created_at     TEXT NOT NULL DEFAULT (datetime('now'))
+      )
+    `);
+	},
 ];
 
 export async function runMigrations(db: DbAdapter): Promise<void> {

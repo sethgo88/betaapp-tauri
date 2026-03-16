@@ -1,4 +1,12 @@
 import type { Burn } from "@/features/burns/burns.schema";
+import type {
+	ClimbImage,
+	ClimbImagePin,
+} from "@/features/climb-images/climb-images.schema";
+import {
+	applyRemoteClimbImage,
+	applyRemoteClimbImagePin,
+} from "@/features/climb-images/climb-images.service";
 import type { Climb } from "@/features/climbs/climbs.schema";
 import type {
 	RouteImage,
@@ -148,6 +156,86 @@ export async function pullBurns(userId: string, since?: string): Promise<void> {
 				row.deleted_at ?? null,
 			],
 		);
+	}
+}
+
+// ── Climb images push/pull (bidirectional — user-owned content) ───────────────
+
+export async function pushClimbImages(
+	userId: string,
+	since?: string,
+): Promise<void> {
+	const db = await getDb();
+	const images = await db.select<ClimbImage[]>(
+		since
+			? "SELECT * FROM climb_images WHERE user_id = ? AND created_at > ?"
+			: "SELECT * FROM climb_images WHERE user_id = ?",
+		since ? [userId, since] : [userId],
+	);
+	if (images.length === 0) return;
+
+	const { error } = await supabase.from("climb_images").upsert(images, {
+		onConflict: "id",
+	});
+	if (error) throw error;
+}
+
+export async function pullClimbImages(
+	userId: string,
+	since?: string,
+): Promise<void> {
+	let query = supabase.from("climb_images").select("*").eq("user_id", userId);
+	if (since) query = query.gt("created_at", since);
+
+	const { data, error } = await query;
+	if (error) throw error;
+	if (!data || data.length === 0) return;
+
+	for (const row of data) {
+		await applyRemoteClimbImage(row as ClimbImage);
+	}
+}
+
+// ── Climb image pins push/pull ────────────────────────────────────────────────
+
+export async function pushClimbImagePins(
+	userId: string,
+	since?: string,
+): Promise<void> {
+	const db = await getDb();
+	// Join through climb_images to scope by user
+	const pins = await db.select<ClimbImagePin[]>(
+		since
+			? `SELECT p.* FROM climb_image_pins p
+         JOIN climb_images i ON i.id = p.climb_image_id
+         WHERE i.user_id = ? AND p.created_at > ?`
+			: `SELECT p.* FROM climb_image_pins p
+         JOIN climb_images i ON i.id = p.climb_image_id
+         WHERE i.user_id = ?`,
+		since ? [userId, since] : [userId],
+	);
+	if (pins.length === 0) return;
+
+	const { error } = await supabase.from("climb_image_pins").upsert(pins, {
+		onConflict: "id",
+	});
+	if (error) throw error;
+}
+
+export async function pullClimbImagePins(
+	_userId: string,
+	since?: string,
+): Promise<void> {
+	// RLS on Supabase scopes this to the authenticated user's own image pins.
+	let query = supabase.from("climb_image_pins").select("*");
+	if (since) query = query.gt("created_at", since);
+
+	const { data, error } = await query;
+	if (error) throw error;
+	if (!data || data.length === 0) return;
+
+	for (const row of data) {
+		await applyRemoteClimbImagePin(row as ClimbImagePin);
 	}
 }
 
