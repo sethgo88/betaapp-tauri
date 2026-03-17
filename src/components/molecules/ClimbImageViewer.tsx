@@ -42,6 +42,10 @@ const PIN_TIP = 8; // height/width of the triangle tip
 const PIN_R = PIN_CIRCLE / 2; // radius
 const DRAG_Y_OFFSET = 35; // px — shifts pin below finger during drag so it's visible
 
+const MAGNIFIER_SIZE = 80; // px — canvas width & height
+const MAGNIFIER_ZOOM = 2.5; // zoom multiplier
+const MAGNIFIER_GAP = 60; // px — gap between magnifier bottom edge and raw touch point
+
 // ── Pin geometry helpers ──────────────────────────────────────────────────────
 
 function pinPosition(
@@ -151,6 +155,8 @@ export const ClimbImageViewer = ({ image, onClose }: ClimbImageViewerProps) => {
 	const deletePin = useDeletePin(image.id);
 
 	const imgRef = useRef<HTMLImageElement>(null);
+	const canvasRef = useRef<HTMLCanvasElement>(null);
+	const magnifierRef = useRef<HTMLDivElement>(null);
 	const [editMode, setEditMode] = useState(false);
 	const [selectedPinType, setSelectedPinType] = useState<PinType>("lh");
 	const [draggingPinId, setDraggingPinId] = useState<string | null>(null);
@@ -200,6 +206,77 @@ export const ClimbImageViewer = ({ image, onClose }: ClimbImageViewerProps) => {
 		setPopoverPinId(null);
 	}
 
+	// ── Magnifier ──────────────────────────────────────────────────────────────
+
+	// Draws a zoomed crop of the image onto the canvas, centred on the pin tip
+	// position (clientX, clientY - DRAG_Y_OFFSET). Positions and shows the
+	// magnifier container imperatively to avoid re-render jank.
+	function showMagnifier(touchClientX: number, touchClientY: number) {
+		const img = imgRef.current;
+		const canvas = canvasRef.current;
+		const container = magnifierRef.current;
+		if (!img || !canvas || !container) return;
+
+		// Position above the finger
+		container.style.display = "block";
+		container.style.left = `${touchClientX - MAGNIFIER_SIZE / 2}px`;
+		container.style.top = `${touchClientY - MAGNIFIER_SIZE - MAGNIFIER_GAP}px`;
+
+		// Draw zoomed region centred on the pin tip (adjusted touch position)
+		const ctx = canvas.getContext("2d");
+		if (!ctx) return;
+
+		const rect = img.getBoundingClientRect();
+		const pinClientY = touchClientY - DRAG_Y_OFFSET;
+		const scaleX = img.naturalWidth / rect.width;
+		const scaleY = img.naturalHeight / rect.height;
+		const naturalX = (touchClientX - rect.left) * scaleX;
+		const naturalY = (pinClientY - rect.top) * scaleY;
+
+		const cropW = MAGNIFIER_SIZE / MAGNIFIER_ZOOM;
+		const cropH = MAGNIFIER_SIZE / MAGNIFIER_ZOOM;
+
+		ctx.clearRect(0, 0, MAGNIFIER_SIZE, MAGNIFIER_SIZE);
+		ctx.drawImage(
+			img,
+			naturalX - cropW / 2,
+			naturalY - cropH / 2,
+			cropW,
+			cropH,
+			0,
+			0,
+			MAGNIFIER_SIZE,
+			MAGNIFIER_SIZE,
+		);
+
+		// Crosshair at centre
+		const mid = MAGNIFIER_SIZE / 2;
+		ctx.strokeStyle = "rgba(0,0,0,0.4)";
+		ctx.lineWidth = 2;
+		ctx.beginPath();
+		ctx.moveTo(0, mid);
+		ctx.lineTo(MAGNIFIER_SIZE, mid);
+		ctx.stroke();
+		ctx.beginPath();
+		ctx.moveTo(mid, 0);
+		ctx.lineTo(mid, MAGNIFIER_SIZE);
+		ctx.stroke();
+		ctx.strokeStyle = "rgba(255,255,255,0.9)";
+		ctx.lineWidth = 1;
+		ctx.beginPath();
+		ctx.moveTo(0, mid);
+		ctx.lineTo(MAGNIFIER_SIZE, mid);
+		ctx.stroke();
+		ctx.beginPath();
+		ctx.moveTo(mid, 0);
+		ctx.lineTo(mid, MAGNIFIER_SIZE);
+		ctx.stroke();
+	}
+
+	function hideMagnifier() {
+		if (magnifierRef.current) magnifierRef.current.style.display = "none";
+	}
+
 	// ── Touch drag ─────────────────────────────────────────────────────────────
 
 	function handlePinTouchStart(
@@ -224,10 +301,12 @@ export const ClimbImageViewer = ({ image, onClose }: ClimbImageViewerProps) => {
 			id: draggingPinId,
 			patch: { x_pct: coords.xPct, y_pct: coords.yPct },
 		});
+		showMagnifier(touch.clientX, touch.clientY);
 	}
 
 	function handleTouchEnd() {
 		setDraggingPinId(null);
+		hideMagnifier();
 	}
 
 	// ── Pin tap ────────────────────────────────────────────────────────────────
@@ -571,6 +650,24 @@ export const ClimbImageViewer = ({ image, onClose }: ClimbImageViewerProps) => {
 					style={{ height: "env(safe-area-inset-bottom)" }}
 				/>
 			)}
+
+			{/* Drag magnifier — always in DOM, shown/hidden imperatively during drag */}
+			<div
+				ref={magnifierRef}
+				className="fixed pointer-events-none z-[60]"
+				style={{ display: "none" }}
+			>
+				<canvas
+					ref={canvasRef}
+					width={MAGNIFIER_SIZE}
+					height={MAGNIFIER_SIZE}
+					className="block rounded-full"
+					style={{
+						border: "2px solid white",
+						boxShadow: "0 2px 8px rgba(0,0,0,0.6)",
+					}}
+				/>
+			</div>
 		</div>
 	);
 };
