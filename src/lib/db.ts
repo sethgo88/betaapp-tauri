@@ -375,6 +375,13 @@ const migrations: Migration[] = [
       )
     `);
 	},
+
+	// v15: server_updated_at on downloaded_regions (#31)
+	async (db) => {
+		await db.execute(
+			`ALTER TABLE downloaded_regions ADD COLUMN server_updated_at TEXT`,
+		);
+	},
 ];
 
 export async function runMigrations(db: DbAdapter): Promise<void> {

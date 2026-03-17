@@ -1,19 +1,21 @@
 import { useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
 import { Button } from "@/components/atoms/Button";
 import {
 	useCountries,
 	useDownloadedRegionIds,
 	useDownloadRegion,
 	useRegions,
+	useStaleRegionIds,
 } from "@/features/locations/locations.queries";
 
 const RegionList = ({
 	countryId,
 	downloadedIds,
+	staleIds,
 }: {
 	countryId: string;
 	downloadedIds: string[];
+	staleIds: string[];
 }) => {
 	const navigate = useNavigate();
 	const { data: regions = [] } = useRegions(countryId);
@@ -33,6 +35,7 @@ const RegionList = ({
 		<div className="flex flex-col gap-1 mt-2">
 			{regions.map((region) => {
 				const isDownloaded = downloadedIds.includes(region.id);
+				const isStale = isDownloaded && staleIds.includes(region.id);
 				const isThisDownloading = isPending && downloadingId === region.id;
 
 				return (
@@ -55,7 +58,13 @@ const RegionList = ({
 						</button>
 						{isDownloaded ? (
 							<div className="flex items-center gap-2">
-								<span className="text-xs text-accent-primary">Downloaded</span>
+								{isStale ? (
+									<span className="text-xs text-amber-400">Outdated</span>
+								) : (
+									<span className="text-xs text-accent-primary">
+										Downloaded
+									</span>
+								)}
 								<Button
 									type="button"
 									variant="secondary"
@@ -87,9 +96,7 @@ const RegionList = ({
 const RoutesView = () => {
 	const { data: countries = [] } = useCountries();
 	const { data: downloadedIds = [] } = useDownloadedRegionIds();
-	const [selectedCountryId, setSelectedCountryId] = useState<string | null>(
-		null,
-	);
+	const { data: staleIds = [] } = useStaleRegionIds();
 
 	return (
 		<div className="flex flex-col gap-3">
@@ -103,22 +110,15 @@ const RoutesView = () => {
 
 			{countries.map((country) => (
 				<div key={country.id} className="rounded-lg bg-surface-card p-4">
-					<button
-						type="button"
-						className="w-full flex items-center justify-between"
-						onClick={() =>
-							setSelectedCountryId(
-								selectedCountryId === country.id ? null : country.id,
-							)
-						}
-					>
+					<div className="flex items-center justify-between">
 						<span className="font-medium">{country.name}</span>
 						<span className="text-text-secondary text-sm">{country.code}</span>
-					</button>
-
-					{selectedCountryId === country.id && (
-						<RegionList countryId={country.id} downloadedIds={downloadedIds} />
-					)}
+					</div>
+					<RegionList
+						countryId={country.id}
+						downloadedIds={downloadedIds}
+						staleIds={staleIds}
+					/>
 				</div>
 			))}
 		</div>

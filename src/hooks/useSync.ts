@@ -6,6 +6,7 @@ import type { Climb } from "@/features/climbs/climbs.schema";
 import { applyRemoteClimb } from "@/features/climbs/climbs.service";
 import { pullGrades } from "@/features/grades/grades.service";
 import {
+	checkRegionStaleness,
 	pullCountries,
 	pullRegions,
 } from "@/features/locations/locations.service";
@@ -55,6 +56,9 @@ export function useSync(userId: string | undefined) {
 				await pullGrades();
 				await pullCountries();
 				await pullRegions();
+				await checkRegionStaleness().then(() => {
+					queryClient.invalidateQueries({ queryKey: ["stale_region_ids"] });
+				});
 				await pullRouteImages(since);
 				await pullWallImages(since);
 				await pushRouteLinks(userId, since);

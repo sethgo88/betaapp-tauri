@@ -35,7 +35,7 @@ Versioned migration runner. Maintains a `schema_version` table (single row) and 
 | `countries_cache`, `regions_cache` | Location reference (always synced on launch) |
 | `sub_regions_cache`, `crags_cache`, `walls_cache` | Location reference (on-demand download) |
 | `routes_cache` | Route reference (downloaded per region) |
-| `downloaded_regions` | Tracks which regions have been downloaded |
+| `downloaded_regions` | Tracks which regions have been downloaded; `server_updated_at` stores the server timestamp at download time for staleness checks |
 | `sync_meta` | Single-row singleton; persists `last_synced_at` for delta sync |
 | `burns` | Individual attempt/send records per climb (#14) |
 | `route_links` | External video/image/beta links attached to routes (#13) |
@@ -61,6 +61,7 @@ Versioned migration runner. Maintains a `schema_version` table (single row) and 
 | v12 | `wall_type`, `sport_count`, `trad_count`, `boulder_count` on walls_cache; `sport_count`, `trad_count`, `boulder_count` on crags_cache (#25) |
 | v13 | Restructure `route_images_cache` + `wall_images_cache` (`url`→`image_url`, drop `caption`, add `uploaded_by`) (#11) |
 | v14 | Restructure `climb_images` (`url`→`image_url`, drop `caption`); add `climb_image_pins` table (#32) |
+| v15 | `server_updated_at` on `downloaded_regions` for staleness detection (#31) |
 
 ### Rules
 - Always use `?` positional parameters — never string interpolation (SQL injection)
