@@ -3,12 +3,14 @@ import {
 	ArrowLeft,
 	ArrowRight,
 	ArrowUp,
+	ChevronLeft,
+	ChevronRight,
 	HandGrab,
 	Pencil,
 	Trash2,
 	X,
 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FootIcon } from "@/components/atoms/FootIcon";
 import { Input } from "@/components/atoms/Input";
 import {
@@ -42,7 +44,6 @@ const DRAG_Y_OFFSET = 35; // px — shifts pin below finger during drag so it's 
 
 // ── Pin geometry helpers ──────────────────────────────────────────────────────
 
-// Returns the CSS position so that the triangle tip sits at (x_pct, y_pct)
 function pinPosition(
 	xPct: number,
 	yPct: number,
@@ -72,10 +73,8 @@ function pinPosition(
 	}
 }
 
-// Renders the triangle pointing in the given direction
 function PinTriangle({ dir, color }: { dir: PointerDir; color: string }) {
-	const tipBase = PIN_TIP * 0.7; // half-width of the triangle base
-
+	const tipBase = PIN_TIP * 0.7;
 	const style: React.CSSProperties = { width: 0, height: 0 };
 
 	switch (dir) {
@@ -116,7 +115,6 @@ function PinTriangle({ dir, color }: { dir: PointerDir; color: string }) {
 	return <div style={style} />;
 }
 
-// Returns flex direction so circle and triangle are arranged correctly
 function pinFlexDir(dir: PointerDir): string {
 	switch (dir) {
 		case "bottom":
@@ -156,9 +154,23 @@ export const ClimbImageViewer = ({ image, onClose }: ClimbImageViewerProps) => {
 	const [editMode, setEditMode] = useState(false);
 	const [selectedPinType, setSelectedPinType] = useState<PinType>("lh");
 	const [draggingPinId, setDraggingPinId] = useState<string | null>(null);
+	const [activePinId, setActivePinId] = useState<string | null>(null);
 	const [popoverPinId, setPopoverPinId] = useState<string | null>(null);
 	const [editingDescription, setEditingDescription] = useState(false);
 	const [descriptionInput, setDescriptionInput] = useState("");
+
+	// Keep activePinId in sync with the pins list: default to first pin,
+	// clear if the active pin is deleted.
+	useEffect(() => {
+		if (pins.length === 0) {
+			setActivePinId(null);
+		} else if (
+			activePinId === null ||
+			!pins.find((p) => p.id === activePinId)
+		) {
+			setActivePinId(pins[0].id);
+		}
+	}, [pins, activePinId]);
 
 	// ── Coordinate helpers ─────────────────────────────────────────────────────
 
@@ -185,6 +197,7 @@ export const ClimbImageViewer = ({ image, onClose }: ClimbImageViewerProps) => {
 			xPct: coords.xPct,
 			yPct: coords.yPct,
 		});
+		setPopoverPinId(null);
 	}
 
 	// ── Touch drag ─────────────────────────────────────────────────────────────
@@ -217,7 +230,7 @@ export const ClimbImageViewer = ({ image, onClose }: ClimbImageViewerProps) => {
 		setDraggingPinId(null);
 	}
 
-	// ── Pin tap — open popover ─────────────────────────────────────────────────
+	// ── Pin tap ────────────────────────────────────────────────────────────────
 
 	function handlePinClick(
 		e: React.MouseEvent<HTMLButtonElement>,
@@ -225,14 +238,29 @@ export const ClimbImageViewer = ({ image, onClose }: ClimbImageViewerProps) => {
 	) {
 		e.stopPropagation();
 		if (draggingPinId) return;
-		setPopoverPinId(popoverPinId === pinId ? null : pinId);
+		setActivePinId(pinId);
+		if (editMode) {
+			setPopoverPinId(popoverPinId === pinId ? null : pinId);
+			setEditingDescription(false);
+		}
+	}
+
+	// ── Pin cycling ────────────────────────────────────────────────────────────
+
+	function cyclePin(dir: -1 | 1) {
+		if (pins.length === 0) return;
+		const idx = pins.findIndex((p) => p.id === activePinId);
+		const next = (idx + dir + pins.length) % pins.length;
+		setActivePinId(pins[next].id);
+		setPopoverPinId(null);
 		setEditingDescription(false);
 	}
 
-	// ── Render ─────────────────────────────────────────────────────────────────
+	// ── Derived ────────────────────────────────────────────────────────────────
 
+	const activePin = pins.find((p) => p.id === activePinId) ?? null;
+	const activePinIndex = pins.findIndex((p) => p.id === activePinId);
 	const popoverPin = pins.find((p) => p.id === popoverPinId) ?? null;
-	const dimOthers = popoverPinId !== null || addPin.isPending;
 
 	return (
 		<div className="fixed inset-0 z-50 bg-black flex flex-col">
@@ -254,6 +282,7 @@ export const ClimbImageViewer = ({ image, onClose }: ClimbImageViewerProps) => {
 					onClick={() => {
 						setEditMode(!editMode);
 						setPopoverPinId(null);
+						setEditingDescription(false);
 					}}
 					className={`text-sm font-semibold px-3 py-1 rounded-full ${
 						editMode ? "bg-accent-primary text-white" : "bg-white/20 text-white"
@@ -325,13 +354,9 @@ export const ClimbImageViewer = ({ image, onClose }: ClimbImageViewerProps) => {
 					{pins.map((pin, index) => {
 						const cfg = PIN_CONFIG[pin.pin_type];
 						const dir: PointerDir = pin.pointer_dir ?? "bottom";
-						const isActive = pin.id === popoverPinId;
+						const isActive = pin.id === activePinId;
 						const isDragging = pin.id === draggingPinId;
-						const opacity = isDragging
-							? 0.5
-							: dimOthers && !isActive
-								? 0.25
-								: 1;
+						const opacity = isDragging ? 0.5 : isActive ? 1 : 0.5;
 
 						return (
 							<button
@@ -349,7 +374,6 @@ export const ClimbImageViewer = ({ image, onClose }: ClimbImageViewerProps) => {
 									transition: "opacity 0.15s",
 								}}
 							>
-								{/* Circle with number */}
 								<div
 									className="rounded-full flex items-center justify-center text-white font-bold"
 									style={{
@@ -362,7 +386,6 @@ export const ClimbImageViewer = ({ image, onClose }: ClimbImageViewerProps) => {
 								>
 									{index + 1}
 								</div>
-								{/* Directional triangle */}
 								<PinTriangle dir={dir} color={cfg.color} />
 							</button>
 						);
@@ -370,10 +393,55 @@ export const ClimbImageViewer = ({ image, onClose }: ClimbImageViewerProps) => {
 				</div>
 			</div>
 
-			{/* Pin popover */}
+			{/* Persistent description bar */}
+			{activePin && !popoverPin && (
+				<div className="shrink-0 bg-surface-card flex items-center gap-2 px-3 py-3 border-t border-border-default">
+					<button
+						type="button"
+						onClick={() => cyclePin(-1)}
+						disabled={pins.length <= 1}
+						className="text-text-secondary disabled:opacity-30 p-1"
+						aria-label="Previous pin"
+					>
+						<ChevronLeft size={20} />
+					</button>
+
+					{/* biome-ignore lint/a11y/useKeyWithClickEvents: touch surface */}
+					{/* biome-ignore lint/a11y/noStaticElementInteractions: touch surface */}
+					<div
+						className="flex-1 min-w-0"
+						onClick={() => editMode && setPopoverPinId(activePin.id)}
+					>
+						<div className="flex items-center gap-1.5 mb-0.5">
+							<span
+								className="text-xs font-bold"
+								style={{ color: PIN_CONFIG[activePin.pin_type].color }}
+							>
+								{activePinIndex + 1} · {PIN_CONFIG[activePin.pin_type].label}
+							</span>
+							{editMode && <Pencil size={11} className="text-text-tertiary" />}
+						</div>
+						<p className="text-sm text-text-secondary truncate">
+							{activePin.description ?? "No note"}
+						</p>
+					</div>
+
+					<button
+						type="button"
+						onClick={() => cyclePin(1)}
+						disabled={pins.length <= 1}
+						className="text-text-secondary disabled:opacity-30 p-1"
+						aria-label="Next pin"
+					>
+						<ChevronRight size={20} />
+					</button>
+				</div>
+			)}
+
+			{/* Edit popover (triggered by tapping bar or pin in edit mode) */}
 			{popoverPin && (
 				<div
-					className="shrink-0 bg-surface-card px-4 pt-3 flex flex-col gap-2"
+					className="shrink-0 bg-surface-card px-4 pt-3 flex flex-col gap-2 border-t border-border-default"
 					style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
 				>
 					<div className="flex items-center justify-between">
@@ -384,36 +452,45 @@ export const ClimbImageViewer = ({ image, onClose }: ClimbImageViewerProps) => {
 							Pin {(pins.findIndex((p) => p.id === popoverPin.id) ?? 0) + 1} —{" "}
 							{PIN_CONFIG[popoverPin.pin_type].label}
 						</span>
-						{editMode && (
-							<div className="flex items-center gap-3">
-								<button
-									type="button"
-									onClick={() => {
-										setEditingDescription(true);
-										setDescriptionInput(popoverPin.description ?? "");
-									}}
-									className="text-text-secondary"
-									aria-label="Edit description"
-								>
-									<Pencil size={16} />
-								</button>
-								<button
-									type="button"
-									onClick={() => {
-										deletePin.mutate(popoverPin.id);
-										setPopoverPinId(null);
-									}}
-									className="text-red-400"
-									aria-label="Delete pin"
-								>
-									<Trash2 size={16} />
-								</button>
-							</div>
-						)}
+						<div className="flex items-center gap-3">
+							<button
+								type="button"
+								onClick={() => {
+									setEditingDescription(true);
+									setDescriptionInput(popoverPin.description ?? "");
+								}}
+								className="text-text-secondary"
+								aria-label="Edit description"
+							>
+								<Pencil size={16} />
+							</button>
+							<button
+								type="button"
+								onClick={() => {
+									deletePin.mutate(popoverPin.id);
+									setPopoverPinId(null);
+								}}
+								className="text-red-400"
+								aria-label="Delete pin"
+							>
+								<Trash2 size={16} />
+							</button>
+							<button
+								type="button"
+								onClick={() => {
+									setPopoverPinId(null);
+									setEditingDescription(false);
+								}}
+								className="text-text-tertiary"
+								aria-label="Close"
+							>
+								<X size={16} />
+							</button>
+						</div>
 					</div>
 
-					{/* Direction picker (edit mode only) */}
-					{editMode && !editingDescription && (
+					{/* Direction picker */}
+					{!editingDescription && (
 						<div className="flex items-center gap-1">
 							<span className="text-xs text-text-tertiary mr-1">
 								Direction:
@@ -471,20 +548,28 @@ export const ClimbImageViewer = ({ image, onClose }: ClimbImageViewerProps) => {
 						</div>
 					) : (
 						<p className="text-sm text-text-secondary">
-							{popoverPin.description ??
-								(editMode ? "Tap pencil to add note" : "No note")}
+							{popoverPin.description ?? "Tap pencil to add note"}
 						</p>
 					)}
 				</div>
 			)}
 
-			{editMode && !popoverPin && (
+			{/* Hint (edit mode, no popover, no pins) */}
+			{editMode && !popoverPin && pins.length === 0 && (
 				<p
 					className="shrink-0 text-center text-xs text-white/50 px-4"
 					style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
 				>
-					Tap image to place pin · Drag pins to reposition · Tap pin to edit
+					Tap image to place a pin
 				</p>
+			)}
+
+			{/* Safe area padding when bar is visible */}
+			{(activePin || popoverPin) && (
+				<div
+					className="shrink-0 bg-surface-card"
+					style={{ height: "env(safe-area-inset-bottom)" }}
+				/>
 			)}
 		</div>
 	);
