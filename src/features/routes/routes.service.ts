@@ -1,6 +1,6 @@
 import { getDb } from "@/lib/db";
 import { supabase } from "@/lib/supabase";
-import type { Route, RouteSubmitValues } from "./routes.schema";
+import type { Route, RouteLink, RouteSubmitValues } from "./routes.schema";
 
 export async function fetchRoutes(wallId: string): Promise<Route[]> {
 	const db = await getDb();
@@ -289,4 +289,73 @@ export async function searchVerifiedRoutes(
 		.limit(10);
 	if (error) throw error;
 	return (data ?? []) as VerifiedRouteResult[];
+}
+
+// ── Route links ───────────────────────────────────────────────────────────────
+
+export async function fetchRouteLinks(routeId: string): Promise<RouteLink[]> {
+	const db = await getDb();
+	return db.select<RouteLink[]>(
+		"SELECT * FROM route_links WHERE route_id = ? AND deleted_at IS NULL ORDER BY created_at ASC",
+		[routeId],
+	);
+}
+
+export async function addRouteLink(
+	routeId: string,
+	userId: string,
+	url: string,
+	title: string | undefined,
+): Promise<void> {
+	const id = crypto.randomUUID();
+	const { error } = await supabase.from("route_links").insert({
+		id,
+		route_id: routeId,
+		user_id: userId,
+		url,
+		title: title ?? null,
+		link_type: "link",
+	});
+	if (error) throw error;
+
+	const db = await getDb();
+	await db.execute(
+		`INSERT INTO route_links (id, route_id, user_id, url, title, link_type, created_at)
+     VALUES (?, ?, ?, ?, ?, 'link', datetime('now'))`,
+		[id, routeId, userId, url, title ?? null],
+	);
+}
+
+export async function deleteRouteLink(id: string): Promise<void> {
+	const { error } = await supabase
+		.from("route_links")
+		.update({ deleted_at: new Date().toISOString() })
+		.eq("id", id);
+	if (error) throw error;
+
+	const db = await getDb();
+	await db.execute("DELETE FROM route_links WHERE id = ?", [id]);
+}
+
+export async function applyRemoteRouteLink(link: RouteLink): Promise<void> {
+	const db = await getDb();
+	if (link.deleted_at) {
+		await db.execute("DELETE FROM route_links WHERE id = ?", [link.id]);
+		return;
+	}
+	await db.execute(
+		`INSERT OR REPLACE INTO route_links
+     (id, route_id, user_id, url, title, link_type, created_at, deleted_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		[
+			link.id,
+			link.route_id,
+			link.user_id,
+			link.url,
+			link.title ?? null,
+			link.link_type,
+			link.created_at,
+			link.deleted_at ?? null,
+		],
+	);
 }

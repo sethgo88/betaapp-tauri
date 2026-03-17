@@ -3,10 +3,13 @@ import { useAuthStore } from "@/features/auth/auth.store";
 import type { RouteSubmitValues } from "./routes.schema";
 import {
 	addRoute,
+	addRouteLink,
 	adminDeleteRoute,
+	deleteRouteLink,
 	editRoute,
 	fetchAllRoutes,
 	fetchRoute,
+	fetchRouteLinks,
 	fetchRoutes,
 	fetchUnverifiedRoutes,
 	mergeRoute,
@@ -196,6 +199,43 @@ export function useMergeRoute() {
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: ["unverified_routes"] });
 			qc.invalidateQueries({ queryKey: ["all_routes"] });
+		},
+	});
+}
+
+// ── Route links ───────────────────────────────────────────────────────────────
+
+export function useRouteLinks(routeId: string) {
+	return useQuery({
+		queryKey: ["route_links", routeId],
+		queryFn: () => fetchRouteLinks(routeId),
+	});
+}
+
+export function useAddRouteLink(routeId: string) {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: ({
+			url,
+			title,
+			userId,
+		}: {
+			url: string;
+			title?: string;
+			userId: string;
+		}) => addRouteLink(routeId, userId, url, title),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: ["route_links", routeId] });
+		},
+	});
+}
+
+export function useDeleteRouteLink(routeId: string) {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: (id: string) => deleteRouteLink(id),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: ["route_links", routeId] });
 		},
 	});
 }

@@ -16,11 +16,13 @@ import {
 	pullClimbImages,
 	pullClimbs,
 	pullRouteImages,
+	pullRouteLinks,
 	pullWallImages,
 	pushBurns,
 	pushClimbImagePins,
 	pushClimbImages,
 	pushClimbs,
+	pushRouteLinks,
 	setSyncMeta,
 } from "@/features/sync/sync.service";
 import { useSyncStore } from "@/features/sync/sync.store";
@@ -55,6 +57,8 @@ export function useSync(userId: string | undefined) {
 				await pullRegions();
 				await pullRouteImages(since);
 				await pullWallImages(since);
+				await pushRouteLinks(userId, since);
+				await pullRouteLinks(since);
 
 				const now = new Date().toISOString();
 				await setSyncMeta(now);
@@ -68,6 +72,7 @@ export function useSync(userId: string | undefined) {
 				queryClient.invalidateQueries({ queryKey: ["regions"] });
 				queryClient.invalidateQueries({ queryKey: ["route-images"] });
 				queryClient.invalidateQueries({ queryKey: ["wall-images"] });
+				queryClient.invalidateQueries({ queryKey: ["route_links"] });
 				setSuccess();
 			} catch (err) {
 				console.error("Sync error:", err);

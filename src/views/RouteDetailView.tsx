@@ -1,5 +1,9 @@
 import { useNavigate, useParams } from "@tanstack/react-router";
+import { openUrl } from "@tauri-apps/plugin-opener";
+import { ExternalLink, Trash2 } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/atoms/Button";
+import { Input } from "@/components/atoms/Input";
 import { Spinner } from "@/components/atoms/Spinner";
 import { AdminImageGallery } from "@/components/molecules/AdminImageGallery";
 import { EditableDescription } from "@/components/molecules/EditableDescription";
@@ -11,9 +15,13 @@ import {
 	useRouteImages,
 } from "@/features/route-images/route-images.queries";
 import {
+	useAddRouteLink,
+	useDeleteRouteLink,
 	useRoute,
+	useRouteLinks,
 	useUpdateRouteDescription,
 } from "@/features/routes/routes.queries";
+import { RouteLinkSubmitSchema } from "@/features/routes/routes.schema";
 
 const RouteDetailView = () => {
 	const { routeId } = useParams({ from: "/routes/$routeId" });
@@ -21,11 +29,48 @@ const RouteDetailView = () => {
 	const { data: route, isLoading } = useRoute(routeId);
 	const { data: climbs = [] } = useClimbs();
 	const { data: routeImages = [] } = useRouteImages(routeId);
+	const { data: routeLinks = [] } = useRouteLinks(routeId);
 	const updateDescription = useUpdateRouteDescription();
 	const addRouteImage = useAddRouteImage(routeId);
 	const deleteRouteImage = useDeleteRouteImage(routeId);
-	const isAdmin = useAuthStore((s) => s.user?.role === "admin");
+	const addRouteLink = useAddRouteLink(routeId);
+	const deleteRouteLink = useDeleteRouteLink(routeId);
+	const user = useAuthStore((s) => s.user);
+	const isAdmin = user?.role === "admin";
 	const existingClimb = climbs.find((c) => c.route_id === routeId);
+
+	const [linkUrl, setLinkUrl] = useState("");
+	const [linkTitle, setLinkTitle] = useState("");
+	const [linkError, setLinkError] = useState<string | null>(null);
+
+	const userLinkCount = routeLinks.filter((l) => l.user_id === user?.id).length;
+	const atLinkLimit = userLinkCount >= 5;
+
+	const handleAddLink = () => {
+		if (atLinkLimit) return;
+		const result = RouteLinkSubmitSchema.safeParse({
+			url: linkUrl,
+			title: linkTitle || undefined,
+		});
+		if (!result.success) {
+			setLinkError(result.error.issues[0]?.message ?? "Invalid input");
+			return;
+		}
+		setLinkError(null);
+		addRouteLink.mutate(
+			{
+				url: result.data.url,
+				title: result.data.title,
+				userId: user?.id ?? "",
+			},
+			{
+				onSuccess: () => {
+					setLinkUrl("");
+					setLinkTitle("");
+				},
+			},
+		);
+	};
 
 	if (isLoading) {
 		return (
@@ -84,6 +129,72 @@ const RouteDetailView = () => {
 				onDelete={(id, imageUrl) => deleteRouteImage.mutate({ id, imageUrl })}
 				isAdding={addRouteImage.isPending}
 			/>
+
+			{/* Links section */}
+			<div className="flex flex-col gap-2">
+				<h2 className="text-sm font-semibold text-text-secondary uppercase tracking-wide">
+					Links
+				</h2>
+
+				{routeLinks.length > 0 && (
+					<ul className="flex flex-col gap-1">
+						{routeLinks.map((link) => (
+							<li
+								key={link.id}
+								className="flex items-center justify-between gap-2 py-2 border-b border-border-subtle"
+							>
+								<button
+									type="button"
+									className="flex items-center gap-2 text-sm text-accent-primary min-w-0"
+									onClick={() => openUrl(link.url)}
+								>
+									<ExternalLink size={14} className="shrink-0" />
+									<span className="truncate">{link.title ?? link.url}</span>
+								</button>
+
+								{(isAdmin || link.user_id === user?.id) && (
+									<button
+										type="button"
+										className="shrink-0 text-text-secondary"
+										onClick={() => deleteRouteLink.mutate(link.id)}
+										disabled={deleteRouteLink.isPending}
+									>
+										<Trash2 size={14} />
+									</button>
+								)}
+							</li>
+						))}
+					</ul>
+				)}
+
+				{atLinkLimit ? (
+					<p className="text-xs text-text-muted">
+						You've reached the limit of 5 links per route.
+					</p>
+				) : (
+					<div className="flex flex-col gap-2">
+						<Input
+							placeholder="https://..."
+							value={linkUrl}
+							onChange={(e) => setLinkUrl(e.target.value)}
+						/>
+						<Input
+							placeholder="Title (optional)"
+							value={linkTitle}
+							onChange={(e) => setLinkTitle(e.target.value)}
+						/>
+						{linkError && <p className="text-xs text-red-400">{linkError}</p>}
+						<Button
+							type="button"
+							variant="secondary"
+							onClick={handleAddLink}
+							disabled={addRouteLink.isPending || !linkUrl}
+						>
+							{addRouteLink.isPending ? "Adding..." : "Add link"}
+						</Button>
+					</div>
+				)}
+			</div>
 
 			{existingClimb ? (
 				<Button

@@ -27,6 +27,22 @@ RouteSubmitSchema = {
   route_type: 'sport' | 'boulder'
   description?: string
 }
+
+RouteLinkSchema = {
+  id: string
+  route_id: string
+  user_id: string
+  url: string
+  title: string | null
+  link_type: string    // defaults to 'link'
+  created_at: string
+  deleted_at: string | null
+}
+
+RouteLinkSubmitSchema = {
+  url: string          // must start with http:// or https://
+  title?: string
+}
 ```
 
 ---
@@ -64,6 +80,15 @@ Only populated when the user downloads a region (see [`locations/README.md`](../
 | `searchLocalRoutes(query)` | LIKE search on local `routes_cache` by name or grade (verified only, limit 30) |
 | `updateRouteDescription(id, description)` | Updates description in Supabase + local cache |
 
+### Route links
+
+| Function | What it does |
+|---|---|
+| `fetchRouteLinks(routeId)` | Reads non-deleted links for a route from local `route_links` table |
+| `addRouteLink(routeId, userId, url, title)` | Inserts into Supabase `route_links` + local cache |
+| `deleteRouteLink(id)` | Soft-deletes in Supabase; hard-deletes locally |
+| `applyRemoteRouteLink(link)` | Upserts a remote link into local cache (handles soft deletes) |
+
 ### Admin-only
 
 | Function | What it does |
@@ -91,6 +116,9 @@ useVerifyRoute()           // admin mutation
 useRejectRoute()           // admin mutation
 useUpdateRouteFields()     // admin mutation
 useMergeRoute()            // admin mutation
+useRouteLinks(routeId)     // non-deleted links for a route from local cache
+useAddRouteLink(routeId)   // mutation — { url, title?, userId }
+useDeleteRouteLink(routeId) // mutation — id
 ```
 
 ---
