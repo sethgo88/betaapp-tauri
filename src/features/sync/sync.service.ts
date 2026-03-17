@@ -16,6 +16,8 @@ import {
 	applyRemoteRouteImage,
 	applyRemoteWallImage,
 } from "@/features/route-images/route-images.service";
+import type { RouteLink } from "@/features/routes/routes.schema";
+import { applyRemoteRouteLink } from "@/features/routes/routes.service";
 import { getDb } from "@/lib/db";
 import { supabase } from "@/lib/supabase";
 
@@ -267,5 +269,39 @@ export async function pullWallImages(since?: string): Promise<void> {
 
 	for (const row of data) {
 		await applyRemoteWallImage(row as unknown as WallImage);
+	}
+}
+
+// ── Route links push/pull (community data — all authenticated users) ──────────
+
+export async function pushRouteLinks(
+	userId: string,
+	since?: string,
+): Promise<void> {
+	const db = await getDb();
+	const links = await db.select<RouteLink[]>(
+		since
+			? "SELECT * FROM route_links WHERE user_id = ? AND created_at > ?"
+			: "SELECT * FROM route_links WHERE user_id = ?",
+		since ? [userId, since] : [userId],
+	);
+	if (links.length === 0) return;
+
+	const { error } = await supabase.from("route_links").upsert(links, {
+		onConflict: "id",
+	});
+	if (error) throw error;
+}
+
+export async function pullRouteLinks(since?: string): Promise<void> {
+	let query = supabase.from("route_links").select("*");
+	if (since) query = query.gt("created_at", since);
+
+	const { data, error } = await query;
+	if (error) throw error;
+	if (!data || data.length === 0) return;
+
+	for (const row of data) {
+		await applyRemoteRouteLink(row as RouteLink);
 	}
 }

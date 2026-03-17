@@ -28,6 +28,9 @@ Push/pull `climb_images` rows scoped by `user_id`. Delta uses `created_at` (imag
 ### `pushClimbImagePins(userId, since?)` / `pullClimbImagePins(userId, since?)`
 Push/pull `climb_image_pins` rows scoped to the user's images (via JOIN on `climb_images.user_id`). Pull strips the JOIN column before applying locally.
 
+### `pushRouteLinks(userId, since?)` / `pullRouteLinks(since?)`
+Push/pull community-shared `route_links`. Push is scoped to `user_id`; pull fetches all links (no user filter — community data). Delta uses `created_at`. Deletions are handled directly in `deleteRouteLink()` (Supabase soft-delete + local hard-delete) rather than via sync.
+
 ---
 
 ## sync.store.ts

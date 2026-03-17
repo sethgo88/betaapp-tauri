@@ -25,3 +25,25 @@ export const RouteSubmitSchema = z.object({
 
 export type Route = z.infer<typeof RouteSchema>;
 export type RouteSubmitValues = z.infer<typeof RouteSubmitSchema>;
+
+export const RouteLinkSchema = z.object({
+	id: z.string(),
+	route_id: z.string(),
+	user_id: z.string(),
+	url: z.string(),
+	title: z.string().nullable(),
+	link_type: z.string(),
+	created_at: z.string(),
+	deleted_at: z.string().nullable(),
+});
+
+export const RouteLinkSubmitSchema = z.object({
+	url: z
+		.string()
+		.min(1, "URL is required")
+		.regex(/^https?:\/\//, "URL must start with http:// or https://"),
+	title: z.string().optional(),
+});
+
+export type RouteLink = z.infer<typeof RouteLinkSchema>;
+export type RouteLinkSubmitValues = z.infer<typeof RouteLinkSubmitSchema>;
