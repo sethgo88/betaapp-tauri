@@ -28,6 +28,7 @@ CREATE TABLE climb_image_pins (
   x_pct          REAL NOT NULL,  -- 0.0–1.0 relative to image width
   y_pct          REAL NOT NULL,  -- 0.0–1.0 relative to image height
   description    TEXT,
+  pointer_dir    TEXT NOT NULL DEFAULT 'bottom',  -- 'top' | 'bottom' | 'left' | 'right'
   sort_order     INTEGER NOT NULL DEFAULT 0,
   created_at     TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -45,9 +46,10 @@ CREATE TABLE climb_image_pins (
 | Type | Description |
 |---|---|
 | `PinType` | `'lh' \| 'rh' \| 'lf' \| 'rf'` |
+| `PointerDir` | `'top' \| 'bottom' \| 'left' \| 'right'` — direction the pin triangle points |
 | `ClimbImage` | Row shape from `climb_images` table |
 | `ClimbImageWithUrl` | `ClimbImage` + `signed_url: string` (short-lived display URL) |
-| `ClimbImagePin` | Row shape from `climb_image_pins` table |
+| `ClimbImagePin` | Row shape from `climb_image_pins` table (includes `pointer_dir`) |
 
 ---
 
@@ -62,8 +64,8 @@ CREATE TABLE climb_image_pins (
 | `reorderClimbImages(ids[])` | Updates `sort_order` for each id in the given order |
 | `applyRemoteClimbImage(image)` | `INSERT OR REPLACE` — used by sync pull |
 | `fetchClimbImagePins(climbImageId)` | Returns pins ordered by `sort_order` |
-| `insertClimbImagePin(climbImageId, pinType, xPct, yPct, sortOrder)` | Inserts a new pin |
-| `updateClimbImagePin(id, patch)` | Partial update of `x_pct`, `y_pct`, and/or `description` |
+| `insertClimbImagePin(climbImageId, pinType, xPct, yPct, sortOrder, pointerDir?)` | Inserts a new pin; defaults `pointer_dir` to `'bottom'` |
+| `updateClimbImagePin(id, patch)` | Partial update of `x_pct`, `y_pct`, `description`, and/or `pointer_dir` |
 | `deleteClimbImagePin(id)` | Hard delete (pins have no sync tombstone requirement) |
 | `applyRemoteClimbImagePin(pin)` | `INSERT OR REPLACE` — used by sync pull |
 
@@ -79,8 +81,8 @@ CREATE TABLE climb_image_pins (
 | `useDeleteClimbImage(climbId)` | Mutation; soft-deletes row + removes from Storage |
 | `useReorderClimbImages(climbId)` | Mutation; updates sort_order for all images |
 | `useClimbImagePins(climbImageId)` | Query; disabled when `climbImageId` is null |
-| `useAddPin(climbImageId)` | Mutation; inserts pin at given x_pct/y_pct |
-| `useUpdatePin(climbImageId)` | Mutation; partial patch (position or description) |
+| `useAddPin(climbImageId)` | Mutation; inserts pin at given x_pct/y_pct with optional `pointerDir` (default `'bottom'`) |
+| `useUpdatePin(climbImageId)` | Mutation; partial patch (position, description, or pointer_dir) |
 | `useDeletePin(climbImageId)` | Mutation; hard deletes pin |
 
 ---

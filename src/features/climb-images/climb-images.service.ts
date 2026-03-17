@@ -5,6 +5,7 @@ import type {
 	ClimbImagePin,
 	ClimbImageWithUrl,
 	PinType,
+	PointerDir,
 } from "./climb-images.schema";
 
 const BUCKET = "climb-images";
@@ -126,20 +127,26 @@ export async function insertClimbImagePin(
 	xPct: number,
 	yPct: number,
 	sortOrder: number,
+	pointerDir: PointerDir = "bottom",
 ): Promise<string> {
 	const db = await getDb();
 	const id = crypto.randomUUID();
 	await db.execute(
-		`INSERT INTO climb_image_pins (id, climb_image_id, pin_type, x_pct, y_pct, sort_order, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`,
-		[id, climbImageId, pinType, xPct, yPct, sortOrder],
+		`INSERT INTO climb_image_pins (id, climb_image_id, pin_type, x_pct, y_pct, pointer_dir, sort_order, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
+		[id, climbImageId, pinType, xPct, yPct, pointerDir, sortOrder],
 	);
 	return id;
 }
 
 export async function updateClimbImagePin(
 	id: string,
-	patch: { x_pct?: number; y_pct?: number; description?: string | null },
+	patch: {
+		x_pct?: number;
+		y_pct?: number;
+		description?: string | null;
+		pointer_dir?: PointerDir;
+	},
 ): Promise<void> {
 	const db = await getDb();
 	const sets: string[] = [];
@@ -155,6 +162,10 @@ export async function updateClimbImagePin(
 	if ("description" in patch) {
 		sets.push("description = ?");
 		params.push(patch.description ?? null);
+	}
+	if (patch.pointer_dir !== undefined) {
+		sets.push("pointer_dir = ?");
+		params.push(patch.pointer_dir);
 	}
 	if (sets.length === 0) return;
 	params.push(id);
@@ -175,8 +186,8 @@ export async function applyRemoteClimbImagePin(
 	const db = await getDb();
 	await db.execute(
 		`INSERT OR REPLACE INTO climb_image_pins
-     (id, climb_image_id, pin_type, x_pct, y_pct, description, sort_order, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+     (id, climb_image_id, pin_type, x_pct, y_pct, description, pointer_dir, sort_order, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		[
 			pin.id,
 			pin.climb_image_id,
@@ -184,6 +195,7 @@ export async function applyRemoteClimbImagePin(
 			pin.x_pct,
 			pin.y_pct,
 			pin.description ?? null,
+			pin.pointer_dir ?? "bottom",
 			pin.sort_order,
 			pin.created_at,
 		],

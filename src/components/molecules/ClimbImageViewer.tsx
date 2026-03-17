@@ -1,4 +1,13 @@
-import { HandGrab, Pencil, Trash2, X } from "lucide-react";
+import {
+	ArrowDown,
+	ArrowLeft,
+	ArrowRight,
+	ArrowUp,
+	HandGrab,
+	Pencil,
+	Trash2,
+	X,
+} from "lucide-react";
 import { useRef, useState } from "react";
 import { FootIcon } from "@/components/atoms/FootIcon";
 import { Input } from "@/components/atoms/Input";
@@ -11,6 +20,7 @@ import {
 import type {
 	ClimbImageWithUrl,
 	PinType,
+	PointerDir,
 } from "@/features/climb-images/climb-images.schema";
 
 // ── Pin type config ───────────────────────────────────────────────────────────
@@ -25,9 +35,111 @@ const PIN_CONFIG: Record<
 	rf: { label: "RF", color: "#f59e0b", mirror: true },
 };
 
-const PIN_CIRCLE = 28; // diameter of the circle head
-const PIN_TIP = 10; // height of the triangle tip below the circle
+const PIN_CIRCLE = 20; // diameter of the circle head
+const PIN_TIP = 8; // height/width of the triangle tip
+const PIN_R = PIN_CIRCLE / 2; // radius
 const DRAG_Y_OFFSET = 35; // px — shifts pin below finger during drag so it's visible
+
+// ── Pin geometry helpers ──────────────────────────────────────────────────────
+
+// Returns the CSS position so that the triangle tip sits at (x_pct, y_pct)
+function pinPosition(
+	xPct: number,
+	yPct: number,
+	dir: PointerDir,
+): React.CSSProperties {
+	switch (dir) {
+		case "bottom":
+			return {
+				left: `calc(${xPct * 100}% - ${PIN_R}px)`,
+				top: `calc(${yPct * 100}% - ${PIN_CIRCLE + PIN_TIP}px)`,
+			};
+		case "top":
+			return {
+				left: `calc(${xPct * 100}% - ${PIN_R}px)`,
+				top: `calc(${yPct * 100}%)`,
+			};
+		case "left":
+			return {
+				left: `calc(${xPct * 100}%)`,
+				top: `calc(${yPct * 100}% - ${PIN_R}px)`,
+			};
+		case "right":
+			return {
+				left: `calc(${xPct * 100}% - ${PIN_CIRCLE + PIN_TIP}px)`,
+				top: `calc(${yPct * 100}% - ${PIN_R}px)`,
+			};
+	}
+}
+
+// Renders the triangle pointing in the given direction
+function PinTriangle({ dir, color }: { dir: PointerDir; color: string }) {
+	const tipBase = PIN_TIP * 0.7; // half-width of the triangle base
+
+	const style: React.CSSProperties = { width: 0, height: 0 };
+
+	switch (dir) {
+		case "bottom":
+			Object.assign(style, {
+				borderLeft: `${tipBase}px solid transparent`,
+				borderRight: `${tipBase}px solid transparent`,
+				borderTop: `${PIN_TIP}px solid ${color}`,
+				marginTop: "-1px",
+			});
+			break;
+		case "top":
+			Object.assign(style, {
+				borderLeft: `${tipBase}px solid transparent`,
+				borderRight: `${tipBase}px solid transparent`,
+				borderBottom: `${PIN_TIP}px solid ${color}`,
+				marginBottom: "-1px",
+			});
+			break;
+		case "left":
+			Object.assign(style, {
+				borderTop: `${tipBase}px solid transparent`,
+				borderBottom: `${tipBase}px solid transparent`,
+				borderRight: `${PIN_TIP}px solid ${color}`,
+				marginRight: "-1px",
+			});
+			break;
+		case "right":
+			Object.assign(style, {
+				borderTop: `${tipBase}px solid transparent`,
+				borderBottom: `${tipBase}px solid transparent`,
+				borderLeft: `${PIN_TIP}px solid ${color}`,
+				marginLeft: "-1px",
+			});
+			break;
+	}
+
+	return <div style={style} />;
+}
+
+// Returns flex direction so circle and triangle are arranged correctly
+function pinFlexDir(dir: PointerDir): string {
+	switch (dir) {
+		case "bottom":
+			return "flex-col";
+		case "top":
+			return "flex-col-reverse";
+		case "left":
+			return "flex-row-reverse";
+		case "right":
+			return "flex-row";
+	}
+}
+
+// ── Direction picker ──────────────────────────────────────────────────────────
+
+const DIR_BUTTONS: { dir: PointerDir; icon: React.ReactNode }[] = [
+	{ dir: "top", icon: <ArrowUp size={14} /> },
+	{ dir: "bottom", icon: <ArrowDown size={14} /> },
+	{ dir: "left", icon: <ArrowLeft size={14} /> },
+	{ dir: "right", icon: <ArrowRight size={14} /> },
+];
+
+// ── Component ─────────────────────────────────────────────────────────────────
 
 interface ClimbImageViewerProps {
 	image: ClimbImageWithUrl;
@@ -90,7 +202,6 @@ export const ClimbImageViewer = ({ image, onClose }: ClimbImageViewerProps) => {
 	function handleTouchMove(e: React.TouchEvent<HTMLDivElement>) {
 		if (!draggingPinId) return;
 		const touch = e.touches[0];
-		// Apply upward offset so the pin tip sits below the finger, not under it
 		const coords = clientToImagePct(
 			touch.clientX,
 			touch.clientY - DRAG_Y_OFFSET,
@@ -121,6 +232,7 @@ export const ClimbImageViewer = ({ image, onClose }: ClimbImageViewerProps) => {
 	// ── Render ─────────────────────────────────────────────────────────────────
 
 	const popoverPin = pins.find((p) => p.id === popoverPinId) ?? null;
+	const dimOthers = popoverPinId !== null || addPin.isPending;
 
 	return (
 		<div className="fixed inset-0 z-50 bg-black flex flex-col">
@@ -192,9 +304,7 @@ export const ClimbImageViewer = ({ image, onClose }: ClimbImageViewerProps) => {
 				</div>
 			)}
 
-			{/* Image + pin overlay — role="presentation" because this is a canvas-like
-			    touch surface, not a discrete interactive element. Keyboard interaction
-			    is not applicable (pin placement is inherently pointer-based). */}
+			{/* Image + pin overlay */}
 			{/* biome-ignore lint/a11y/noStaticElementInteractions: touch canvas */}
 			<div
 				role="presentation"
@@ -203,7 +313,6 @@ export const ClimbImageViewer = ({ image, onClose }: ClimbImageViewerProps) => {
 				onTouchMove={handleTouchMove}
 				onTouchEnd={handleTouchEnd}
 			>
-				{/* Wrapper constrains pin positions to the visible image area */}
 				<div className="relative inline-block">
 					<img
 						ref={imgRef}
@@ -213,64 +322,48 @@ export const ClimbImageViewer = ({ image, onClose }: ClimbImageViewerProps) => {
 						draggable={false}
 					/>
 
-					{/* Pins — anchor point is the tip of the triangle (bottom center) */}
-					{pins.map((pin) => {
+					{pins.map((pin, index) => {
 						const cfg = PIN_CONFIG[pin.pin_type];
+						const dir: PointerDir = pin.pointer_dir ?? "bottom";
+						const isActive = pin.id === popoverPinId;
+						const isDragging = pin.id === draggingPinId;
+						const opacity = isDragging
+							? 0.5
+							: dimOthers && !isActive
+								? 0.25
+								: 1;
+
 						return (
 							<button
 								key={pin.id}
 								data-pin="true"
 								type="button"
-								aria-label={`${cfg.label} pin`}
+								aria-label={`Pin ${index + 1} — ${cfg.label}`}
 								onTouchStart={(e) => handlePinTouchStart(e, pin.id)}
 								onClick={(e) => handlePinClick(e, pin.id)}
-								className="absolute flex flex-col items-center touch-none"
+								className={`absolute touch-none ${pinFlexDir(dir)} flex items-center`}
 								style={{
-									left: `calc(${pin.x_pct * 100}% - ${PIN_CIRCLE / 2}px)`,
-									top: `calc(${pin.y_pct * 100}% - ${PIN_CIRCLE + PIN_TIP}px)`,
-
-									opacity: draggingPinId === pin.id ? 0.6 : 1,
-
-									filter: "drop-shadow(0 2px 3px rgba(0,0,0,0.5))",
+									...pinPosition(pin.x_pct, pin.y_pct, dir),
+									opacity,
+									filter: "drop-shadow(0 2px 3px rgba(0,0,0,0.6))",
+									transition: "opacity 0.15s",
 								}}
 							>
-								{/* Circle head */}
+								{/* Circle with number */}
 								<div
-									className="rounded-full flex items-center justify-center text-white font-bold text-xs"
+									className="rounded-full flex items-center justify-center text-white font-bold"
 									style={{
 										width: PIN_CIRCLE,
 										height: PIN_CIRCLE,
+										fontSize: 10,
 										backgroundColor: cfg.color,
+										outline: isActive ? "2px solid white" : "none",
 									}}
 								>
-									{pin.pin_type === "lh" || pin.pin_type === "rh" ? (
-										<HandGrab
-											size={16}
-											style={
-												cfg.mirror ? { transform: "scaleX(-1)" } : undefined
-											}
-										/>
-									) : (
-										<FootIcon
-											size={16}
-											color="white"
-											style={
-												cfg.mirror ? { transform: "scaleX(-1)" } : undefined
-											}
-										/>
-									)}
+									{index + 1}
 								</div>
-								{/* Triangle tip */}
-								<div
-									style={{
-										width: 0,
-										height: 0,
-										borderLeft: `${PIN_TIP / 1.5}px solid transparent`,
-										borderRight: `${PIN_TIP / 1.5}px solid transparent`,
-										borderTop: `${PIN_TIP}px solid ${cfg.color}`,
-										marginTop: "-2px",
-									}}
-								/>
+								{/* Directional triangle */}
+								<PinTriangle dir={dir} color={cfg.color} />
 							</button>
 						);
 					})}
@@ -288,6 +381,7 @@ export const ClimbImageViewer = ({ image, onClose }: ClimbImageViewerProps) => {
 							className="text-sm font-semibold"
 							style={{ color: PIN_CONFIG[popoverPin.pin_type].color }}
 						>
+							Pin {(pins.findIndex((p) => p.id === popoverPin.id) ?? 0) + 1} —{" "}
 							{PIN_CONFIG[popoverPin.pin_type].label}
 						</span>
 						{editMode && (
@@ -317,6 +411,41 @@ export const ClimbImageViewer = ({ image, onClose }: ClimbImageViewerProps) => {
 							</div>
 						)}
 					</div>
+
+					{/* Direction picker (edit mode only) */}
+					{editMode && !editingDescription && (
+						<div className="flex items-center gap-1">
+							<span className="text-xs text-text-tertiary mr-1">
+								Direction:
+							</span>
+							{DIR_BUTTONS.map(({ dir, icon }) => (
+								<button
+									key={dir}
+									type="button"
+									onClick={() =>
+										updatePin.mutate({
+											id: popoverPin.id,
+											patch: { pointer_dir: dir },
+										})
+									}
+									className="w-7 h-7 rounded flex items-center justify-center transition-colors"
+									style={{
+										backgroundColor:
+											(popoverPin.pointer_dir ?? "bottom") === dir
+												? PIN_CONFIG[popoverPin.pin_type].color
+												: undefined,
+										color:
+											(popoverPin.pointer_dir ?? "bottom") === dir
+												? "white"
+												: undefined,
+									}}
+									aria-label={`Point ${dir}`}
+								>
+									{icon}
+								</button>
+							))}
+						</div>
+					)}
 
 					{editingDescription ? (
 						<div className="flex gap-2">
