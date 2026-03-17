@@ -1,4 +1,10 @@
-import { ChevronLeft, ChevronRight, ImagePlus, Trash2 } from "lucide-react";
+import {
+	ChevronLeft,
+	ChevronRight,
+	Film,
+	ImagePlus,
+	Trash2,
+} from "lucide-react";
 import { useRef, useState } from "react";
 import { Spinner } from "@/components/atoms/Spinner";
 import {
@@ -11,6 +17,7 @@ import {
 } from "@/features/climb-images/climb-images.queries";
 import type { ClimbImageWithUrl } from "@/features/climb-images/climb-images.schema";
 import { ClimbImageViewer } from "./ClimbImageViewer";
+import { VideoFrameCapturer } from "./VideoFrameCapturer";
 
 const THUMB_SIZE = 96; // px — width & height of each thumbnail cell
 
@@ -153,6 +160,7 @@ export const ClimbImageGallery = ({ climbId }: ClimbImageGalleryProps) => {
 
 	const [sheetImageId, setSheetImageId] = useState<string | null>(null);
 	const [viewerImageId, setViewerImageId] = useState<string | null>(null);
+	const [showVideoCapturer, setShowVideoCapturer] = useState(false);
 
 	const atCap = imageCount >= USER_IMAGE_CAP;
 	const sheetImage = images.find((img) => img.id === sheetImageId) ?? null;
@@ -232,7 +240,7 @@ export const ClimbImageGallery = ({ climbId }: ClimbImageGalleryProps) => {
 				)}
 			</div>
 
-			{/* Hidden file input */}
+			{/* Hidden photo file input */}
 			<input
 				ref={inputRef}
 				type="file"
@@ -244,6 +252,19 @@ export const ClimbImageGallery = ({ climbId }: ClimbImageGalleryProps) => {
 					e.target.value = "";
 				}}
 			/>
+
+			{/* Capture from video link */}
+			{!atCap && (
+				<button
+					type="button"
+					onClick={() => setShowVideoCapturer(true)}
+					disabled={addImage.isPending}
+					className="flex items-center gap-1.5 text-xs text-text-tertiary disabled:opacity-40 self-start"
+				>
+					<Film size={13} />
+					Capture from video
+				</button>
+			)}
 
 			{/* Per-image action sheet */}
 			{sheetImage && (
@@ -268,6 +289,17 @@ export const ClimbImageGallery = ({ climbId }: ClimbImageGalleryProps) => {
 				<ClimbImageViewer
 					image={viewerImage}
 					onClose={() => setViewerImageId(null)}
+				/>
+			)}
+
+			{/* Video frame capturer */}
+			{showVideoCapturer && (
+				<VideoFrameCapturer
+					onCapture={(file) => {
+						addImage.mutate(file);
+						setShowVideoCapturer(false);
+					}}
+					onClose={() => setShowVideoCapturer(false)}
 				/>
 			)}
 		</div>
