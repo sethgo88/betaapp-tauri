@@ -123,6 +123,46 @@ export async function fetchDownloadedRegionIds(): Promise<string[]> {
 	return rows.map((r) => r.region_id);
 }
 
+export type DownloadedRegion = {
+	region_id: string;
+	downloaded_at: string;
+	server_updated_at: string | null;
+};
+
+export async function fetchDownloadedRegions(): Promise<DownloadedRegion[]> {
+	const db = await getDb();
+	return db.select<DownloadedRegion[]>(
+		"SELECT region_id, downloaded_at, server_updated_at FROM downloaded_regions",
+	);
+}
+
+export async function checkRegionStaleness(): Promise<string[]> {
+	const downloaded = await fetchDownloadedRegions();
+	if (downloaded.length === 0) return [];
+
+	const ids = downloaded.map((r) => r.region_id);
+	const { data, error } = await supabase
+		.from("regions")
+		.select("id, updated_at")
+		.in("id", ids);
+	if (error) throw error;
+
+	const serverMap = new Map<string, string>(
+		(data as unknown as { id: string; updated_at: string }[]).map((r) => [
+			r.id,
+			r.updated_at,
+		]),
+	);
+
+	return downloaded
+		.filter((local) => {
+			const serverUpdatedAt = serverMap.get(local.region_id);
+			if (!serverUpdatedAt || !local.server_updated_at) return false;
+			return new Date(serverUpdatedAt) > new Date(local.server_updated_at);
+		})
+		.map((r) => r.region_id);
+}
+
 // ── Search (local cache only) ─────────────────────────────────────────────────
 
 export type LocationSearchResult = {
@@ -196,6 +236,17 @@ export async function pullRegions(): Promise<void> {
 export async function downloadRegion(regionId: string): Promise<void> {
 	const db = await getDb();
 
+	// 0. Fetch region metadata (including server updated_at for staleness tracking)
+	const { data: regionMeta, error: regionMetaError } = await supabase
+		.from("regions")
+		.select("updated_at")
+		.eq("id", regionId)
+		.single();
+	if (regionMetaError) throw regionMetaError;
+	const serverUpdatedAt: string | null =
+		(regionMeta as unknown as { updated_at?: string } | null)?.updated_at ??
+		null;
+
 	// 1. Pull sub_regions
 	const { data: subRegions, error: srError } = await supabase
 		.from("sub_regions")
@@ -209,8 +260,8 @@ export async function downloadRegion(regionId: string): Promise<void> {
 
 	if (!subRegions || subRegions.length === 0) {
 		await db.execute(
-			"INSERT OR REPLACE INTO downloaded_regions (region_id, downloaded_at) VALUES (?, datetime('now'))",
-			[regionId],
+			"INSERT OR REPLACE INTO downloaded_regions (region_id, downloaded_at, server_updated_at) VALUES (?, datetime('now'), ?)",
+			[regionId, serverUpdatedAt],
 		);
 		return;
 	}
@@ -344,8 +395,8 @@ export async function downloadRegion(regionId: string): Promise<void> {
 	}
 
 	await db.execute(
-		"INSERT OR REPLACE INTO downloaded_regions (region_id, downloaded_at) VALUES (?, datetime('now'))",
-		[regionId],
+		"INSERT OR REPLACE INTO downloaded_regions (region_id, downloaded_at, server_updated_at) VALUES (?, datetime('now'), ?)",
+		[regionId, serverUpdatedAt],
 	);
 }
 

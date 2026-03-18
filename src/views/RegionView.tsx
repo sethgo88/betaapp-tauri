@@ -1,6 +1,9 @@
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { useState } from "react";
+import { Button } from "@/components/atoms/Button";
 import {
+	useDownloadRegion,
+	useStaleRegionIds,
 	useSubmitSubRegion,
 	useSubRegions,
 } from "@/features/locations/locations.queries";
@@ -57,6 +60,9 @@ const RegionView = () => {
 	const navigate = useNavigate();
 	const { data: subRegions = [] } = useSubRegions(regionId);
 	const submitSubRegion = useSubmitSubRegion();
+	const { data: staleIds = [] } = useStaleRegionIds();
+	const { mutate: refresh, isPending: isRefreshing } = useDownloadRegion();
+	const isStale = staleIds.includes(regionId);
 	const [showSubRegionForm, setShowSubRegionForm] = useState(false);
 
 	const handleAddSubRegion = async (name: string) => {
@@ -73,6 +79,23 @@ const RegionView = () => {
 			>
 				← Back to routes
 			</button>
+
+			{isStale && (
+				<div className="flex items-center justify-between rounded-lg bg-amber-900/30 border border-amber-700/40 px-4 py-3 text-sm">
+					<span className="text-amber-300">
+						Newer data is available for this region.
+					</span>
+					<Button
+						type="button"
+						variant="secondary"
+						size="small"
+						onClick={() => refresh(regionId)}
+						disabled={isRefreshing}
+					>
+						{isRefreshing ? "…" : "Refresh"}
+					</Button>
+				</div>
+			)}
 
 			{subRegions.length === 0 && !showSubRegionForm && (
 				<p className="text-text-secondary text-sm">

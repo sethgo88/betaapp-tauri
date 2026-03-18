@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS crags_cache       (id, sub_region_id, name, descripti
 CREATE TABLE IF NOT EXISTS walls_cache       (id, crag_id, name, description, sort_order, status, created_by, created_at, lat, lng, wall_type, sport_count, trad_count, boulder_count);
 
 -- Download tracking
-CREATE TABLE IF NOT EXISTS downloaded_regions (region_id TEXT PRIMARY KEY, downloaded_at TEXT);
+CREATE TABLE IF NOT EXISTS downloaded_regions (region_id TEXT PRIMARY KEY, downloaded_at TEXT, server_updated_at TEXT);
 ```
 
 ---
@@ -68,6 +68,8 @@ CREATE TABLE IF NOT EXISTS downloaded_regions (region_id TEXT PRIMARY KEY, downl
 | `fetchCrag(id)` | Single crag by ID |
 | `fetchWall(id)` | Single wall by ID |
 | `fetchDownloadedRegionIds()` | IDs of all downloaded regions |
+| `fetchDownloadedRegions()` | Full rows from `downloaded_regions` including `server_updated_at` |
+| `checkRegionStaleness()` | Fetches `updated_at` from Supabase for all downloaded regions; returns IDs where server timestamp is newer than `server_updated_at` |
 | `searchLocations(query)` | LIKE search across sub_regions/crags/walls cache; returns typed results with `kind` |
 | `fetchAllCragsWithCoords()` | All crags with non-null lat/lng + sport/trad/boulder counts (for map Discovery mode); reads stored counts directly — no route JOIN |
 | `fetchAllWallsWithCoords()` | All walls with non-null lat/lng + wall_type + sport/trad/boulder counts + crag_name (for map Discovery mode); reads stored counts directly — no route JOIN |
@@ -84,11 +86,12 @@ Both are full replace (DELETE + INSERT).
 ### Region download
 
 `downloadRegion(regionId)` — fetches the full hierarchy for a region in a single transaction:
-1. Sub-regions for the region
-2. Crags for those sub-regions
-3. Walls for those crags
-4. **Verified routes** for those walls (only `status = 'verified'`)
-5. Records `downloaded_regions` row
+1. Fetches `regions.updated_at` from Supabase (stored in `server_updated_at` for staleness tracking)
+2. Sub-regions for the region
+3. Crags for those sub-regions
+4. Walls for those crags
+5. **Verified routes** for those walls (only `status = 'verified'`)
+6. Records `downloaded_regions` row with `server_updated_at`
 
 If any level has no data, the download still completes and records the region as downloaded.
 
@@ -142,6 +145,7 @@ useSubRegion(id)            // single entity
 useCrag(id)                 // single entity
 useWall(id)                 // single entity
 useDownloadedRegionIds()
+useStaleRegionIds()         // IDs of downloaded regions where server data is newer; populated by useSync on launch
 useDownloadRegion()         // mutation
 useSubmitSubRegion()        // mutation — user submission
 useSubmitCrag()             // mutation — user submission
@@ -164,7 +168,8 @@ useAdminUpdateWallCoords()  // admin mutation — { id, lat, lng, cragId }
 
 ```sql
 public.countries   (id, name, code, sort_order, created_at)
-public.regions     (id, country_id, name, sort_order, created_at)
+public.regions     (id, country_id, name, sort_order, created_at, updated_at)
+-- updated_at: maintained by trigger; bumped whenever a sub_region/crag/wall/route in this region is changed
 public.sub_regions (id, region_id, name, sort_order, created_at)
 public.crags       (id, sub_region_id, name, sort_order, created_at, lat, lng, sport_count, trad_count, boulder_count)
 public.walls       (id, crag_id, name, sort_order, created_at, lat, lng, wall_type, sport_count, trad_count, boulder_count)

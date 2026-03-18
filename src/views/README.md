@@ -74,10 +74,10 @@ At zoom ≥15, crag pins hide for crags that have wall coordinates and wall pins
 Real-time search across all downloaded locations (sub-regions, crags, walls) and routes. Two checkboxes filter by Locations and Routes. Minimum 2 characters to search. Results link to their respective detail views. Local SQLite cache only — no network requests.
 
 ### RoutesView `/routes`
-Route Manager. Loads `useCountries()` and `useDownloadedRegionIds()`. Renders country list → inline region list per country. Each region shows download status and a download/refresh button. Already-downloaded regions show a "Refresh" button to re-download latest data. Navigates to `/regions/$regionId` on tap.
+Route Manager. Loads `useCountries()`, `useDownloadedRegionIds()`, and `useStaleRegionIds()`. Renders all countries with their region lists expanded immediately (no collapse). Each region shows download status and a download/refresh button. Downloaded regions with newer server data show an amber "Outdated" badge instead of the green "Downloaded" badge. Navigates to `/regions/$regionId` on tap.
 
 ### RegionView `/regions/$regionId`
-Loads `useSubRegions(regionId)`. Lists sub-regions as tappable cards. Tap navigates to `/sub-regions/$subRegionId`. Has "Add sub-area" inline form. Back button navigates to `/routes`.
+Loads `useSubRegions(regionId)` and `useStaleRegionIds()`. Lists sub-regions as tappable cards. If the current region is stale, shows an amber banner ("Newer data is available") with a "Refresh" button that re-runs `downloadRegion`. Tap navigates to `/sub-regions/$subRegionId`. Has "Add sub-area" inline form. Back button navigates to `/routes`.
 
 ### SubRegionView `/sub-regions/$subRegionId`
 Loads `useSubRegion(id)` and `useCrags(subRegionId)`. Shows name, admin-editable description (`EditableDescription`), and list of crags. Tap navigates to `/crags/$cragId`. Back button navigates up to `/regions/$regionId`.

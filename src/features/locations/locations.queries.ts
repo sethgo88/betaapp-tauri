@@ -22,6 +22,7 @@ import {
 	adminUpdateCragCoords,
 	adminUpdateWallCoords,
 	adminUpdateWallType,
+	checkRegionStaleness,
 	downloadRegion,
 	fetchAllCragsWithCoords,
 	fetchAllWallsWithCoords,
@@ -518,5 +519,14 @@ export function useRejectLocation() {
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: ["pending_locations"] });
 		},
+	});
+}
+
+export function useStaleRegionIds() {
+	return useQuery({
+		queryKey: ["stale_region_ids"],
+		queryFn: checkRegionStaleness,
+		// Don't auto-refetch — staleness is checked explicitly on app launch
+		staleTime: Number.POSITIVE_INFINITY,
 	});
 }
