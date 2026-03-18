@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import type { Burn } from "@/features/burns/burns.schema";
 import { applyRemoteBurn } from "@/features/burns/burns.service";
 import type { Climb } from "@/features/climbs/climbs.schema";
@@ -31,58 +31,78 @@ import { supabase } from "@/lib/supabase";
 
 export function useSync(userId: string | undefined) {
 	const queryClient = useQueryClient();
-	const { setSyncing, setSuccess, setError } = useSyncStore();
+	const { setSyncing, setSuccess, setError, setOffline, setTriggerSync } =
+		useSyncStore();
+
+	// Delta push/pull if we have a stored timestamp; full sync on first run.
+	// Reference data (grades, countries, regions) always does a full pull —
+	// it's small and admin-owned so no delta is needed.
+	const runSync = useCallback(async () => {
+		if (!userId) return;
+
+		if (!navigator.onLine) {
+			setOffline();
+			return;
+		}
+
+		setSyncing();
+		try {
+			const { last_synced_at } = await getSyncMeta();
+			const since = last_synced_at ?? undefined;
+
+			await pushClimbs(userId, since);
+			await pullClimbs(userId, since);
+			await pushBurns(userId, since);
+			await pullBurns(userId, since);
+			await pushClimbImages(userId, since);
+			await pullClimbImages(userId, since);
+			await pushClimbImagePins(userId, since);
+			await pullClimbImagePins(userId, since);
+			await pullGrades();
+			await pullCountries();
+			await pullRegions();
+			await checkRegionStaleness().then(() => {
+				queryClient.invalidateQueries({ queryKey: ["stale_region_ids"] });
+			});
+			await pullRouteImages(since);
+			await pullWallImages(since);
+			await pushRouteLinks(userId, since);
+			await pullRouteLinks(since);
+
+			const now = new Date().toISOString();
+			await setSyncMeta(now);
+
+			queryClient.invalidateQueries({ queryKey: ["climbs"] });
+			queryClient.invalidateQueries({ queryKey: ["burns"] });
+			queryClient.invalidateQueries({ queryKey: ["climb-images"] });
+			queryClient.invalidateQueries({ queryKey: ["climb-image-pins"] });
+			queryClient.invalidateQueries({ queryKey: ["grades"] });
+			queryClient.invalidateQueries({ queryKey: ["countries"] });
+			queryClient.invalidateQueries({ queryKey: ["regions"] });
+			queryClient.invalidateQueries({ queryKey: ["route-images"] });
+			queryClient.invalidateQueries({ queryKey: ["wall-images"] });
+			queryClient.invalidateQueries({ queryKey: ["route_links"] });
+			setSuccess();
+		} catch (err) {
+			console.error("Sync error:", JSON.stringify(err));
+			setError(err instanceof Error ? err.message : JSON.stringify(err));
+		}
+	}, [
+		userId,
+		setSyncing,
+		setSuccess,
+		setError,
+		setOffline,
+		queryClient,
+	]);
+
+	// Register triggerSync in the store so SyncStatus can call it without prop drilling.
+	useEffect(() => {
+		setTriggerSync(runSync);
+	}, [runSync, setTriggerSync]);
 
 	useEffect(() => {
 		if (!userId) return;
-
-		// Delta push/pull if we have a stored timestamp; full sync on first run.
-		// Reference data (grades, countries, regions) always does a full pull —
-		// it's small and admin-owned so no delta is needed.
-		const runSync = async () => {
-			setSyncing();
-			try {
-				const { last_synced_at } = await getSyncMeta();
-				const since = last_synced_at ?? undefined;
-
-				await pushClimbs(userId, since);
-				await pullClimbs(userId, since);
-				await pushBurns(userId, since);
-				await pullBurns(userId, since);
-				await pushClimbImages(userId, since);
-				await pullClimbImages(userId, since);
-				await pushClimbImagePins(userId, since);
-				await pullClimbImagePins(userId, since);
-				await pullGrades();
-				await pullCountries();
-				await pullRegions();
-				await checkRegionStaleness().then(() => {
-					queryClient.invalidateQueries({ queryKey: ["stale_region_ids"] });
-				});
-				await pullRouteImages(since);
-				await pullWallImages(since);
-				await pushRouteLinks(userId, since);
-				await pullRouteLinks(since);
-
-				const now = new Date().toISOString();
-				await setSyncMeta(now);
-
-				queryClient.invalidateQueries({ queryKey: ["climbs"] });
-				queryClient.invalidateQueries({ queryKey: ["burns"] });
-				queryClient.invalidateQueries({ queryKey: ["climb-images"] });
-				queryClient.invalidateQueries({ queryKey: ["climb-image-pins"] });
-				queryClient.invalidateQueries({ queryKey: ["grades"] });
-				queryClient.invalidateQueries({ queryKey: ["countries"] });
-				queryClient.invalidateQueries({ queryKey: ["regions"] });
-				queryClient.invalidateQueries({ queryKey: ["route-images"] });
-				queryClient.invalidateQueries({ queryKey: ["wall-images"] });
-				queryClient.invalidateQueries({ queryKey: ["route_links"] });
-				setSuccess();
-			} catch (err) {
-				console.error("Sync error:", err);
-				setError(err instanceof Error ? err.message : "Sync failed");
-			}
-		};
 
 		runSync();
 
@@ -125,5 +145,5 @@ export function useSync(userId: string | undefined) {
 		return () => {
 			supabase.removeChannel(channel);
 		};
-	}, [userId, setSyncing, setSuccess, setError, queryClient]);
+	}, [userId, runSync, queryClient]);
 }

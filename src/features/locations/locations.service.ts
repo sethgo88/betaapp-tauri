@@ -143,14 +143,14 @@ export async function checkRegionStaleness(): Promise<string[]> {
 	const ids = downloaded.map((r) => r.region_id);
 	const { data, error } = await supabase
 		.from("regions")
-		.select("id, updated_at")
+		.select("id, created_at")
 		.in("id", ids);
 	if (error) throw error;
 
 	const serverMap = new Map<string, string>(
-		(data as unknown as { id: string; updated_at: string }[]).map((r) => [
+		(data as unknown as { id: string; created_at: string }[]).map((r) => [
 			r.id,
-			r.updated_at,
+			r.created_at,
 		]),
 	);
 
@@ -239,12 +239,12 @@ export async function downloadRegion(regionId: string): Promise<void> {
 	// 0. Fetch region metadata (including server updated_at for staleness tracking)
 	const { data: regionMeta, error: regionMetaError } = await supabase
 		.from("regions")
-		.select("updated_at")
+		.select("created_at")
 		.eq("id", regionId)
 		.single();
 	if (regionMetaError) throw regionMetaError;
 	const serverUpdatedAt: string | null =
-		(regionMeta as unknown as { updated_at?: string } | null)?.updated_at ??
+		(regionMeta as unknown as { created_at?: string } | null)?.created_at ??
 		null;
 
 	// 1. Pull sub_regions
