@@ -20,6 +20,7 @@ import { ClimbImageViewer } from "./ClimbImageViewer";
 import { VideoFrameCapturer } from "./VideoFrameCapturer";
 
 const THUMB_SIZE = 96; // px — width & height of each thumbnail cell
+const CAROUSEL_THUMB = 56; // px — width & height of carousel thumbnails in sheet
 
 interface ClimbImageGalleryProps {
 	climbId: string;
@@ -29,6 +30,7 @@ interface ClimbImageGalleryProps {
 
 interface ImageActionSheetProps {
 	image: ClimbImageWithUrl;
+	allImages: ClimbImageWithUrl[];
 	index: number;
 	total: number;
 	isReordering: boolean;
@@ -37,10 +39,12 @@ interface ImageActionSheetProps {
 	onEditPins: () => void;
 	onDelete: () => void;
 	onClose: () => void;
+	onSelectImage: (id: string) => void;
 }
 
 const ImageActionSheet = ({
 	image,
+	allImages,
 	index,
 	total,
 	isReordering,
@@ -49,6 +53,7 @@ const ImageActionSheet = ({
 	onEditPins,
 	onDelete,
 	onClose,
+	onSelectImage,
 }: ImageActionSheetProps) => {
 	const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -67,7 +72,7 @@ const ImageActionSheet = ({
 				style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
 				onClick={(e) => e.stopPropagation()}
 			>
-				{/* Image preview */}
+				{/* Main image preview */}
 				<div className="w-full aspect-video bg-black flex items-center justify-center overflow-hidden">
 					<img
 						src={image.signed_url}
@@ -75,6 +80,36 @@ const ImageActionSheet = ({
 						className="max-w-full max-h-full object-contain"
 					/>
 				</div>
+
+				{/* Image carousel — visible when more than one image */}
+				{allImages.length > 1 && (
+					<div className="flex gap-2 px-3 py-2 overflow-x-auto">
+						{allImages.map((img) => (
+							<button
+								key={img.id}
+								type="button"
+								onClick={() => onSelectImage(img.id)}
+								aria-label="Select photo"
+								className="shrink-0 rounded overflow-hidden transition-opacity"
+								style={{
+									width: CAROUSEL_THUMB,
+									height: CAROUSEL_THUMB,
+									outline:
+										img.id === image.id
+											? "2px solid var(--color-accent-primary)"
+											: "2px solid transparent",
+									opacity: img.id === image.id ? 1 : 0.6,
+								}}
+							>
+								<img
+									src={img.signed_url}
+									alt=""
+									className="w-full h-full object-cover"
+								/>
+							</button>
+						))}
+					</div>
+				)}
 
 				{confirmDelete ? (
 					<div className="flex flex-col gap-3 p-5">
@@ -269,7 +304,9 @@ export const ClimbImageGallery = ({ climbId }: ClimbImageGalleryProps) => {
 			{/* Per-image action sheet */}
 			{sheetImage && (
 				<ImageActionSheet
+					key={sheetImage.id}
 					image={sheetImage}
+					allImages={images}
 					index={sheetIndex}
 					total={images.length}
 					isReordering={reorder.isPending}
@@ -281,6 +318,7 @@ export const ClimbImageGallery = ({ climbId }: ClimbImageGalleryProps) => {
 					}}
 					onDelete={handleDelete}
 					onClose={() => setSheetImageId(null)}
+					onSelectImage={(id) => setSheetImageId(id)}
 				/>
 			)}
 

@@ -180,6 +180,16 @@ export async function deleteClimbImagePin(id: string): Promise<void> {
 	await db.execute("DELETE FROM climb_image_pins WHERE id = ?", [id]);
 }
 
+export async function reorderClimbImagePins(ids: string[]): Promise<void> {
+	const db = await getDb();
+	for (let i = 0; i < ids.length; i++) {
+		await db.execute(
+			"UPDATE climb_image_pins SET sort_order = ? WHERE id = ?",
+			[i, ids[i]],
+		);
+	}
+}
+
 export async function applyRemoteClimbImagePin(
 	pin: ClimbImagePin,
 ): Promise<void> {

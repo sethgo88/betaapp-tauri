@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const PinType = z.enum(["lh", "rh", "lf", "rf"]);
+export const PinType = z.enum(["lh", "rh", "lf", "rf", "body", "clip"]);
 export type PinType = z.infer<typeof PinType>;
 
 export const PointerDir = z.enum(["top", "bottom", "left", "right"]);

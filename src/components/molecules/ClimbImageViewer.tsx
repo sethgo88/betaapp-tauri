@@ -17,6 +17,7 @@ import {
 	useAddPin,
 	useClimbImagePins,
 	useDeletePin,
+	useReorderPins,
 	useUpdatePin,
 } from "@/features/climb-images/climb-images.queries";
 import type {
@@ -29,12 +30,14 @@ import type {
 
 const PIN_CONFIG: Record<
 	PinType,
-	{ label: string; color: string; mirror?: boolean }
+	{ label: string; color: string; mirror?: boolean; textIcon?: string }
 > = {
 	lh: { label: "LH", color: "#3b82f6", mirror: true },
 	rh: { label: "RH", color: "#ef4444" },
 	lf: { label: "LF", color: "#22c55e" },
 	rf: { label: "RF", color: "#f59e0b", mirror: true },
+	body: { label: "Body", color: "#a855f7", textIcon: "B" },
+	clip: { label: "Clip", color: "#06b6d4", textIcon: "C" },
 };
 
 const PIN_CIRCLE = 20; // diameter of the circle head
@@ -45,6 +48,42 @@ const DRAG_Y_OFFSET = 35; // px — shifts pin below finger during drag so it's 
 const MAGNIFIER_SIZE = 80; // px — canvas width & height
 const MAGNIFIER_ZOOM = 2.5; // zoom multiplier
 const MAGNIFIER_GAP = 60; // px — gap between magnifier bottom edge and raw touch point
+
+// ── Pin icon ──────────────────────────────────────────────────────────────────
+
+function PinIcon({ type, size = 12 }: { type: PinType; size?: number }) {
+	const cfg = PIN_CONFIG[type];
+	if (cfg.textIcon) {
+		return (
+			<span
+				style={{
+					fontSize: size - 2,
+					fontWeight: "bold",
+					color: "white",
+					lineHeight: 1,
+				}}
+			>
+				{cfg.textIcon}
+			</span>
+		);
+	}
+	if (type === "lh" || type === "rh") {
+		return (
+			<HandGrab
+				size={size}
+				color="white"
+				style={cfg.mirror ? { transform: "scaleX(-1)" } : undefined}
+			/>
+		);
+	}
+	return (
+		<FootIcon
+			size={size}
+			color="white"
+			style={cfg.mirror ? { transform: "scaleX(-1)" } : undefined}
+		/>
+	);
+}
 
 // ── Pin geometry helpers ──────────────────────────────────────────────────────
 
@@ -152,11 +191,15 @@ export const ClimbImageViewer = ({ image, onClose }: ClimbImageViewerProps) => {
 	const { data: pins = [] } = useClimbImagePins(image.id);
 	const addPin = useAddPin(image.id);
 	const updatePin = useUpdatePin(image.id);
+	const reorderPins = useReorderPins(image.id);
 	const deletePin = useDeletePin(image.id);
 
 	const imgRef = useRef<HTMLImageElement>(null);
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 	const magnifierRef = useRef<HTMLDivElement>(null);
+	// Holds the ID of a newly added pin until the query refetches and confirms it
+	const pendingActivePinRef = useRef<string | null>(null);
+
 	const [editMode, setEditMode] = useState(false);
 	const [selectedPinType, setSelectedPinType] = useState<PinType>("lh");
 	const [draggingPinId, setDraggingPinId] = useState<string | null>(null);
@@ -165,15 +208,23 @@ export const ClimbImageViewer = ({ image, onClose }: ClimbImageViewerProps) => {
 	const [editingDescription, setEditingDescription] = useState(false);
 	const [descriptionInput, setDescriptionInput] = useState("");
 
-	// Keep activePinId in sync with the pins list: default to first pin,
-	// clear if the active pin is deleted.
+	// Sync activePinId when pins list changes.
+	// Prioritises a pending new pin, then keeps current selection, then falls
+	// back to the first pin.
 	useEffect(() => {
 		if (pins.length === 0) {
 			setActivePinId(null);
-		} else if (
-			activePinId === null ||
-			!pins.find((p) => p.id === activePinId)
+			return;
+		}
+		if (
+			pendingActivePinRef.current &&
+			pins.find((p) => p.id === pendingActivePinRef.current)
 		) {
+			setActivePinId(pendingActivePinRef.current);
+			pendingActivePinRef.current = null;
+			return;
+		}
+		if (activePinId === null || !pins.find((p) => p.id === activePinId)) {
 			setActivePinId(pins[0].id);
 		}
 	}, [pins, activePinId]);
@@ -198,31 +249,29 @@ export const ClimbImageViewer = ({ image, onClose }: ClimbImageViewerProps) => {
 		if ((e.target as HTMLElement).closest("[data-pin]")) return;
 		const coords = clientToImagePct(e.clientX, e.clientY);
 		if (!coords) return;
-		addPin.mutate({
-			pinType: selectedPinType,
-			xPct: coords.xPct,
-			yPct: coords.yPct,
-		});
+		addPin.mutate(
+			{ pinType: selectedPinType, xPct: coords.xPct, yPct: coords.yPct },
+			{
+				onSuccess: (newId) => {
+					pendingActivePinRef.current = newId;
+				},
+			},
+		);
 		setPopoverPinId(null);
 	}
 
 	// ── Magnifier ──────────────────────────────────────────────────────────────
 
-	// Draws a zoomed crop of the image onto the canvas, centred on the pin tip
-	// position (clientX, clientY - DRAG_Y_OFFSET). Positions and shows the
-	// magnifier container imperatively to avoid re-render jank.
 	function showMagnifier(touchClientX: number, touchClientY: number) {
 		const img = imgRef.current;
 		const canvas = canvasRef.current;
 		const container = magnifierRef.current;
 		if (!img || !canvas || !container) return;
 
-		// Position above the finger
 		container.style.display = "block";
 		container.style.left = `${touchClientX - MAGNIFIER_SIZE / 2}px`;
 		container.style.top = `${touchClientY - MAGNIFIER_SIZE - MAGNIFIER_GAP}px`;
 
-		// Draw zoomed region centred on the pin tip (adjusted touch position)
 		const ctx = canvas.getContext("2d");
 		if (!ctx) return;
 
@@ -249,7 +298,6 @@ export const ClimbImageViewer = ({ image, onClose }: ClimbImageViewerProps) => {
 			MAGNIFIER_SIZE,
 		);
 
-		// Crosshair at centre
 		const mid = MAGNIFIER_SIZE / 2;
 		ctx.strokeStyle = "rgba(0,0,0,0.4)";
 		ctx.lineWidth = 2;
@@ -335,6 +383,18 @@ export const ClimbImageViewer = ({ image, onClose }: ClimbImageViewerProps) => {
 		setEditingDescription(false);
 	}
 
+	// ── Pin reorder ────────────────────────────────────────────────────────────
+
+	function movePin(dir: -1 | 1) {
+		if (!activePinId) return;
+		const idx = pins.findIndex((p) => p.id === activePinId);
+		const newIdx = idx + dir;
+		if (newIdx < 0 || newIdx >= pins.length) return;
+		const ids = pins.map((p) => p.id);
+		[ids[idx], ids[newIdx]] = [ids[newIdx], ids[idx]];
+		reorderPins.mutate(ids);
+	}
+
 	// ── Derived ────────────────────────────────────────────────────────────────
 
 	const activePin = pins.find((p) => p.id === activePinId) ?? null;
@@ -377,36 +437,26 @@ export const ClimbImageViewer = ({ image, onClose }: ClimbImageViewerProps) => {
 					{(
 						Object.entries(PIN_CONFIG) as [
 							PinType,
-							{ label: string; color: string; mirror?: boolean },
+							{
+								label: string;
+								color: string;
+								mirror?: boolean;
+								textIcon?: string;
+							},
 						][]
-					).map(([type, config]) => (
+					).map(([type]) => (
 						<button
 							key={type}
 							type="button"
 							onClick={() => setSelectedPinType(type)}
 							className="w-10 h-10 rounded-full font-bold text-sm text-white flex items-center justify-center border-2 transition-all"
 							style={{
-								backgroundColor: config.color,
+								backgroundColor: PIN_CONFIG[type].color,
 								borderColor: selectedPinType === type ? "white" : "transparent",
 								opacity: selectedPinType === type ? 1 : 0.6,
 							}}
 						>
-							{type === "lh" || type === "rh" ? (
-								<HandGrab
-									size={18}
-									style={
-										config.mirror ? { transform: "scaleX(-1)" } : undefined
-									}
-								/>
-							) : (
-								<FootIcon
-									size={18}
-									color="white"
-									style={
-										config.mirror ? { transform: "scaleX(-1)" } : undefined
-									}
-								/>
-							)}
+							<PinIcon type={type} size={18} />
 						</button>
 					))}
 				</div>
@@ -430,7 +480,7 @@ export const ClimbImageViewer = ({ image, onClose }: ClimbImageViewerProps) => {
 						draggable={false}
 					/>
 
-					{pins.map((pin, index) => {
+					{pins.map((pin) => {
 						const cfg = PIN_CONFIG[pin.pin_type];
 						const dir: PointerDir = pin.pointer_dir ?? "bottom";
 						const isActive = pin.id === activePinId;
@@ -442,7 +492,7 @@ export const ClimbImageViewer = ({ image, onClose }: ClimbImageViewerProps) => {
 								key={pin.id}
 								data-pin="true"
 								type="button"
-								aria-label={`Pin ${index + 1} — ${cfg.label}`}
+								aria-label={`Pin — ${cfg.label}`}
 								onTouchStart={(e) => handlePinTouchStart(e, pin.id)}
 								onClick={(e) => handlePinClick(e, pin.id)}
 								className={`absolute touch-none ${pinFlexDir(dir)} flex items-center`}
@@ -454,16 +504,14 @@ export const ClimbImageViewer = ({ image, onClose }: ClimbImageViewerProps) => {
 								}}
 							>
 								<div
-									className="rounded-full flex items-center justify-center text-white font-bold"
+									className="rounded-full flex items-center justify-center"
 									style={{
 										width: PIN_CIRCLE,
 										height: PIN_CIRCLE,
-										fontSize: 10,
 										backgroundColor: cfg.color,
-										outline: isActive ? "2px solid white" : "none",
 									}}
 								>
-									{index + 1}
+									<PinIcon type={pin.pin_type} size={12} />
 								</div>
 								<PinTriangle dir={dir} color={cfg.color} />
 							</button>
@@ -498,7 +546,38 @@ export const ClimbImageViewer = ({ image, onClose }: ClimbImageViewerProps) => {
 							>
 								{activePinIndex + 1} · {PIN_CONFIG[activePin.pin_type].label}
 							</span>
-							{editMode && <Pencil size={11} className="text-text-tertiary" />}
+							{editMode && (
+								<>
+									<button
+										type="button"
+										onClick={(e) => {
+											e.stopPropagation();
+											movePin(-1);
+										}}
+										disabled={activePinIndex === 0 || reorderPins.isPending}
+										className="text-text-tertiary disabled:opacity-30 p-0.5"
+										aria-label="Move pin earlier"
+									>
+										<ArrowLeft size={12} />
+									</button>
+									<button
+										type="button"
+										onClick={(e) => {
+											e.stopPropagation();
+											movePin(1);
+										}}
+										disabled={
+											activePinIndex === pins.length - 1 ||
+											reorderPins.isPending
+										}
+										className="text-text-tertiary disabled:opacity-30 p-0.5"
+										aria-label="Move pin later"
+									>
+										<ArrowRight size={12} />
+									</button>
+									<Pencil size={11} className="text-text-tertiary ml-1" />
+								</>
+							)}
 						</div>
 						<p className="text-sm text-text-secondary truncate">
 							{activePin.description ?? "No note"}
