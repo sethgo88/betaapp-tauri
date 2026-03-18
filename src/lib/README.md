@@ -63,6 +63,7 @@ Versioned migration runner. Maintains a `schema_version` table (single row) and 
 | v14 | Restructure `climb_images` (`url`→`image_url`, drop `caption`); add `climb_image_pins` table (#32) |
 | v15 | `server_updated_at` on `downloaded_regions` for staleness detection (#31) |
 | v16 | `pointer_dir` on `climb_image_pins` (#38) |
+| v17 | Backfill `server_updated_at` on `downloaded_regions` for devices that skipped v15 |
 
 ### Rules
 - Always use `?` positional parameters — never string interpolation (SQL injection)
