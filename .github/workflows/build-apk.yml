@@ -95,9 +95,9 @@ jobs:
           TAURI_CLI_VERBOSITY: "3"
         run: |
           if [ "${{ inputs.build_type }}" = "release" ]; then
-            pnpm tauri android build --apk
+            pnpm tauri android build --apk --target aarch64
           else
-            pnpm tauri android build --debug --apk
+            pnpm tauri android build --debug --apk --target aarch64
           fi
 
       # ── Upload ────────────────────────────────────────────────────────────
@@ -105,6 +105,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: betaapp-${{ inputs.build_type }}-${{ github.run_number }}
-          path: src-tauri/gen/android/app/build/outputs/apk/${{ inputs.build_type }}/app-${{ inputs.build_type }}.apk
+          path: src-tauri/gen/android/app/build/outputs/apk/**/*.apk
           if-no-files-found: error
           retention-days: 30
