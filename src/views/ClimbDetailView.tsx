@@ -421,9 +421,9 @@ const ClimbDetailView = () => {
 						onChange={(e) => {
 							const text = e.target.value;
 							setImportText(text);
-							const hasCommas = text
-								.split("\n")
-								.some((line) => line.includes(","));
+							const hasCommas =
+							text.split("\n").filter((line) => line.trimEnd().endsWith(","))
+								.length > 1;
 							setImportMode(hasCommas ? "csv" : "text");
 						}}
 					/>
