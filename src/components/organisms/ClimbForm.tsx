@@ -21,6 +21,7 @@ import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { Select } from "@/components/atoms/Select";
 import { ToggleGroup } from "@/components/atoms/ToggleGroup";
+import { ImportBetaSheet } from "@/components/molecules/ImportBetaSheet";
 import {
 	ClimbFormSchema,
 	type ClimbFormValues,
@@ -109,6 +110,7 @@ export const ClimbForm = ({ defaultValues, onSubmit }: ClimbFormProps) => {
 	const [routeType, _setRouteType] = useState<RouteType>(
 		defaultValues?.route_type ?? "sport",
 	);
+	const [importOpen, setImportOpen] = useState(false);
 
 	const inputRefs = useRef<Array<HTMLTextAreaElement | null>>([]);
 
@@ -320,6 +322,20 @@ export const ClimbForm = ({ defaultValues, onSubmit }: ClimbFormProps) => {
 				>
 					Save
 				</Button>
+
+				<Button
+					variant="outlined"
+					className="w-full"
+					onClick={() => setImportOpen(true)}
+				>
+					Import Beta
+				</Button>
+
+				<ImportBetaSheet
+					isOpen={importOpen}
+					onClose={() => setImportOpen(false)}
+					onImport={(moves) => setMovesList(moves)}
+				/>
 			</div>
 
 			<div className="w-full rounded-md bg-surface-card p-2 overflow-y-scroll">

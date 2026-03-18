@@ -43,6 +43,7 @@ templates   Layout shells with no real data — just children/slots.
 | `ClimbImageGallery` | User photo gallery for a climb log. Auto-fill grid of 96px thumbnails + a dotted `ImagePlus` add tile. Tapping a thumbnail opens a bottom action sheet with an image preview, sort arrows (move left/right), "Edit pins" (opens `ClimbImageViewer`), and delete with confirmation. Shows usage counter (n / 100). Props: `climbId`. |
 | `ClimbImageViewer` | Fullscreen photo viewer with pin annotation overlay. Read-only shows pins; "Edit pins" mode enables tap-to-place, drag-to-reposition, and per-pin description popovers. Four pin types: LH (blue), RH (red), LF (green), RF (amber). Props: `image` (ClimbImageWithUrl), `onClose`. |
 | `VideoFrameCapturer` | Fullscreen video scrubber for capturing a still frame as a climb image. Auto-opens the device file picker on mount. Shows play/pause + seek bar once a video is loaded; "Save frame" draws the current frame to a canvas, compresses to JPEG, and calls `onCapture(file)`. Props: `onCapture(file)`, `onClose`. |
+| `ImportBetaSheet` | Bottom sheet for importing a move list from plain text (one-per-line) or CSV. Auto-detects CSV when >1 line ends with a comma. Replaces existing moves on import. Props: `climbId`, `isOpen`, `onClose`. |
 
 ### Organisms
 | Component | Purpose |
