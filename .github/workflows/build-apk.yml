@@ -82,6 +82,10 @@ jobs:
             "$KEYSTORE_PATH" "$KEY_ALIAS" "$KEYSTORE_PASSWORD" \
             > src-tauri/gen/android/keystore.properties
 
+      # ── Tauri CLI (Rust binary — required by Gradle's BuildTask) ─────────
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli --version "^2" --locked
+
       # ── Build ─────────────────────────────────────────────────────────────
       - name: Make gradlew executable
         run: chmod +x src-tauri/gen/android/gradlew
