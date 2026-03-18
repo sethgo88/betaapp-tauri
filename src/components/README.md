@@ -47,7 +47,7 @@ templates   Layout shells with no real data — just children/slots.
 ### Organisms
 | Component | Purpose |
 |---|---|
-| `ClimbForm` | Full add/edit form — used by both `AddClimbView` and `EditClimbView` |
+| `ClimbForm` | Full add/edit form — used by both `AddClimbView` and `EditClimbView`. Move list is drag-to-reorder via `@dnd-kit/sortable`; long-press the `GripVertical` handle to activate drag (250ms `TouchSensor` delay). |
 | `NavBar` | Bottom navigation bar: Home, Add, Search, Menu |
 | `Drawer` | Slide-up modal sheet |
 
