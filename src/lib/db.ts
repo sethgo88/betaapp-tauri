@@ -5,19 +5,27 @@ export interface DbAdapter {
 	select<T>(sql: string, params?: unknown[]): Promise<T>;
 }
 
-let _db: DbAdapter | null = null;
+let _dbReady: Promise<DbAdapter> | null = null;
+
+// Injected by tests via setDb — bypasses the lazy-init path.
+let _testDb: DbAdapter | null = null;
 
 export function setDb(adapter: DbAdapter): void {
-	_db = adapter;
+	_testDb = adapter;
+	_dbReady = Promise.resolve(adapter);
 }
 
-export async function getDb(): Promise<DbAdapter> {
-	if (!_db) {
-		const db = await Database.load("sqlite:betaapp.db");
-		_db = db as unknown as DbAdapter;
-		await runMigrations(_db);
+export function getDb(): Promise<DbAdapter> {
+	if (_testDb) return Promise.resolve(_testDb);
+	if (!_dbReady) {
+		_dbReady = (async () => {
+			const db = await Database.load("sqlite:betaapp.db");
+			const adapter = db as unknown as DbAdapter;
+			await runMigrations(adapter);
+			return adapter;
+		})();
 	}
-	return _db;
+	return _dbReady;
 }
 
 type Migration = (db: DbAdapter) => Promise<void>;
@@ -378,16 +386,26 @@ const migrations: Migration[] = [
 
 	// v15: server_updated_at on downloaded_regions (#31)
 	async (db) => {
-		await db.execute(
-			`ALTER TABLE downloaded_regions ADD COLUMN server_updated_at TEXT`,
+		const cols = await db.select<{ name: string }[]>(
+			`PRAGMA table_info(downloaded_regions)`,
 		);
+		if (!cols.some((c) => c.name === "server_updated_at")) {
+			await db.execute(
+				`ALTER TABLE downloaded_regions ADD COLUMN server_updated_at TEXT`,
+			);
+		}
 	},
 
 	// v16: add pointer_dir to climb_image_pins (#38)
 	async (db) => {
-		await db.execute(
-			`ALTER TABLE climb_image_pins ADD COLUMN pointer_dir TEXT NOT NULL DEFAULT 'bottom'`,
+		const cols = await db.select<{ name: string }[]>(
+			`PRAGMA table_info(climb_image_pins)`,
 		);
+		if (!cols.some((c) => c.name === "pointer_dir")) {
+			await db.execute(
+				`ALTER TABLE climb_image_pins ADD COLUMN pointer_dir TEXT NOT NULL DEFAULT 'bottom'`,
+			);
+		}
 	},
 
 	// v17: backfill server_updated_at on downloaded_regions for devices that skipped v15
