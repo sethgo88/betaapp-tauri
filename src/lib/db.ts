@@ -389,6 +389,19 @@ const migrations: Migration[] = [
 			`ALTER TABLE climb_image_pins ADD COLUMN pointer_dir TEXT NOT NULL DEFAULT 'bottom'`,
 		);
 	},
+
+	// v17: backfill server_updated_at on downloaded_regions for devices that skipped v15
+	async (db) => {
+		const cols = await db.select<{ name: string }[]>(
+			`PRAGMA table_info(downloaded_regions)`,
+		);
+		const hasColumn = cols.some((c) => c.name === "server_updated_at");
+		if (!hasColumn) {
+			await db.execute(
+				`ALTER TABLE downloaded_regions ADD COLUMN server_updated_at TEXT`,
+			);
+		}
+	},
 ];
 
 export async function runMigrations(db: DbAdapter): Promise<void> {
