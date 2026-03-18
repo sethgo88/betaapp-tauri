@@ -87,9 +87,9 @@ jobs:
       - name: Build ${{ inputs.build_type }} APK
         run: |
           if [ "${{ inputs.build_type }}" = "release" ]; then
-            pnpm tauri android build --release --target aarch64
+            pnpm tauri android build --apk
           else
-            pnpm tauri android build --debug --target aarch64
+            pnpm tauri android build --debug --apk
           fi
 
       # ── Upload ────────────────────────────────────────────────────────────
