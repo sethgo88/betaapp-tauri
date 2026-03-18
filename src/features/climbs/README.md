@@ -70,6 +70,7 @@ CREATE TABLE IF NOT EXISTS climbs (
 | `fetchClimb(id)` | Single climb by id |
 | `insertClimb(userId, data, routeId?)` | Creates new climb; `routeId` links to a verified route |
 | `updateClimb(id, data, routeId?)` | Updates mutable fields; trigger stamps `updated_at` |
+| `updateClimbMoves(id, moves)` | Updates only the `moves` JSON string; used by the import sheet |
 | `linkClimbToRoute(climbId, routeId)` | Sets `route_id` without changing other fields (upgrade flow) |
 | `softDeleteClimb(id)` | Sets `deleted_at = datetime('now')` |
 | `applyRemoteClimb(climb)` | `INSERT OR REPLACE` — preserves server `updated_at`; used by sync + Realtime |
@@ -86,6 +87,7 @@ CREATE TABLE IF NOT EXISTS climbs (
 | `useClimb(id)` | Single climb |
 | `useAddClimb()` | Mutation — `{ data, routeId? }` — inserts + silent push |
 | `useUpdateClimb()` | Mutation — `{ id, data, routeId? }` — updates + silent push |
+| `useUpdateClimbMoves()` | Mutation — `{ id, moves }` — replaces moves JSON string + silent push |
 | `useLinkClimbToRoute()` | Mutation — `{ climbId, routeId }` — upgrade flow in EditClimbView |
 | `useDeleteClimb()` | Mutation — soft delete + silent push |
 

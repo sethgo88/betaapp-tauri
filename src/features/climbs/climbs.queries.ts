@@ -10,6 +10,7 @@ import {
 	linkClimbToRoute,
 	softDeleteClimb,
 	updateClimb,
+	updateClimbMoves,
 } from "./climbs.service";
 
 const CLIMBS_KEY = "climbs";
@@ -85,6 +86,19 @@ export function useLinkClimbToRoute() {
 	return useMutation({
 		mutationFn: ({ climbId, routeId }: { climbId: string; routeId: string }) =>
 			linkClimbToRoute(climbId, routeId),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: [CLIMBS_KEY] });
+			silentPush(userId);
+		},
+	});
+}
+
+export function useUpdateClimbMoves() {
+	const qc = useQueryClient();
+	const userId = useAuthStore((s) => s.user?.id);
+	return useMutation({
+		mutationFn: ({ id, moves }: { id: string; moves: string }) =>
+			updateClimbMoves(id, moves),
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: [CLIMBS_KEY] });
 			silentPush(userId);

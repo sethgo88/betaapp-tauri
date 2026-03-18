@@ -74,6 +74,17 @@ export async function updateClimb(
 	);
 }
 
+export async function updateClimbMoves(
+	id: string,
+	moves: string,
+): Promise<void> {
+	const db = await getDb();
+	await db.execute(
+		"UPDATE climbs SET moves = ? WHERE id = ? AND deleted_at IS NULL",
+		[moves, id],
+	);
+}
+
 export async function linkClimbToRoute(
 	climbId: string,
 	routeId: string,
