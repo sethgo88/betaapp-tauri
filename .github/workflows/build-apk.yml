@@ -36,6 +36,7 @@ jobs:
         run: |
           sdkmanager "ndk;27.2.12479018"
           echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/27.2.12479018" >> $GITHUB_ENV
+          echo "NDK_HOME=$ANDROID_HOME/ndk/27.2.12479018" >> $GITHUB_ENV
 
       # ── Rust ──────────────────────────────────────────────────────────────
       - name: Set up Rust stable
@@ -77,17 +78,17 @@ jobs:
         run: |
           KEYSTORE_PATH="$GITHUB_WORKSPACE/betaapp-release.jks"
           echo "$KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
-          cat > src-tauri/gen/android/keystore.properties <<EOF
-          storeFile=$KEYSTORE_PATH
-          keyAlias=$KEY_ALIAS
-          password=$KEYSTORE_PASSWORD
-          EOF
+          printf 'storeFile=%s\nkeyAlias=%s\npassword=%s\n' \
+            "$KEYSTORE_PATH" "$KEY_ALIAS" "$KEYSTORE_PASSWORD" \
+            > src-tauri/gen/android/keystore.properties
 
       # ── Build ─────────────────────────────────────────────────────────────
       - name: Make gradlew executable
         run: chmod +x src-tauri/gen/android/gradlew
 
       - name: Build ${{ inputs.build_type }} APK
+        env:
+          TAURI_CLI_VERBOSITY: "3"
         run: |
           if [ "${{ inputs.build_type }}" = "release" ]; then
             pnpm tauri android build --apk
