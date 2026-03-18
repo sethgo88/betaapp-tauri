@@ -3,9 +3,7 @@ import { ChevronDown, ExternalLink, Pencil, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
-import { Sheet } from "@/components/molecules/Sheet";
 import { Spinner } from "@/components/atoms/Spinner";
-import { ToggleGroup } from "@/components/atoms/ToggleGroup";
 import { ClimbImageGallery } from "@/components/molecules/ClimbImageGallery";
 import {
 	useAddBurn,
@@ -13,10 +11,7 @@ import {
 	useDeleteBurn,
 	useUpdateBurn,
 } from "@/features/burns/burns.queries";
-import {
-	useClimb,
-	useUpdateClimbMoves,
-} from "@/features/climbs/climbs.queries";
+import { useClimb } from "@/features/climbs/climbs.queries";
 import { useClimbsStore } from "@/features/climbs/climbs.store";
 import { useRoute } from "@/features/routes/routes.queries";
 import { cn } from "@/lib/cn";
@@ -32,12 +27,8 @@ const ClimbDetailView = () => {
 	const updateBurn = useUpdateBurn();
 	const deleteBurn = useDeleteBurn();
 	const setSelectedClimbId = useClimbsStore((s) => s.setSelectedClimbId);
-	const updateClimbMoves = useUpdateClimbMoves();
 	const [movesOpen, setMovesOpen] = useState(false);
 	const [burnsOpen, setBurnsOpen] = useState(false);
-	const [importOpen, setImportOpen] = useState(false);
-	const [importText, setImportText] = useState("");
-	const [importMode, setImportMode] = useState<"text" | "csv">("text");
 	const [showAddBurn, setShowAddBurn] = useState(false);
 	const [addDate, setAddDate] = useState(() =>
 		new Date().toISOString().slice(0, 10),
@@ -51,28 +42,6 @@ const ClimbDetailView = () => {
 		setSelectedClimbId(climbId);
 		return () => setSelectedClimbId(null);
 	}, [climbId, setSelectedClimbId]);
-
-	const handleImport = () => {
-		if (!importText.trim()) return;
-		const parsed =
-			importMode === "csv"
-				? importText.split(",").map((s) => s.trim()).filter(Boolean)
-				: importText.split("\n").map((s) => s.trim()).filter(Boolean);
-		const newMoves = parsed.map((text) => ({
-			id: crypto.randomUUID(),
-			text,
-		}));
-		updateClimbMoves.mutate(
-			{ id: climbId, moves: JSON.stringify(newMoves) },
-			{
-				onSuccess: () => {
-					setImportOpen(false);
-					setImportText("");
-					setImportMode("text");
-				},
-			},
-		);
-	};
 
 	if (isLoading) {
 		return (
@@ -341,29 +310,20 @@ const ClimbDetailView = () => {
 			</div>
 
 			<div className="rounded-md bg-surface-card">
-				<div className="flex items-center justify-between w-full px-3 pt-3 pb-2">
-					<button
-						type="button"
-						className="flex items-center gap-2 text-sm text-text-secondary"
-						onClick={() => setMovesOpen(!movesOpen)}
-					>
-						<span>Moves ({moves.length})</span>
-						<ChevronDown
-							size={16}
-							className={cn(
-								"transition-transform",
-								movesOpen && "rotate-180",
-							)}
-						/>
-					</button>
-					<button
-						type="button"
-						className="text-xs text-accent-primary"
-						onClick={() => setImportOpen(true)}
-					>
-						Import
-					</button>
-				</div>
+				<button
+					type="button"
+					className="flex items-center gap-2 w-full px-3 pt-3 pb-2 text-sm text-text-secondary"
+					onClick={() => setMovesOpen(!movesOpen)}
+				>
+					<span>Moves ({moves.length})</span>
+					<ChevronDown
+						size={16}
+						className={cn(
+							"transition-transform",
+							movesOpen && "rotate-180",
+						)}
+					/>
+				</button>
 				{movesOpen && moves.length > 0 && (
 					<ul className="flex flex-col gap-1 px-3 pb-3">
 						{moves.map((move, i) => (
@@ -382,59 +342,6 @@ const ClimbDetailView = () => {
 					</p>
 				)}
 			</div>
-
-			<Sheet
-				isOpen={importOpen}
-				onClose={() => {
-					setImportOpen(false);
-					setImportText("");
-					setImportMode("text");
-				}}
-				title="Import Moves"
-				action={
-					<Button
-						size="small"
-						disabled={!importText.trim() || updateClimbMoves.isPending}
-						onClick={handleImport}
-					>
-						Import
-					</Button>
-				}
-			>
-				<div className="flex flex-col gap-4">
-					<ToggleGroup
-						options={[
-							{ value: "text", label: "Plain text" },
-							{ value: "csv", label: "CSV" },
-						]}
-						value={importMode}
-						onChange={(v) => setImportMode(v as "text" | "csv")}
-					/>
-					<textarea
-						className="w-full min-h-48 rounded-[var(--radius-md)] bg-surface-input p-3 text-sm outline-none resize-none"
-						placeholder={
-							importMode === "csv"
-								? "move1, move2, move3..."
-								: "Move 1\nMove 2\nMove 3..."
-						}
-						value={importText}
-						onChange={(e) => {
-							const text = e.target.value;
-							setImportText(text);
-							const hasCommas =
-							text.split("\n").filter((line) => line.trimEnd().endsWith(","))
-								.length > 1;
-							setImportMode(hasCommas ? "csv" : "text");
-						}}
-					/>
-					<p className="text-xs text-text-secondary">
-						{importMode === "csv"
-							? "Moves separated by commas."
-							: "One move per line."}{" "}
-						Importing will replace existing moves.
-					</p>
-				</div>
-			</Sheet>
 
 			{climb.link && (
 				<a
