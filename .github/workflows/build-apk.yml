@@ -84,6 +84,9 @@ jobs:
           EOF
 
       # ── Build ─────────────────────────────────────────────────────────────
+      - name: Make gradlew executable
+        run: chmod +x src-tauri/gen/android/gradlew
+
       - name: Build ${{ inputs.build_type }} APK
         run: |
           if [ "${{ inputs.build_type }}" = "release" ]; then
