@@ -93,6 +93,8 @@ jobs:
       - name: Build ${{ inputs.build_type }} APK
         env:
           TAURI_CLI_VERBOSITY: "3"
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: |
           if [ "${{ inputs.build_type }}" = "release" ]; then
             pnpm tauri android build --apk --target aarch64
