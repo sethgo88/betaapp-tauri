@@ -65,6 +65,7 @@ export type Database = {
           description: string | null
           id: string
           pin_type: string
+          pointer_dir: string
           sort_order: number
           x_pct: number
           y_pct: number
@@ -73,8 +74,9 @@ export type Database = {
           climb_image_id: string
           created_at?: string
           description?: string | null
-          id?: string
+          id: string
           pin_type: string
+          pointer_dir?: string
           sort_order?: number
           x_pct: number
           y_pct: number
@@ -85,6 +87,7 @@ export type Database = {
           description?: string | null
           id?: string
           pin_type?: string
+          pointer_dir?: string
           sort_order?: number
           x_pct?: number
           y_pct?: number
@@ -113,7 +116,7 @@ export type Database = {
           climb_id: string
           created_at?: string
           deleted_at?: string | null
-          id?: string
+          id: string
           image_url: string
           sort_order?: number
           user_id: string
@@ -228,6 +231,7 @@ export type Database = {
       }
       crags: {
         Row: {
+          boulder_count: number
           created_at: string
           created_by: string | null
           deleted_at: string | null
@@ -237,10 +241,13 @@ export type Database = {
           lng: number | null
           name: string
           sort_order: number
+          sport_count: number
           status: string
           sub_region_id: string
+          trad_count: number
         }
         Insert: {
+          boulder_count?: number
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null
@@ -250,10 +257,13 @@ export type Database = {
           lng?: number | null
           name: string
           sort_order?: number
+          sport_count?: number
           status?: string
           sub_region_id: string
+          trad_count?: number
         }
         Update: {
+          boulder_count?: number
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null
@@ -263,8 +273,10 @@ export type Database = {
           lng?: number | null
           name?: string
           sort_order?: number
+          sport_count?: number
           status?: string
           sub_region_id?: string
+          trad_count?: number
         }
         Relationships: [
           {
@@ -596,6 +608,7 @@ export type Database = {
       }
       walls: {
         Row: {
+          boulder_count: number
           crag_id: string
           created_at: string
           created_by: string | null
@@ -606,9 +619,13 @@ export type Database = {
           lng: number | null
           name: string
           sort_order: number
+          sport_count: number
           status: string
+          trad_count: number
+          wall_type: string
         }
         Insert: {
+          boulder_count?: number
           crag_id: string
           created_at?: string
           created_by?: string | null
@@ -619,9 +636,13 @@ export type Database = {
           lng?: number | null
           name: string
           sort_order?: number
+          sport_count?: number
           status?: string
+          trad_count?: number
+          wall_type?: string
         }
         Update: {
+          boulder_count?: number
           crag_id?: string
           created_at?: string
           created_by?: string | null
@@ -632,7 +653,10 @@ export type Database = {
           lng?: number | null
           name?: string
           sort_order?: number
+          sport_count?: number
           status?: string
+          trad_count?: number
+          wall_type?: string
         }
         Relationships: [
           {

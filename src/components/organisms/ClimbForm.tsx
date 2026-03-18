@@ -1,4 +1,21 @@
+import type { DragEndEvent } from "@dnd-kit/core";
+import {
+	closestCenter,
+	DndContext,
+	PointerSensor,
+	TouchSensor,
+	useSensor,
+	useSensors,
+} from "@dnd-kit/core";
+import {
+	arrayMove,
+	SortableContext,
+	useSortable,
+	verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { useForm, uuid } from "@tanstack/react-form";
+import { GripVertical } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
@@ -13,6 +30,64 @@ import {
 import { useGrades } from "@/features/grades/grades.queries";
 
 type MoveItem = { id: string; text: string };
+
+// ── Sortable move row ─────────────────────────────────────────────────────────
+
+interface SortableMoveRowProps {
+	move: MoveItem;
+	index: number;
+	onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>, id: string) => void;
+	onChange: (e: React.ChangeEvent<HTMLTextAreaElement>, id: string) => void;
+	setRef: (el: HTMLTextAreaElement | null, index: number) => void;
+}
+
+const SortableMoveRow = ({
+	move,
+	index,
+	onKeyDown,
+	onChange,
+	setRef,
+}: SortableMoveRowProps) => {
+	const {
+		attributes,
+		listeners,
+		setNodeRef,
+		transform,
+		transition,
+		isDragging,
+	} = useSortable({ id: move.id });
+
+	const style: React.CSSProperties = {
+		transform: CSS.Transform.toString(transform),
+		transition,
+		opacity: isDragging ? 0.4 : 1,
+		touchAction: "none",
+	};
+
+	return (
+		<div ref={setNodeRef} style={style} className="flex items-start gap-1">
+			{/* Drag handle — long press to activate */}
+			<button
+				type="button"
+				className="flex-shrink-0 mt-1 p-1 text-text-tertiary touch-none cursor-grab active:cursor-grabbing"
+				aria-label="Drag to reorder"
+				{...attributes}
+				{...listeners}
+			>
+				<GripVertical size={16} />
+			</button>
+			<textarea
+				onKeyDown={(e) => onKeyDown(e, move.id)}
+				onChange={(e) => onChange(e, move.id)}
+				className="flex-1 field-sizing-content border-l border-text-primary outline-none px-1 bg-transparent"
+				value={move.text}
+				ref={(el) => setRef(el, index)}
+			/>
+		</div>
+	);
+};
+
+// ── Climb form ────────────────────────────────────────────────────────────────
 
 interface ClimbFormProps {
 	defaultValues?: Partial<ClimbFormValues>;
@@ -36,6 +111,28 @@ export const ClimbForm = ({ defaultValues, onSubmit }: ClimbFormProps) => {
 	);
 
 	const inputRefs = useRef<Array<HTMLTextAreaElement | null>>([]);
+
+	// ── DnD sensors: touch with 250ms long-press delay, pointer for dev ────────
+	const sensors = useSensors(
+		useSensor(TouchSensor, {
+			activationConstraint: { delay: 250, tolerance: 5 },
+		}),
+		useSensor(PointerSensor, {
+			activationConstraint: { distance: 8 },
+		}),
+	);
+
+	const handleDragEnd = (event: DragEndEvent) => {
+		const { active, over } = event;
+		if (!over || active.id === over.id) return;
+		setMovesList((items) => {
+			const oldIndex = items.findIndex((m) => m.id === active.id);
+			const newIndex = items.findIndex((m) => m.id === over.id);
+			return arrayMove(items, oldIndex, newIndex);
+		});
+	};
+
+	// ── Move editing ──────────────────────────────────────────────────────────
 
 	const addMove = (id: string) => {
 		const index = movesList.findIndex((x) => x.id === id);
@@ -98,6 +195,8 @@ export const ClimbForm = ({ defaultValues, onSubmit }: ClimbFormProps) => {
 			inputRefs.current[focusedIndex + 1]?.focus();
 		}
 	}, [movesList.length]);
+
+	// ── Form ──────────────────────────────────────────────────────────────────
 
 	const { data: grades = [] } = useGrades(routeType);
 
@@ -224,18 +323,29 @@ export const ClimbForm = ({ defaultValues, onSubmit }: ClimbFormProps) => {
 			</div>
 
 			<div className="w-full rounded-md bg-surface-card p-2 overflow-y-scroll">
-				{movesList.map((move, index) => (
-					<textarea
-						key={move.id}
-						onKeyDown={(e) => handleTextAreaKeyDown(e, move.id)}
-						onChange={(e) => handleMoveChange(e, move.id)}
-						className="w-full field-sizing-content border-l border-text-primary outline-none px-1 bg-transparent"
-						value={move.text}
-						ref={(el) => {
-							inputRefs.current[index] = el;
-						}}
-					/>
-				))}
+				<DndContext
+					sensors={sensors}
+					collisionDetection={closestCenter}
+					onDragEnd={handleDragEnd}
+				>
+					<SortableContext
+						items={movesList.map((m) => m.id)}
+						strategy={verticalListSortingStrategy}
+					>
+						{movesList.map((move, index) => (
+							<SortableMoveRow
+								key={move.id}
+								move={move}
+								index={index}
+								onKeyDown={handleTextAreaKeyDown}
+								onChange={handleMoveChange}
+								setRef={(el, i) => {
+									inputRefs.current[i] = el;
+								}}
+							/>
+						))}
+					</SortableContext>
+				</DndContext>
 			</div>
 		</form>
 	);

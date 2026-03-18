@@ -3,7 +3,7 @@ import { useAuthStore } from "@/features/auth/auth.store";
 import { uploadToStorage } from "@/lib/image-utils";
 import { supabase } from "@/lib/supabase";
 import { useUiStore } from "@/stores/ui.store";
-import type { PinType } from "./climb-images.schema";
+import type { PinType, PointerDir } from "./climb-images.schema";
 import {
 	deleteClimbImagePin,
 	fetchClimbImagePins,
@@ -12,6 +12,7 @@ import {
 	getUserImageCount,
 	insertClimbImage,
 	insertClimbImagePin,
+	reorderClimbImagePins,
 	reorderClimbImages,
 	softDeleteClimbImage,
 	updateClimbImagePin,
@@ -127,20 +128,23 @@ export function useAddPin(climbImageId: string) {
 	return useMutation({
 		mutationFn: async ({
 			pinType,
+			pointerDir = "bottom",
 			xPct,
 			yPct,
 		}: {
 			pinType: PinType;
+			pointerDir?: PointerDir;
 			xPct: number;
 			yPct: number;
-		}) => {
+		}): Promise<string> => {
 			const existing = await fetchClimbImagePins(climbImageId);
-			await insertClimbImagePin(
+			return insertClimbImagePin(
 				climbImageId,
 				pinType,
 				xPct,
 				yPct,
 				existing.length,
+				pointerDir,
 			);
 		},
 		onSuccess: () => {
@@ -160,8 +164,26 @@ export function useUpdatePin(climbImageId: string) {
 			patch,
 		}: {
 			id: string;
-			patch: { x_pct?: number; y_pct?: number; description?: string | null };
+			patch: {
+				x_pct?: number;
+				y_pct?: number;
+				description?: string | null;
+				pointer_dir?: PointerDir;
+			};
 		}) => updateClimbImagePin(id, patch),
+		onSuccess: () => {
+			qc.invalidateQueries({
+				queryKey: [CLIMB_IMAGE_PINS_KEY, climbImageId],
+			});
+		},
+	});
+}
+
+export function useReorderPins(climbImageId: string) {
+	const qc = useQueryClient();
+
+	return useMutation({
+		mutationFn: (ids: string[]) => reorderClimbImagePins(ids),
 		onSuccess: () => {
 			qc.invalidateQueries({
 				queryKey: [CLIMB_IMAGE_PINS_KEY, climbImageId],

@@ -1,7 +1,10 @@
 import { z } from "zod";
 
-export const PinType = z.enum(["lh", "rh", "lf", "rf"]);
+export const PinType = z.enum(["lh", "rh", "lf", "rf", "body", "clip"]);
 export type PinType = z.infer<typeof PinType>;
+
+export const PointerDir = z.enum(["top", "bottom", "left", "right"]);
+export type PointerDir = z.infer<typeof PointerDir>;
 
 export const ClimbImageSchema = z.object({
 	id: z.string(),
@@ -26,6 +29,7 @@ export const ClimbImagePinSchema = z.object({
 	x_pct: z.number(),
 	y_pct: z.number(),
 	description: z.string().nullable().optional(),
+	pointer_dir: PointerDir.default("bottom"),
 	sort_order: z.number(),
 	created_at: z.string(),
 });
