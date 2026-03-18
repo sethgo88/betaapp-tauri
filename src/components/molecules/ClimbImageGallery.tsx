@@ -1,4 +1,10 @@
-import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import {
+	ChevronLeft,
+	ChevronRight,
+	Film,
+	ImagePlus,
+	Trash2,
+} from "lucide-react";
 import { useRef, useState } from "react";
 import { Spinner } from "@/components/atoms/Spinner";
 import {
@@ -9,11 +15,175 @@ import {
 	useReorderClimbImages,
 	useUserImageCount,
 } from "@/features/climb-images/climb-images.queries";
+import type { ClimbImageWithUrl } from "@/features/climb-images/climb-images.schema";
 import { ClimbImageViewer } from "./ClimbImageViewer";
+import { VideoFrameCapturer } from "./VideoFrameCapturer";
+
+const THUMB_SIZE = 96; // px — width & height of each thumbnail cell
+const CAROUSEL_THUMB = 56; // px — width & height of carousel thumbnails in sheet
 
 interface ClimbImageGalleryProps {
 	climbId: string;
 }
+
+// ── Per-image action sheet ────────────────────────────────────────────────────
+
+interface ImageActionSheetProps {
+	image: ClimbImageWithUrl;
+	allImages: ClimbImageWithUrl[];
+	index: number;
+	total: number;
+	isReordering: boolean;
+	onMoveLeft: () => void;
+	onMoveRight: () => void;
+	onEditPins: () => void;
+	onDelete: () => void;
+	onClose: () => void;
+	onSelectImage: (id: string) => void;
+}
+
+const ImageActionSheet = ({
+	image,
+	allImages,
+	index,
+	total,
+	isReordering,
+	onMoveLeft,
+	onMoveRight,
+	onEditPins,
+	onDelete,
+	onClose,
+	onSelectImage,
+}: ImageActionSheetProps) => {
+	const [confirmDelete, setConfirmDelete] = useState(false);
+
+	return (
+		<div
+			className="fixed inset-0 z-40 flex items-end justify-center bg-black/50"
+			onClick={onClose}
+			onKeyDown={(e) => e.key === "Escape" && onClose()}
+			role="dialog"
+			aria-modal="true"
+		>
+			{/* biome-ignore lint/a11y/noStaticElementInteractions: sheet stops backdrop tap from closing */}
+			{/* biome-ignore lint/a11y/useKeyWithClickEvents: touch surface, not a focusable control */}
+			<div
+				className="bg-surface-card rounded-t-2xl w-full flex flex-col overflow-hidden"
+				style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+				onClick={(e) => e.stopPropagation()}
+			>
+				{/* Main image preview */}
+				<div className="w-full aspect-video bg-black flex items-center justify-center overflow-hidden">
+					<img
+						src={image.signed_url}
+						alt=""
+						className="max-w-full max-h-full object-contain"
+					/>
+				</div>
+
+				{/* Image carousel — visible when more than one image */}
+				{allImages.length > 1 && (
+					<div className="flex gap-2 px-3 py-2 overflow-x-auto">
+						{allImages.map((img) => (
+							<button
+								key={img.id}
+								type="button"
+								onClick={() => onSelectImage(img.id)}
+								aria-label="Select photo"
+								className="shrink-0 rounded overflow-hidden transition-opacity"
+								style={{
+									width: CAROUSEL_THUMB,
+									height: CAROUSEL_THUMB,
+									outline:
+										img.id === image.id
+											? "2px solid var(--color-accent-primary)"
+											: "2px solid transparent",
+									opacity: img.id === image.id ? 1 : 0.6,
+								}}
+							>
+								<img
+									src={img.signed_url}
+									alt=""
+									className="w-full h-full object-cover"
+								/>
+							</button>
+						))}
+					</div>
+				)}
+
+				{confirmDelete ? (
+					<div className="flex flex-col gap-3 p-5">
+						<p className="text-text-primary font-medium text-center">
+							Delete this photo?
+						</p>
+						<button
+							type="button"
+							onClick={onDelete}
+							className="w-full py-3 rounded-[var(--radius-md)] bg-red-500 text-white font-medium"
+						>
+							Delete
+						</button>
+						<button
+							type="button"
+							onClick={() => setConfirmDelete(false)}
+							className="w-full py-2 text-text-secondary"
+						>
+							Cancel
+						</button>
+					</div>
+				) : (
+					<div className="flex flex-col gap-1 p-3">
+						{/* Sort row */}
+						<div className="flex items-center justify-between px-2 py-3 border-b border-border-default">
+							<span className="text-sm text-text-secondary">
+								Photo {index + 1} of {total}
+							</span>
+							<div className="flex items-center gap-4">
+								<button
+									type="button"
+									onClick={onMoveLeft}
+									disabled={index === 0 || isReordering}
+									className="text-text-secondary disabled:opacity-30"
+									aria-label="Move left"
+								>
+									<ChevronLeft size={20} />
+								</button>
+								<button
+									type="button"
+									onClick={onMoveRight}
+									disabled={index === total - 1 || isReordering}
+									className="text-text-secondary disabled:opacity-30"
+									aria-label="Move right"
+								>
+									<ChevronRight size={20} />
+								</button>
+							</div>
+						</div>
+
+						{/* Actions */}
+						<button
+							type="button"
+							onClick={onEditPins}
+							className="w-full text-left px-2 py-3 text-text-primary border-b border-border-default"
+						>
+							Edit pins
+						</button>
+						<button
+							type="button"
+							onClick={() => setConfirmDelete(true)}
+							className="w-full text-left px-2 py-3 text-red-400 flex items-center gap-2"
+						>
+							<Trash2 size={16} />
+							Delete photo
+						</button>
+					</div>
+				)}
+			</div>
+		</div>
+	);
+};
+
+// ── Gallery ───────────────────────────────────────────────────────────────────
 
 export const ClimbImageGallery = ({ climbId }: ClimbImageGalleryProps) => {
 	const inputRef = useRef<HTMLInputElement>(null);
@@ -23,10 +193,13 @@ export const ClimbImageGallery = ({ climbId }: ClimbImageGalleryProps) => {
 	const deleteImage = useDeleteClimbImage(climbId);
 	const reorder = useReorderClimbImages(climbId);
 
+	const [sheetImageId, setSheetImageId] = useState<string | null>(null);
 	const [viewerImageId, setViewerImageId] = useState<string | null>(null);
-	const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+	const [showVideoCapturer, setShowVideoCapturer] = useState(false);
 
 	const atCap = imageCount >= USER_IMAGE_CAP;
+	const sheetImage = images.find((img) => img.id === sheetImageId) ?? null;
+	const sheetIndex = images.findIndex((img) => img.id === sheetImageId);
 	const viewerImage = images.find((img) => img.id === viewerImageId) ?? null;
 
 	function moveImage(index: number, direction: -1 | 1) {
@@ -37,96 +210,72 @@ export const ClimbImageGallery = ({ climbId }: ClimbImageGalleryProps) => {
 		reorder.mutate(ids);
 	}
 
+	function handleDelete() {
+		if (!sheetImage) return;
+		deleteImage.mutate({
+			id: sheetImage.id,
+			storagePath: sheetImage.image_url,
+		});
+		setSheetImageId(null);
+	}
+
 	return (
 		<div className="flex flex-col gap-2">
-			<div className="flex items-center justify-between">
-				<span className="text-sm text-text-secondary">
-					Photos ({imageCount} / {USER_IMAGE_CAP})
-				</span>
-				<button
-					type="button"
-					onClick={() => inputRef.current?.click()}
-					disabled={addImage.isPending || atCap}
-					className="text-xs text-accent-primary font-semibold disabled:opacity-40"
-				>
-					{addImage.isPending
-						? "Uploading…"
-						: atCap
-							? "Cap reached"
-							: "+ Add photo"}
-				</button>
+			<span className="text-sm text-text-secondary">
+				Photos ({imageCount} / {USER_IMAGE_CAP})
+			</span>
+
+			{/* Thumbnail grid */}
+			<div
+				className="grid gap-2"
+				style={{
+					gridTemplateColumns: `repeat(auto-fill, minmax(${THUMB_SIZE}px, 1fr))`,
+				}}
+			>
+				{/* Upload-in-progress placeholder */}
+				{addImage.isPending && (
+					<div
+						className="rounded-[var(--radius-md)] bg-surface-card flex items-center justify-center"
+						style={{ width: THUMB_SIZE, height: THUMB_SIZE }}
+					>
+						<Spinner />
+					</div>
+				)}
+
+				{/* Thumbnails */}
+				{images.map((img) => (
+					<button
+						key={img.id}
+						type="button"
+						onClick={() => setSheetImageId(img.id)}
+						aria-label="View photo options"
+						className="rounded-[var(--radius-md)] overflow-hidden block"
+						style={{ width: THUMB_SIZE, height: THUMB_SIZE }}
+					>
+						<img
+							src={img.signed_url}
+							alt=""
+							className="w-full h-full object-cover"
+						/>
+					</button>
+				))}
+
+				{/* Dotted add tile */}
+				{!atCap && (
+					<button
+						type="button"
+						onClick={() => inputRef.current?.click()}
+						disabled={addImage.isPending}
+						aria-label="Add photo"
+						className="rounded-[var(--radius-md)] border-2 border-dashed border-border-default flex items-center justify-center text-text-tertiary disabled:opacity-40"
+						style={{ width: THUMB_SIZE, height: THUMB_SIZE }}
+					>
+						<ImagePlus size={24} />
+					</button>
+				)}
 			</div>
 
-			{images.length === 0 && !addImage.isPending && (
-				<button
-					type="button"
-					onClick={() => inputRef.current?.click()}
-					disabled={atCap}
-					className="rounded-[var(--radius-md)] border-2 border-dashed border-border-default h-20 flex items-center justify-center text-text-tertiary text-sm disabled:opacity-40"
-				>
-					Add a photo
-				</button>
-			)}
-
-			{(images.length > 0 || addImage.isPending) && (
-				<div
-					className="flex overflow-x-auto gap-2 pb-1"
-					style={{ scrollbarWidth: "none" }}
-				>
-					{addImage.isPending && (
-						<div className="shrink-0 w-20 h-20 rounded-[var(--radius-md)] bg-surface-card flex items-center justify-center">
-							<Spinner />
-						</div>
-					)}
-					{images.map((img, index) => (
-						<div key={img.id} className="relative shrink-0 flex flex-col gap-1">
-							<button
-								type="button"
-								onClick={() => setViewerImageId(img.id)}
-								className="w-20 h-20 rounded-[var(--radius-md)] overflow-hidden block"
-								aria-label="View photo"
-							>
-								<img
-									src={img.signed_url}
-									alt=""
-									className="w-full h-full object-cover"
-								/>
-							</button>
-							<button
-								type="button"
-								onClick={() => setConfirmDeleteId(img.id)}
-								className="absolute top-1 right-1 bg-black/60 rounded-full p-1"
-								aria-label="Delete photo"
-							>
-								<Trash2 size={12} className="text-white" />
-							</button>
-							{/* Reorder arrows */}
-							<div className="flex justify-between px-0.5">
-								<button
-									type="button"
-									onClick={() => moveImage(index, -1)}
-									disabled={index === 0 || reorder.isPending}
-									className="text-text-tertiary disabled:opacity-20"
-									aria-label="Move left"
-								>
-									<ChevronLeft size={14} />
-								</button>
-								<button
-									type="button"
-									onClick={() => moveImage(index, 1)}
-									disabled={index === images.length - 1 || reorder.isPending}
-									className="text-text-tertiary disabled:opacity-20"
-									aria-label="Move right"
-								>
-									<ChevronRight size={14} />
-								</button>
-							</div>
-						</div>
-					))}
-				</div>
-			)}
-
-			{/* Hidden file input */}
+			{/* Hidden photo file input */}
 			<input
 				ref={inputRef}
 				type="file"
@@ -139,7 +288,41 @@ export const ClimbImageGallery = ({ climbId }: ClimbImageGalleryProps) => {
 				}}
 			/>
 
-			{/* Full-screen viewer */}
+			{/* Capture from video link */}
+			{!atCap && (
+				<button
+					type="button"
+					onClick={() => setShowVideoCapturer(true)}
+					disabled={addImage.isPending}
+					className="flex items-center gap-1.5 text-xs text-text-tertiary disabled:opacity-40 self-start"
+				>
+					<Film size={13} />
+					Capture from video
+				</button>
+			)}
+
+			{/* Per-image action sheet */}
+			{sheetImage && (
+				<ImageActionSheet
+					key={sheetImage.id}
+					image={sheetImage}
+					allImages={images}
+					index={sheetIndex}
+					total={images.length}
+					isReordering={reorder.isPending}
+					onMoveLeft={() => moveImage(sheetIndex, -1)}
+					onMoveRight={() => moveImage(sheetIndex, 1)}
+					onEditPins={() => {
+						setViewerImageId(sheetImage.id);
+						setSheetImageId(null);
+					}}
+					onDelete={handleDelete}
+					onClose={() => setSheetImageId(null)}
+					onSelectImage={(id) => setSheetImageId(id)}
+				/>
+			)}
+
+			{/* Full-screen pin viewer/editor */}
 			{viewerImage && (
 				<ClimbImageViewer
 					image={viewerImage}
@@ -147,38 +330,15 @@ export const ClimbImageGallery = ({ climbId }: ClimbImageGalleryProps) => {
 				/>
 			)}
 
-			{/* Delete confirmation sheet */}
-			{confirmDeleteId && (
-				<div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40">
-					<div className="bg-surface-card rounded-t-2xl p-6 w-full flex flex-col gap-3">
-						<p className="text-text-primary font-medium text-center">
-							Delete this photo?
-						</p>
-						<button
-							type="button"
-							onClick={() => {
-								const img = images.find((i) => i.id === confirmDeleteId);
-								if (img) {
-									deleteImage.mutate({
-										id: img.id,
-										storagePath: img.image_url,
-									});
-								}
-								setConfirmDeleteId(null);
-							}}
-							className="w-full py-3 rounded-[var(--radius-md)] bg-red-500 text-white font-medium"
-						>
-							Delete
-						</button>
-						<button
-							type="button"
-							onClick={() => setConfirmDeleteId(null)}
-							className="w-full py-2 text-text-secondary"
-						>
-							Cancel
-						</button>
-					</div>
-				</div>
+			{/* Video frame capturer */}
+			{showVideoCapturer && (
+				<VideoFrameCapturer
+					onCapture={(file) => {
+						addImage.mutate(file);
+						setShowVideoCapturer(false);
+					}}
+					onClose={() => setShowVideoCapturer(false)}
+				/>
 			)}
 		</div>
 	);

@@ -375,6 +375,13 @@ const migrations: Migration[] = [
       )
     `);
 	},
+
+	// v15: add pointer_dir to climb_image_pins (#38)
+	async (db) => {
+		await db.execute(
+			`ALTER TABLE climb_image_pins ADD COLUMN pointer_dir TEXT NOT NULL DEFAULT 'bottom'`,
+		);
+	},
 ];
 
 export async function runMigrations(db: DbAdapter): Promise<void> {
