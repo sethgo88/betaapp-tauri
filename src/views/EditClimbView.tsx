@@ -142,6 +142,7 @@ const EditClimbView = () => {
 	return (
 		<div className="flex flex-col gap-4">
 			<ClimbForm
+				climbId={climbId}
 				defaultValues={{
 					name: climb.name,
 					route_type: climb.route_type as "sport" | "boulder",

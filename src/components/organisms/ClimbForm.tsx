@@ -15,13 +15,16 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useForm, uuid } from "@tanstack/react-form";
+import { useBlocker } from "@tanstack/react-router";
 import { GripVertical } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { Select } from "@/components/atoms/Select";
 import { ToggleGroup } from "@/components/atoms/ToggleGroup";
+import { ConfirmDialog } from "@/components/molecules/ConfirmDialog";
 import { ImportBetaSheet } from "@/components/molecules/ImportBetaSheet";
+import { useUpdateClimbMoves } from "@/features/climbs/climbs.queries";
 import {
 	ClimbFormSchema,
 	type ClimbFormValues,
@@ -90,12 +93,20 @@ const SortableMoveRow = ({
 
 // ── Climb form ────────────────────────────────────────────────────────────────
 
+type SaveStatus = "idle" | "saving" | "saved";
+
 interface ClimbFormProps {
 	defaultValues?: Partial<ClimbFormValues>;
 	onSubmit: (values: ClimbFormValues) => Promise<void>;
+	/** When provided, moves are auto-saved after a 1-second debounce. */
+	climbId?: string;
 }
 
-export const ClimbForm = ({ defaultValues, onSubmit }: ClimbFormProps) => {
+export const ClimbForm = ({
+	defaultValues,
+	onSubmit,
+	climbId,
+}: ClimbFormProps) => {
 	const [movesList, setMovesList] = useState<MoveItem[]>(() => {
 		if (defaultValues?.moves) {
 			try {
@@ -111,6 +122,13 @@ export const ClimbForm = ({ defaultValues, onSubmit }: ClimbFormProps) => {
 		defaultValues?.route_type ?? "sport",
 	);
 	const [importOpen, setImportOpen] = useState(false);
+	const [isDirty, setIsDirty] = useState(false);
+	const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+
+	const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const savedStatusRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const isFirstRender = useRef(true);
+	const updateMoves = useUpdateClimbMoves();
 
 	const inputRefs = useRef<Array<HTMLTextAreaElement | null>>([]);
 
@@ -198,6 +216,50 @@ export const ClimbForm = ({ defaultValues, onSubmit }: ClimbFormProps) => {
 		}
 	}, [movesList.length]);
 
+	// ── Auto-save moves (edit mode only) ──────────────────────────────────────
+
+	// biome-ignore lint/correctness/useExhaustiveDependencies: updateMoves.mutate is stable from useMutation
+	useEffect(() => {
+		if (!climbId) return;
+		if (isFirstRender.current) {
+			isFirstRender.current = false;
+			return;
+		}
+		setIsDirty(true);
+		setSaveStatus("idle");
+		if (debounceRef.current) clearTimeout(debounceRef.current);
+		debounceRef.current = setTimeout(() => {
+			setSaveStatus("saving");
+			updateMoves.mutate(
+				{ id: climbId, moves: JSON.stringify(movesList) },
+				{
+					onSuccess: () => {
+						setIsDirty(false);
+						setSaveStatus("saved");
+						if (savedStatusRef.current) clearTimeout(savedStatusRef.current);
+						savedStatusRef.current = setTimeout(
+							() => setSaveStatus("idle"),
+							2000,
+						);
+					},
+					onError: () => {
+						setSaveStatus("idle");
+					},
+				},
+			);
+		}, 1000);
+		return () => {
+			if (debounceRef.current) clearTimeout(debounceRef.current);
+		};
+	}, [movesList, climbId]);
+
+	// ── Navigation guard ──────────────────────────────────────────────────────
+
+	const blocker = useBlocker({
+		shouldBlockFn: () => !!climbId && isDirty,
+		withResolver: true,
+	});
+
 	// ── Form ──────────────────────────────────────────────────────────────────
 
 	const { data: grades = [] } = useGrades(routeType);
@@ -228,6 +290,9 @@ export const ClimbForm = ({ defaultValues, onSubmit }: ClimbFormProps) => {
 				alert(messages);
 				return;
 			}
+			// Cancel any pending auto-save; full save covers the moves too.
+			if (debounceRef.current) clearTimeout(debounceRef.current);
+			setIsDirty(false);
 			await onSubmit(parsed.data);
 		},
 	});
@@ -339,6 +404,11 @@ export const ClimbForm = ({ defaultValues, onSubmit }: ClimbFormProps) => {
 			</div>
 
 			<div className="w-full rounded-md bg-surface-card p-2 overflow-y-scroll">
+				{climbId && saveStatus !== "idle" && (
+					<p className="text-xs text-text-secondary mb-2 px-1">
+						{saveStatus === "saving" ? "Saving…" : "Saved"}
+					</p>
+				)}
 				<DndContext
 					sensors={sensors}
 					collisionDetection={closestCenter}
@@ -363,6 +433,16 @@ export const ClimbForm = ({ defaultValues, onSubmit }: ClimbFormProps) => {
 					</SortableContext>
 				</DndContext>
 			</div>
+
+			<ConfirmDialog
+				isOpen={blocker.status === "blocked"}
+				title="Unsaved changes"
+				message="You have unsaved changes. Leave anyway?"
+				confirmLabel="Leave"
+				cancelLabel="Stay"
+				onConfirm={() => blocker.proceed?.()}
+				onCancel={() => blocker.reset?.()}
+			/>
 		</form>
 	);
 };
