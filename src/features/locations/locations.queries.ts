@@ -340,9 +340,10 @@ export function useAdminDeleteRegion() {
 export function useSubmitSubRegion() {
 	const qc = useQueryClient();
 	const userId = useAuthStore((s) => s.user?.id ?? "");
+	const isAdmin = useAuthStore((s) => s.user?.role === "admin");
 	return useMutation({
 		mutationFn: (values: SubRegionSubmitValues) =>
-			submitSubRegion(values, userId),
+			submitSubRegion(values, userId, isAdmin),
 		onSuccess: (_data, values) => {
 			qc.invalidateQueries({ queryKey: ["sub_regions", values.region_id] });
 		},
@@ -352,8 +353,9 @@ export function useSubmitSubRegion() {
 export function useSubmitCrag() {
 	const qc = useQueryClient();
 	const userId = useAuthStore((s) => s.user?.id ?? "");
+	const isAdmin = useAuthStore((s) => s.user?.role === "admin");
 	return useMutation({
-		mutationFn: (values: CragSubmitValues) => submitCrag(values, userId),
+		mutationFn: (values: CragSubmitValues) => submitCrag(values, userId, isAdmin),
 		onSuccess: (_data, values) => {
 			qc.invalidateQueries({
 				queryKey: ["crags", values.sub_region_id],
@@ -365,8 +367,9 @@ export function useSubmitCrag() {
 export function useSubmitWall() {
 	const qc = useQueryClient();
 	const userId = useAuthStore((s) => s.user?.id ?? "");
+	const isAdmin = useAuthStore((s) => s.user?.role === "admin");
 	return useMutation({
-		mutationFn: (values: WallSubmitValues) => submitWall(values, userId),
+		mutationFn: (values: WallSubmitValues) => submitWall(values, userId, isAdmin),
 		onSuccess: (_data, values) => {
 			qc.invalidateQueries({ queryKey: ["walls", values.crag_id] });
 		},

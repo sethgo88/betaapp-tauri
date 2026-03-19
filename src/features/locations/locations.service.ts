@@ -405,36 +405,40 @@ export async function downloadRegion(regionId: string): Promise<void> {
 export async function submitSubRegion(
 	values: SubRegionSubmitValues,
 	userId: string,
+	isAdmin = false,
 ): Promise<void> {
 	const id = crypto.randomUUID();
+	const status = isAdmin ? "verified" : "pending";
 	const { error } = await supabase.from("sub_regions").insert({
 		id,
 		region_id: values.region_id,
 		name: values.name,
 		sort_order: 9999,
-		status: "pending",
+		status,
 		created_by: userId,
 	});
 	if (error) throw error;
 
 	const db = await getDb();
 	await db.execute(
-		"INSERT INTO sub_regions_cache (id, region_id, name, sort_order, status, created_by, created_at) VALUES (?, ?, ?, 9999, 'pending', ?, datetime('now'))",
-		[id, values.region_id, values.name, userId],
+		"INSERT INTO sub_regions_cache (id, region_id, name, sort_order, status, created_by, created_at) VALUES (?, ?, ?, 9999, ?, ?, datetime('now'))",
+		[id, values.region_id, values.name, status, userId],
 	);
 }
 
 export async function submitCrag(
 	values: CragSubmitValues,
 	userId: string,
+	isAdmin = false,
 ): Promise<void> {
 	const id = crypto.randomUUID();
+	const status = isAdmin ? "verified" : "pending";
 	const { error } = await supabase.from("crags").insert({
 		id,
 		sub_region_id: values.sub_region_id,
 		name: values.name,
 		sort_order: 9999,
-		status: "pending",
+		status,
 		created_by: userId,
 		lat: values.lat ?? null,
 		lng: values.lng ?? null,
@@ -443,11 +447,12 @@ export async function submitCrag(
 
 	const db = await getDb();
 	await db.execute(
-		"INSERT INTO crags_cache (id, sub_region_id, name, sort_order, status, created_by, created_at, lat, lng) VALUES (?, ?, ?, 9999, 'pending', ?, datetime('now'), ?, ?)",
+		"INSERT INTO crags_cache (id, sub_region_id, name, sort_order, status, created_by, created_at, lat, lng) VALUES (?, ?, ?, 9999, ?, ?, datetime('now'), ?, ?)",
 		[
 			id,
 			values.sub_region_id,
 			values.name,
+			status,
 			userId,
 			values.lat ?? null,
 			values.lng ?? null,
@@ -458,8 +463,10 @@ export async function submitCrag(
 export async function submitWall(
 	values: WallSubmitValues,
 	userId: string,
+	isAdmin = false,
 ): Promise<void> {
 	const id = crypto.randomUUID();
+	const status = isAdmin ? "verified" : "pending";
 	// biome-ignore lint/suspicious/noExplicitAny: wall_type not yet in generated Supabase types
 	const { error } = await (supabase.from("walls") as any).insert({
 		id,
@@ -469,18 +476,19 @@ export async function submitWall(
 		lat: values.lat ?? null,
 		lng: values.lng ?? null,
 		sort_order: 9999,
-		status: "pending",
+		status,
 		created_by: userId,
 	});
 	if (error) throw error;
 
 	const db = await getDb();
 	await db.execute(
-		"INSERT INTO walls_cache (id, crag_id, name, sort_order, status, created_by, created_at, lat, lng, wall_type) VALUES (?, ?, ?, 9999, 'pending', ?, datetime('now'), ?, ?, ?)",
+		"INSERT INTO walls_cache (id, crag_id, name, sort_order, status, created_by, created_at, lat, lng, wall_type) VALUES (?, ?, ?, 9999, ?, ?, datetime('now'), ?, ?, ?)",
 		[
 			id,
 			values.crag_id,
 			values.name,
+			status,
 			userId,
 			values.lat ?? null,
 			values.lng ?? null,

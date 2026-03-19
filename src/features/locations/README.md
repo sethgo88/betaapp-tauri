@@ -99,11 +99,11 @@ If any level has no data, the download still completes and records the region as
 
 | Function | What it does |
 |---|---|
-| `submitSubRegion(values, userId)` | Inserts into Supabase `sub_regions` with `status='pending'` + local cache |
-| `submitCrag(values, userId)` | Inserts into Supabase `crags` with `status='pending'` + local cache |
-| `submitWall(values, userId)` | Inserts into Supabase `walls` with `status='pending'` + local cache |
+| `submitSubRegion(values, userId, isAdmin)` | Inserts into Supabase `sub_regions` with `status='verified'` (admin) or `status='pending'` (user) + local cache |
+| `submitCrag(values, userId, isAdmin)` | Inserts into Supabase `crags` with `status='verified'` (admin) or `status='pending'` (user) + local cache |
+| `submitWall(values, userId, isAdmin)` | Inserts into Supabase `walls` with `status='verified'` (admin) or `status='pending'` (user) + local cache |
 
-Pending items are visible immediately to the submitting user; hidden from others until admin verifies.
+Admin submissions are auto-verified and immediately visible to all users. Non-admin submissions remain pending until an admin verifies them.
 
 ### Admin location verification (Supabase + local cache)
 
