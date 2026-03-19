@@ -3,13 +3,12 @@ import { Input } from "@/components/atoms/Input";
 import { Spinner } from "@/components/atoms/Spinner";
 import { ClimbCard } from "@/components/molecules/ClimbCard";
 import { FilterPanel } from "@/components/molecules/FilterPanel";
-import { useClimbs, useDeleteClimb } from "@/features/climbs/climbs.queries";
+import { useClimbs } from "@/features/climbs/climbs.queries";
 import { useClimbsStore } from "@/features/climbs/climbs.store";
 
 const HomeView = () => {
 	const navigate = useNavigate();
 	const { data: climbs = [], isLoading } = useClimbs();
-	const { mutateAsync: deleteClimb } = useDeleteClimb();
 
 	const searchText = useClimbsStore((s) => s.searchText);
 	const setSearchText = useClimbsStore((s) => s.setSearchText);
@@ -29,7 +28,7 @@ const HomeView = () => {
 		if (!statusFilters.has(c.sent_status)) return false;
 		if (!typeFilters.has(c.route_type)) return false;
 		if (query) {
-			const haystack = [c.name, c.grade, c.country, c.area, c.sub_area]
+			const haystack = [c.name, c.grade, c.country, c.area, c.sub_area, c.crag, c.wall]
 				.filter(Boolean)
 				.join(" ")
 				.toLowerCase();
@@ -57,7 +56,6 @@ const HomeView = () => {
 								params: { climbId: climb.id },
 							})
 						}
-						onDelete={deleteClimb}
 					/>
 				))}
 				{filtered.length === 0 && (

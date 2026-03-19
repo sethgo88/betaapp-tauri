@@ -24,6 +24,8 @@ export const ClimbSchema = z.object({
 	country: z.string().optional(),
 	area: z.string().optional(),
 	sub_area: z.string().optional(),
+	crag: z.string().optional(),
+	wall: z.string().optional(),
 	route_location: z.string().optional(),
 	link: z.string().optional(),
 	route_id: z.string().nullable().optional(),
@@ -43,6 +45,8 @@ export const ClimbFormSchema = z.object({
 	country: z.string().optional(),
 	area: z.string().optional(),
 	sub_area: z.string().optional(),
+	crag: z.string().optional(),
+	wall: z.string().optional(),
 	route_location: z.string().optional(),
 	link: z.string().optional(),
 });
