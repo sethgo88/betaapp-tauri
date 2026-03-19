@@ -29,8 +29,7 @@ Router defined in `src/router.tsx` using `createMemoryHistory` (required for And
 | `/routes/add` | `AddEditRouteView` | required | Add a new route with location drill-down; admin creates verified, user creates pending |
 | `/routes/$routeId/edit` | `AddEditRouteView` | required | Edit an existing route including changing its wall |
 | `/admin/locations` | `admin/LocationManagerView` | admin | Add/delete countries and regions in Supabase |
-| `/admin/locations/pending` | `admin/LocationVerificationView` | admin | Verify or reject pending sub-area/crag/wall submissions |
-| `/admin/routes` | `admin/RouteVerificationView` | admin | View all routes with status badges; verify, edit, reject, or merge |
+| `/admin/verify` | `admin/VerificationView` | admin | Unified pending-submissions queue: routes and locations grouped by type with count badges; inline approve, edit, merge, reject |
 
 ---
 
@@ -103,8 +102,8 @@ Unified add/edit route form with cascading location picker (`LocationDrillDown` 
 ### admin/LocationManagerView `/admin/locations`
 Admin only. Loads countries + regions. Inline forms to add/delete entries. Calls admin mutation functions from `locations.service`.
 
-### admin/RouteVerificationView `/admin/routes`
-Admin only. Loads `useAllRoutes()`. Shows all routes (all statuses) with status badges (Pending/Verified/Rejected). Approve, Reject, and Merge actions are shown only for pending routes; Edit is always shown.
+### admin/VerificationView `/admin/verify`
+Admin only. Unified submissions queue. Loads `useUnverifiedRoutes()` (pending routes only) and `usePendingLocations()`. Displays two collapsible accordion sections — Routes and Locations — each with a count badge. Empty state shown when both sections are empty. Route rows support inline Approve, Edit (name/grade/type/description), Merge (search for a verified route), and Reject. Location rows support inline Approve and Reject; crag items additionally show a coordinate picker.
 
 ---
 
