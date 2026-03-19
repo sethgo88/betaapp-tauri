@@ -11,7 +11,7 @@ import {
 	useDeleteBurn,
 	useUpdateBurn,
 } from "@/features/burns/burns.queries";
-import { useClimb } from "@/features/climbs/climbs.queries";
+import { useClimb, useDeleteClimb } from "@/features/climbs/climbs.queries";
 import { useClimbsStore } from "@/features/climbs/climbs.store";
 import { useRoute } from "@/features/routes/routes.queries";
 import { cn } from "@/lib/cn";
@@ -26,8 +26,10 @@ const ClimbDetailView = () => {
 	const addBurn = useAddBurn();
 	const updateBurn = useUpdateBurn();
 	const deleteBurn = useDeleteBurn();
+	const deleteClimb = useDeleteClimb();
 	const setSelectedClimbId = useClimbsStore((s) => s.setSelectedClimbId);
 	const [movesOpen, setMovesOpen] = useState(false);
+	const [confirmDelete, setConfirmDelete] = useState(false);
 	const [burnsOpen, setBurnsOpen] = useState(false);
 	const [showAddBurn, setShowAddBurn] = useState(false);
 	const [addDate, setAddDate] = useState(() =>
@@ -68,6 +70,8 @@ const ClimbDetailView = () => {
 		climb.country,
 		climb.area,
 		climb.sub_area,
+		climb.crag,
+		climb.wall,
 	]);
 
 	return (
@@ -150,6 +154,28 @@ const ClimbDetailView = () => {
 			</Button>
 
 			{/* Burns section */}
+
+			{confirmDelete ? (
+				<div className="flex gap-2">
+					<Button variant="outlined" onClick={() => setConfirmDelete(false)}>
+						Cancel
+					</Button>
+					<Button
+						onClick={() => {
+							deleteClimb.mutate(climb.id, {
+								onSuccess: () => navigate({ to: "/" }),
+							});
+						}}
+						disabled={deleteClimb.isPending}
+					>
+						Confirm Delete
+					</Button>
+				</div>
+			) : (
+				<Button variant="outlined" onClick={() => setConfirmDelete(true)}>
+					Delete
+				</Button>
+			)}
 			<div className="rounded-md bg-surface-card">
 				<button
 					type="button"

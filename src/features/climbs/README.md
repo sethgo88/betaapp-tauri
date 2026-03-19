@@ -22,6 +22,8 @@ ClimbSchema = {
   country?: string
   area?: string
   sub_area?: string
+  crag?: string
+  wall?: string
   route_location?: string
   link?: string
   route_id?: string      // optional link to routes_cache
@@ -50,6 +52,8 @@ CREATE TABLE IF NOT EXISTS climbs (
     country          TEXT,
     area             TEXT,
     sub_area         TEXT,
+    crag             TEXT,
+    wall             TEXT,
     route_location   TEXT,
     link             TEXT,
     route_id         TEXT,
@@ -136,7 +140,7 @@ Soft-deleted rows are included in sync pushes so Supabase receives the `deleted_
 public.climbs (
   id uuid pk,  user_id uuid,  name text,  route_type text,
   grade text,  moves text,  sent_status text,
-  country text,  area text,  sub_area text,  route_location text,  link text,
+  country text,  area text,  sub_area text,  crag text,  wall text,  route_location text,  link text,
   route_id uuid references public.routes,
   created_at timestamptz,  updated_at timestamptz,  deleted_at timestamptz
 )

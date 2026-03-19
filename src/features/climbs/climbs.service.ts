@@ -26,8 +26,8 @@ export async function insertClimb(
 	const db = await getDb();
 	const id = crypto.randomUUID();
 	await db.execute(
-		`INSERT INTO climbs (id, user_id, name, route_type, grade, moves, sent_status, country, area, sub_area, route_location, link, route_id)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		`INSERT INTO climbs (id, user_id, name, route_type, grade, moves, sent_status, country, area, sub_area, crag, wall, route_location, link, route_id)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		[
 			id,
 			userId,
@@ -39,6 +39,8 @@ export async function insertClimb(
 			data.country ?? null,
 			data.area ?? null,
 			data.sub_area ?? null,
+			data.crag ?? null,
+			data.wall ?? null,
 			data.route_location ?? null,
 			data.link ?? null,
 			routeId ?? null,
@@ -55,7 +57,7 @@ export async function updateClimb(
 	await db.execute(
 		`UPDATE climbs
      SET name = ?, route_type = ?, grade = ?, moves = ?, sent_status = ?,
-         country = ?, area = ?, sub_area = ?, route_location = ?, link = ?, route_id = ?
+         country = ?, area = ?, sub_area = ?, crag = ?, wall = ?, route_location = ?, link = ?, route_id = ?
      WHERE id = ? AND deleted_at IS NULL`,
 		[
 			data.name,
@@ -66,6 +68,8 @@ export async function updateClimb(
 			data.country ?? null,
 			data.area ?? null,
 			data.sub_area ?? null,
+			data.crag ?? null,
+			data.wall ?? null,
 			data.route_location ?? null,
 			data.link ?? null,
 			routeId ?? null,
@@ -112,9 +116,9 @@ export async function applyRemoteClimb(climb: Climb): Promise<void> {
 	await db.execute(
 		`INSERT OR REPLACE INTO climbs
      (id, user_id, name, route_type, grade, moves, sent_status,
-      country, area, sub_area, route_location, link, route_id,
+      country, area, sub_area, crag, wall, route_location, link, route_id,
       created_at, updated_at, deleted_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		[
 			climb.id,
 			climb.user_id,
@@ -126,6 +130,8 @@ export async function applyRemoteClimb(climb: Climb): Promise<void> {
 			climb.country ?? null,
 			climb.area ?? null,
 			climb.sub_area ?? null,
+			climb.crag ?? null,
+			climb.wall ?? null,
 			climb.route_location ?? null,
 			climb.link ?? null,
 			climb.route_id ?? null,

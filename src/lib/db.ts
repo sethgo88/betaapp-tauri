@@ -420,6 +420,20 @@ const migrations: Migration[] = [
 			);
 		}
 	},
+
+	// v18: add crag and wall to climbs (#44)
+	async (db) => {
+		const cols = await db.select<{ name: string }[]>(
+			`PRAGMA table_info(climbs)`,
+		);
+		const names = cols.map((c) => c.name);
+		if (!names.includes("crag")) {
+			await db.execute(`ALTER TABLE climbs ADD COLUMN crag TEXT`);
+		}
+		if (!names.includes("wall")) {
+			await db.execute(`ALTER TABLE climbs ADD COLUMN wall TEXT`);
+		}
+	},
 ];
 
 export async function runMigrations(db: DbAdapter): Promise<void> {
