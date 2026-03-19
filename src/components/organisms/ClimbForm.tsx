@@ -40,6 +40,7 @@ interface SortableMoveRowProps {
 	onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>, id: string) => void;
 	onChange: (e: React.ChangeEvent<HTMLTextAreaElement>, id: string) => void;
 	setRef: (el: HTMLTextAreaElement | null, index: number) => void;
+	onFocus: (index: number) => void;
 }
 
 const SortableMoveRow = ({
@@ -48,6 +49,7 @@ const SortableMoveRow = ({
 	onKeyDown,
 	onChange,
 	setRef,
+	onFocus,
 }: SortableMoveRowProps) => {
 	const {
 		attributes,
@@ -80,6 +82,7 @@ const SortableMoveRow = ({
 			<textarea
 				onKeyDown={(e) => onKeyDown(e, move.id)}
 				onChange={(e) => onChange(e, move.id)}
+				onFocus={() => onFocus(index)}
 				className="flex-1 field-sizing-content border-l border-text-primary outline-none px-1 bg-transparent"
 				value={move.text}
 				ref={(el) => setRef(el, index)}
@@ -161,6 +164,22 @@ export const ClimbForm = ({ defaultValues, onSubmit }: ClimbFormProps) => {
 		if (movesList.length > 1) {
 			setMovesList(movesList.filter((x) => x.id !== id));
 		}
+	};
+
+	const handleMoveFocus = (index: number) => {
+		const el = inputRefs.current[index];
+		if (!el) return;
+		const scrollIntoViewAboveNavbar = () => {
+			const rect = el.getBoundingClientRect();
+			const navbarHeight = window.innerHeight * 0.07;
+			const visibleBottom = window.innerHeight - navbarHeight - 8;
+			if (rect.bottom > visibleBottom) {
+				window.scrollBy({ top: rect.bottom - visibleBottom, behavior: "smooth" });
+			}
+		};
+		// Run immediately, then again after the keyboard finishes opening
+		scrollIntoViewAboveNavbar();
+		setTimeout(scrollIntoViewAboveNavbar, 300);
 	};
 
 	const getFocusedMoveIndex = () => {
@@ -355,6 +374,7 @@ export const ClimbForm = ({ defaultValues, onSubmit }: ClimbFormProps) => {
 								index={index}
 								onKeyDown={handleTextAreaKeyDown}
 								onChange={handleMoveChange}
+								onFocus={handleMoveFocus}
 								setRef={(el, i) => {
 									inputRefs.current[i] = el;
 								}}
