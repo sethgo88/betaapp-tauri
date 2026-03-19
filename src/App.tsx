@@ -21,6 +21,7 @@ import {
 	upsertLocalUser,
 } from "@/features/auth/auth.service";
 import { useAuthStore } from "@/features/auth/auth.store";
+import { backfillClimbLocations } from "@/features/climbs/climbs.service";
 import { seedGrades } from "@/features/grades/grades-seed";
 import { useSync } from "@/hooks/useSync";
 import { supabase } from "@/lib/supabase";
@@ -60,6 +61,7 @@ function Bootstrap() {
 		queryKey: ["bootstrap"],
 		queryFn: async () => {
 			await seedGrades();
+			await backfillClimbLocations();
 
 			// Refresh user location in background (don't block startup)
 			refreshUserLocation(setUserLocation);

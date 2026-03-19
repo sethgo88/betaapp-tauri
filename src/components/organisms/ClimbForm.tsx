@@ -293,6 +293,8 @@ export const ClimbForm = ({
 			country: defaultValues?.country ?? "",
 			area: defaultValues?.area ?? "",
 			sub_area: defaultValues?.sub_area ?? "",
+			crag: defaultValues?.crag ?? "",
+			wall: defaultValues?.wall ?? "",
 			route_location: defaultValues?.route_location ?? "",
 			link: defaultValues?.link ?? "",
 		},
