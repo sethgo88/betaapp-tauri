@@ -9,6 +9,7 @@ import {
 	editRoute,
 	fetchAllRoutes,
 	fetchRoute,
+	fetchRouteBodyStats,
 	fetchRouteLinks,
 	fetchRoutes,
 	fetchUnverifiedRoutes,
@@ -200,6 +201,16 @@ export function useMergeRoute() {
 			qc.invalidateQueries({ queryKey: ["unverified_routes"] });
 			qc.invalidateQueries({ queryKey: ["all_routes"] });
 		},
+	});
+}
+
+// ── Route body stats ──────────────────────────────────────────────────────────
+
+export function useRouteBodyStats(routeId: string) {
+	return useQuery({
+		queryKey: ["route_body_stats", routeId],
+		queryFn: () => fetchRouteBodyStats(routeId),
+		enabled: !!routeId,
 	});
 }
 

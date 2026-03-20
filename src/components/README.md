@@ -46,6 +46,7 @@ templates   Layout shells with no real data — just children/slots.
 | `ImportBetaSheet` | Bottom sheet for importing a move list from plain text (one-per-line) or CSV. Auto-detects CSV when >1 line ends with a comma. Replaces existing moves on import. Props: `climbId`, `isOpen`, `onClose`. |
 | `ConfirmDialog` | Centred modal overlay for confirming destructive or navigating-away actions. Props: `isOpen`, `title`, `message`, `confirmLabel?`, `cancelLabel?`, `onConfirm`, `onCancel`. |
 | `RoutePickerSheet` | Full-screen sheet that chains `LocationDrillDown` with a route list (verified routes only for the selected wall). Used in `AddClimbView` to link a log entry to a community route. Props: `isOpen`, `onClose`, `onSelect(route)`. |
+| `RouteBodyChart` | Bubble chart (recharts `ScatterChart`) showing how climbers' body dimensions (height or ape index) correlate with grade on a specific route. Only sent climbs are included. Toggles X-axis between height and ape index. Renders an empty state when fewer than 5 climbers have data. Data comes from the `get_route_body_stats` Supabase RPC. Props: `routeId`, `routeType`. |
 
 ### Organisms
 | Component | Purpose |

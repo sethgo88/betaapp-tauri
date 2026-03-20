@@ -47,3 +47,11 @@ export const RouteLinkSubmitSchema = z.object({
 
 export type RouteLink = z.infer<typeof RouteLinkSchema>;
 export type RouteLinkSubmitValues = z.infer<typeof RouteLinkSubmitSchema>;
+
+// Returned by the get_route_body_stats Supabase RPC
+export type RouteBodyStat = {
+	height_cm: number;
+	ape_index_cm: number | null;
+	grade: string;
+	count: number;
+};

@@ -7,6 +7,7 @@ import { Input } from "@/components/atoms/Input";
 import { Spinner } from "@/components/atoms/Spinner";
 import { AdminImageGallery } from "@/components/molecules/AdminImageGallery";
 import { EditableDescription } from "@/components/molecules/EditableDescription";
+import { RouteBodyChart } from "@/components/molecules/RouteBodyChart";
 import { useAuthStore } from "@/features/auth/auth.store";
 import { useClimbs } from "@/features/climbs/climbs.queries";
 import {
@@ -196,7 +197,9 @@ const RouteDetailView = () => {
 				)}
 			</div>
 
-			{existingClimb ? (
+			<RouteBodyChart routeId={routeId} routeType={route.route_type} />
+
+		{existingClimb ? (
 				<Button
 					type="button"
 					variant="primary"
