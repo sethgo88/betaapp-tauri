@@ -15,6 +15,7 @@ import { useEffect } from "react";
 import { Spinner } from "@/components/atoms/Spinner";
 import {
 	checkPendingDeepLink,
+	fetchAndApplyProfile,
 	fetchOrCreateSupabaseUser,
 	initDeepLinkHandler,
 	restoreSession,
@@ -73,11 +74,8 @@ function Bootstrap() {
 					session.user.id,
 					session.user.email ?? "",
 				);
-				const user = await upsertLocalUser(
-					session.user.id,
-					session.user.email ?? "",
-					role,
-				);
+				await upsertLocalUser(session.user.id, session.user.email ?? "", role);
+				const user = await fetchAndApplyProfile(session.user.id);
 				setUser(user);
 			}
 
@@ -107,11 +105,8 @@ function Bootstrap() {
 				session.user.id,
 				session.user.email ?? "",
 			);
-			const localUser = await upsertLocalUser(
-				session.user.id,
-				session.user.email ?? "",
-				role,
-			);
+			await upsertLocalUser(session.user.id, session.user.email ?? "", role);
+			const localUser = await fetchAndApplyProfile(session.user.id);
 			setUser(localUser);
 			router.navigate({ to: "/" });
 		};

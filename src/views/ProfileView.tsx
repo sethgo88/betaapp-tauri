@@ -10,6 +10,7 @@ import { ToggleGroup } from "@/components/atoms/ToggleGroup";
 import { SyncStatus } from "@/components/molecules/SyncStatus";
 import type { UnitPreference } from "@/features/auth/auth.schema";
 import {
+	fetchAndApplyProfile,
 	fetchOrCreateSupabaseUser,
 	sendMagicLink,
 	sendPasswordReset,
@@ -277,7 +278,17 @@ const AuthenticatedProfile = ({
 		setDefaultUnit(newUnit);
 	};
 
+	const [saveError, setSaveError] = useState<string | null>(null);
+
 	const handleSave = async () => {
+		setSaveError(null);
+		const trimmedName = displayName.trim();
+
+		if (trimmedName.length > 50) {
+			setSaveError("Display name must be 50 characters or fewer");
+			return;
+		}
+
 		const heightCm =
 			defaultUnit === "imperial"
 				? heightFt !== "" || heightIn !== ""
@@ -286,6 +297,12 @@ const AuthenticatedProfile = ({
 				: heightCmVal !== ""
 					? Number(heightCmVal)
 					: null;
+
+		if (heightCm !== null && (heightCm <= 0 || !Number.isInteger(heightCm))) {
+			setSaveError("Height must be a positive whole number");
+			return;
+		}
+
 		const apeCm =
 			apeVal !== ""
 				? defaultUnit === "imperial"
@@ -293,8 +310,13 @@ const AuthenticatedProfile = ({
 					: Number(apeVal)
 				: null;
 
+		if (apeCm !== null && (apeCm <= 0 || !Number.isInteger(apeCm))) {
+			setSaveError("Ape index must be a positive whole number");
+			return;
+		}
+
 		const profile: UserProfileUpdate = {
-			display_name: displayName || null,
+			display_name: trimmedName || null,
 			height_cm: heightCm,
 			ape_index_cm: apeCm,
 			max_redpoint_sport: maxSport || null,
@@ -307,10 +329,9 @@ const AuthenticatedProfile = ({
 			onUserUpdate(updated);
 			addToast({ message: "Profile saved", type: "success" });
 		} catch (err) {
-			addToast({
-				message: err instanceof Error ? err.message : "Failed to save profile",
-				type: "error",
-			});
+			const msg = err instanceof Error ? err.message : "Failed to save profile";
+			setSaveError(msg);
+			addToast({ message: msg, type: "error" });
 		}
 	};
 
@@ -443,6 +464,7 @@ const AuthenticatedProfile = ({
 						</Select>
 					</div>
 				</div>
+				{saveError && <p className="text-sm text-red-400">{saveError}</p>}
 				<Button onClick={handleSave}>Save</Button>
 			</div>
 
@@ -467,11 +489,8 @@ const ProfileView = () => {
 			session.user.id,
 			session.user.email ?? "",
 		);
-		const localUser = await upsertLocalUser(
-			session.user.id,
-			session.user.email ?? "",
-			role,
-		);
+		await upsertLocalUser(session.user.id, session.user.email ?? "", role);
+		const localUser = await fetchAndApplyProfile(session.user.id);
 		setUser(localUser);
 		navigate({ to: "/" });
 	};

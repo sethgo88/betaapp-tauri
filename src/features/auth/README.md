@@ -47,12 +47,27 @@ Single row per device. Written after login, cleared on logout (row retained for 
 ## Supabase tables
 
 ```sql
--- User profile (mirrors local users table)
-public.users (id uuid pk, email text, role text default 'user', ...)
+-- User profile — display name, height, ape index, hardest grades, unit preference
+public.profiles (
+  id uuid pk references auth.users(id),
+  display_name text,
+  height_cm integer,
+  ape_index integer,
+  hardest_sport text,
+  hardest_boulder text,
+  default_unit text default 'imperial',
+  updated_at timestamptz
+)
+-- RLS: id = auth.uid() for all operations
 
 -- Role lookup — source of truth for admin access
 public.user_roles (user_id uuid pk, role text default 'user')
 ```
+
+Column name mapping (Supabase → local SQLite `users`):
+- `ape_index` → `ape_index_cm`
+- `hardest_sport` → `max_redpoint_sport`
+- `hardest_boulder` → `max_redpoint_boulder`
 
 Role is **not** read from `public.users.role` — always fetched from `user_roles` after login.
 
@@ -69,7 +84,8 @@ Role is **not** read from `public.users.role` — always fetched from `user_role
 | `sendMagicLink(email)` | `signInWithOtp` — sends magic link email; redirects via Supabase Edge Function → `betaapp://auth/callback` |
 | `restoreSession()` | `supabase.auth.getSession()` — call on app launch |
 | `signOut()` | Clears Supabase session |
-| `updateUserProfile(userId, profile)` | Updates profile fields in SQLite + Supabase; returns updated User |
+| `updateUserProfile(userId, profile)` | Upserts to Supabase `profiles` (throws on error), then updates local SQLite; returns updated User |
+| `fetchAndApplyProfile(userId)` | Fetches from Supabase `profiles`, merges into local SQLite `users`; returns updated User |
 | `upsertLocalUser(id, email, role)` | Writes/updates the local `users` row; migrates climbs if a pre-auth UUID exists |
 | `fetchOrCreateSupabaseUser(userId, email)` | Reads role from `user_roles` → returns `'user' \| 'admin'` |
 | `initDeepLinkHandler(onSession)` | Listens for `betaapp://auth/callback`, exchanges `code` for session, calls `onSession` |
@@ -96,12 +112,17 @@ interface AuthStore {
 
 ```
 App launch:
-  restoreSession() → if session exists → setSession + setUser + run sync
+  restoreSession() → if session exists → setSession
+  fetchOrCreateSupabaseUser(id) → get role
+  upsertLocalUser(id, email, role)
+  fetchAndApplyProfile(id) → merge Supabase profile into local SQLite → setUser
+  useSync fires (userId now defined)
 
 Login (password):
   signIn(email, password) → setSession
   fetchOrCreateSupabaseUser(id) → get role
-  upsertLocalUser(id, email, role) → setUser
+  upsertLocalUser(id, email, role)
+  fetchAndApplyProfile(id) → merge Supabase profile into local SQLite → setUser
   useSync fires (userId now defined)
 
 Login (magic link):
@@ -112,7 +133,8 @@ Login (magic link):
   checkPendingDeepLink / initDeepLinkHandler fires
   exchangeCodeForSession(code) → session
   fetchOrCreateSupabaseUser(id) → get role
-  upsertLocalUser(id, email, role) → setUser
+  upsertLocalUser(id, email, role)
+  fetchAndApplyProfile(id) → merge Supabase profile into local SQLite → setUser
   router.navigate({ to: '/' }) — explicit nav needed; router already redirected to /profile
   useSync fires (userId now defined)
 
