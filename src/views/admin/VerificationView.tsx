@@ -278,6 +278,10 @@ const RouteRow = ({ route }: { route: UnverifiedRoute }) => {
 		);
 	};
 
+	const submitterLabel = route.submitter
+		? (route.submitter.display_name ?? route.submitter.email)
+		: null;
+
 	return (
 		<div className="rounded-lg bg-surface-card p-4 flex flex-col gap-1">
 			<p className="text-xs text-text-secondary">{locationLabel(route)}</p>
@@ -292,6 +296,17 @@ const RouteRow = ({ route }: { route: UnverifiedRoute }) => {
 					{new Date(route.created_at).toLocaleDateString()}
 				</span>
 			</div>
+			{submitterLabel && (
+				<p className="text-xs text-text-secondary">
+					Submitted by{" "}
+					<span className="text-text-primary">{submitterLabel}</span>
+					{route.submitter?.display_name && (
+						<span className="text-text-tertiary ml-1">
+							({route.submitter.email})
+						</span>
+					)}
+				</p>
+			)}
 
 			{mode === "idle" && (
 				<div className="flex gap-2 mt-2 flex-wrap">

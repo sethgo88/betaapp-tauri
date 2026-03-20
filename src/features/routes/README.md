@@ -20,6 +20,15 @@ RouteSchema = {
   created_at: string
 }
 
+// Admin-only type — not stored in SQLite
+UnverifiedRoute = RouteSchema & {
+  walls: { ... } | null    // nested location breadcrumb
+  submitter?: {
+    email: string
+    display_name: string | null
+  }
+}
+
 RouteSubmitSchema = {
   wall_id: string      // required — must select a wall
   name: string
@@ -93,7 +102,7 @@ Only populated when the user downloads a region (see [`locations/README.md`](../
 
 | Function | What it does |
 |---|---|
-| `fetchUnverifiedRoutes()` | Supabase query — pending routes only with nested location names |
+| `fetchUnverifiedRoutes()` | Supabase query — pending routes only with nested location names; enriches each route with submitter `email` and `display_name` from the `users` table |
 | `fetchAllRoutes()` | Supabase query — all routes (all statuses) with nested location names, ordered by created_at desc |
 | `verifyRoute(id)` | Sets `status = 'verified'` in Supabase + local cache |
 | `rejectRoute(id)` | Sets `status = 'rejected'` in Supabase + local cache (soft — stays visible to creator) |
