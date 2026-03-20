@@ -28,6 +28,7 @@ Router defined in `src/router.tsx` using `createMemoryHistory` (required for And
 | `/locations/add` | `AddLocationView` | required | Add a sub-area/crag/wall using location drill-down; admin creates verified, user creates pending |
 | `/routes/add` | `AddEditRouteView` | required | Add a new route with location drill-down; admin creates verified, user creates pending |
 | `/routes/$routeId/edit` | `AddEditRouteView` | required | Edit an existing route including changing its wall |
+| `/stats` | `StatsView` | required | Personal climbing stats — grade distribution, sends per month, burns per send |
 | `/admin/locations` | `admin/LocationManagerView` | admin | Add/delete countries and regions in Supabase |
 | `/admin/verify` | `admin/VerificationView` | admin | Unified pending-submissions queue: routes and locations grouped by type with count badges; inline approve, edit, merge, reject |
 
@@ -98,6 +99,14 @@ Legacy route submission view. Reads `wallId` and `wallName` from search params. 
 
 ### AddEditRouteView `/routes/add` and `/routes/$routeId/edit`
 Unified add/edit route form with cascading location picker (`LocationDrillDown` molecule). Resolves the full location chain (wall → crag → sub_region → region → country) for edit mode pre-population. Admin creates routes as `verified`; users create as `pending`. Calls `useAddRoute()` or `useEditRoute()`. On success navigates back.
+
+### StatsView `/stats`
+Personal climbing analytics. Sport/Boulder discipline toggle at top. Three recharts `BarChart` panels:
+- **Grade distribution** — stacked bar per grade (sent/project/todo); grades ordered by `grades_cache.sort_order`
+- **Sends per month** — single bar per month showing sends (sent/redpoint/flash/onsight)
+- **Burns per send** — average attempts per send at each grade (sent climbs only; requires burns data)
+
+Each panel shows a "Not enough data yet" empty state when the data array is empty. Powered by `useClimbStats(discipline)` → `climbs.stats.ts`.
 
 ### admin/LocationManagerView `/admin/locations`
 Admin only. Loads countries + regions. Inline forms to add/delete entries. Calls admin mutation functions from `locations.service`.

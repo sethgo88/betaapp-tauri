@@ -95,8 +95,22 @@ CREATE TABLE IF NOT EXISTS climbs (
 | `useUpdateClimbMoves()` | Mutation — `{ id, moves }` — replaces moves JSON string + silent push |
 | `useLinkClimbToRoute()` | Mutation — `{ climbId, routeId }` — upgrade flow in EditClimbView |
 | `useDeleteClimb()` | Mutation — soft delete + silent push |
+| `useClimbStats(discipline)` | Grade distribution, sends per month, and burns per send — all from local SQLite via `climbs.stats.ts` |
 
 After each mutation a **silent push** fires: `pushClimbs(userId)` runs in the background, toasting success or "saved offline" on failure.
+
+---
+
+## climbs.stats.ts
+
+Read-only analytics functions — all query local SQLite, no Supabase calls.
+
+| Function | Returns |
+|---|---|
+| `fetchGradeDistribution(userId, discipline)` | `GradeStatusBucket[]` — per-grade counts segmented into `sent` (sent/redpoint/flash/onsight), `project`, and `todo`, ordered by `grades_cache.sort_order` |
+| `fetchSendsPerMonth(userId, discipline)` | `MonthSendCount[]` — sent count grouped by `YYYY-MM`, ordered chronologically |
+| `fetchBurnsPerSend(userId, discipline)` | `BurnsPerSend[]` — average burn count per send at each grade (sent climbs only), ordered by grade |
+| `fetchClimbStats(userId, discipline)` | Runs all three above in parallel, returns `ClimbStats` |
 
 ---
 
