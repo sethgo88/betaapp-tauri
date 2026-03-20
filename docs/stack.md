@@ -24,6 +24,12 @@ Technology choices for BetaApp. For usage patterns, see the relevant README in `
 
 ---
 
+## Web Target (Planned)
+
+A web build target is under research (issue #50). The agreed approach is cloud-only: no local SQLite on web; all data reads and writes go directly to Supabase. See `docs/web-feasibility.md` for the full research spike.
+
+---
+
 ## Further reading
 
 - `src/lib/README.md` — db.ts and supabase.ts client details
