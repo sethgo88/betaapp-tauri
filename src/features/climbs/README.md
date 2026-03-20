@@ -72,7 +72,8 @@ CREATE TABLE IF NOT EXISTS climbs (
 |---|---|
 | `fetchClimbs(userId)` | All active climbs for user, newest first |
 | `fetchClimb(id)` | Single climb by id |
-| `insertClimb(userId, data, routeId?)` | Creates new climb; `routeId` links to a verified route |
+| `backfillClimbLocations()` | One-time startup migration: fills `country/area/sub_area/crag/wall` on route-linked climbs that have empty location data, by joining the local location cache hierarchy |
+| `insertClimb(userId, data, routeId?)` | Creates new climb; when `routeId` is provided, location fields are auto-populated from the route's wall→crag→sub_region→region→country hierarchy |
 | `updateClimb(id, data, routeId?)` | Updates mutable fields; trigger stamps `updated_at` |
 | `updateClimbMoves(id, moves)` | Updates only the `moves` JSON string; used by the import sheet |
 | `linkClimbToRoute(climbId, routeId)` | Sets `route_id` without changing other fields (upgrade flow) |

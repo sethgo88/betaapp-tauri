@@ -54,7 +54,7 @@ export async function fetchClimb(id: string): Promise<Climb | null> {
 export async function backfillClimbLocations(): Promise<void> {
 	const db = await getDb();
 	const rows = await db.select<{ id: string; route_id: string }[]>(
-		"SELECT id, route_id FROM climbs WHERE route_id IS NOT NULL AND country IS NULL AND deleted_at IS NULL",
+		"SELECT id, route_id FROM climbs WHERE route_id IS NOT NULL AND (country IS NULL OR country = '') AND deleted_at IS NULL",
 	);
 	for (const row of rows) {
 		const loc = await fetchLocationForRoute(row.route_id);
