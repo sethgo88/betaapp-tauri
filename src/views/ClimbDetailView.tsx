@@ -344,10 +344,7 @@ const ClimbDetailView = () => {
 					<span>Moves ({moves.length})</span>
 					<ChevronDown
 						size={16}
-						className={cn(
-							"transition-transform",
-							movesOpen && "rotate-180",
-						)}
+						className={cn("transition-transform", movesOpen && "rotate-180")}
 					/>
 				</button>
 				{movesOpen && moves.length > 0 && (

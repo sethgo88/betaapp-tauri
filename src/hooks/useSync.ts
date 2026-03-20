@@ -87,14 +87,7 @@ export function useSync(userId: string | undefined) {
 			console.error("Sync error:", JSON.stringify(err));
 			setError(err instanceof Error ? err.message : JSON.stringify(err));
 		}
-	}, [
-		userId,
-		setSyncing,
-		setSuccess,
-		setError,
-		setOffline,
-		queryClient,
-	]);
+	}, [userId, setSyncing, setSuccess, setError, setOffline, queryClient]);
 
 	// Register triggerSync in the store so SyncStatus can call it without prop drilling.
 	useEffect(() => {

@@ -30,7 +30,13 @@ async function fetchLocationForRoute(
 		[routeId],
 	);
 	return (
-		rows[0] ?? { country: null, area: null, sub_area: null, crag: null, wall: null }
+		rows[0] ?? {
+			country: null,
+			area: null,
+			sub_area: null,
+			crag: null,
+			wall: null,
+		}
 	);
 }
 

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/atoms/Button";
-import { Sheet } from "@/components/molecules/Sheet";
 import { ToggleGroup } from "@/components/atoms/ToggleGroup";
+import { Sheet } from "@/components/molecules/Sheet";
 
 interface ImportBetaSheetProps {
 	isOpen: boolean;
@@ -27,8 +27,14 @@ export const ImportBetaSheet = ({
 		if (!importText.trim()) return;
 		const parsed =
 			importMode === "csv"
-				? importText.split(",").map((s) => s.trim()).filter(Boolean)
-				: importText.split("\n").map((s) => s.trim()).filter(Boolean);
+				? importText
+						.split(",")
+						.map((s) => s.trim())
+						.filter(Boolean)
+				: importText
+						.split("\n")
+						.map((s) => s.trim())
+						.filter(Boolean);
 		onImport(parsed.map((text) => ({ id: crypto.randomUUID(), text })));
 		handleClose();
 	};
