@@ -52,6 +52,14 @@ RouteLinkSubmitSchema = {
   url: string          // must start with http:// or https://
   title?: string
 }
+
+// Returned by the get_route_body_stats Supabase RPC (not stored locally)
+RouteBodyStat = {
+  height_cm: number
+  ape_index_cm: number | null
+  grade: string
+  count: number           // number of climbers at this height/ape + grade combination
+}
 ```
 
 ---
@@ -89,6 +97,12 @@ Only populated when the user downloads a region (see [`locations/README.md`](../
 | `searchLocalRoutes(query)` | LIKE search on local `routes_cache` by name or grade (verified only, limit 30) |
 | `updateRouteDescription(id, description)` | Updates description in Supabase + local cache |
 
+### Route body stats
+
+| Function | What it does |
+|---|---|
+| `fetchRouteBodyStats(routeId)` | Calls `get_route_body_stats` Supabase RPC; returns aggregated height/ape index vs grade data for all climbers who have sent the route (SECURITY DEFINER — bypasses RLS to include all users) |
+
 ### Route links
 
 | Function | What it does |
@@ -125,6 +139,7 @@ useVerifyRoute()           // admin mutation
 useRejectRoute()           // admin mutation
 useUpdateRouteFields()     // admin mutation
 useMergeRoute()            // admin mutation
+useRouteBodyStats(routeId) // body dimension vs grade scatter data from Supabase RPC
 useRouteLinks(routeId)     // non-deleted links for a route from local cache
 useAddRouteLink(routeId)   // mutation — { url, title?, userId }
 useDeleteRouteLink(routeId) // mutation — id

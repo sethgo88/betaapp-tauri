@@ -1,6 +1,11 @@
 import { getDb } from "@/lib/db";
 import { supabase } from "@/lib/supabase";
-import type { Route, RouteLink, RouteSubmitValues } from "./routes.schema";
+import type {
+	Route,
+	RouteBodyStat,
+	RouteLink,
+	RouteSubmitValues,
+} from "./routes.schema";
 
 export async function fetchRoutes(wallId: string): Promise<Route[]> {
 	const db = await getDb();
@@ -317,6 +322,31 @@ export async function searchVerifiedRoutes(
 		.limit(10);
 	if (error) throw error;
 	return (data ?? []) as VerifiedRouteResult[];
+}
+
+// ── Route body stats ──────────────────────────────────────────────────────────
+
+// Requires Supabase RPC:
+//
+// CREATE OR REPLACE FUNCTION public.get_route_body_stats(p_route_id uuid)
+// RETURNS TABLE (height_cm integer, ape_index_cm integer, grade text, count bigint)
+// LANGUAGE sql SECURITY DEFINER STABLE AS $$
+//   SELECT u.height_cm, u.ape_index_cm, c.grade, COUNT(*) AS count
+//   FROM climbs c JOIN users u ON u.id = c.user_id
+//   WHERE c.route_id = p_route_id
+//     AND c.sent_status IN ('sent', 'redpoint', 'flash', 'onsight')
+//     AND c.deleted_at IS NULL AND u.height_cm IS NOT NULL
+//   GROUP BY u.height_cm, u.ape_index_cm, c.grade;
+// $$;
+
+export async function fetchRouteBodyStats(
+	routeId: string,
+): Promise<RouteBodyStat[]> {
+	const { data, error } = await supabase.rpc("get_route_body_stats", {
+		p_route_id: routeId,
+	});
+	if (error) throw error;
+	return (data ?? []) as RouteBodyStat[];
 }
 
 // ── Route links ───────────────────────────────────────────────────────────────
