@@ -92,12 +92,64 @@ export interface UserProfileUpdate {
 	default_unit: UnitPreference;
 }
 
+export async function fetchAndApplyProfile(userId: string): Promise<User> {
+	const db = await getDb();
+
+	const { data, error } = await supabase
+		.from("profiles")
+		.select(
+			"id, display_name, height_cm, ape_index, hardest_sport, hardest_boulder, default_unit",
+		)
+		.eq("id", userId)
+		.single();
+
+	// PGRST116 = row not found — new user with no profile yet, that's fine
+	if (error && error.code !== "PGRST116") {
+		console.warn("[fetchAndApplyProfile] Supabase error:", error.message);
+	}
+
+	if (data) {
+		await db.execute(
+			`UPDATE users
+       SET display_name = ?, height_cm = ?, ape_index_cm = ?,
+           max_redpoint_sport = ?, max_redpoint_boulder = ?, default_unit = ?
+       WHERE id = ?`,
+			[
+				data.display_name,
+				data.height_cm,
+				data.ape_index,
+				data.hardest_sport,
+				data.hardest_boulder,
+				data.default_unit,
+				userId,
+			],
+		);
+	}
+
+	const rows = await db.select<User[]>("SELECT * FROM users WHERE id = ?", [
+		userId,
+	]);
+	if (!rows[0]) throw new Error("User row missing after profile fetch");
+	return rows[0];
+}
+
 export async function updateUserProfile(
 	userId: string,
 	profile: UserProfileUpdate,
 ): Promise<User> {
-	const db = await getDb();
+	// Push to Supabase profiles first — throw on error so caller can show feedback
+	const { error } = await supabase.from("profiles").upsert({
+		id: userId,
+		display_name: profile.display_name,
+		height_cm: profile.height_cm,
+		ape_index: profile.ape_index_cm,
+		hardest_sport: profile.max_redpoint_sport,
+		hardest_boulder: profile.max_redpoint_boulder,
+		default_unit: profile.default_unit,
+	});
+	if (error) throw new Error(error.message);
 
+	const db = await getDb();
 	await db.execute(
 		`UPDATE users
      SET display_name = ?, height_cm = ?, ape_index_cm = ?,
@@ -113,9 +165,6 @@ export async function updateUserProfile(
 			userId,
 		],
 	);
-
-	// Push to Supabase
-	await supabase.from("users").update(profile).eq("id", userId);
 
 	const rows = await db.select<User[]>("SELECT * FROM users WHERE id = ?", [
 		userId,
