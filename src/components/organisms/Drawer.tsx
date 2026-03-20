@@ -1,5 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import {
+	BarChart2,
 	CircleUser,
 	Map as MapIcon,
 	MapPin,
@@ -87,6 +88,15 @@ export const Drawer = ({ isOpen, onClose }: DrawerProps) => {
 							<span>Add Location</span>
 						</button>
 					)}
+
+					<button
+						type="button"
+						className="flex items-center gap-3 py-3 px-2 text-left rounded-lg hover:bg-surface-hover"
+						onClick={() => handleNav("/stats")}
+					>
+						<BarChart2 size={18} />
+						<span>Stats</span>
+					</button>
 
 					<button
 						type="button"

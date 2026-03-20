@@ -3,6 +3,7 @@ import { useAuthStore } from "@/features/auth/auth.store";
 import { pushClimbs } from "@/features/sync/sync.service";
 import { useUiStore } from "@/stores/ui.store";
 import type { ClimbFormValues } from "./climbs.schema";
+import { fetchClimbStats, type Discipline } from "./climbs.stats";
 import {
 	fetchClimb,
 	fetchClimbs,
@@ -117,5 +118,14 @@ export function useDeleteClimb() {
 			qc.invalidateQueries({ queryKey: [CLIMBS_KEY] });
 			silentPush(userId);
 		},
+	});
+}
+
+export function useClimbStats(discipline: Discipline) {
+	const userId = useAuthStore((s) => s.user?.id);
+	return useQuery({
+		queryKey: ["climb_stats", userId, discipline],
+		queryFn: () => fetchClimbStats(userId ?? "", discipline),
+		enabled: !!userId,
 	});
 }

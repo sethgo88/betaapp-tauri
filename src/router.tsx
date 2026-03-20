@@ -19,6 +19,7 @@ import ClimbDetailView from "@/views/ClimbDetailView";
 import CragView from "@/views/CragView";
 import EditClimbView from "@/views/EditClimbView";
 import HomeView from "@/views/HomeView";
+import StatsView from "@/views/StatsView";
 import MapView from "@/views/MapView";
 import ProfileView from "@/views/ProfileView";
 import RegionView from "@/views/RegionView";
@@ -194,6 +195,13 @@ const addLocationRoute = createRoute({
 	component: AddLocationView,
 });
 
+const statsRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/stats",
+	beforeLoad: requireAuth,
+	component: StatsView,
+});
+
 const adminLocationsRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/admin/locations",
@@ -227,6 +235,7 @@ const routeTree = rootRoute.addChildren([
 	wallRoute,
 	routeDetailRoute,
 	addLocationRoute,
+	statsRoute,
 	adminLocationsRoute,
 	adminVerificationRoute,
 ]);

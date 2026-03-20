@@ -19,6 +19,7 @@ Technology choices for BetaApp. For usage patterns, see the relevant README in `
 | **Supabase** | Hosted Postgres with Auth, Realtime, RLS, and web dashboard as admin CMS | Credentials via `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` in `.env` (gitignored) |
 | **tauri-plugin-deep-link** | Handles `betaapp://` URL scheme on Android | Plugin registered; magic link auth wiring planned for Phase 11 |
 | **Leaflet + react-leaflet** | Interactive maps with OSM + Stadia Alidade Satellite tiles | CSS imported in `main.tsx`; custom SVG marker icons; Stadia API key via `VITE_STADIA_API_KEY` |
+| **recharts** | Composable React charting library for stats visualisations | Used in `StatsView`; chart colours are hardcoded hex values (CSS variables are not accessible inside canvas/SVG renderers) |
 | **pnpm** | Fast, strict dependency resolution | Never use `npm` or `yarn` |
 
 ---
