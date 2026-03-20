@@ -145,6 +145,10 @@ export type UnverifiedRoute = {
 			};
 		};
 	} | null;
+	submitter?: {
+		email: string;
+		display_name: string | null;
+	};
 };
 
 export type VerifiedRouteResult = {
@@ -164,7 +168,30 @@ export async function fetchUnverifiedRoutes(): Promise<UnverifiedRoute[]> {
 		.eq("status", "pending")
 		.order("created_at", { ascending: false });
 	if (error) throw error;
-	return (data ?? []) as UnverifiedRoute[];
+
+	const routes = (data ?? []) as UnverifiedRoute[];
+
+	const userIds = [...new Set(routes.map((r) => r.created_by))];
+	if (userIds.length > 0) {
+		const { data: users } = await supabase
+			.from("users")
+			.select("id, email, display_name")
+			.in("id", userIds);
+		if (users) {
+			const userMap = new Map(users.map((u) => [u.id, u]));
+			for (const route of routes) {
+				const user = userMap.get(route.created_by);
+				if (user) {
+					route.submitter = {
+						email: user.email,
+						display_name: user.display_name,
+					};
+				}
+			}
+		}
+	}
+
+	return routes;
 }
 
 export async function fetchAllRoutes(): Promise<UnverifiedRoute[]> {
