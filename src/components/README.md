@@ -45,11 +45,12 @@ templates   Layout shells with no real data — just children/slots.
 | `VideoFrameCapturer` | Fullscreen video scrubber for capturing a still frame as a climb image. Auto-opens the device file picker on mount. Shows play/pause + seek bar once a video is loaded; "Save frame" draws the current frame to a canvas, compresses to JPEG, and calls `onCapture(file)`. Props: `onCapture(file)`, `onClose`. |
 | `ImportBetaSheet` | Bottom sheet for importing a move list from plain text (one-per-line) or CSV. Auto-detects CSV when >1 line ends with a comma. Replaces existing moves on import. Props: `climbId`, `isOpen`, `onClose`. |
 | `ConfirmDialog` | Centred modal overlay for confirming destructive or navigating-away actions. Props: `isOpen`, `title`, `message`, `confirmLabel?`, `cancelLabel?`, `onConfirm`, `onCancel`. |
+| `RoutePickerSheet` | Full-screen sheet that chains `LocationDrillDown` with a route list (verified routes only for the selected wall). Used in `AddClimbView` to link a log entry to a community route. Props: `isOpen`, `onClose`, `onSelect(route)`. |
 
 ### Organisms
 | Component | Purpose |
 |---|---|
-| `ClimbForm` | Full add/edit form — used by both `AddClimbView` and `EditClimbView`. Move list is drag-to-reorder via `@dnd-kit/sortable`; long-press the `GripVertical` handle to activate drag (250ms `TouchSensor` delay). Accepts optional `climbId` prop: when provided, moves auto-save after a 1-second debounce via `useUpdateClimbMoves`, shows a Saving/Saved indicator, and blocks navigation while unsaved changes are in-flight using `useBlocker`. |
+| `ClimbForm` | Full add/edit form — used by both `AddClimbView` and `EditClimbView`. Move list is drag-to-reorder via `@dnd-kit/sortable`; long-press the `GripVertical` handle to activate drag (250ms `TouchSensor` delay). Accepts optional `climbId` prop: when provided, moves auto-save after a 1-second debounce via `useUpdateClimbMoves`, shows a Saving/Saved indicator, and blocks navigation while unsaved changes are in-flight using `useBlocker`. Accepts optional `linkedRoute`, `onOpenRoutePicker`, `onUnlinkRoute` props for displaying/clearing a linked community route (shown above the Save button). |
 | `NavBar` | Bottom navigation bar: Home, Add, Search, Menu |
 | `Drawer` | Slide-up modal sheet |
 

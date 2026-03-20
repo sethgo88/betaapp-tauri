@@ -32,6 +32,7 @@ import {
 	type SentStatus,
 } from "@/features/climbs/climbs.schema";
 import { useGrades } from "@/features/grades/grades.queries";
+import type { Route } from "@/features/routes/routes.schema";
 
 type MoveItem = { id: string; text: string };
 
@@ -103,12 +104,21 @@ interface ClimbFormProps {
 	onSubmit: (values: ClimbFormValues) => Promise<void>;
 	/** When provided, moves are auto-saved after a 1-second debounce. */
 	climbId?: string;
+	/** Currently linked community route, shown as a summary card. */
+	linkedRoute?: Pick<Route, "id" | "name" | "grade"> | null;
+	/** Called when the user taps "Link to route" or "Change route". */
+	onOpenRoutePicker?: () => void;
+	/** Called when the user taps "Unlink". */
+	onUnlinkRoute?: () => void;
 }
 
 export const ClimbForm = ({
 	defaultValues,
 	onSubmit,
 	climbId,
+	linkedRoute,
+	onOpenRoutePicker,
+	onUnlinkRoute,
 }: ClimbFormProps) => {
 	const [movesList, setMovesList] = useState<MoveItem[]>(() => {
 		if (defaultValues?.moves) {
@@ -400,6 +410,47 @@ export const ClimbForm = ({
 						/>
 					)}
 				</form.Field>
+
+				{onOpenRoutePicker && (
+					<div className="rounded-card bg-surface-card px-3 py-2.5">
+						{linkedRoute ? (
+							<div className="flex items-center justify-between gap-2">
+								<div className="min-w-0">
+									<p className="text-sm font-medium text-text-primary truncate">
+										{linkedRoute.name}
+									</p>
+									<p className="text-xs text-text-secondary">
+										{linkedRoute.grade}
+									</p>
+								</div>
+								<div className="flex items-center gap-3 shrink-0">
+									<button
+										type="button"
+										onClick={onOpenRoutePicker}
+										className="text-xs text-accent-primary"
+									>
+										Change
+									</button>
+									<button
+										type="button"
+										onClick={() => onUnlinkRoute?.()}
+										className="text-xs text-text-muted"
+									>
+										Unlink
+									</button>
+								</div>
+							</div>
+						) : (
+							<button
+								type="button"
+								onClick={onOpenRoutePicker}
+								className="text-sm text-text-secondary w-full text-left"
+							>
+								+ Link to route
+							</button>
+						)}
+					</div>
+				)}
 
 				<Button
 					type="submit"
