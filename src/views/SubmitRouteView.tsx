@@ -43,12 +43,16 @@ const SubmitRouteView = () => {
 				return;
 			}
 			try {
-				await submitRoute(parsed.data);
+				const newRouteId = await submitRoute(parsed.data);
 				addToast({
 					message: isAdmin ? "Route added" : "Route submitted for review",
 					type: "success",
 				});
-				router.history.back();
+				router.navigate({
+					to: "/routes/$routeId",
+					params: { routeId: newRouteId },
+					replace: true,
+				});
 			} catch {
 				addToast({ message: "Failed to submit route", type: "error" });
 			}
