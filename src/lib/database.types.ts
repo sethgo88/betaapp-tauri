@@ -318,6 +318,39 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          ape_index: number | null
+          default_unit: string
+          display_name: string | null
+          hardest_boulder: string | null
+          hardest_sport: string | null
+          height_cm: number | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          ape_index?: number | null
+          default_unit?: string
+          display_name?: string | null
+          hardest_boulder?: string | null
+          hardest_sport?: string | null
+          height_cm?: number | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          ape_index?: number | null
+          default_unit?: string
+          display_name?: string | null
+          hardest_boulder?: string | null
+          hardest_sport?: string | null
+          height_cm?: number | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       regions: {
         Row: {
           country_id: string
@@ -529,39 +562,6 @@ export type Database = {
         Update: {
           role?: string
           user_id?: string
-        }
-        Relationships: []
-      }
-      profiles: {
-        Row: {
-          id: string
-          display_name: string | null
-          height_cm: number | null
-          ape_index: number | null
-          hardest_sport: string | null
-          hardest_boulder: string | null
-          default_unit: string
-          updated_at: string
-        }
-        Insert: {
-          id: string
-          display_name?: string | null
-          height_cm?: number | null
-          ape_index?: number | null
-          hardest_sport?: string | null
-          hardest_boulder?: string | null
-          default_unit?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          display_name?: string | null
-          height_cm?: number | null
-          ape_index?: number | null
-          hardest_sport?: string | null
-          hardest_boulder?: string | null
-          default_unit?: string
-          updated_at?: string
         }
         Relationships: []
       }
