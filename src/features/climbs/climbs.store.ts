@@ -1,10 +1,18 @@
 import { create } from "zustand";
 
+export type SortKey =
+	| "name_asc"
+	| "name_desc"
+	| "date_desc"
+	| "date_asc"
+	| "grade_asc"
+	| "grade_desc";
+
 interface ClimbsStore {
 	selectedClimbId: string | null;
 	setSelectedClimbId: (id: string | null) => void;
 
-	// Filter state — persists across navigation
+	// Filter / sort state — persists across navigation
 	searchText: string;
 	setSearchText: (text: string) => void;
 	filtersOpen: boolean;
@@ -13,6 +21,8 @@ interface ClimbsStore {
 	toggleStatusFilter: (status: string) => void;
 	typeFilters: Set<string>;
 	toggleTypeFilter: (type: string) => void;
+	sortKey: SortKey;
+	setSortKey: (key: SortKey) => void;
 }
 
 export const useClimbsStore = create<ClimbsStore>((set) => ({
@@ -39,4 +49,6 @@ export const useClimbsStore = create<ClimbsStore>((set) => ({
 			else next.add(type);
 			return { typeFilters: next };
 		}),
+	sortKey: "name_asc",
+	setSortKey: (sortKey) => set({ sortKey }),
 }));

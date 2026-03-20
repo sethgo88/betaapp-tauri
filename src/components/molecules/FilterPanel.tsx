@@ -1,6 +1,7 @@
 import { ChevronDown } from "lucide-react";
 import type { Climb } from "@/features/climbs/climbs.schema";
 import { useClimbsStore } from "@/features/climbs/climbs.store";
+import type { SortKey } from "@/features/climbs/climbs.store";
 import { cn } from "@/lib/cn";
 
 interface FilterPanelProps {
@@ -31,6 +32,15 @@ const FilterCheckbox = ({
 	</label>
 );
 
+const SORT_OPTIONS: { key: SortKey; label: string }[] = [
+	{ key: "name_asc", label: "A → Z (title)" },
+	{ key: "name_desc", label: "Z → A (title)" },
+	{ key: "date_desc", label: "Newest first" },
+	{ key: "date_asc", label: "Oldest first" },
+	{ key: "grade_asc", label: "Grade easy → hard" },
+	{ key: "grade_desc", label: "Grade hard → easy" },
+];
+
 export const FilterPanel = ({ climbs }: FilterPanelProps) => {
 	const filtersOpen = useClimbsStore((s) => s.filtersOpen);
 	const setFiltersOpen = useClimbsStore((s) => s.setFiltersOpen);
@@ -38,6 +48,8 @@ export const FilterPanel = ({ climbs }: FilterPanelProps) => {
 	const toggleStatusFilter = useClimbsStore((s) => s.toggleStatusFilter);
 	const typeFilters = useClimbsStore((s) => s.typeFilters);
 	const toggleTypeFilter = useClimbsStore((s) => s.toggleTypeFilter);
+	const sortKey = useClimbsStore((s) => s.sortKey);
+	const setSortKey = useClimbsStore((s) => s.setSortKey);
 
 	// Status counts are filtered by active type filters
 	const typeFiltered = climbs.filter((c) => typeFilters.has(c.route_type));
@@ -60,7 +72,7 @@ export const FilterPanel = ({ climbs }: FilterPanelProps) => {
 				className="flex items-center gap-1 text-sm text-text-secondary w-full"
 				onClick={() => setFiltersOpen(!filtersOpen)}
 			>
-				<span>Filters</span>
+				<span>Filter / Sort</span>
 				<ChevronDown
 					size={16}
 					className={cn("transition-transform", filtersOpen && "rotate-180")}
@@ -111,6 +123,29 @@ export const FilterPanel = ({ climbs }: FilterPanelProps) => {
 								checked={typeFilters.has("boulder")}
 								onChange={() => toggleTypeFilter("boulder")}
 							/>
+						</div>
+					</div>
+					<div>
+						<p className="text-xs text-text-secondary uppercase tracking-wide mb-1">
+							Sort
+						</p>
+						<div className="flex flex-col gap-1">
+							{SORT_OPTIONS.map((opt) => (
+								<label
+									key={opt.key}
+									className="flex items-center gap-2 text-sm cursor-pointer"
+								>
+									<input
+										type="radio"
+										name="sort"
+										value={opt.key}
+										checked={sortKey === opt.key}
+										onChange={() => setSortKey(opt.key)}
+										className="accent-accent-primary w-4 h-4"
+									/>
+									<span>{opt.label}</span>
+								</label>
+							))}
 						</div>
 					</div>
 				</div>

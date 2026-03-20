@@ -1,5 +1,6 @@
 import { getDb } from "@/lib/db";
 import type { Climb, ClimbFormValues } from "./climbs.schema";
+import type { SortKey } from "./climbs.store";
 
 type LocationBreadcrumb = {
 	country: string | null;
@@ -40,10 +41,41 @@ async function fetchLocationForRoute(
 	);
 }
 
-export async function fetchClimbs(userId: string): Promise<Climb[]> {
+function buildOrderBy(sortKey: SortKey): string {
+	switch (sortKey) {
+		case "name_asc":
+			return "ORDER BY c.name COLLATE NOCASE ASC";
+		case "name_desc":
+			return "ORDER BY c.name COLLATE NOCASE DESC";
+		case "date_desc":
+			return "ORDER BY c.created_at DESC";
+		case "date_asc":
+			return "ORDER BY c.created_at ASC";
+		case "grade_asc":
+			return "ORDER BY c.route_type ASC, COALESCE(g.sort_order, 9999) ASC";
+		case "grade_desc":
+			return "ORDER BY c.route_type ASC, COALESCE(g.sort_order, 9999) DESC";
+	}
+}
+
+export async function fetchClimbs(
+	userId: string,
+	sortKey: SortKey = "name_asc",
+): Promise<Climb[]> {
 	const db = await getDb();
+	const orderBy = buildOrderBy(sortKey);
+	const needsGradeJoin = sortKey === "grade_asc" || sortKey === "grade_desc";
+	if (needsGradeJoin) {
+		return db.select<Climb[]>(
+			`SELECT c.* FROM climbs c
+       LEFT JOIN grades_cache g ON g.discipline = c.route_type AND g.grade = c.grade
+       WHERE c.user_id = ? AND c.deleted_at IS NULL
+       ${orderBy}`,
+			[userId],
+		);
+	}
 	return db.select<Climb[]>(
-		"SELECT * FROM climbs WHERE user_id = ? AND deleted_at IS NULL ORDER BY created_at DESC",
+		`SELECT c.* FROM climbs c WHERE c.user_id = ? AND c.deleted_at IS NULL ${orderBy}`,
 		[userId],
 	);
 }
