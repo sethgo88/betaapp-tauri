@@ -23,7 +23,7 @@ export async function addRoute(
 	values: RouteSubmitValues,
 	userId: string,
 	isAdmin: boolean,
-): Promise<void> {
+): Promise<string> {
 	const id = crypto.randomUUID();
 	const status = isAdmin ? "verified" : "pending";
 
@@ -55,6 +55,7 @@ export async function addRoute(
 			userId,
 		],
 	);
+	return id;
 }
 
 export async function editRoute(
