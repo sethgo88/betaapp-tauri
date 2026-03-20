@@ -12,14 +12,16 @@ import {
 	updateClimb,
 	updateClimbMoves,
 } from "./climbs.service";
+import { useClimbsStore } from "./climbs.store";
 
 const CLIMBS_KEY = "climbs";
 
 export function useClimbs() {
 	const userId = useAuthStore((s) => s.user?.id);
+	const sortKey = useClimbsStore((s) => s.sortKey);
 	return useQuery({
-		queryKey: [CLIMBS_KEY, userId],
-		queryFn: () => fetchClimbs(userId ?? ""),
+		queryKey: [CLIMBS_KEY, userId, sortKey],
+		queryFn: () => fetchClimbs(userId ?? "", sortKey),
 		enabled: !!userId,
 	});
 }

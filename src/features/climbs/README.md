@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS climbs (
 
 | Function | What it does |
 |---|---|
-| `fetchClimbs(userId)` | All active climbs for user, newest first |
+| `fetchClimbs(userId, sortKey?)` | All active climbs for user; sort defaults to `name_asc`. Grade sort joins `grades_cache` to rank by `sort_order`. |
 | `fetchClimb(id)` | Single climb by id |
 | `backfillClimbLocations()` | One-time startup migration: fills `country/area/sub_area/crag/wall` on route-linked climbs that have empty location data, by joining the local location cache hierarchy |
 | `insertClimb(userId, data, routeId?)` | Creates new climb; when `routeId` is provided, location fields are auto-populated from the route's wall→crag→sub_region→region→country hierarchy |
@@ -88,7 +88,7 @@ CREATE TABLE IF NOT EXISTS climbs (
 
 | Hook | Returns |
 |---|---|
-| `useClimbs()` | All active climbs for current user |
+| `useClimbs()` | All active climbs for current user, sorted per `sortKey` from `useClimbsStore` |
 | `useClimb(id)` | Single climb |
 | `useAddClimb()` | Mutation — `{ data, routeId? }` — inserts + silent push |
 | `useUpdateClimb()` | Mutation — `{ id, data, routeId? }` — updates + silent push |
@@ -103,11 +103,16 @@ After each mutation a **silent push** fires: `pushClimbs(userId)` runs in the ba
 ## climbs.store.ts
 
 ```ts
+type SortKey =
+  | 'name_asc' | 'name_desc'    // alphabetical by climb title
+  | 'date_desc' | 'date_asc'    // by created_at
+  | 'grade_asc' | 'grade_desc'  // by grades_cache.sort_order, discipline-grouped
+
 interface ClimbsStore {
   selectedClimbId: string | null
   setSelectedClimbId: (id: string | null) => void
 
-  // Filter state — persists across navigation
+  // Filter / sort state — persists across navigation
   searchText: string
   setSearchText: (text: string) => void
   filtersOpen: boolean
@@ -116,6 +121,8 @@ interface ClimbsStore {
   toggleStatusFilter: (status: string) => void
   typeFilters: Set<string>            // default: sport, boulder
   toggleTypeFilter: (type: string) => void
+  sortKey: SortKey                    // default: name_asc
+  setSortKey: (key: SortKey) => void
 }
 ```
 
