@@ -28,7 +28,15 @@ const HomeView = () => {
 		if (!statusFilters.has(c.sent_status)) return false;
 		if (!typeFilters.has(c.route_type)) return false;
 		if (query) {
-			const haystack = [c.name, c.grade, c.country, c.area, c.sub_area, c.crag, c.wall]
+			const haystack = [
+				c.name,
+				c.grade,
+				c.country,
+				c.area,
+				c.sub_area,
+				c.crag,
+				c.wall,
+			]
 				.filter(Boolean)
 				.join(" ")
 				.toLowerCase();

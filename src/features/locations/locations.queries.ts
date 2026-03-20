@@ -355,7 +355,8 @@ export function useSubmitCrag() {
 	const userId = useAuthStore((s) => s.user?.id ?? "");
 	const isAdmin = useAuthStore((s) => s.user?.role === "admin");
 	return useMutation({
-		mutationFn: (values: CragSubmitValues) => submitCrag(values, userId, isAdmin),
+		mutationFn: (values: CragSubmitValues) =>
+			submitCrag(values, userId, isAdmin),
 		onSuccess: (_data, values) => {
 			qc.invalidateQueries({
 				queryKey: ["crags", values.sub_region_id],
@@ -369,7 +370,8 @@ export function useSubmitWall() {
 	const userId = useAuthStore((s) => s.user?.id ?? "");
 	const isAdmin = useAuthStore((s) => s.user?.role === "admin");
 	return useMutation({
-		mutationFn: (values: WallSubmitValues) => submitWall(values, userId, isAdmin),
+		mutationFn: (values: WallSubmitValues) =>
+			submitWall(values, userId, isAdmin),
 		onSuccess: (_data, values) => {
 			qc.invalidateQueries({ queryKey: ["walls", values.crag_id] });
 		},

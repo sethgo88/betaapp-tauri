@@ -192,7 +192,10 @@ export const ClimbForm = ({
 			const navbarHeight = window.innerHeight * 0.07;
 			const visibleBottom = window.innerHeight - navbarHeight - 8;
 			if (rect.bottom > visibleBottom) {
-				window.scrollBy({ top: rect.bottom - visibleBottom, behavior: "smooth" });
+				window.scrollBy({
+					top: rect.bottom - visibleBottom,
+					behavior: "smooth",
+				});
 			}
 		};
 		// Run immediately, then again after the keyboard finishes opening

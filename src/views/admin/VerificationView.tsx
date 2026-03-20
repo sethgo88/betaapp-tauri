@@ -1,5 +1,5 @@
-import { useState } from "react";
 import { useRouter } from "@tanstack/react-router";
+import { useState } from "react";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { Select } from "@/components/atoms/Select";
@@ -466,13 +466,10 @@ const VerificationView = () => {
 	const router = useRouter();
 	const addToast = useUiStore((s) => s.addToast);
 
-	const { data: routes = [], isLoading: routesLoading } =
-		useUnverifiedRoutes();
+	const { data: routes = [], isLoading: routesLoading } = useUnverifiedRoutes();
 	const { data: locations = [], isLoading: locationsLoading } =
 		usePendingLocations();
 
-	const verifyRoute = useVerifyRoute();
-	const rejectRoute = useRejectRoute();
 	const verifyLocation = useVerifyLocation();
 	const rejectLocation = useRejectLocation();
 
@@ -500,8 +497,7 @@ const VerificationView = () => {
 			{
 				onSuccess: () =>
 					addToast({ message: `${item.name} rejected`, type: "success" }),
-				onError: () =>
-					addToast({ message: "Failed to reject", type: "error" }),
+				onError: () => addToast({ message: "Failed to reject", type: "error" }),
 			},
 		);
 	};

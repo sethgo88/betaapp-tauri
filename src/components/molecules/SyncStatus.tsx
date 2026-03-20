@@ -1,4 +1,10 @@
-import { AlertCircle, CheckCircle, Loader2, RefreshCw, WifiOff } from "lucide-react";
+import {
+	AlertCircle,
+	CheckCircle,
+	Loader2,
+	RefreshCw,
+	WifiOff,
+} from "lucide-react";
 import { useSyncStore } from "@/features/sync/sync.store";
 
 export const SyncStatus = () => {
