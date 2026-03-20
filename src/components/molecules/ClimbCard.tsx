@@ -25,7 +25,7 @@ export const ClimbCard = ({ climb, onClick }: ClimbCardProps) => {
 					<span className="font-display font-bold">{climb.name}</span>
 					<span className="font-display text-sm">{climb.grade}</span>
 				</div>
-				<div className="text-xs text-current/70">
+				<div className="text-xs text-left max-w-4/5 text-current/70">
 					{buildLocationString([
 						climb.country,
 						climb.area,

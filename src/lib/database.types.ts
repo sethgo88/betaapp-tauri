@@ -144,6 +144,7 @@ export type Database = {
         Row: {
           area: string | null
           country: string | null
+          crag: string | null
           created_at: string
           deleted_at: string | null
           grade: string
@@ -158,10 +159,12 @@ export type Database = {
           sub_area: string | null
           updated_at: string
           user_id: string
+          wall: string | null
         }
         Insert: {
           area?: string | null
           country?: string | null
+          crag?: string | null
           created_at: string
           deleted_at?: string | null
           grade: string
@@ -176,10 +179,12 @@ export type Database = {
           sub_area?: string | null
           updated_at: string
           user_id: string
+          wall?: string | null
         }
         Update: {
           area?: string | null
           country?: string | null
+          crag?: string | null
           created_at?: string
           deleted_at?: string | null
           grade?: string
@@ -194,6 +199,7 @@ export type Database = {
           sub_area?: string | null
           updated_at?: string
           user_id?: string
+          wall?: string | null
         }
         Relationships: [
           {
