@@ -8,7 +8,14 @@ import { Spinner } from "@/components/atoms/Spinner";
 import { AdminImageGallery } from "@/components/molecules/AdminImageGallery";
 import { EditableDescription } from "@/components/molecules/EditableDescription";
 import { RouteBodyChart } from "@/components/molecules/RouteBodyChart";
+import { TopoModal } from "@/components/molecules/TopoModal";
+import { RouteTopoBuilder } from "@/components/organisms/TopoBuilder";
 import { useAuthStore } from "@/features/auth/auth.store";
+import {
+	useRouteTopo,
+	useWallTopo,
+	useWallTopoLines,
+} from "@/features/topos/topos.queries";
 import { useClimbs } from "@/features/climbs/climbs.queries";
 import {
 	useAddRouteImage,
@@ -39,6 +46,14 @@ const RouteDetailView = () => {
 	const user = useAuthStore((s) => s.user);
 	const isAdmin = user?.role === "admin";
 	const existingClimb = climbs.find((c) => c.route_id === routeId);
+
+	// Topo data
+	const { data: routeTopo = null } = useRouteTopo(routeId);
+	const { data: wallTopo = null } = useWallTopo(route?.wall_id ?? null);
+	const { data: wallTopoLines = [] } = useWallTopoLines(wallTopo?.id ?? null);
+	const wallTopoLineForRoute = wallTopoLines.find((l) => l.route_id === routeId);
+	const showWallTopoFallback = !routeTopo && !!wallTopo && !!wallTopoLineForRoute;
+	const [showTopoModal, setShowTopoModal] = useState(false);
 
 	const [linkUrl, setLinkUrl] = useState("");
 	const [linkTitle, setLinkTitle] = useState("");
@@ -130,6 +145,51 @@ const RouteDetailView = () => {
 				onDelete={(id, imageUrl) => deleteRouteImage.mutate({ id, imageUrl })}
 				isAdding={addRouteImage.isPending}
 			/>
+
+			{/* Topo section */}
+			{(routeTopo || showWallTopoFallback) && (
+				<div className="flex flex-col gap-1">
+					<p className="text-xs text-text-tertiary">Topo</p>
+					<button
+						type="button"
+						onClick={() => setShowTopoModal(true)}
+						className="relative w-full rounded-[var(--radius-md)] overflow-hidden"
+						aria-label="View topo"
+					>
+						<img
+							src={routeTopo ? routeTopo.image_url : wallTopo!.image_url}
+							alt="Route topo"
+							className="w-full object-cover max-h-40"
+						/>
+						<span className="absolute inset-0 flex items-center justify-center bg-black/20 text-white text-xs font-medium">
+							View topo
+						</span>
+					</button>
+				</div>
+			)}
+
+			{isAdmin && (
+				<RouteTopoBuilder routeId={routeId} topo={routeTopo} />
+			)}
+
+			{showTopoModal && routeTopo && (
+				<TopoModal
+					mode="route"
+					topo={routeTopo}
+					onClose={() => setShowTopoModal(false)}
+				/>
+			)}
+
+			{showTopoModal && showWallTopoFallback && wallTopo && wallTopoLineForRoute && (
+				<TopoModal
+					mode="wall-single"
+					topo={wallTopo}
+					lines={wallTopoLines}
+					routes={route ? [{ id: route.id, name: route.name, grade: route.grade }] : []}
+					routeId={routeId}
+					onClose={() => setShowTopoModal(false)}
+				/>
+			)}
 
 			{/* Links section */}
 			<div className="flex flex-col gap-2">

@@ -42,6 +42,9 @@ Versioned migration runner. Maintains a `schema_version` table (single row) and 
 | `route_images_cache` | Admin-managed route photos (read-only cache) (#11) |
 | `wall_images_cache` | Admin-managed wall photos (read-only cache) (#11) |
 | `climb_images` | User-uploaded photos per climb log entry (#12) |
+| `wall_topos_cache` | Admin-managed wall topo photos (one per wall) |
+| `wall_topo_lines_cache` | Route lines on wall topos; `points` stored as JSON `[{x_pct,y_pct}]` |
+| `route_topos_cache` | Admin-managed route topo photos (one per route, optional) |
 
 ### Migration history
 
@@ -65,6 +68,7 @@ Versioned migration runner. Maintains a `schema_version` table (single row) and 
 | v16 | `pointer_dir` on `climb_image_pins` (#38) |
 | v17 | Backfill `server_updated_at` on `downloaded_regions` for devices that skipped v15 |
 | v18 | `crag`, `wall` on `climbs` — full 5-level location breadcrumb (#44) |
+| v19 | `wall_topos_cache`, `wall_topo_lines_cache`, `route_topos_cache` tables for topo photos |
 
 ### Rules
 - Always use `?` positional parameters — never string interpolation (SQL injection)
