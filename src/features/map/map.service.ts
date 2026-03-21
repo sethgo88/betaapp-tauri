@@ -5,6 +5,7 @@ export type PersonalCrag = {
 	name: string;
 	lat: number;
 	lng: number;
+	approach: string | null;
 	route_count: number;
 	climb_count: number;
 	sent_count: number;
@@ -25,6 +26,7 @@ export async function fetchPersonalCrags(
 			name: string;
 			lat: number;
 			lng: number;
+			approach: string | null;
 			route_count: number;
 			climb_count: number;
 			sent_count: number;
@@ -37,6 +39,7 @@ export async function fetchPersonalCrags(
 			c.name,
 			c.lat,
 			c.lng,
+			c.approach,
 			(SELECT COUNT(*) FROM routes_cache r2
 			 JOIN walls_cache w2 ON r2.wall_id = w2.id
 			 WHERE w2.crag_id = c.id) AS route_count,
@@ -79,6 +82,7 @@ export type PersonalWall = {
 	crag_name: string;
 	lat: number;
 	lng: number;
+	approach: string | null;
 	route_count: number;
 	sent_count: number;
 	project_count: number;
@@ -97,6 +101,7 @@ export async function fetchPersonalWalls(
 			c.name AS crag_name,
 			w.lat,
 			w.lng,
+			w.approach,
 			(SELECT COUNT(*) FROM routes_cache r2 WHERE r2.wall_id = w.id) AS route_count,
 			SUM(CASE WHEN cl.sent_status IN ('sent', 'flash', 'redpoint', 'onsight') THEN 1 ELSE 0 END) AS sent_count,
 			SUM(CASE WHEN cl.sent_status = 'project' THEN 1 ELSE 0 END) AS project_count,

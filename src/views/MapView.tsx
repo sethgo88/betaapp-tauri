@@ -504,6 +504,11 @@ const MapView = () => {
 											<MapPin size={14} className="inline mr-1" />
 											{crag.name}
 										</button>
+										{crag.approach && (
+											<p className="text-xs text-gray-500 max-w-[180px]">
+												{crag.approach}
+											</p>
+										)}
 										<ZoomToButton lat={crag.lat} lng={crag.lng} />
 									</div>
 								</Popup>
@@ -537,6 +542,11 @@ const MapView = () => {
 										<span className="text-xs text-gray-500">
 											{wall.crag_name}
 										</span>
+										{wall.approach && (
+											<p className="text-xs text-gray-500 max-w-[180px]">
+												{wall.approach}
+											</p>
+										)}
 									</div>
 								</Popup>
 							</Marker>
@@ -575,6 +585,11 @@ const MapView = () => {
 												.filter(Boolean)
 												.join(" · ")}
 										</span>
+										{crag.approach && (
+											<p className="text-xs text-gray-500 max-w-[180px]">
+												{crag.approach}
+											</p>
+										)}
 										<ZoomToButton lat={crag.lat} lng={crag.lng} />
 									</div>
 								</Popup>
@@ -615,6 +630,11 @@ const MapView = () => {
 												.filter(Boolean)
 												.join(" · ")}
 										</span>
+										{wall.approach && (
+											<p className="text-xs text-gray-500 max-w-[180px]">
+												{wall.approach}
+											</p>
+										)}
 									</div>
 								</Popup>
 							</Marker>

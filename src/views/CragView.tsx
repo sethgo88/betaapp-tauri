@@ -17,6 +17,7 @@ import {
 	useAdminUpdateCragCoords,
 	useCrag,
 	useSubmitWall,
+	useUpdateLocationApproach,
 	useUpdateLocationDescription,
 	useWalls,
 } from "@/features/locations/locations.queries";
@@ -196,6 +197,7 @@ const CragView = () => {
 	const { data: walls = [] } = useWalls(cragId);
 	const submitWall = useSubmitWall();
 	const updateDescription = useUpdateLocationDescription();
+	const updateApproach = useUpdateLocationApproach();
 	const isAdmin = useAuthStore((s) => s.user?.role === "admin");
 	const addToast = useUiStore((s) => s.addToast);
 	const updateCoords = useAdminUpdateCragCoords();
@@ -258,6 +260,25 @@ const CragView = () => {
 							});
 						}}
 					/>
+
+					<div className="flex flex-col gap-1">
+						<p className="text-xs text-text-tertiary uppercase tracking-wide">
+							Approach
+						</p>
+						<EditableDescription
+							description={crag.approach}
+							isAdmin={isAdmin}
+							placeholder="Describe how to get here…"
+							emptyText="No approach info"
+							onSave={async (approach) => {
+								await updateApproach.mutateAsync({
+									table: "crags",
+									id: cragId,
+									approach,
+								});
+							}}
+						/>
+					</div>
 
 					{crag.lat != null && crag.lng != null && (
 						<ViewOnMap lat={crag.lat} lng={crag.lng} />

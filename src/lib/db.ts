@@ -469,6 +469,12 @@ const migrations: Migration[] = [
       )
     `);
 	},
+
+	// v20: approach text on crags_cache and walls_cache (#92)
+	async (db) => {
+		await db.execute(`ALTER TABLE crags_cache ADD COLUMN approach TEXT`);
+		await db.execute(`ALTER TABLE walls_cache ADD COLUMN approach TEXT`);
+	},
 ];
 
 export async function runMigrations(db: DbAdapter): Promise<void> {
