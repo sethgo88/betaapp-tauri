@@ -8,12 +8,20 @@ Per-user timestamped notes on a climb representing a single attempt or session. 
 
 | Schema | Purpose |
 |---|---|
-| `BurnSchema` | Full DB record: `id, climb_id, user_id, date, outcome, notes, created_at, updated_at, deleted_at` |
-| `BurnFormSchema` | Form input: `date, notes` |
+| `BurnSchema` | Full DB record: `id, climb_id, user_id, date, outcome, notes, feel, created_at, updated_at, deleted_at` |
+| `BurnFormSchema` | Form input: `date, notes, feel` |
 
 Types: `Burn`, `BurnFormValues`
 
 The `outcome` column exists in the DB but defaults to `'attempt'` and is not exposed in the UI.
+
+The `feel` column is an optional integer 0–5 rating of how close the climber felt to sending:
+- 0: Impossible
+- 1: Very far
+- 2: Far
+- 3: Getting closer
+- 4: Close
+- 5: It will go
 
 ---
 
@@ -23,7 +31,7 @@ The `outcome` column exists in the DB but defaults to `'attempt'` and is not exp
 |---|---|
 | `fetchBurns(climbId)` | All non-deleted burns for a climb, sorted date DESC |
 | `insertBurn(climbId, userId, data)` | Insert with `crypto.randomUUID()`, outcome defaults to `'attempt'` |
-| `updateBurn(id, data)` | Update date and notes |
+| `updateBurn(id, data)` | Update date, notes, and feel |
 | `softDeleteBurn(id)` | Set `deleted_at` |
 | `applyRemoteBurn(burn)` | `INSERT OR REPLACE` preserving server timestamps |
 

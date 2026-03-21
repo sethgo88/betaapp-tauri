@@ -27,6 +27,7 @@ templates   Layout shells with no real data — just children/slots.
 | `Select` | Dropdown select |
 | `Spinner` | Loading indicator |
 | `ToggleGroup` | Full-width segmented button toggle (e.g. todo/project/sent) |
+| `FeelSlider` | Horizontal segmented slider with 6 circular radio steps (0–5) and a dynamic label above the selected step. Tapping the active step deselects it (nullable). Used in burn add/edit forms. Props: `value: number \| null \| undefined`, `onChange(value: number \| null)`. |
 
 ### Molecules
 | Component | Purpose |

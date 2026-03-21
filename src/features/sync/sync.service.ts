@@ -145,9 +145,9 @@ export async function pullBurns(userId: string, since?: string): Promise<void> {
 	for (const row of data) {
 		await db.execute(
 			`INSERT OR REPLACE INTO burns
-       (id, climb_id, user_id, date, outcome, notes,
+       (id, climb_id, user_id, date, outcome, notes, feel,
         created_at, updated_at, deleted_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			[
 				row.id,
 				row.climb_id,
@@ -155,6 +155,7 @@ export async function pullBurns(userId: string, since?: string): Promise<void> {
 				row.date,
 				row.outcome,
 				row.notes ?? null,
+				row.feel ?? null,
 				row.created_at,
 				row.updated_at,
 				row.deleted_at ?? null,

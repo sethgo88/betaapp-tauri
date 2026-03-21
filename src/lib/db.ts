@@ -475,6 +475,11 @@ const migrations: Migration[] = [
 		await db.execute(`ALTER TABLE crags_cache ADD COLUMN approach TEXT`);
 		await db.execute(`ALTER TABLE walls_cache ADD COLUMN approach TEXT`);
 	},
+
+	// v21: feel rating on burns (#93)
+	async (db) => {
+		await db.execute(`ALTER TABLE burns ADD COLUMN feel INTEGER`);
+	},
 ];
 
 export async function runMigrations(db: DbAdapter): Promise<void> {
