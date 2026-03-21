@@ -480,6 +480,11 @@ const migrations: Migration[] = [
 	async (db) => {
 		await db.execute(`ALTER TABLE burns ADD COLUMN feel INTEGER`);
 	},
+
+	// v22: sent_date on climbs (#100)
+	async (db) => {
+		await db.execute(`ALTER TABLE climbs ADD COLUMN sent_date TEXT`);
+	},
 ];
 
 export async function runMigrations(db: DbAdapter): Promise<void> {

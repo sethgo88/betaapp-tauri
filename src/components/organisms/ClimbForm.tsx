@@ -383,6 +383,7 @@ export const ClimbForm = ({
 			wall: defaultValues?.wall ?? "",
 			route_location: defaultValues?.route_location ?? "",
 			link: defaultValues?.link ?? "",
+			sent_date: defaultValues?.sent_date ?? null,
 		},
 		onSubmit: async ({ value }) => {
 			const gradeValue =
@@ -467,10 +468,50 @@ export const ClimbForm = ({
 								{ value: "sent", label: "Sent" },
 							]}
 							value={field.state.value}
-							onChange={(v) => field.handleChange(v as SentStatus)}
+							onChange={(v) => {
+								const newStatus = v as SentStatus;
+								field.handleChange(newStatus);
+								if (newStatus === "sent") {
+									const today = new Date().toISOString().split("T")[0];
+									form.setFieldValue(
+										"sent_date",
+										form.getFieldValue("sent_date") ?? today,
+									);
+								} else {
+									form.setFieldValue("sent_date", null);
+								}
+							}}
 						/>
 					)}
 				</form.Field>
+
+				<form.Subscribe selector={(state) => state.values.sent_status}>
+					{(sentStatus) =>
+						sentStatus === "sent" ? (
+							<form.Field name="sent_date">
+								{(field) => (
+									<div className="flex flex-col gap-1">
+										<label
+											htmlFor="sent_date"
+											className="text-xs text-text-secondary"
+										>
+											Sent date
+										</label>
+										<Input
+											id="sent_date"
+											type="date"
+											value={field.state.value ?? ""}
+											onChange={(e) =>
+												field.handleChange(e.target.value || null)
+											}
+											max={new Date().toISOString().split("T")[0]}
+										/>
+									</div>
+								)}
+							</form.Field>
+						) : null
+					}
+				</form.Subscribe>
 
 				<form.Field name="link">
 					{(field) => (
