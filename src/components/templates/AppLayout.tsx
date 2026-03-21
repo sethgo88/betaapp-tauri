@@ -18,7 +18,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
 	return (
 		<div className="bg-surface-page min-h-screen min-w-screen max-w-screen text-text-primary pt-[env(safe-area-inset-top)]">
 			<div className="relative">
-				<div className="absolute top-0 left-0 right-0 pointer-events-none">
+				<div className="fixed top-[2vh] left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 pointer-events-none items-center">
 					{toasts.map((toast) => (
 						<Toast key={toast.id} {...toast} />
 					))}
