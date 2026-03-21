@@ -4,6 +4,7 @@ import { ExternalLink, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
+import { Select } from "@/components/atoms/Select";
 import { Spinner } from "@/components/atoms/Spinner";
 import { AdminImageGallery } from "@/components/molecules/AdminImageGallery";
 import { EditableDescription } from "@/components/molecules/EditableDescription";
@@ -14,6 +15,7 @@ import { RouteTopoViewer } from "@/components/molecules/TopoViewer";
 import { RouteTopoBuilder } from "@/components/organisms/TopoBuilder";
 import { useAuthStore } from "@/features/auth/auth.store";
 import { useClimbs } from "@/features/climbs/climbs.queries";
+import { useGrades } from "@/features/grades/grades.queries";
 import {
 	useAddRouteImage,
 	useDeleteRouteImage,
@@ -25,6 +27,7 @@ import {
 	useRoute,
 	useRouteLinks,
 	useUpdateRouteDescription,
+	useUpdateRouteFields,
 } from "@/features/routes/routes.queries";
 import { RouteLinkSubmitSchema } from "@/features/routes/routes.schema";
 import {
@@ -60,6 +63,41 @@ const RouteDetailView = () => {
 		!routeTopo && !!wallTopo && !!wallTopoLineForRoute;
 	const [showTopoModal, setShowTopoModal] = useState(false);
 	const [showTopoEdit, setShowTopoEdit] = useState(false);
+
+	const updateRouteFields = useUpdateRouteFields();
+	const [editingMeta, setEditingMeta] = useState(false);
+	const [editName, setEditName] = useState("");
+	const [editRouteType, setEditRouteType] = useState<"sport" | "boulder">(
+		"sport",
+	);
+	const [editGrade, setEditGrade] = useState("");
+	const { data: editGrades = [] } = useGrades(editRouteType);
+
+	const handleOpenMetaEdit = () => {
+		if (!route) return;
+		setEditName(route.name);
+		setEditRouteType(route.route_type);
+		setEditGrade(route.grade);
+		setEditingMeta(true);
+	};
+
+	const handleSaveMeta = () => {
+		if (!route) return;
+		const resolvedGrade =
+			editGrade || (editGrades.length > 0 ? editGrades[0].grade : "");
+		updateRouteFields.mutate(
+			{
+				id: routeId,
+				values: {
+					name: editName.trim(),
+					grade: resolvedGrade,
+					route_type: editRouteType,
+					description: route.description ?? undefined,
+				},
+			},
+			{ onSuccess: () => setEditingMeta(false) },
+		);
+	};
 
 	const [showLogSheet, setShowLogSheet] = useState(false);
 	const [linkUrl, setLinkUrl] = useState("");
@@ -111,15 +149,80 @@ const RouteDetailView = () => {
 
 	return (
 		<div className="flex flex-col gap-4">
-			<div>
-				<h1 className="text-xl font-display font-bold">{route.name}</h1>
-				<div className="flex items-center gap-2 mt-1">
-					<span className="text-text-secondary">{route.grade}</span>
-					<span className="text-xs px-2 py-0.5 rounded-full bg-surface-page text-text-secondary">
-						{route.route_type}
-					</span>
+			{editingMeta ? (
+				<div className="flex flex-col gap-2 rounded-lg bg-surface-card p-4">
+					<Input
+						placeholder="Route name"
+						value={editName}
+						onChange={(e) => setEditName(e.target.value)}
+					/>
+					<Select
+						value={editRouteType}
+						onChange={(e) => {
+							const val = e.target.value as "sport" | "boulder";
+							setEditRouteType(val);
+							setEditGrade("");
+						}}
+					>
+						<option value="sport">Sport</option>
+						<option value="boulder">Boulder</option>
+					</Select>
+					<Select
+						value={
+							editGrade || (editGrades.length > 0 ? editGrades[0].grade : "")
+						}
+						onChange={(e) => setEditGrade(e.target.value)}
+					>
+						{editGrades.map((g) => (
+							<option key={g.id} value={g.grade}>
+								{g.grade}
+							</option>
+						))}
+					</Select>
+					<div className="flex gap-2">
+						<Button
+							type="button"
+							variant="primary"
+							size="small"
+							onClick={handleSaveMeta}
+							disabled={
+								updateRouteFields.isPending || !editName.trim()
+							}
+						>
+							{updateRouteFields.isPending ? "Saving…" : "Save"}
+						</Button>
+						<Button
+							type="button"
+							variant="secondary"
+							size="small"
+							onClick={() => setEditingMeta(false)}
+						>
+							Cancel
+						</Button>
+					</div>
 				</div>
-			</div>
+			) : (
+				<div>
+					<div className="flex items-start justify-between gap-2">
+						<h1 className="text-xl font-display font-bold">{route.name}</h1>
+						{isAdmin && (
+							<button
+								type="button"
+								onClick={handleOpenMetaEdit}
+								className="text-xs text-accent-primary shrink-0 mt-1"
+							>
+								Edit
+							</button>
+						)}
+					</div>
+					<div className="flex items-center gap-2 mt-1">
+						<span className="text-text-secondary">{route.grade}</span>
+						<span className="text-xs px-2 py-0.5 rounded-full bg-surface-page text-text-secondary">
+							{route.route_type}
+						</span>
+					</div>
+				</div>
+			)}
 
 			<EditableDescription
 				description={route.description}

@@ -180,7 +180,8 @@ export function useUpdateRouteFields() {
 				description?: string;
 			};
 		}) => updateRouteFields(id, values),
-		onSuccess: () => {
+		onSuccess: (_data, { id }) => {
+			qc.invalidateQueries({ queryKey: ["route", id] });
 			qc.invalidateQueries({ queryKey: ["unverified_routes"] });
 			qc.invalidateQueries({ queryKey: ["all_routes"] });
 		},
