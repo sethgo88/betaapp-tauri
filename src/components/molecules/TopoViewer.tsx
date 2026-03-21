@@ -1,5 +1,9 @@
 import { useState } from "react";
-import type { RouteTopo, WallTopo, WallTopoLine } from "@/features/topos/topos.schema";
+import type {
+	RouteTopo,
+	WallTopo,
+	WallTopoLine,
+} from "@/features/topos/topos.schema";
 
 interface RouteInfo {
 	id: string;
@@ -68,6 +72,7 @@ export const WallTopoViewer = ({
 						return (
 							<g key={line.id}>
 								{/* Fat invisible hit target */}
+								{/* biome-ignore lint/a11y/noStaticElementInteractions: SVG polyline used as click target for route selection */}
 								<polyline
 									points={pointsStr(line)}
 									stroke="transparent"
@@ -124,9 +129,7 @@ export const WallTopoViewer = ({
 								<button
 									key={line.id}
 									type="button"
-									onClick={() =>
-										setSelectedRouteId(isActive ? null : route.id)
-									}
+									onClick={() => setSelectedRouteId(isActive ? null : route.id)}
 									className="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-surface-page transition-colors"
 								>
 									{/* Color swatch */}

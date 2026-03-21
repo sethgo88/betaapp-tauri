@@ -68,7 +68,11 @@ const GradeDistributionChart = ({
 }) => (
 	<ResponsiveContainer width="100%" height={200}>
 		<BarChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-			<CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} vertical={false} />
+			<CartesianGrid
+				strokeDasharray="3 3"
+				stroke={GRID_COLOR}
+				vertical={false}
+			/>
 			<XAxis
 				dataKey="grade"
 				tick={{ fill: AXIS_COLOR, fontSize: 10 }}
@@ -90,11 +94,33 @@ const GradeDistributionChart = ({
 				cursor={{ fill: "rgba(255,255,255,0.04)" }}
 			/>
 			<Legend
-				wrapperStyle={{ fontSize: "0.7rem", color: AXIS_COLOR, paddingTop: "4px" }}
+				wrapperStyle={{
+					fontSize: "0.7rem",
+					color: AXIS_COLOR,
+					paddingTop: "4px",
+				}}
 			/>
-			<Bar dataKey="sent" stackId="a" fill={COLOR_SENT} name="Sent" radius={[0, 0, 0, 0]} />
-			<Bar dataKey="project" stackId="a" fill={COLOR_PROJECT} name="Project" radius={[0, 0, 0, 0]} />
-			<Bar dataKey="todo" stackId="a" fill={COLOR_TODO} name="Todo" radius={[3, 3, 0, 0]} />
+			<Bar
+				dataKey="sent"
+				stackId="a"
+				fill={COLOR_SENT}
+				name="Sent"
+				radius={[0, 0, 0, 0]}
+			/>
+			<Bar
+				dataKey="project"
+				stackId="a"
+				fill={COLOR_PROJECT}
+				name="Project"
+				radius={[0, 0, 0, 0]}
+			/>
+			<Bar
+				dataKey="todo"
+				stackId="a"
+				fill={COLOR_TODO}
+				name="Todo"
+				radius={[3, 3, 0, 0]}
+			/>
 		</BarChart>
 	</ResponsiveContainer>
 );
@@ -122,7 +148,11 @@ const SendsPerMonthChart = ({
 				data={displayData}
 				margin={{ top: 4, right: 4, left: -20, bottom: 0 }}
 			>
-				<CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} vertical={false} />
+				<CartesianGrid
+					strokeDasharray="3 3"
+					stroke={GRID_COLOR}
+					vertical={false}
+				/>
 				<XAxis
 					dataKey="label"
 					tick={{ fill: AXIS_COLOR, fontSize: 10 }}
@@ -138,9 +168,14 @@ const SendsPerMonthChart = ({
 				<Tooltip
 					contentStyle={tooltipStyle}
 					cursor={{ fill: "rgba(255,255,255,0.04)" }}
-					formatter={(v: number) => [v, "Sends"]}
+					formatter={(v) => [v, "Sends"]}
 				/>
-				<Bar dataKey="count" fill={COLOR_SENT} name="Sends" radius={[3, 3, 0, 0]} />
+				<Bar
+					dataKey="count"
+					fill={COLOR_SENT}
+					name="Sends"
+					radius={[3, 3, 0, 0]}
+				/>
 			</BarChart>
 		</ResponsiveContainer>
 	);
@@ -155,7 +190,11 @@ const BurnsPerSendChart = ({
 }) => (
 	<ResponsiveContainer width="100%" height={180}>
 		<BarChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-			<CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} vertical={false} />
+			<CartesianGrid
+				strokeDasharray="3 3"
+				stroke={GRID_COLOR}
+				vertical={false}
+			/>
 			<XAxis
 				dataKey="grade"
 				tick={{ fill: AXIS_COLOR, fontSize: 10 }}
@@ -174,7 +213,7 @@ const BurnsPerSendChart = ({
 			<Tooltip
 				contentStyle={tooltipStyle}
 				cursor={{ fill: "rgba(255,255,255,0.04)" }}
-				formatter={(v: number) => [v, "Burns/send"]}
+				formatter={(v) => [v, "Burns/send"]}
 			/>
 			<Bar
 				dataKey="burns_per_send"
