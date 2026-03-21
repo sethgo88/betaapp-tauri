@@ -115,6 +115,25 @@ export async function updateLocationDescription(
 	);
 }
 
+export async function updateLocationApproach(
+	table: "crags" | "walls",
+	id: string,
+	approach: string,
+): Promise<void> {
+	// biome-ignore lint/suspicious/noExplicitAny: approach not yet in generated Supabase types
+	const { error } = await (supabase.from(table) as any)
+		.update({ approach })
+		.eq("id", id);
+	if (error) throw error;
+
+	const cacheTable = table === "crags" ? "crags_cache" : "walls_cache";
+	const db = await getDb();
+	await db.execute(`UPDATE ${cacheTable} SET approach = ? WHERE id = ?`, [
+		approach,
+		id,
+	]);
+}
+
 export async function fetchDownloadedRegionIds(): Promise<string[]> {
 	const db = await getDb();
 	const rows = await db.select<{ region_id: string }[]>(
@@ -300,12 +319,13 @@ export async function downloadRegion(regionId: string): Promise<void> {
 	if (crags && crags.length > 0) {
 		for (const row of crags as unknown as Crag[]) {
 			await db.execute(
-				"INSERT INTO crags_cache (id, sub_region_id, name, description, sort_order, status, created_by, created_at, lat, lng, sport_count, trad_count, boulder_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+				"INSERT INTO crags_cache (id, sub_region_id, name, description, approach, sort_order, status, created_by, created_at, lat, lng, sport_count, trad_count, boulder_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 				[
 					row.id,
 					row.sub_region_id,
 					row.name,
 					row.description ?? null,
+					row.approach ?? null,
 					row.sort_order,
 					row.status ?? "verified",
 					row.created_by ?? null,
@@ -337,12 +357,13 @@ export async function downloadRegion(regionId: string): Promise<void> {
 		if (walls && walls.length > 0) {
 			for (const row of walls as unknown as Wall[]) {
 				await db.execute(
-					"INSERT INTO walls_cache (id, crag_id, name, description, sort_order, status, created_by, created_at, lat, lng, wall_type, sport_count, trad_count, boulder_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+					"INSERT INTO walls_cache (id, crag_id, name, description, approach, sort_order, status, created_by, created_at, lat, lng, wall_type, sport_count, trad_count, boulder_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 					[
 						row.id,
 						row.crag_id,
 						row.name,
 						row.description ?? null,
+						row.approach ?? null,
 						row.sort_order,
 						row.status ?? "verified",
 						row.created_by ?? null,
@@ -763,6 +784,7 @@ export type MapCrag = {
 	name: string;
 	lat: number;
 	lng: number;
+	approach: string | null;
 	sport_count: number;
 	trad_count: number;
 	boulder_count: number;
@@ -779,12 +801,13 @@ export async function fetchAllCragsWithCoords(): Promise<MapCrag[]> {
 			name: string;
 			lat: number;
 			lng: number;
+			approach: string | null;
 			sport_count: number;
 			trad_count: number;
 			boulder_count: number;
 		}[]
 	>(
-		`SELECT id, name, lat, lng, sport_count, trad_count, boulder_count
+		`SELECT id, name, lat, lng, approach, sport_count, trad_count, boulder_count
 		FROM crags_cache
 		WHERE lat IS NOT NULL AND lng IS NOT NULL`,
 	);
@@ -875,6 +898,7 @@ export type MapWall = {
 	crag_name: string;
 	lat: number;
 	lng: number;
+	approach: string | null;
 	wall_type: string;
 	sport_count: number;
 	trad_count: number;
@@ -894,6 +918,7 @@ export async function fetchAllWallsWithCoords(): Promise<MapWall[]> {
 			crag_name: string;
 			lat: number;
 			lng: number;
+			approach: string | null;
 			wall_type: string;
 			sport_count: number;
 			trad_count: number;
@@ -901,7 +926,7 @@ export async function fetchAllWallsWithCoords(): Promise<MapWall[]> {
 		}[]
 	>(
 		`SELECT w.id, w.crag_id, w.name, c.name AS crag_name, w.lat, w.lng,
-			w.wall_type, w.sport_count, w.trad_count, w.boulder_count
+			w.approach, w.wall_type, w.sport_count, w.trad_count, w.boulder_count
 		FROM walls_cache w
 		JOIN crags_cache c ON c.id = w.crag_id
 		WHERE w.lat IS NOT NULL AND w.lng IS NOT NULL`,

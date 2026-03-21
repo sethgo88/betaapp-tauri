@@ -6,12 +6,16 @@ interface EditableDescriptionProps {
 	description: string | null | undefined;
 	isAdmin: boolean;
 	onSave: (description: string) => Promise<void>;
+	placeholder?: string;
+	emptyText?: string;
 }
 
 export const EditableDescription = ({
 	description,
 	isAdmin,
 	onSave,
+	placeholder = "Add a description…",
+	emptyText = "No description",
 }: EditableDescriptionProps) => {
 	const [editing, setEditing] = useState(false);
 	const [draft, setDraft] = useState(description ?? "");
@@ -34,7 +38,7 @@ export const EditableDescription = ({
 					value={draft}
 					onChange={(e) => setDraft(e.target.value)}
 					className="w-full text-sm bg-surface-page rounded-lg px-3 py-2 text-text-primary placeholder-text-tertiary outline-none min-h-[80px]"
-					placeholder="Add a description…"
+					placeholder={placeholder}
 					// biome-ignore lint/a11y/noAutofocus: intentional — editing mode
 					autoFocus
 				/>
@@ -71,7 +75,7 @@ export const EditableDescription = ({
 					{description}
 				</p>
 			) : (
-				<p className="text-sm text-text-tertiary italic">No description</p>
+				<p className="text-sm text-text-tertiary italic">{emptyText}</p>
 			)}
 			{isAdmin && (
 				<button

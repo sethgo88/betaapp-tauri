@@ -16,6 +16,7 @@ import {
 	useAdminUpdateWallCoords,
 	useAdminUpdateWallType,
 	useCrag,
+	useUpdateLocationApproach,
 	useUpdateLocationDescription,
 	useWall,
 	useWalls,
@@ -56,6 +57,7 @@ const WallView = () => {
 	const { data: routes = [] } = useRoutes(wallId);
 	const { data: wallImages = [] } = useWallImages(wallId);
 	const updateDescription = useUpdateLocationDescription();
+	const updateApproach = useUpdateLocationApproach();
 	const updateCoords = useAdminUpdateWallCoords();
 	const updateWallType = useAdminUpdateWallType();
 	const addWallImage = useAddWallImage(wallId);
@@ -139,6 +141,25 @@ const WallView = () => {
 					});
 				}}
 			/>
+
+			<div className="flex flex-col gap-1">
+				<p className="text-xs text-text-tertiary uppercase tracking-wide">
+					Approach
+				</p>
+				<EditableDescription
+					description={wall.approach}
+					isAdmin={isAdmin}
+					placeholder="Describe how to get here…"
+					emptyText="No approach info"
+					onSave={async (approach) => {
+						await updateApproach.mutateAsync({
+							table: "walls",
+							id: wallId,
+							approach,
+						});
+					}}
+				/>
+			</div>
 
 			<AdminImageGallery
 				images={wallImages}

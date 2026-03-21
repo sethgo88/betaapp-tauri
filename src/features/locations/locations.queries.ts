@@ -44,6 +44,7 @@ import {
 	submitCrag,
 	submitSubRegion,
 	submitWall,
+	updateLocationApproach,
 	updateLocationDescription,
 	verifyLocation,
 } from "./locations.service";
@@ -140,6 +141,27 @@ export function useUpdateLocationDescription() {
 				walls: "wall",
 			} as const;
 			qc.invalidateQueries({ queryKey: [keyMap[table], id] });
+		},
+	});
+}
+
+export function useUpdateLocationApproach() {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: ({
+			table,
+			id,
+			approach,
+		}: {
+			table: "crags" | "walls";
+			id: string;
+			approach: string;
+		}) => updateLocationApproach(table, id, approach),
+		onSuccess: (_data, { table, id }) => {
+			const keyMap = { crags: "crag", walls: "wall" } as const;
+			qc.invalidateQueries({ queryKey: [keyMap[table], id] });
+			qc.invalidateQueries({ queryKey: ["crags_with_coords"] });
+			qc.invalidateQueries({ queryKey: ["walls_with_coords"] });
 		},
 	});
 }
