@@ -310,8 +310,8 @@ const AuthenticatedProfile = ({
 					: Number(apeVal)
 				: null;
 
-		if (apeCm !== null && (apeCm <= 0 || !Number.isInteger(apeCm))) {
-			setSaveError("Ape index must be a positive whole number");
+		if (apeCm !== null && !Number.isFinite(apeCm)) {
+			setSaveError("Ape index must be a valid number");
 			return;
 		}
 
