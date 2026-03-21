@@ -89,6 +89,44 @@ export type PersonalWall = {
 	todo_count: number;
 };
 
+export type PinClimb = {
+	id: string;
+	name: string;
+	grade: string;
+	sent_status: string;
+};
+
+export async function fetchClimbsAtPin(
+	userId: string,
+	pinType: "crag" | "wall",
+	pinId: string,
+): Promise<PinClimb[]> {
+	const db = await getDb();
+	if (pinType === "crag") {
+		return db.select<PinClimb[]>(
+			`SELECT cl.id, cl.name, cl.grade, cl.sent_status
+			 FROM climbs cl
+			 JOIN routes_cache r ON r.id = cl.route_id
+			 JOIN walls_cache w ON w.id = r.wall_id
+			 WHERE w.crag_id = ?
+			   AND cl.user_id = ?
+			   AND cl.deleted_at IS NULL
+			 ORDER BY cl.name COLLATE NOCASE ASC`,
+			[pinId, userId],
+		);
+	}
+	return db.select<PinClimb[]>(
+		`SELECT cl.id, cl.name, cl.grade, cl.sent_status
+		 FROM climbs cl
+		 JOIN routes_cache r ON r.id = cl.route_id
+		 WHERE r.wall_id = ?
+		   AND cl.user_id = ?
+		   AND cl.deleted_at IS NULL
+		 ORDER BY cl.name COLLATE NOCASE ASC`,
+		[pinId, userId],
+	);
+}
+
 export async function fetchPersonalWalls(
 	userId: string,
 ): Promise<PersonalWall[]> {
