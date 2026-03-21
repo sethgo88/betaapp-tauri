@@ -202,6 +202,44 @@ export async function linkClimbToRoute(
 	);
 }
 
+export async function unlinkClimbFromRoute(climbId: string): Promise<void> {
+	const db = await getDb();
+	await db.execute(
+		"UPDATE climbs SET route_id = NULL WHERE id = ? AND deleted_at IS NULL",
+		[climbId],
+	);
+}
+
+export async function fetchUnlinkedClimbs(userId: string): Promise<Climb[]> {
+	const db = await getDb();
+	return db.select<Climb[]>(
+		"SELECT * FROM climbs WHERE user_id = ? AND route_id IS NULL AND deleted_at IS NULL ORDER BY name COLLATE NOCASE ASC",
+		[userId],
+	);
+}
+
+export async function linkExistingClimbToRoute(
+	climbId: string,
+	routeId: string,
+): Promise<void> {
+	const db = await getDb();
+	const loc = await fetchLocationForRoute(routeId);
+	await db.execute(
+		`UPDATE climbs
+     SET route_id = ?, country = ?, area = ?, sub_area = ?, crag = ?, wall = ?
+     WHERE id = ? AND deleted_at IS NULL`,
+		[
+			routeId,
+			loc.country,
+			loc.area,
+			loc.sub_area,
+			loc.crag,
+			loc.wall,
+			climbId,
+		],
+	);
+}
+
 export async function softDeleteClimb(id: string): Promise<void> {
 	const db = await getDb();
 	await db.execute(

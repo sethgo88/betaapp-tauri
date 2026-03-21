@@ -7,6 +7,7 @@ import { Input } from "@/components/atoms/Input";
 import { Spinner } from "@/components/atoms/Spinner";
 import { AdminImageGallery } from "@/components/molecules/AdminImageGallery";
 import { EditableDescription } from "@/components/molecules/EditableDescription";
+import { LogClimbSheet } from "@/components/molecules/LogClimbSheet";
 import { RouteBodyChart } from "@/components/molecules/RouteBodyChart";
 import { TopoModal } from "@/components/molecules/TopoModal";
 import { RouteTopoViewer } from "@/components/molecules/TopoViewer";
@@ -60,6 +61,7 @@ const RouteDetailView = () => {
 	const [showTopoModal, setShowTopoModal] = useState(false);
 	const [showTopoEdit, setShowTopoEdit] = useState(false);
 
+	const [showLogSheet, setShowLogSheet] = useState(false);
 	const [linkUrl, setLinkUrl] = useState("");
 	const [linkTitle, setLinkTitle] = useState("");
 	const [linkError, setLinkError] = useState<string | null>(null);
@@ -324,23 +326,20 @@ const RouteDetailView = () => {
 					View log
 				</Button>
 			) : (
-				<Button
-					type="button"
-					variant="primary"
-					onClick={() =>
-						navigate({
-							to: "/climbs/add",
-							search: {
-								routeId: route.id,
-								routeName: route.name,
-								grade: route.grade,
-								routeType: route.route_type,
-							},
-						})
-					}
-				>
-					Log this climb
-				</Button>
+				<>
+					<Button
+						type="button"
+						variant="primary"
+						onClick={() => setShowLogSheet(true)}
+					>
+						Log this climb
+					</Button>
+					<LogClimbSheet
+						isOpen={showLogSheet}
+						onClose={() => setShowLogSheet(false)}
+						route={route}
+					/>
+				</>
 			)}
 		</div>
 	);

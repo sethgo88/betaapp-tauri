@@ -11,7 +11,11 @@ import {
 	useDeleteBurn,
 	useUpdateBurn,
 } from "@/features/burns/burns.queries";
-import { useClimb, useDeleteClimb } from "@/features/climbs/climbs.queries";
+import {
+	useClimb,
+	useDeleteClimb,
+	useUnlinkClimbFromRoute,
+} from "@/features/climbs/climbs.queries";
 import { parseBetas } from "@/features/climbs/climbs.schema";
 import { useClimbsStore } from "@/features/climbs/climbs.store";
 import { useRoute } from "@/features/routes/routes.queries";
@@ -28,6 +32,7 @@ const ClimbDetailView = () => {
 	const updateBurn = useUpdateBurn();
 	const deleteBurn = useDeleteBurn();
 	const deleteClimb = useDeleteClimb();
+	const unlinkClimb = useUnlinkClimbFromRoute();
 	const setSelectedClimbId = useClimbsStore((s) => s.setSelectedClimbId);
 	const [openBetaIds, setOpenBetaIds] = useState<Set<string>>(new Set());
 	const [confirmDelete, setConfirmDelete] = useState(false);
@@ -157,6 +162,16 @@ const ClimbDetailView = () => {
 			>
 				Edit
 			</Button>
+
+			{climb.route_id && (
+				<Button
+					variant="outlined"
+					disabled={unlinkClimb.isPending}
+					onClick={() => unlinkClimb.mutate(climb.id)}
+				>
+					{unlinkClimb.isPending ? "Unlinking…" : "Unlink from route"}
+				</Button>
+			)}
 
 			{/* Burns section */}
 
