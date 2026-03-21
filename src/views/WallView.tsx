@@ -155,17 +155,44 @@ const WallView = () => {
 					<button
 						type="button"
 						onClick={() => setShowTopoModal(true)}
-						className="relative w-full rounded-[var(--radius-md)] overflow-hidden"
+						className="relative max-h-36 w-full rounded-[var(--radius-md)] overflow-hidden"
 						aria-label="View topo"
 					>
-						<img
-							src={wallTopo.image_url}
-							alt="Wall topo"
-							className="w-full object-cover max-h-40"
-						/>
-						<span className="absolute inset-0 flex items-center justify-center bg-black/20 text-white text-xs font-medium">
-							View topo
-						</span>
+						<div className="relative -translate-y-1/3">
+							<img
+								src={wallTopo.image_url}
+								alt="Wall topo"
+								className="w-full"
+								draggable={false}
+							/>
+							{wallTopoLines.length > 0 && (
+								<svg
+									className="absolute inset-0 w-full h-full"
+									viewBox="0 0 100 100"
+									preserveAspectRatio="none"
+									aria-hidden="true"
+									style={{ pointerEvents: "none" }}
+								>
+									{wallTopoLines.map(
+										(line) =>
+											line.points.length >= 2 && (
+												<polyline
+													key={line.id}
+													points={line.points
+														.map((p) => `${p.x_pct * 100},${p.y_pct * 100}`)
+														.join(" ")}
+													stroke={line.color}
+													strokeWidth="2"
+													fill="none"
+													strokeLinecap="round"
+													strokeLinejoin="round"
+													vectorEffect="non-scaling-stroke"
+												/>
+											),
+									)}
+								</svg>
+							)}
+						</div>
 					</button>
 				</div>
 			)}
