@@ -66,7 +66,7 @@ export const Drawer = ({ isOpen, onClose }: DrawerProps) => {
 						onClick={() => handleNav("/routes")}
 					>
 						<MapPin size={18} />
-						<span>Route Manager</span>
+						<span>Locations</span>
 					</button>
 
 					<button
