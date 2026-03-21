@@ -231,21 +231,6 @@ const CragView = () => {
 
 	return (
 		<div className="flex flex-col gap-3">
-			<button
-				type="button"
-				className="text-text-secondary text-sm text-left"
-				onClick={() => {
-					if (crag?.sub_region_id) {
-						navigate({
-							to: "/sub-regions/$subRegionId",
-							params: { subRegionId: crag.sub_region_id },
-						});
-					}
-				}}
-			>
-				← Back to area
-			</button>
-
 			{crag && (
 				<>
 					<h1 className="text-xl font-display font-bold">{crag.name}</h1>

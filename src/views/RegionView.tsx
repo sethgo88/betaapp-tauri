@@ -72,14 +72,6 @@ const RegionView = () => {
 
 	return (
 		<div className="flex flex-col gap-3">
-			<button
-				type="button"
-				className="text-text-secondary text-sm text-left"
-				onClick={() => navigate({ to: "/routes" })}
-			>
-				← Back to routes
-			</button>
-
 			{isStale && (
 				<div className="flex items-center justify-between rounded-lg bg-amber-900/30 border border-amber-700/40 px-4 py-3 text-sm">
 					<span className="text-amber-300">

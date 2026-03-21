@@ -111,19 +111,6 @@ const RouteDetailView = () => {
 
 	return (
 		<div className="flex flex-col gap-4">
-			<button
-				type="button"
-				className="text-text-secondary text-sm text-left"
-				onClick={() =>
-					navigate({
-						to: "/walls/$wallId",
-						params: { wallId: route.wall_id },
-					})
-				}
-			>
-				← Back to wall
-			</button>
-
 			<div>
 				<h1 className="text-xl font-display font-bold">{route.name}</h1>
 				<div className="flex items-center gap-2 mt-1">
