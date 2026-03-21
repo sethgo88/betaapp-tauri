@@ -31,6 +31,7 @@ ClimbSchema = {
   route_location?: string
   link?: string
   route_id?: string      // optional link to routes_cache
+  sent_date?: string | null  // YYYY-MM-DD; set when sent_status is 'sent'; cleared otherwise
   created_at: string
   updated_at: string
   deleted_at?: string | null
@@ -71,6 +72,7 @@ CREATE TABLE IF NOT EXISTS climbs (
     route_location   TEXT,
     link             TEXT,
     route_id         TEXT,
+    sent_date        TEXT,
     deleted_at       TEXT,
     created_at       TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at       TEXT NOT NULL DEFAULT (datetime('now'))
@@ -183,7 +185,7 @@ public.climbs (
   id uuid pk,  user_id uuid,  name text,  route_type text,
   grade text,  moves text,  sent_status text,
   country text,  area text,  sub_area text,  crag text,  wall text,  route_location text,  link text,
-  route_id uuid references public.routes,
+  route_id uuid references public.routes,  sent_date text,
   created_at timestamptz,  updated_at timestamptz,  deleted_at timestamptz
 )
 -- RLS: auth.uid() = user_id

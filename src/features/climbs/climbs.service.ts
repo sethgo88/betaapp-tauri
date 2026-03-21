@@ -128,8 +128,8 @@ export async function insertClimb(
 	}
 
 	await db.execute(
-		`INSERT INTO climbs (id, user_id, name, route_type, grade, moves, sent_status, country, area, sub_area, crag, wall, route_location, link, route_id)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		`INSERT INTO climbs (id, user_id, name, route_type, grade, moves, sent_status, country, area, sub_area, crag, wall, route_location, link, route_id, sent_date)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		[
 			id,
 			userId,
@@ -146,6 +146,7 @@ export async function insertClimb(
 			data.route_location ?? null,
 			data.link ?? null,
 			routeId ?? null,
+			data.sent_date ?? null,
 		],
 	);
 }
@@ -159,7 +160,7 @@ export async function updateClimb(
 	await db.execute(
 		`UPDATE climbs
      SET name = ?, route_type = ?, grade = ?, moves = ?, sent_status = ?,
-         country = ?, area = ?, sub_area = ?, crag = ?, wall = ?, route_location = ?, link = ?, route_id = ?
+         country = ?, area = ?, sub_area = ?, crag = ?, wall = ?, route_location = ?, link = ?, route_id = ?, sent_date = ?
      WHERE id = ? AND deleted_at IS NULL`,
 		[
 			data.name,
@@ -175,6 +176,7 @@ export async function updateClimb(
 			data.route_location ?? null,
 			data.link ?? null,
 			routeId ?? null,
+			data.sent_date ?? null,
 			id,
 		],
 	);
@@ -257,8 +259,8 @@ export async function applyRemoteClimb(climb: Climb): Promise<void> {
 		`INSERT OR REPLACE INTO climbs
      (id, user_id, name, route_type, grade, moves, sent_status,
       country, area, sub_area, crag, wall, route_location, link, route_id,
-      created_at, updated_at, deleted_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      sent_date, created_at, updated_at, deleted_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		[
 			climb.id,
 			climb.user_id,
@@ -275,6 +277,7 @@ export async function applyRemoteClimb(climb: Climb): Promise<void> {
 			climb.route_location ?? null,
 			climb.link ?? null,
 			climb.route_id ?? null,
+			climb.sent_date ?? null,
 			climb.created_at,
 			climb.updated_at,
 			climb.deleted_at ?? null,
