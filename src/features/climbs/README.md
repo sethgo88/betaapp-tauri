@@ -11,13 +11,17 @@ Personal climb log. The user's primary data — local-first, synced bidirectiona
 SentStatus = 'todo' | 'project' | 'sent' | 'redpoint' | 'flash' | 'onsight'
 RouteType  = 'sport' | 'boulder'
 
+MoveItem = { id: string; text: string }
+Beta     = { id: string; title: string; moves: MoveItem[] }
+Betas    = Beta[]   // BetasSchema = z.array(Beta)
+
 ClimbSchema = {
   id: string
   user_id: string
   name: string           // route name (freeform)
   route_type: RouteType
   grade: string
-  moves: string          // JSON array default '[]'
+  moves: string          // JSON — either Betas (new) or MoveItem[] (legacy); default '[]'
   sent_status: SentStatus
   country?: string
   area?: string
@@ -35,6 +39,16 @@ ClimbSchema = {
 ClimbFormSchema = ClimbSchema minus (id, route_id, created_at, updated_at, deleted_at)
 // route_id is passed separately to insertClimb/updateClimb, not part of the form
 ```
+
+### parseBetas(movesJson: string): Beta[]
+
+Migration utility exported from `climbs.schema.ts`. Converts the `moves` JSON string into the new betas format:
+
+- **New format** `[{id, title, moves}]` → returned as-is (empty-text moves filtered out)
+- **Legacy format** `[{id, text}]` → wrapped as a single "Beta 1" (empty-text moves filtered out)
+- **Empty / invalid** → returns `[]`
+
+Use `parseBetas` everywhere `moves` needs to be displayed or edited. The `ClimbForm` always stores `JSON.stringify(betas)` — i.e., the new betas format — on any save.
 
 ---
 
@@ -75,7 +89,7 @@ CREATE TABLE IF NOT EXISTS climbs (
 | `backfillClimbLocations()` | One-time startup migration: fills `country/area/sub_area/crag/wall` on route-linked climbs that have empty location data, by joining the local location cache hierarchy |
 | `insertClimb(userId, data, routeId?)` | Creates new climb; when `routeId` is provided, location fields are auto-populated from the route's wall→crag→sub_region→region→country hierarchy |
 | `updateClimb(id, data, routeId?)` | Updates mutable fields; trigger stamps `updated_at` |
-| `updateClimbMoves(id, moves)` | Updates only the `moves` JSON string; used by the import sheet |
+| `updateClimbMoves(id, moves)` | Updates only the `moves` JSON string; stores the full betas array |
 | `linkClimbToRoute(climbId, routeId)` | Sets `route_id` without changing other fields (upgrade flow) |
 | `softDeleteClimb(id)` | Sets `deleted_at = datetime('now')` |
 | `applyRemoteClimb(climb)` | `INSERT OR REPLACE` — preserves server `updated_at`; used by sync + Realtime |

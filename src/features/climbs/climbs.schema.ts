@@ -1,5 +1,61 @@
 import { z } from "zod";
 
+export const MoveItem = z.object({
+	id: z.string(),
+	text: z.string(),
+});
+export type MoveItem = z.infer<typeof MoveItem>;
+
+export const Beta = z.object({
+	id: z.string(),
+	title: z.string(),
+	moves: z.array(MoveItem),
+});
+export type Beta = z.infer<typeof Beta>;
+
+export const BetasSchema = z.array(Beta);
+export type Betas = z.infer<typeof BetasSchema>;
+
+/**
+ * Parse the `moves` JSON string from a climb record into an array of betas.
+ *
+ * Handles:
+ *   - New format: [{id, title, moves: [{id, text}]}]
+ *   - Legacy format: [{id, text}] → wrapped as "Beta 1"
+ *   - Empty / invalid → returns []
+ *
+ * Empty-text moves are filtered out.
+ */
+export function parseBetas(movesJson: string): Beta[] {
+	let parsed: unknown;
+	try {
+		parsed = JSON.parse(movesJson);
+	} catch {
+		return [];
+	}
+	if (!Array.isArray(parsed) || parsed.length === 0) return [];
+
+	// New betas format
+	const betasResult = BetasSchema.safeParse(parsed);
+	if (betasResult.success) {
+		return betasResult.data.map((beta) => ({
+			...beta,
+			moves: beta.moves.filter((m) => m.text.trim() !== ""),
+		}));
+	}
+
+	// Legacy flat moves format
+	const legacyResult = z.array(MoveItem).safeParse(parsed);
+	if (legacyResult.success) {
+		const nonEmpty = legacyResult.data.filter((m) => m.text.trim() !== "");
+		if (nonEmpty.length > 0) {
+			return [{ id: crypto.randomUUID(), title: "Beta 1", moves: nonEmpty }];
+		}
+	}
+
+	return [];
+}
+
 export const SentStatus = z.enum([
 	"todo",
 	"project",

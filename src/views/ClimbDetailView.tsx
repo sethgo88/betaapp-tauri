@@ -12,6 +12,7 @@ import {
 	useUpdateBurn,
 } from "@/features/burns/burns.queries";
 import { useClimb, useDeleteClimb } from "@/features/climbs/climbs.queries";
+import { parseBetas } from "@/features/climbs/climbs.schema";
 import { useClimbsStore } from "@/features/climbs/climbs.store";
 import { useRoute } from "@/features/routes/routes.queries";
 import { cn } from "@/lib/cn";
@@ -28,7 +29,7 @@ const ClimbDetailView = () => {
 	const deleteBurn = useDeleteBurn();
 	const deleteClimb = useDeleteClimb();
 	const setSelectedClimbId = useClimbsStore((s) => s.setSelectedClimbId);
-	const [movesOpen, setMovesOpen] = useState(false);
+	const [openBetaIds, setOpenBetaIds] = useState<Set<string>>(new Set());
 	const [confirmDelete, setConfirmDelete] = useState(false);
 	const [burnsOpen, setBurnsOpen] = useState(false);
 	const [showAddBurn, setShowAddBurn] = useState(false);
@@ -59,12 +60,16 @@ const ClimbDetailView = () => {
 		);
 	}
 
-	let moves: { id: string; text: string }[] = [];
-	try {
-		moves = JSON.parse(climb.moves);
-	} catch {
-		moves = [];
-	}
+	const betas = parseBetas(climb.moves);
+
+	const toggleBeta = (id: string) => {
+		setOpenBetaIds((prev) => {
+			const next = new Set(prev);
+			if (next.has(id)) next.delete(id);
+			else next.add(id);
+			return next;
+		});
+	};
 
 	const location = buildLocationString([
 		climb.country,
@@ -335,36 +340,49 @@ const ClimbDetailView = () => {
 				)}
 			</div>
 
-			<div className="rounded-md bg-surface-card">
-				<button
-					type="button"
-					className="flex items-center gap-2 w-full px-3 pt-3 pb-2 text-sm text-text-secondary"
-					onClick={() => setMovesOpen(!movesOpen)}
-				>
-					<span>Moves ({moves.length})</span>
-					<ChevronDown
-						size={16}
-						className={cn("transition-transform", movesOpen && "rotate-180")}
-					/>
-				</button>
-				{movesOpen && moves.length > 0 && (
-					<ul className="flex flex-col gap-1 px-3 pb-3">
-						{moves.map((move, i) => (
-							<li
-								key={move.id}
-								className="border-l border-text-primary pl-2 text-sm"
-							>
-								{i + 1}. {move.text}
-							</li>
-						))}
-					</ul>
-				)}
-				{movesOpen && moves.length === 0 && (
-					<p className="text-sm text-text-secondary px-3 pb-3">
-						No moves logged yet.
-					</p>
-				)}
-			</div>
+			{betas.length === 0 ? (
+				<div className="rounded-md bg-surface-card px-3 py-3">
+					<p className="text-sm text-text-secondary">No betas logged yet.</p>
+				</div>
+			) : (
+				betas.map((beta) => (
+					<div key={beta.id} className="rounded-md bg-surface-card">
+						<button
+							type="button"
+							className="flex items-center justify-between w-full p-3 text-sm text-text-secondary"
+							onClick={() => toggleBeta(beta.id)}
+						>
+							<span>
+								{beta.title} ({beta.moves.length})
+							</span>
+							<ChevronDown
+								size={16}
+								className={cn(
+									"transition-transform",
+									openBetaIds.has(beta.id) && "rotate-180",
+								)}
+							/>
+						</button>
+						{openBetaIds.has(beta.id) &&
+							(beta.moves.length > 0 ? (
+								<ul className="flex flex-col gap-1 px-3 pb-3">
+									{beta.moves.map((move, i) => (
+										<li
+											key={move.id}
+											className="border-l border-text-primary pl-2 text-sm"
+										>
+											{i + 1}. {move.text}
+										</li>
+									))}
+								</ul>
+							) : (
+								<p className="text-sm text-text-secondary px-3 pb-3">
+									No moves logged yet.
+								</p>
+							))}
+					</div>
+				))
+			)}
 
 			{climb.link && (
 				<a
