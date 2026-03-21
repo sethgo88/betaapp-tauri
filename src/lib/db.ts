@@ -434,6 +434,41 @@ const migrations: Migration[] = [
 			await db.execute(`ALTER TABLE climbs ADD COLUMN wall TEXT`);
 		}
 	},
+
+	// v19: topo tables for wall and route topos
+	async (db) => {
+		await db.execute(`
+      CREATE TABLE IF NOT EXISTS wall_topos_cache (
+        id         TEXT PRIMARY KEY,
+        wall_id    TEXT NOT NULL,
+        image_url  TEXT NOT NULL,
+        created_by TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )
+    `);
+		await db.execute(`
+      CREATE TABLE IF NOT EXISTS wall_topo_lines_cache (
+        id         TEXT PRIMARY KEY,
+        topo_id    TEXT NOT NULL,
+        route_id   TEXT NOT NULL,
+        points     TEXT NOT NULL,
+        color      TEXT NOT NULL,
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )
+    `);
+		await db.execute(`
+      CREATE TABLE IF NOT EXISTS route_topos_cache (
+        id         TEXT PRIMARY KEY,
+        route_id   TEXT NOT NULL,
+        image_url  TEXT NOT NULL,
+        points     TEXT NOT NULL,
+        color      TEXT NOT NULL DEFAULT '#EF4444',
+        created_by TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )
+    `);
+	},
 ];
 
 export async function runMigrations(db: DbAdapter): Promise<void> {

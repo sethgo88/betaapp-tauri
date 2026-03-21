@@ -9,6 +9,8 @@ import {
 	type PickerMarker,
 } from "@/components/molecules/CoordinatePicker";
 import { EditableDescription } from "@/components/molecules/EditableDescription";
+import { TopoModal } from "@/components/molecules/TopoModal";
+import { WallTopoBuilder } from "@/components/organisms/TopoBuilder";
 import { useAuthStore } from "@/features/auth/auth.store";
 import {
 	useAdminUpdateWallCoords,
@@ -23,6 +25,10 @@ import {
 	useDeleteWallImage,
 	useWallImages,
 } from "@/features/route-images/route-images.queries";
+import {
+	useWallTopo,
+	useWallTopoLines,
+} from "@/features/topos/topos.queries";
 import { useRoutes } from "@/features/routes/routes.queries";
 
 const ViewOnMap = ({ lat, lng }: { lat: number; lng: number }) => {
@@ -59,6 +65,9 @@ const WallView = () => {
 	const deleteWallImage = useDeleteWallImage(wallId);
 	const isAdmin = useAuthStore((s) => s.user?.role === "admin");
 	const [showCoordEditor, setShowCoordEditor] = useState(false);
+	const [showTopoModal, setShowTopoModal] = useState(false);
+	const { data: wallTopo = null } = useWallTopo(wallId);
+	const { data: wallTopoLines = [] } = useWallTopoLines(wallTopo?.id ?? null);
 
 	const siblingMarkers = useMemo<PickerMarker[]>(() => {
 		const result: PickerMarker[] = [];
@@ -140,6 +149,49 @@ const WallView = () => {
 				onDelete={(id, imageUrl) => deleteWallImage.mutate({ id, imageUrl })}
 				isAdding={addWallImage.isPending}
 			/>
+
+			{/* Topo section */}
+			{wallTopo && (
+				<div className="flex flex-col gap-1">
+					<p className="text-xs text-text-tertiary">Topo</p>
+					<button
+						type="button"
+						onClick={() => setShowTopoModal(true)}
+						className="relative w-full rounded-[var(--radius-md)] overflow-hidden"
+						aria-label="View topo"
+					>
+						<img
+							src={wallTopo.image_url}
+							alt="Wall topo"
+							className="w-full object-cover max-h-40"
+						/>
+						<span className="absolute inset-0 flex items-center justify-center bg-black/20 text-white text-xs font-medium">
+							View topo
+						</span>
+					</button>
+				</div>
+			)}
+
+			{isAdmin && (
+				<WallTopoBuilder
+					wallId={wallId}
+					routes={routes.filter((r) => r.status === "verified")}
+					topo={wallTopo}
+					lines={wallTopoLines}
+				/>
+			)}
+
+			{showTopoModal && wallTopo && (
+				<TopoModal
+					mode="wall"
+					topo={wallTopo}
+					lines={wallTopoLines}
+					routes={routes
+						.filter((r) => r.status === "verified")
+						.map((r) => ({ id: r.id, name: r.name, grade: r.grade }))}
+					onClose={() => setShowTopoModal(false)}
+				/>
+			)}
 
 			{wall.lat != null && wall.lng != null && (
 				<ViewOnMap lat={wall.lat} lng={wall.lng} />

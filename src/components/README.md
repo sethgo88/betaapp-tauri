@@ -47,6 +47,8 @@ templates   Layout shells with no real data — just children/slots.
 | `ConfirmDialog` | Centred modal overlay for confirming destructive or navigating-away actions. Props: `isOpen`, `title`, `message`, `confirmLabel?`, `cancelLabel?`, `onConfirm`, `onCancel`. |
 | `RoutePickerSheet` | Full-screen sheet that chains `LocationDrillDown` with a route list (verified routes only for the selected wall). Used in `AddClimbView` to link a log entry to a community route. Props: `isOpen`, `onClose`, `onSelect(route)`. |
 | `RouteBodyChart` | Bubble chart (recharts `ScatterChart`) showing how climbers' body dimensions (height or ape index) correlate with grade on a specific route. Only sent climbs are included. Toggles X-axis between height and ape index. Renders an empty state when fewer than 5 climbers have data. Data comes from the `get_route_body_stats` Supabase RPC. Props: `routeId`, `routeType`. |
+| `TopoViewer` | SVG route-line overlay on a topo photo. Exports `WallTopoViewer` (multiple colour-coded lines, selectable bottom panel) and `RouteTopoViewer` (single line, no panel). Lines use `vector-effect="non-scaling-stroke"` and transparent fat hit targets for tap detection. Props for wall: `topo`, `lines[]`, `routes[]`, optional `singleRouteId`. Props for route: `topo`. |
+| `TopoModal` | Full-screen topo viewer with pinch-to-zoom (scale 1–4×) and double-tap-to-reset. Wraps `WallTopoViewer` or `RouteTopoViewer` depending on `mode` (`"wall"` \| `"wall-single"` \| `"route"`). Close button in top-left respects safe-area inset. |
 
 ### Organisms
 | Component | Purpose |
@@ -54,6 +56,7 @@ templates   Layout shells with no real data — just children/slots.
 | `ClimbForm` | Full add/edit form — used by both `AddClimbView` and `EditClimbView`. Move list is drag-to-reorder via `@dnd-kit/sortable`; long-press the `GripVertical` handle to activate drag (250ms `TouchSensor` delay). Accepts optional `climbId` prop: when provided, moves auto-save after a 1-second debounce via `useUpdateClimbMoves`, shows a Saving/Saved indicator, and blocks navigation while unsaved changes are in-flight using `useBlocker`. Accepts optional `linkedRoute`, `onOpenRoutePicker`, `onUnlinkRoute` props for displaying/clearing a linked community route (shown above the Save button). |
 | `NavBar` | Bottom navigation bar: Home, Add, Search, Menu |
 | `Drawer` | Slide-up modal sheet |
+| `TopoBuilder` | Admin-only SVG drawing canvas for creating topo route lines. Exports `WallTopoBuilder` (image upload + per-route line drawing with route selector) and `RouteTopoBuilder` (image upload + single line). Point editing: tap to add, drag point handles to reposition, drag midpoint handles to insert new points between existing ones. Props for wall: `wallId`, `routes[]`, `topo`, `lines[]`. Props for route: `routeId`, `topo`. |
 
 ### Templates
 | Component | Purpose |
