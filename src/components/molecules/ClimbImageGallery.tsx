@@ -17,6 +17,7 @@ import {
 } from "@/features/climb-images/climb-images.queries";
 import type { ClimbImageWithUrl } from "@/features/climb-images/climb-images.schema";
 import { ClimbImageViewer } from "./ClimbImageViewer";
+import { PhotoViewer } from "./PhotoViewer";
 import { VideoFrameCapturer } from "./VideoFrameCapturer";
 
 const THUMB_SIZE = 96; // px — width & height of each thumbnail cell
@@ -40,6 +41,7 @@ interface ImageActionSheetProps {
 	onDelete: () => void;
 	onClose: () => void;
 	onSelectImage: (id: string) => void;
+	onViewFullscreen: () => void;
 }
 
 const ImageActionSheet = ({
@@ -54,6 +56,7 @@ const ImageActionSheet = ({
 	onDelete,
 	onClose,
 	onSelectImage,
+	onViewFullscreen,
 }: ImageActionSheetProps) => {
 	const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -72,14 +75,19 @@ const ImageActionSheet = ({
 				style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
 				onClick={(e) => e.stopPropagation()}
 			>
-				{/* Main image preview */}
-				<div className="w-full aspect-video bg-black flex items-center justify-center overflow-hidden">
+				{/* Main image preview — tap to open full-screen PhotoViewer */}
+				<button
+					type="button"
+					onClick={onViewFullscreen}
+					className="w-full aspect-video bg-black flex items-center justify-center overflow-hidden"
+					aria-label="View full screen"
+				>
 					<img
 						src={image.signed_url}
 						alt=""
 						className="max-w-full max-h-full object-contain"
 					/>
-				</div>
+				</button>
 
 				{/* Image carousel — visible when more than one image */}
 				{allImages.length > 1 && (
@@ -195,12 +203,17 @@ export const ClimbImageGallery = ({ climbId }: ClimbImageGalleryProps) => {
 
 	const [sheetImageId, setSheetImageId] = useState<string | null>(null);
 	const [viewerImageId, setViewerImageId] = useState<string | null>(null);
+	const [photoViewerImageId, setPhotoViewerImageId] = useState<string | null>(
+		null,
+	);
 	const [showVideoCapturer, setShowVideoCapturer] = useState(false);
 
 	const atCap = imageCount >= USER_IMAGE_CAP;
 	const sheetImage = images.find((img) => img.id === sheetImageId) ?? null;
 	const sheetIndex = images.findIndex((img) => img.id === sheetImageId);
 	const viewerImage = images.find((img) => img.id === viewerImageId) ?? null;
+	const photoViewerImage =
+		images.find((img) => img.id === photoViewerImageId) ?? null;
 
 	function moveImage(index: number, direction: -1 | 1) {
 		const newIndex = index + direction;
@@ -319,6 +332,18 @@ export const ClimbImageGallery = ({ climbId }: ClimbImageGalleryProps) => {
 					onDelete={handleDelete}
 					onClose={() => setSheetImageId(null)}
 					onSelectImage={(id) => setSheetImageId(id)}
+					onViewFullscreen={() => {
+						setPhotoViewerImageId(sheetImage.id);
+						setSheetImageId(null);
+					}}
+				/>
+			)}
+
+			{/* Full-screen photo viewer (pinch-to-zoom) */}
+			{photoViewerImage && (
+				<PhotoViewer
+					src={photoViewerImage.signed_url}
+					onClose={() => setPhotoViewerImageId(null)}
 				/>
 			)}
 

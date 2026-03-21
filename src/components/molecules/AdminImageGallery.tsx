@@ -1,6 +1,7 @@
 import { Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
 import { Spinner } from "@/components/atoms/Spinner";
+import { PhotoViewer } from "./PhotoViewer";
 
 interface GalleryImage {
 	id: string;
@@ -95,18 +96,10 @@ export const AdminImageGallery = ({
 
 			{/* Fullscreen viewer */}
 			{fullscreenUrl && (
-				<button
-					type="button"
-					className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
-					onClick={() => setFullscreenUrl(null)}
-					aria-label="Close image"
-				>
-					<img
-						src={fullscreenUrl}
-						alt=""
-						className="max-w-full max-h-full object-contain"
-					/>
-				</button>
+				<PhotoViewer
+					src={fullscreenUrl}
+					onClose={() => setFullscreenUrl(null)}
+				/>
 			)}
 
 			{/* Delete confirmation sheet */}
