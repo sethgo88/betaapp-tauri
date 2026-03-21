@@ -91,6 +91,9 @@ CREATE TABLE IF NOT EXISTS climbs (
 | `updateClimb(id, data, routeId?)` | Updates mutable fields; trigger stamps `updated_at` |
 | `updateClimbMoves(id, moves)` | Updates only the `moves` JSON string; stores the full betas array |
 | `linkClimbToRoute(climbId, routeId)` | Sets `route_id` without changing other fields (upgrade flow) |
+| `unlinkClimbFromRoute(climbId)` | Sets `route_id = NULL`; preserves all other fields |
+| `fetchUnlinkedClimbs(userId)` | Returns climbs where `route_id IS NULL AND deleted_at IS NULL`, ordered by name |
+| `linkExistingClimbToRoute(climbId, routeId)` | Sets `route_id` and backfills `country/area/sub_area/crag/wall` from the route's location hierarchy |
 | `softDeleteClimb(id)` | Sets `deleted_at = datetime('now')` |
 | `applyRemoteClimb(climb)` | `INSERT OR REPLACE` — preserves server `updated_at`; used by sync + Realtime |
 
@@ -108,6 +111,9 @@ CREATE TABLE IF NOT EXISTS climbs (
 | `useUpdateClimb()` | Mutation — `{ id, data, routeId? }` — updates + silent push |
 | `useUpdateClimbMoves()` | Mutation — `{ id, moves }` — replaces moves JSON string + silent push |
 | `useLinkClimbToRoute()` | Mutation — `{ climbId, routeId }` — upgrade flow in EditClimbView |
+| `useUnlinkClimbFromRoute()` | Mutation — `(climbId)` — clears `route_id`; invalidates climbs + silent push |
+| `useUnlinkedClimbs()` | Query — climbs where `route_id IS NULL` for current user |
+| `useLinkExistingClimbToRoute()` | Mutation — `{ climbId, routeId }` — sets route link + backfills location + silent push |
 | `useDeleteClimb()` | Mutation — soft delete + silent push |
 | `useClimbStats(discipline)` | Grade distribution, sends per month, and burns per send — all from local SQLite via `climbs.stats.ts` |
 
