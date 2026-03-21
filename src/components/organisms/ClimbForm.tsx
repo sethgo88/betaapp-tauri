@@ -16,7 +16,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { useForm, uuid } from "@tanstack/react-form";
 import { useBlocker } from "@tanstack/react-router";
-import { GripVertical } from "lucide-react";
+import { GripVertical, Plus, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
@@ -27,14 +27,16 @@ import { ImportBetaSheet } from "@/components/molecules/ImportBetaSheet";
 import { useUpdateClimbMoves } from "@/features/climbs/climbs.queries";
 import {
 	ClimbFormSchema,
+	type Beta,
 	type ClimbFormValues,
+	type MoveItem,
 	type RouteType,
 	type SentStatus,
+	parseBetas,
 } from "@/features/climbs/climbs.schema";
 import { useGrades } from "@/features/grades/grades.queries";
 import type { Route } from "@/features/routes/routes.schema";
-
-type MoveItem = { id: string; text: string };
+import { cn } from "@/lib/cn";
 
 // ── Sortable move row ─────────────────────────────────────────────────────────
 
@@ -120,17 +122,50 @@ export const ClimbForm = ({
 	onOpenRoutePicker,
 	onUnlinkRoute,
 }: ClimbFormProps) => {
-	const [movesList, setMovesList] = useState<MoveItem[]>(() => {
+	// ── Beta state ────────────────────────────────────────────────────────────
+	// Use a ref to share the initial betas across the two useState initializers.
+	const initialBetasRef = useRef<Beta[]>([]);
+
+	const [betas, setBetas] = useState<Beta[]>(() => {
+		let initial: Beta[];
 		if (defaultValues?.moves) {
 			try {
-				return JSON.parse(defaultValues.moves) as MoveItem[];
+				const parsed = parseBetas(defaultValues.moves);
+				initial =
+					parsed.length > 0
+						? parsed
+						: [
+								{
+									id: uuid(),
+									title: "Beta 1",
+									moves: [{ id: uuid(), text: "" }],
+								},
+							];
 			} catch {
-				return [{ id: uuid(), text: "" }];
+				initial = [
+					{ id: uuid(), title: "Beta 1", moves: [{ id: uuid(), text: "" }] },
+				];
 			}
+		} else {
+			initial = [
+				{ id: uuid(), title: "Beta 1", moves: [{ id: uuid(), text: "" }] },
+			];
 		}
-		return [{ id: uuid(), text: "" }];
+		initialBetasRef.current = initial;
+		return initial;
 	});
 
+	const [activeBetaId, setActiveBetaId] = useState<string>(
+		() => initialBetasRef.current[0]?.id ?? "",
+	);
+	const [galleryMode, setGalleryMode] = useState(false);
+
+	// ── Derived ───────────────────────────────────────────────────────────────
+	const activeBeta = betas.find((b) => b.id === activeBetaId) ?? betas[0];
+	const activeMoves = activeBeta?.moves ?? [];
+	const activeMoveCount = activeMoves.length;
+
+	// ── Form metadata ─────────────────────────────────────────────────────────
 	const [routeType, _setRouteType] = useState<RouteType>(
 		defaultValues?.route_type ?? "sport",
 	);
@@ -155,42 +190,50 @@ export const ClimbForm = ({
 		}),
 	);
 
+	// ── Active-beta move helpers ───────────────────────────────────────────────
+
+	const setActiveMoves = (updater: (moves: MoveItem[]) => MoveItem[]) => {
+		const currentId = activeBeta?.id ?? activeBetaId;
+		setBetas((prev) =>
+			prev.map((b) => (b.id === currentId ? { ...b, moves: updater(b.moves) } : b)),
+		);
+	};
+
 	const handleDragEnd = (event: DragEndEvent) => {
 		const { active, over } = event;
 		if (!over || active.id === over.id) return;
-		setMovesList((items) => {
-			const oldIndex = items.findIndex((m) => m.id === active.id);
-			const newIndex = items.findIndex((m) => m.id === over.id);
-			return arrayMove(items, oldIndex, newIndex);
+		setActiveMoves((moves) => {
+			const oldIndex = moves.findIndex((m) => m.id === active.id);
+			const newIndex = moves.findIndex((m) => m.id === over.id);
+			return arrayMove(moves, oldIndex, newIndex);
 		});
 	};
 
 	// ── Move editing ──────────────────────────────────────────────────────────
 
 	const addMove = (id: string) => {
-		const index = movesList.findIndex((x) => x.id === id);
-		setMovesList([
-			...movesList.slice(0, index + 1),
-			{ id: uuid(), text: "" },
-			...movesList.slice(index + 1),
-		]);
+		setActiveMoves((moves) => {
+			const index = moves.findIndex((x) => x.id === id);
+			return [
+				...moves.slice(0, index + 1),
+				{ id: uuid(), text: "" },
+				...moves.slice(index + 1),
+			];
+		});
 	};
 
 	const handleMoveChange = (
 		e: React.ChangeEvent<HTMLTextAreaElement>,
 		id: string,
 	) => {
-		const index = movesList.findIndex((x) => x.id === id);
-		setMovesList(
-			movesList.map((m, i) =>
-				i === index ? { ...m, text: e.target.value } : m,
-			),
+		setActiveMoves((moves) =>
+			moves.map((m) => (m.id === id ? { ...m, text: e.target.value } : m)),
 		);
 	};
 
 	const handleMoveDelete = (id: string) => {
-		if (movesList.length > 1) {
-			setMovesList(movesList.filter((x) => x.id !== id));
+		if (activeMoves.length > 1) {
+			setActiveMoves((moves) => moves.filter((x) => x.id !== id));
 		}
 	};
 
@@ -238,7 +281,7 @@ export const ClimbForm = ({
 	};
 
 	useEffect(() => {
-		if (inputRefs.current.length > 0 && movesList.length > 0) {
+		if (inputRefs.current.length > 0 && activeMoveCount > 0) {
 			const focused = inputRefs.current.find(
 				(input) => input === document.activeElement,
 			);
@@ -246,7 +289,35 @@ export const ClimbForm = ({
 			const focusedIndex = inputRefs.current.indexOf(focused);
 			inputRefs.current[focusedIndex + 1]?.focus();
 		}
-	}, [movesList.length]);
+	}, [activeMoveCount]);
+
+	// ── Beta management ───────────────────────────────────────────────────────
+
+	const updateActiveBetaTitle = (title: string) => {
+		setBetas((prev) =>
+			prev.map((b) => (b.id === activeBetaId ? { ...b, title } : b)),
+		);
+	};
+
+	const addBeta = () => {
+		const newBeta: Beta = {
+			id: uuid(),
+			title: `Beta ${betas.length + 1}`,
+			moves: [{ id: uuid(), text: "" }],
+		};
+		setBetas((prev) => [...prev, newBeta]);
+		setActiveBetaId(newBeta.id);
+		setGalleryMode(false);
+	};
+
+	const deleteBeta = (betaId: string) => {
+		if (betas.length <= 1) return;
+		const remaining = betas.filter((b) => b.id !== betaId);
+		setBetas(remaining);
+		if (activeBetaId === betaId) {
+			setActiveBetaId(remaining[0]?.id ?? "");
+		}
+	};
 
 	// ── Auto-save moves (edit mode only) ──────────────────────────────────────
 
@@ -263,7 +334,7 @@ export const ClimbForm = ({
 		debounceRef.current = setTimeout(() => {
 			setSaveStatus("saving");
 			updateMoves.mutate(
-				{ id: climbId, moves: JSON.stringify(movesList) },
+				{ id: climbId, moves: JSON.stringify(betas) },
 				{
 					onSuccess: () => {
 						setIsDirty(false);
@@ -283,7 +354,7 @@ export const ClimbForm = ({
 		return () => {
 			if (debounceRef.current) clearTimeout(debounceRef.current);
 		};
-	}, [movesList, climbId]);
+	}, [betas, climbId]);
 
 	// ── Navigation guard ──────────────────────────────────────────────────────
 
@@ -317,7 +388,7 @@ export const ClimbForm = ({
 			const parsed = ClimbFormSchema.safeParse({
 				...value,
 				grade: gradeValue,
-				moves: JSON.stringify(movesList),
+				moves: JSON.stringify(betas),
 			});
 			if (!parsed.success) {
 				const messages = parsed.error.issues.map((i) => i.message).join(", ");
@@ -474,40 +545,143 @@ export const ClimbForm = ({
 				<ImportBetaSheet
 					isOpen={importOpen}
 					onClose={() => setImportOpen(false)}
-					onImport={(moves) => setMovesList(moves)}
+					onImport={(moves) => setActiveMoves(() => moves)}
 				/>
 			</div>
 
-			<div className="w-full rounded-md bg-surface-card p-2 overflow-y-scroll">
-				{climbId && saveStatus !== "idle" && (
-					<p className="text-xs text-text-secondary mb-2 px-1">
-						{saveStatus === "saving" ? "Saving…" : "Saved"}
-					</p>
-				)}
-				<DndContext
-					sensors={sensors}
-					collisionDetection={closestCenter}
-					onDragEnd={handleDragEnd}
-				>
-					<SortableContext
-						items={movesList.map((m) => m.id)}
-						strategy={verticalListSortingStrategy}
-					>
-						{movesList.map((move, index) => (
-							<SortableMoveRow
-								key={move.id}
-								move={move}
-								index={index}
-								onKeyDown={handleTextAreaKeyDown}
-								onChange={handleMoveChange}
-								onFocus={handleMoveFocus}
-								setRef={(el, i) => {
-									inputRefs.current[i] = el;
-								}}
+			<div className="w-full rounded-md bg-surface-card p-2 flex flex-col gap-2 overflow-y-auto">
+				{/* Beta header: title input / gallery toggle / add beta */}
+				<div className="flex items-center gap-2 px-1 min-h-[28px]">
+					{galleryMode ? (
+						<>
+							<span className="flex-1 text-sm font-medium text-text-secondary">
+								All betas
+							</span>
+							<button
+								type="button"
+								className="text-xs text-accent-primary shrink-0"
+								onClick={() => setGalleryMode(false)}
+							>
+								Close
+							</button>
+						</>
+					) : (
+						<>
+							<input
+								type="text"
+								className="flex-1 text-sm font-medium bg-transparent outline-none border-b border-text-muted pb-0.5 min-w-0"
+								value={activeBeta?.title ?? ""}
+								onChange={(e) => updateActiveBetaTitle(e.target.value)}
+								placeholder="Beta title"
 							/>
+							{betas.length > 1 && (
+								<button
+									type="button"
+									className="text-xs text-accent-primary shrink-0"
+									onClick={() => setGalleryMode(true)}
+								>
+									Gallery
+								</button>
+							)}
+						</>
+					)}
+					<button
+						type="button"
+						className="flex items-center gap-0.5 text-xs text-accent-primary shrink-0"
+						onClick={addBeta}
+					>
+						<Plus size={12} />
+						Add Beta
+					</button>
+				</div>
+
+				{galleryMode ? (
+					/* Gallery mode: horizontal snap-scroll cards */
+					<div className="flex gap-3 overflow-x-auto snap-x snap-mandatory -mx-2 px-2 pb-1">
+						{betas.map((beta) => (
+							<div
+								key={beta.id}
+								role="button"
+								tabIndex={0}
+								className={cn(
+									"snap-center shrink-0 w-40 rounded-md p-3 flex flex-col gap-1 bg-surface-input cursor-pointer",
+									activeBetaId === beta.id && "ring-1 ring-accent-primary",
+								)}
+								onClick={() => {
+									setActiveBetaId(beta.id);
+									setGalleryMode(false);
+								}}
+								onKeyDown={(e) => {
+									if (e.key === "Enter" || e.key === " ") {
+										e.preventDefault();
+										setActiveBetaId(beta.id);
+										setGalleryMode(false);
+									}
+								}}
+							>
+								<div className="flex items-center justify-between gap-1">
+									<p className="font-medium text-sm truncate flex-1">
+										{beta.title}
+									</p>
+									{betas.length > 1 && (
+										<button
+											type="button"
+											className="text-text-muted shrink-0"
+											onClick={(e) => {
+												e.stopPropagation();
+												deleteBeta(beta.id);
+											}}
+										>
+											<Trash2 size={12} />
+										</button>
+									)}
+								</div>
+								<p className="text-xs text-text-secondary">
+									{beta.moves.length} move
+									{beta.moves.length !== 1 ? "s" : ""}
+								</p>
+								{beta.moves.slice(0, 2).map((m, i) => (
+									<p key={m.id} className="text-xs text-text-muted truncate">
+										{i + 1}. {m.text || "…"}
+									</p>
+								))}
+							</div>
 						))}
-					</SortableContext>
-				</DndContext>
+					</div>
+				) : (
+					/* Normal mode: save status + DnD moves */
+					<>
+						{climbId && saveStatus !== "idle" && (
+							<p className="text-xs text-text-secondary px-1">
+								{saveStatus === "saving" ? "Saving…" : "Saved"}
+							</p>
+						)}
+						<DndContext
+							sensors={sensors}
+							collisionDetection={closestCenter}
+							onDragEnd={handleDragEnd}
+						>
+							<SortableContext
+								items={activeMoves.map((m) => m.id)}
+								strategy={verticalListSortingStrategy}
+							>
+								{activeMoves.map((move, index) => (
+									<SortableMoveRow
+										key={move.id}
+										move={move}
+										index={index}
+										onKeyDown={handleTextAreaKeyDown}
+										onChange={handleMoveChange}
+										onFocus={handleMoveFocus}
+										setRef={(el, i) => {
+											inputRefs.current[i] = el;
+										}}
+									/>
+								))}
+							</SortableContext>
+						</DndContext>
+					</>
+				)}
 			</div>
 
 			<ConfirmDialog
