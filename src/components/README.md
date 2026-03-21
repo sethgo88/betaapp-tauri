@@ -64,7 +64,7 @@ templates   Layout shells with no real data — just children/slots.
 ### Templates
 | Component | Purpose |
 |---|---|
-| `AppLayout` | Root layout — safe areas, NavBar, Toast renderer |
+| `AppLayout` | Root layout — safe areas, NavBar, Toast renderer, persistent back button (hidden on `/`) |
 
 ---
 

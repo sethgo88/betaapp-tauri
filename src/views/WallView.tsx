@@ -98,19 +98,6 @@ const WallView = () => {
 
 	return (
 		<div className="flex flex-col gap-3">
-			<button
-				type="button"
-				className="text-text-secondary text-sm text-left"
-				onClick={() =>
-					navigate({
-						to: "/crags/$cragId",
-						params: { cragId: wall.crag_id },
-					})
-				}
-			>
-				← Back to crag
-			</button>
-
 			<h1 className="text-xl font-display font-bold">{wall.name}</h1>
 
 			{isAdmin ? (

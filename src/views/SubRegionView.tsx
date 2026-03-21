@@ -145,19 +145,6 @@ const SubRegionView = () => {
 
 	return (
 		<div className="flex flex-col gap-3">
-			<button
-				type="button"
-				className="text-text-secondary text-sm text-left"
-				onClick={() =>
-					navigate({
-						to: "/regions/$regionId",
-						params: { regionId: subRegion.region_id },
-					})
-				}
-			>
-				← Back to region
-			</button>
-
 			<h1 className="text-xl font-display font-bold">{subRegion.name}</h1>
 
 			<EditableDescription

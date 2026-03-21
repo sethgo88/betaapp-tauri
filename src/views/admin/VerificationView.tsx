@@ -1,4 +1,3 @@
-import { useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
@@ -478,7 +477,6 @@ const LocationRow = ({
 // ── Main view ─────────────────────────────────────────────────────────────────
 
 const VerificationView = () => {
-	const router = useRouter();
 	const addToast = useUiStore((s) => s.addToast);
 
 	const { data: routes = [], isLoading: routesLoading } = useUnverifiedRoutes();
@@ -519,14 +517,6 @@ const VerificationView = () => {
 
 	return (
 		<div className="flex flex-col gap-4">
-			<button
-				type="button"
-				className="text-text-secondary text-sm text-left"
-				onClick={() => router.history.back()}
-			>
-				← Back
-			</button>
-
 			<h1 className="text-lg font-display font-semibold">Verification</h1>
 
 			{isLoading && <p className="text-text-secondary text-sm">Loading…</p>}

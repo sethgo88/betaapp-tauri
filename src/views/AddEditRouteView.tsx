@@ -193,14 +193,6 @@ const AddEditRouteView = ({ routeId }: AddEditRouteViewProps) => {
 
 	return (
 		<div className="flex flex-col gap-4">
-			<button
-				type="button"
-				className="text-text-secondary text-sm text-left"
-				onClick={() => router.history.back()}
-			>
-				← Back
-			</button>
-
 			<h1 className="text-lg font-display font-semibold">{title}</h1>
 
 			{/* Location — tappable summary opens full-screen sheet */}

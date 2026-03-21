@@ -61,14 +61,6 @@ const SubmitRouteView = () => {
 
 	return (
 		<div className="flex flex-col gap-4">
-			<button
-				type="button"
-				className="text-text-secondary text-sm text-left"
-				onClick={() => router.history.back()}
-			>
-				← Back
-			</button>
-
 			<div className="rounded-lg bg-surface-card p-4">
 				<p className="font-display font-semibold">Submit a route</p>
 				<p className="text-sm text-text-secondary mt-1">Wall: {wallName}</p>
