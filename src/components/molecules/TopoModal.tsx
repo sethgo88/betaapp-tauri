@@ -1,7 +1,11 @@
-import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
-import type { RouteTopo, WallTopo, WallTopoLine } from "@/features/topos/topos.schema";
-import { RouteTopoViewer, WallTopoViewer } from "./TopoViewer";
+import { useEffect, useRef, useState } from "react";
+import type {
+	RouteTopo,
+	WallTopo,
+	WallTopoLine,
+} from "@/features/topos/topos.schema";
+import { RouteTopoViewer, WallTopoPanel, WallTopoViewer } from "./TopoViewer";
 
 interface RouteInfo {
 	id: string;
@@ -41,12 +45,51 @@ type TopoModalProps =
 export const TopoModal = (props: TopoModalProps) => {
 	const { onClose } = props;
 
-	// Pinch-to-zoom state
-	const [scale, setScale] = useState(1);
-	const [origin, setOrigin] = useState({ x: 0, y: 0 });
-	const lastDistance = useRef<number | null>(null);
-	const lastTap = useRef<number>(0);
+	// Wall mode: route selection state lifted out of WallTopoViewer so panel stays outside zoom
+	const [wallSelectedRouteId, setWallSelectedRouteId] = useState<string | null>(
+		null,
+	);
+
+	// Transform state: translate + scale (so we can pan independently of zoom)
+	const [xf, setXf] = useState({ scale: 1, tx: 0, ty: 0, animated: false });
+	// Live ref so touch handlers always see current values without stale closures
+	const xfRef = useRef(xf);
 	const containerRef = useRef<HTMLDivElement>(null);
+	const lastPinchDist = useRef<number | null>(null);
+	const lastPinchMid = useRef<{ x: number; y: number } | null>(null);
+	const lastPanTouch = useRef<{ x: number; y: number } | null>(null);
+	const lastTap = useRef<number>(0);
+
+	const clamp = (v: number, lo: number, hi: number) =>
+		Math.min(hi, Math.max(lo, v));
+
+	const applyTransform = (
+		scale: number,
+		tx: number,
+		ty: number,
+		animated = false,
+	) => {
+		const s = clamp(scale, 1, 4);
+		// At 1× zoom: always snap to center (no panning)
+		if (s === 1) {
+			const next = { scale: 1, tx: 0, ty: 0, animated };
+			xfRef.current = next;
+			setXf(next);
+			return;
+		}
+		// Clamp pan so image edges can't go past the container edges
+		const rect = containerRef.current?.getBoundingClientRect();
+		const maxTx = rect ? (rect.width * (s - 1)) / 2 : 0;
+		const maxTy = rect ? (rect.height * (s - 1)) / 2 : 0;
+		const next = {
+			scale: s,
+			tx: clamp(tx, -maxTx, maxTx),
+			ty: clamp(ty, -maxTy, maxTy),
+			animated,
+		};
+		xfRef.current = next;
+		setXf(next);
+	};
 
 	// Close on Android back (Escape key)
 	useEffect(() => {
@@ -59,48 +102,89 @@ export const TopoModal = (props: TopoModalProps) => {
 
 	const handleTouchStart = (e: React.TouchEvent) => {
 		if (e.touches.length === 2) {
+			lastPanTouch.current = null;
 			const dx = e.touches[0].clientX - e.touches[1].clientX;
 			const dy = e.touches[0].clientY - e.touches[1].clientY;
-			lastDistance.current = Math.hypot(dx, dy);
+			lastPinchDist.current = Math.hypot(dx, dy);
+			lastPinchMid.current = {
+				x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+				y: (e.touches[0].clientY + e.touches[1].clientY) / 2,
+			};
+		} else if (e.touches.length === 1) {
+			lastPinchDist.current = null;
+			lastPinchMid.current = null;
+			lastPanTouch.current = {
+				x: e.touches[0].clientX,
+				y: e.touches[0].clientY,
+			};
 		}
 	};
 
 	const handleTouchMove = (e: React.TouchEvent) => {
-		if (e.touches.length === 2 && lastDistance.current !== null) {
+		if (
+			e.touches.length === 2 &&
+			lastPinchDist.current !== null &&
+			lastPinchMid.current !== null
+		) {
 			const dx = e.touches[0].clientX - e.touches[1].clientX;
 			const dy = e.touches[0].clientY - e.touches[1].clientY;
 			const dist = Math.hypot(dx, dy);
-			const delta = dist / lastDistance.current;
-			lastDistance.current = dist;
+			const newMid = {
+				x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+				y: (e.touches[0].clientY + e.touches[1].clientY) / 2,
+			};
 
-			// Pinch center as transform origin
 			const rect = containerRef.current?.getBoundingClientRect();
 			if (rect) {
-				const cx =
-					((e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left) /
-					rect.width;
-				const cy =
-					((e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top) /
-					rect.height;
-				setOrigin({ x: cx * 100, y: cy * 100 });
+				const { scale, tx, ty } = xfRef.current;
+				const newScale = clamp(scale * (dist / lastPinchDist.current), 1, 4);
+				// Keep the pinch center point fixed in content space
+				const ccx = rect.left + rect.width / 2;
+				const ccy = rect.top + rect.height / 2;
+				const contentPx = (lastPinchMid.current.x - ccx - tx) / scale;
+				const contentPy = (lastPinchMid.current.y - ccy - ty) / scale;
+				const newTx = newMid.x - ccx - contentPx * newScale;
+				const newTy = newMid.y - ccy - contentPy * newScale;
+				applyTransform(newScale, newTx, newTy);
 			}
 
-			setScale((s) => Math.min(4, Math.max(1, s * delta)));
+			lastPinchDist.current = dist;
+			lastPinchMid.current = newMid;
+		} else if (e.touches.length === 1 && lastPanTouch.current !== null) {
+			// Single-finger pan — only when zoomed in
+			const { scale, tx, ty } = xfRef.current;
+			if (scale <= 1) return;
+			const panDx = e.touches[0].clientX - lastPanTouch.current.x;
+			const panDy = e.touches[0].clientY - lastPanTouch.current.y;
+			lastPanTouch.current = {
+				x: e.touches[0].clientX,
+				y: e.touches[0].clientY,
+			};
+			applyTransform(scale, tx + panDx, ty + panDy);
 		}
 	};
 
 	const handleTouchEnd = (e: React.TouchEvent) => {
-		if (e.touches.length < 2) {
-			lastDistance.current = null;
-		}
-		// Double-tap to reset zoom
-		if (e.changedTouches.length === 1) {
-			const now = Date.now();
-			if (now - lastTap.current < 300) {
-				setScale(1);
-				setOrigin({ x: 50, y: 50 });
+		if (e.touches.length === 1) {
+			// Transition from pinch back to single finger — resume pan
+			lastPinchDist.current = null;
+			lastPinchMid.current = null;
+			lastPanTouch.current = {
+				x: e.touches[0].clientX,
+				y: e.touches[0].clientY,
+			};
+		} else if (e.touches.length === 0) {
+			lastPinchDist.current = null;
+			lastPinchMid.current = null;
+			lastPanTouch.current = null;
+			// Double-tap to reset zoom
+			if (e.changedTouches.length === 1) {
+				const now = Date.now();
+				if (now - lastTap.current < 300) {
+					applyTransform(1, 0, 0, true);
+				}
+				lastTap.current = now;
 			}
-			lastTap.current = now;
 		}
 	};
 
@@ -121,10 +205,10 @@ export const TopoModal = (props: TopoModalProps) => {
 				</button>
 			</div>
 
-			{/* Zoomable content */}
+			{/* Zoomable + pannable content */}
 			<div
 				ref={containerRef}
-				className="flex-1 overflow-hidden relative"
+				className="flex-1 overflow-hidden relative flex items-center justify-center"
 				onTouchStart={handleTouchStart}
 				onTouchMove={handleTouchMove}
 				onTouchEnd={handleTouchEnd}
@@ -133,10 +217,9 @@ export const TopoModal = (props: TopoModalProps) => {
 				<div
 					className="w-full h-full"
 					style={{
-						transform: `scale(${scale})`,
-						transformOrigin: `${origin.x}% ${origin.y}%`,
-						transition:
-							lastDistance.current === null ? "transform 0.15s ease-out" : "none",
+						transform: `translate(${xf.tx}px, ${xf.ty}px) scale(${xf.scale})`,
+						transformOrigin: "center center",
+						transition: xf.animated ? "transform 0.2s ease-out" : "none",
 					}}
 				>
 					{props.mode === "wall" && (
@@ -144,6 +227,9 @@ export const TopoModal = (props: TopoModalProps) => {
 							topo={props.topo}
 							lines={props.lines}
 							routes={props.routes}
+							selectedRouteId={wallSelectedRouteId}
+							onSelectRoute={setWallSelectedRouteId}
+							imageOnly={true}
 						/>
 					)}
 					{props.mode === "wall-single" && (
@@ -157,6 +243,16 @@ export const TopoModal = (props: TopoModalProps) => {
 					{props.mode === "route" && <RouteTopoViewer topo={props.topo} />}
 				</div>
 			</div>
+
+			{/* Route list panel — outside zoom so it stays fixed */}
+			{props.mode === "wall" && (
+				<WallTopoPanel
+					lines={props.lines}
+					routes={props.routes}
+					selectedRouteId={wallSelectedRouteId}
+					onSelectRoute={setWallSelectedRouteId}
+				/>
+			)}
 		</div>
 	);
 };

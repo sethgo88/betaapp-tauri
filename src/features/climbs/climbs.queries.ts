@@ -3,7 +3,6 @@ import { useAuthStore } from "@/features/auth/auth.store";
 import { pushClimbs } from "@/features/sync/sync.service";
 import { useUiStore } from "@/stores/ui.store";
 import type { ClimbFormValues } from "./climbs.schema";
-import { fetchClimbStats, type Discipline } from "./climbs.stats";
 import {
 	fetchClimb,
 	fetchClimbs,
@@ -13,6 +12,7 @@ import {
 	updateClimb,
 	updateClimbMoves,
 } from "./climbs.service";
+import { type Discipline, fetchClimbStats } from "./climbs.stats";
 import { useClimbsStore } from "./climbs.store";
 
 const CLIMBS_KEY = "climbs";

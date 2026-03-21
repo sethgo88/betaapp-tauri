@@ -1,7 +1,7 @@
 import { ChevronDown } from "lucide-react";
 import type { Climb } from "@/features/climbs/climbs.schema";
-import { useClimbsStore } from "@/features/climbs/climbs.store";
 import type { SortKey } from "@/features/climbs/climbs.store";
+import { useClimbsStore } from "@/features/climbs/climbs.store";
 import { cn } from "@/lib/cn";
 
 interface FilterPanelProps {

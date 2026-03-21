@@ -19,6 +19,11 @@ interface WallTopoViewerProps {
 	routes: RouteInfo[];
 	/** If set, only this route's line is shown and highlighted (no bottom panel) */
 	singleRouteId?: string;
+	/** Controlled selection — provide alongside onSelectRoute to manage state externally */
+	selectedRouteId?: string | null;
+	onSelectRoute?: (id: string | null) => void;
+	/** When true, renders only the image+SVG (no bottom panel) */
+	imageOnly?: boolean;
 }
 
 export const WallTopoViewer = ({
@@ -26,18 +31,25 @@ export const WallTopoViewer = ({
 	lines,
 	routes,
 	singleRouteId,
+	selectedRouteId: controlledSelectedId,
+	onSelectRoute: controlledOnSelect,
+	imageOnly,
 }: WallTopoViewerProps) => {
-	const [selectedRouteId, setSelectedRouteId] = useState<string | null>(
+	const [internalSelectedId, setInternalSelectedId] = useState<string | null>(
 		singleRouteId ?? null,
 	);
+
+	const selectedRouteId =
+		controlledSelectedId !== undefined
+			? controlledSelectedId
+			: internalSelectedId;
+	const onSelectRoute = controlledOnSelect ?? setInternalSelectedId;
 
 	const isSingleMode = singleRouteId !== undefined;
 
 	const visibleLines = isSingleMode
 		? lines.filter((l) => l.route_id === singleRouteId)
 		: lines;
-
-	const selectedRoute = routes.find((r) => r.id === selectedRouteId);
 
 	const pointsStr = (line: WallTopoLine) =>
 		line.points.map((p) => `${p.x_pct * 100},${p.y_pct * 100}`).join(" ");
@@ -79,9 +91,7 @@ export const WallTopoViewer = ({
 									strokeWidth="8"
 									fill="none"
 									style={{ cursor: "pointer" }}
-									onClick={() =>
-										!isSingleMode && setSelectedRouteId(line.route_id)
-									}
+									onClick={() => !isSingleMode && onSelectRoute(line.route_id)}
 								/>
 								{/* Visible line */}
 								<polyline
@@ -101,59 +111,79 @@ export const WallTopoViewer = ({
 				</svg>
 			</div>
 
-			{/* Bottom panel — only in multi-route mode */}
-			{!isSingleMode && (
-				<div className="shrink-0 bg-surface-card rounded-b-lg overflow-hidden">
-					{/* Selected route header */}
-					{selectedRoute && (
-						<div className="flex items-center justify-between px-4 py-2 border-b border-border-default">
-							<span className="font-medium text-sm text-text-primary">
-								{selectedRoute.name}
-							</span>
-							<span className="text-xs text-text-secondary">
-								{selectedRoute.grade}
-							</span>
-						</div>
-					)}
+			{/* Bottom panel — only in multi-route uncontrolled mode */}
+			{!isSingleMode && !imageOnly && (
+				<WallTopoPanel
+					lines={lines}
+					routes={routes}
+					selectedRouteId={selectedRouteId}
+					onSelectRoute={onSelectRoute}
+				/>
+			)}
+		</div>
+	);
+};
 
-					{/* Route list */}
-					<div
-						className="overflow-y-auto"
-						style={{ maxHeight: "40vh", scrollbarWidth: "none" }}
-					>
-						{lines.map((line) => {
-							const route = routes.find((r) => r.id === line.route_id);
-							if (!route) return null;
-							const isActive = selectedRouteId === route.id;
-							return (
-								<button
-									key={line.id}
-									type="button"
-									onClick={() => setSelectedRouteId(isActive ? null : route.id)}
-									className="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-surface-page transition-colors"
-								>
-									{/* Color swatch */}
-									<span
-										className="shrink-0 w-3 h-3 rounded-full"
-										style={{
-											backgroundColor: line.color,
-											opacity: isActive || selectedRouteId === null ? 1 : 0.5,
-										}}
-									/>
-									<span
-										className={`flex-1 text-sm ${isActive ? "font-semibold text-text-primary" : "text-text-secondary"}`}
-									>
-										{route.name}
-									</span>
-									<span className="text-xs text-text-tertiary">
-										{route.grade}
-									</span>
-								</button>
-							);
-						})}
-					</div>
+// ── Wall topo bottom panel (route list) ───────────────────────────────────────
+
+interface WallTopoPanelProps {
+	lines: WallTopoLine[];
+	routes: RouteInfo[];
+	selectedRouteId: string | null;
+	onSelectRoute: (id: string | null) => void;
+}
+
+export const WallTopoPanel = ({
+	lines,
+	routes,
+	selectedRouteId,
+	onSelectRoute,
+}: WallTopoPanelProps) => {
+	const selectedRoute = routes.find((r) => r.id === selectedRouteId);
+	return (
+		<div className="shrink-0 bg-surface-card rounded-b-lg overflow-hidden">
+			{selectedRoute && (
+				<div className="flex items-center justify-between px-4 py-2 border-b border-border-default">
+					<span className="font-medium text-sm text-text-primary">
+						{selectedRoute.name}
+					</span>
+					<span className="text-xs text-text-secondary">
+						{selectedRoute.grade}
+					</span>
 				</div>
 			)}
+			<div
+				className="overflow-y-auto"
+				style={{ maxHeight: "40vh", scrollbarWidth: "none" }}
+			>
+				{lines.map((line) => {
+					const route = routes.find((r) => r.id === line.route_id);
+					if (!route) return null;
+					const isActive = selectedRouteId === route.id;
+					return (
+						<button
+							key={line.id}
+							type="button"
+							onClick={() => onSelectRoute(isActive ? null : route.id)}
+							className="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-surface-page transition-colors"
+						>
+							<span
+								className="shrink-0 w-3 h-3 rounded-full"
+								style={{
+									backgroundColor: line.color,
+									opacity: isActive || selectedRouteId === null ? 1 : 0.5,
+								}}
+							/>
+							<span
+								className={`flex-1 text-sm ${isActive ? "font-semibold text-text-primary" : "text-text-secondary"}`}
+							>
+								{route.name}
+							</span>
+							<span className="text-xs text-text-tertiary">{route.grade}</span>
+						</button>
+					);
+				})}
+			</div>
 		</div>
 	);
 };

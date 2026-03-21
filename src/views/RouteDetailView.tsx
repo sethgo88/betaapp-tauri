@@ -158,7 +158,7 @@ const RouteDetailView = () => {
 					<button
 						type="button"
 						onClick={() => setShowTopoModal(true)}
-						className="relative w-full max-h-[300px] rounded-[var(--radius-md)] overflow-hidden"
+						className="relative max-w-1/2 max-h-75 rounded-[var(--radius-md)] overflow-hidden"
 						aria-label="View topo"
 					>
 						{routeTopo ? (
@@ -195,9 +195,6 @@ const RouteDetailView = () => {
 									)}
 							</div>
 						)}
-						<span className="absolute inset-0 flex items-center justify-center bg-black/20 text-white text-xs font-medium">
-							View topo
-						</span>
 					</button>
 				</div>
 			)}
