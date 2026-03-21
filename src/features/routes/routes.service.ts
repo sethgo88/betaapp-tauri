@@ -342,7 +342,8 @@ export async function searchVerifiedRoutes(
 export async function fetchRouteBodyStats(
 	routeId: string,
 ): Promise<RouteBodyStat[]> {
-	const { data, error } = await supabase.rpc("get_route_body_stats", {
+	// biome-ignore lint/suspicious/noExplicitAny: get_route_body_stats not in generated types
+	const { data, error } = await (supabase as any).rpc("get_route_body_stats", {
 		p_route_id: routeId,
 	});
 	if (error) throw error;

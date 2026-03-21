@@ -9,13 +9,9 @@ import { AdminImageGallery } from "@/components/molecules/AdminImageGallery";
 import { EditableDescription } from "@/components/molecules/EditableDescription";
 import { RouteBodyChart } from "@/components/molecules/RouteBodyChart";
 import { TopoModal } from "@/components/molecules/TopoModal";
+import { RouteTopoViewer } from "@/components/molecules/TopoViewer";
 import { RouteTopoBuilder } from "@/components/organisms/TopoBuilder";
 import { useAuthStore } from "@/features/auth/auth.store";
-import {
-	useRouteTopo,
-	useWallTopo,
-	useWallTopoLines,
-} from "@/features/topos/topos.queries";
 import { useClimbs } from "@/features/climbs/climbs.queries";
 import {
 	useAddRouteImage,
@@ -30,6 +26,11 @@ import {
 	useUpdateRouteDescription,
 } from "@/features/routes/routes.queries";
 import { RouteLinkSubmitSchema } from "@/features/routes/routes.schema";
+import {
+	useRouteTopo,
+	useWallTopo,
+	useWallTopoLines,
+} from "@/features/topos/topos.queries";
 
 const RouteDetailView = () => {
 	const { routeId } = useParams({ from: "/routes/$routeId" });
@@ -51,9 +52,13 @@ const RouteDetailView = () => {
 	const { data: routeTopo = null } = useRouteTopo(routeId);
 	const { data: wallTopo = null } = useWallTopo(route?.wall_id ?? null);
 	const { data: wallTopoLines = [] } = useWallTopoLines(wallTopo?.id ?? null);
-	const wallTopoLineForRoute = wallTopoLines.find((l) => l.route_id === routeId);
-	const showWallTopoFallback = !routeTopo && !!wallTopo && !!wallTopoLineForRoute;
+	const wallTopoLineForRoute = wallTopoLines.find(
+		(l) => l.route_id === routeId,
+	);
+	const showWallTopoFallback =
+		!routeTopo && !!wallTopo && !!wallTopoLineForRoute;
 	const [showTopoModal, setShowTopoModal] = useState(false);
+	const [showTopoEdit, setShowTopoEdit] = useState(false);
 
 	const [linkUrl, setLinkUrl] = useState("");
 	const [linkTitle, setLinkTitle] = useState("");
@@ -153,23 +158,62 @@ const RouteDetailView = () => {
 					<button
 						type="button"
 						onClick={() => setShowTopoModal(true)}
-						className="relative w-full rounded-[var(--radius-md)] overflow-hidden"
+						className="relative max-w-1/2 max-h-75 rounded-[var(--radius-md)] overflow-hidden"
 						aria-label="View topo"
 					>
-						<img
-							src={routeTopo ? routeTopo.image_url : wallTopo!.image_url}
-							alt="Route topo"
-							className="w-full object-cover max-h-40"
-						/>
-						<span className="absolute inset-0 flex items-center justify-center bg-black/20 text-white text-xs font-medium">
-							View topo
-						</span>
+						{routeTopo ? (
+							<RouteTopoViewer topo={routeTopo} />
+						) : (
+							<div className="relative w-full">
+								<img
+									src={wallTopo?.image_url}
+									alt="Route topo"
+									className="w-full"
+									draggable={false}
+								/>
+								{wallTopoLineForRoute &&
+									wallTopoLineForRoute.points.length >= 2 && (
+										<svg
+											className="absolute inset-0 w-full h-full"
+											viewBox="0 0 100 100"
+											preserveAspectRatio="none"
+											aria-hidden="true"
+											style={{ pointerEvents: "none" }}
+										>
+											<polyline
+												points={wallTopoLineForRoute.points
+													.map((p) => `${p.x_pct * 100},${p.y_pct * 100}`)
+													.join(" ")}
+												stroke={wallTopoLineForRoute.color}
+												strokeWidth="2"
+												fill="none"
+												strokeLinecap="round"
+												strokeLinejoin="round"
+												vectorEffect="non-scaling-stroke"
+											/>
+										</svg>
+									)}
+							</div>
+						)}
 					</button>
 				</div>
 			)}
 
 			{isAdmin && (
-				<RouteTopoBuilder routeId={routeId} topo={routeTopo} />
+				<button
+					type="button"
+					onClick={() => setShowTopoEdit(true)}
+					className="text-sm text-accent-primary text-left"
+				>
+					{routeTopo ? "Edit topo" : "+ Add route topo"}
+				</button>
+			)}
+			{showTopoEdit && (
+				<RouteTopoBuilder
+					routeId={routeId}
+					topo={routeTopo}
+					onClose={() => setShowTopoEdit(false)}
+				/>
 			)}
 
 			{showTopoModal && routeTopo && (
@@ -180,16 +224,23 @@ const RouteDetailView = () => {
 				/>
 			)}
 
-			{showTopoModal && showWallTopoFallback && wallTopo && wallTopoLineForRoute && (
-				<TopoModal
-					mode="wall-single"
-					topo={wallTopo}
-					lines={wallTopoLines}
-					routes={route ? [{ id: route.id, name: route.name, grade: route.grade }] : []}
-					routeId={routeId}
-					onClose={() => setShowTopoModal(false)}
-				/>
-			)}
+			{showTopoModal &&
+				showWallTopoFallback &&
+				wallTopo &&
+				wallTopoLineForRoute && (
+					<TopoModal
+						mode="wall-single"
+						topo={wallTopo}
+						lines={wallTopoLines}
+						routes={
+							route
+								? [{ id: route.id, name: route.name, grade: route.grade }]
+								: []
+						}
+						routeId={routeId}
+						onClose={() => setShowTopoModal(false)}
+					/>
+				)}
 
 			{/* Links section */}
 			<div className="flex flex-col gap-2">
@@ -259,7 +310,7 @@ const RouteDetailView = () => {
 
 			<RouteBodyChart routeId={routeId} routeType={route.route_type} />
 
-		{existingClimb ? (
+			{existingClimb ? (
 				<Button
 					type="button"
 					variant="primary"

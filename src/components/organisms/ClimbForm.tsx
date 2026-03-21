@@ -26,13 +26,13 @@ import { ConfirmDialog } from "@/components/molecules/ConfirmDialog";
 import { ImportBetaSheet } from "@/components/molecules/ImportBetaSheet";
 import { useUpdateClimbMoves } from "@/features/climbs/climbs.queries";
 import {
-	ClimbFormSchema,
 	type Beta,
+	ClimbFormSchema,
 	type ClimbFormValues,
 	type MoveItem,
+	parseBetas,
 	type RouteType,
 	type SentStatus,
-	parseBetas,
 } from "@/features/climbs/climbs.schema";
 import { useGrades } from "@/features/grades/grades.queries";
 import type { Route } from "@/features/routes/routes.schema";
@@ -195,7 +195,9 @@ export const ClimbForm = ({
 	const setActiveMoves = (updater: (moves: MoveItem[]) => MoveItem[]) => {
 		const currentId = activeBeta?.id ?? activeBetaId;
 		setBetas((prev) =>
-			prev.map((b) => (b.id === currentId ? { ...b, moves: updater(b.moves) } : b)),
+			prev.map((b) =>
+				b.id === currentId ? { ...b, moves: updater(b.moves) } : b,
+			),
 		);
 	};
 
@@ -599,6 +601,7 @@ export const ClimbForm = ({
 					/* Gallery mode: horizontal snap-scroll cards */
 					<div className="flex gap-3 overflow-x-auto snap-x snap-mandatory -mx-2 px-2 pb-1">
 						{betas.map((beta) => (
+							// biome-ignore lint/a11y/useSemanticElements: contains nested button so cannot use <button>
 							<div
 								key={beta.id}
 								role="button"

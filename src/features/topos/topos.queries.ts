@@ -24,7 +24,7 @@ const ROUTE_TOPO_KEY = "route-topo";
 export function useWallTopo(wallId: string | null) {
 	return useQuery({
 		queryKey: [WALL_TOPO_KEY, wallId],
-		queryFn: () => fetchWallTopo(wallId!),
+		queryFn: () => fetchWallTopo(wallId as string),
 		enabled: !!wallId,
 	});
 }
@@ -32,7 +32,7 @@ export function useWallTopo(wallId: string | null) {
 export function useWallTopoLines(topoId: string | null) {
 	return useQuery({
 		queryKey: [WALL_TOPO_LINES_KEY, topoId],
-		queryFn: () => fetchWallTopoLines(topoId!),
+		queryFn: () => fetchWallTopoLines(topoId as string),
 		enabled: !!topoId,
 	});
 }
@@ -92,7 +92,18 @@ export function useUpsertWallTopoLine(wallId: string) {
 			color: string;
 			sortOrder: number;
 		}) => upsertWallTopoLine(topoId, routeId, points, color, sortOrder),
-		onSuccess: (_data, { topoId }: { topoId: string; routeId: string; points: Point[]; color: string; sortOrder: number }) => {
+		onSuccess: (
+			_data,
+			{
+				topoId,
+			}: {
+				topoId: string;
+				routeId: string;
+				points: Point[];
+				color: string;
+				sortOrder: number;
+			},
+		) => {
 			queryClient.invalidateQueries({
 				queryKey: [WALL_TOPO_LINES_KEY, topoId],
 			});
@@ -120,7 +131,7 @@ export function useDeleteWallTopoLine(topoId: string) {
 export function useRouteTopo(routeId: string | null) {
 	return useQuery({
 		queryKey: [ROUTE_TOPO_KEY, routeId],
-		queryFn: () => fetchRouteTopo(routeId!),
+		queryFn: () => fetchRouteTopo(routeId as string),
 		enabled: !!routeId,
 	});
 }

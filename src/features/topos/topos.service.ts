@@ -1,12 +1,14 @@
 import { getDb } from "@/lib/db";
-import { supabase } from "@/lib/supabase";
+import { supabase as _supabase } from "@/lib/supabase";
 import type { Point, RouteTopo, WallTopo, WallTopoLine } from "./topos.schema";
+
+// Topo tables are not yet in the generated Supabase types — cast to bypass until types are regenerated
+// biome-ignore lint/suspicious/noExplicitAny: topo tables not in generated types
+const supabase = _supabase as any;
 
 // ── Wall topos ────────────────────────────────────────────────────────────────
 
-export async function fetchWallTopo(
-	wallId: string,
-): Promise<WallTopo | null> {
+export async function fetchWallTopo(wallId: string): Promise<WallTopo | null> {
 	const db = await getDb();
 	const rows = await db.select<WallTopo[]>(
 		"SELECT * FROM wall_topos_cache WHERE wall_id = ? LIMIT 1",
@@ -30,10 +32,10 @@ export async function upsertWallTopo(
 			.from("wall_topos")
 			.update({ image_url: imageUrl })
 			.eq("id", existing.id);
-		await db.execute(
-			"UPDATE wall_topos_cache SET image_url = ? WHERE id = ?",
-			[imageUrl, existing.id],
-		);
+		await db.execute("UPDATE wall_topos_cache SET image_url = ? WHERE id = ?", [
+			imageUrl,
+			existing.id,
+		]);
 		return existing.id;
 	}
 
@@ -61,9 +63,7 @@ export async function deleteWallTopo(
 	const db = await getDb();
 	// Delete all lines first
 	await supabase.from("wall_topo_lines").delete().eq("topo_id", id);
-	await db.execute("DELETE FROM wall_topo_lines_cache WHERE topo_id = ?", [
-		id,
-	]);
+	await db.execute("DELETE FROM wall_topo_lines_cache WHERE topo_id = ?", [id]);
 	await supabase.from("wall_topos").delete().eq("id", id);
 	await db.execute("DELETE FROM wall_topos_cache WHERE id = ?", [id]);
 	// Remove from storage
@@ -112,16 +112,14 @@ export async function upsertWallTopoLine(
 
 	if (existing[0]) {
 		const lineId = existing[0].id;
-		await supabase
-			.from("wall_topo_lines")
-			.upsert({
-				id: lineId,
-				topo_id: topoId,
-				route_id: routeId,
-				points: pointsJson,
-				color,
-				sort_order: sortOrder,
-			});
+		await supabase.from("wall_topo_lines").upsert({
+			id: lineId,
+			topo_id: topoId,
+			route_id: routeId,
+			points: pointsJson,
+			color,
+			sort_order: sortOrder,
+		});
 		await db.execute(
 			`UPDATE wall_topo_lines_cache SET points = ?, color = ?, sort_order = ? WHERE id = ?`,
 			[pointsJson, color, sortOrder, lineId],

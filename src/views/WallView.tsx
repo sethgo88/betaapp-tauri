@@ -25,11 +25,8 @@ import {
 	useDeleteWallImage,
 	useWallImages,
 } from "@/features/route-images/route-images.queries";
-import {
-	useWallTopo,
-	useWallTopoLines,
-} from "@/features/topos/topos.queries";
 import { useRoutes } from "@/features/routes/routes.queries";
+import { useWallTopo, useWallTopoLines } from "@/features/topos/topos.queries";
 
 const ViewOnMap = ({ lat, lng }: { lat: number; lng: number }) => {
 	const navigate = useNavigate();
@@ -66,6 +63,7 @@ const WallView = () => {
 	const isAdmin = useAuthStore((s) => s.user?.role === "admin");
 	const [showCoordEditor, setShowCoordEditor] = useState(false);
 	const [showTopoModal, setShowTopoModal] = useState(false);
+	const [showTopoEdit, setShowTopoEdit] = useState(false);
 	const { data: wallTopo = null } = useWallTopo(wallId);
 	const { data: wallTopoLines = [] } = useWallTopoLines(wallTopo?.id ?? null);
 
@@ -173,11 +171,21 @@ const WallView = () => {
 			)}
 
 			{isAdmin && (
+				<button
+					type="button"
+					onClick={() => setShowTopoEdit(true)}
+					className="text-sm text-accent-primary text-left"
+				>
+					{wallTopo ? "Edit topo" : "+ Add topo"}
+				</button>
+			)}
+			{showTopoEdit && (
 				<WallTopoBuilder
 					wallId={wallId}
 					routes={routes.filter((r) => r.status === "verified")}
 					topo={wallTopo}
 					lines={wallTopoLines}
+					onClose={() => setShowTopoEdit(false)}
 				/>
 			)}
 
