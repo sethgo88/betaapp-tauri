@@ -230,15 +230,7 @@ export async function linkExistingClimbToRoute(
 		`UPDATE climbs
      SET route_id = ?, country = ?, area = ?, sub_area = ?, crag = ?, wall = ?
      WHERE id = ? AND deleted_at IS NULL`,
-		[
-			routeId,
-			loc.country,
-			loc.area,
-			loc.sub_area,
-			loc.crag,
-			loc.wall,
-			climbId,
-		],
+		[routeId, loc.country, loc.area, loc.sub_area, loc.crag, loc.wall, climbId],
 	);
 }
 

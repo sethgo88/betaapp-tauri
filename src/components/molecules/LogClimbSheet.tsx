@@ -38,10 +38,7 @@ export function LogClimbSheet({ isOpen, onClose, route }: Props) {
 	};
 
 	const handleLinkExisting = (climbId: string) => {
-		linkExisting.mutate(
-			{ climbId, routeId: route.id },
-			{ onSuccess: onClose },
-		);
+		linkExisting.mutate({ climbId, routeId: route.id }, { onSuccess: onClose });
 	};
 
 	return (

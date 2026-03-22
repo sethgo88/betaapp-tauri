@@ -185,9 +185,7 @@ const RouteDetailView = () => {
 							variant="primary"
 							size="small"
 							onClick={handleSaveMeta}
-							disabled={
-								updateRouteFields.isPending || !editName.trim()
-							}
+							disabled={updateRouteFields.isPending || !editName.trim()}
 						>
 							{updateRouteFields.isPending ? "Saving…" : "Save"}
 						</Button>

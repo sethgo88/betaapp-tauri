@@ -71,6 +71,30 @@ const currentRoute = useCurrentRoute() // e.g. "/" or "/search"
 
 ---
 
+## useTopBar
+
+**File:** `useTopBar.ts`
+**Call from:** `AppLayout` — once, unconditionally.
+
+```ts
+import { useTopBar } from '@/hooks/useTopBar'
+
+const topBar = useTopBar()
+// topBar.backLabel   — parent name for back button ("Astral Wall", "Home", etc.), null if no back button
+// topBar.goBack()    — navigate to parent
+// topBar.siblings    — sibling items at current level [{id, label, sublabel?, isCurrent}]
+// topBar.goToSibling(id) — navigate to a sibling
+```
+
+**What it does:**
+- Parses the current route to determine the back button target and sibling context
+- Hierarchy views (region, sub-region, crag, wall, route detail): back goes to parent, siblings show peers at the same level
+- Edit views: back goes to the detail view being edited
+- Most other views: back goes to Home
+- HomeView and ResetPasswordView: no back button (backLabel is null)
+
+---
+
 ## Planned hooks
 
 | Hook | Purpose |
