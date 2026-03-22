@@ -172,6 +172,9 @@ export const ClimbForm = ({
 	const [importOpen, setImportOpen] = useState(false);
 	const [isDirty, setIsDirty] = useState(false);
 	const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+	const [pendingDeleteBetaId, setPendingDeleteBetaId] = useState<
+		string | null
+	>(null);
 
 	const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const savedStatusRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -673,7 +676,7 @@ export const ClimbForm = ({
 											className="text-text-muted shrink-0"
 											onClick={(e) => {
 												e.stopPropagation();
-												deleteBeta(beta.id);
+												setPendingDeleteBetaId(beta.id);
 											}}
 										>
 											<Trash2 size={12} />
@@ -728,6 +731,17 @@ export const ClimbForm = ({
 				)}
 			</div>
 
+			<ConfirmDialog
+				isOpen={pendingDeleteBetaId !== null}
+				title="Delete beta"
+				message={`Are you sure you want to delete ${betas.find((b) => b.id === pendingDeleteBetaId)?.title ?? ""} beta?`}
+				confirmLabel="Delete"
+				onConfirm={() => {
+					if (pendingDeleteBetaId) deleteBeta(pendingDeleteBetaId);
+					setPendingDeleteBetaId(null);
+				}}
+				onCancel={() => setPendingDeleteBetaId(null)}
+			/>
 			<ConfirmDialog
 				isOpen={blocker.status === "blocked"}
 				title="Unsaved changes"
