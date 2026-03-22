@@ -93,20 +93,42 @@ const DrawingCanvas = ({
 	const dragRef = useRef<{ type: "point" | "mid"; index: number } | null>(null);
 	const dragStartedRef = useRef(false); // whether onDragStart has fired for this drag
 
-	// Pinch-zoom state
+	// Pinch-zoom and pan state (zoom always scales from image center)
 	const [zoom, setZoom] = useState(1);
 	const [pan, setPan] = useState({ x: 0, y: 0 });
 	const pinchRef = useRef<{
 		dist: number;
-		midX: number;
-		midY: number;
 		startZoom: number;
-		startPanX: number;
-		startPanY: number;
+	} | null>(null);
+	// Tracks the anchor point when a single-finger pan gesture starts
+	const panAnchorRef = useRef<{
+		touchX: number;
+		touchY: number;
+		panX: number;
+		panY: number;
 	} | null>(null);
 
 	// Double-tap detection for zoom reset
 	const lastTapRef = useRef(0);
+
+	// Longpress detection for waypoint addition
+	const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const touchStartPosRef = useRef<{ x: number; y: number } | null>(null);
+	const LONG_PRESS_MS = 500;
+	const PAN_THRESHOLD = 8; // px — movement beyond this cancels longpress
+	// Blocks synthetic mouse events that Android WebView fires after touch events
+	const lastTouchEndRef = useRef(0);
+
+	const clampPan = (px: number, py: number, z: number) => {
+		const el = containerRef.current;
+		if (!el) return { x: px, y: py };
+		const maxX = (el.offsetWidth / 2) * (z - 1);
+		const maxY = (el.offsetHeight / 2) * (z - 1);
+		return {
+			x: Math.max(-maxX, Math.min(maxX, px)),
+			y: Math.max(-maxY, Math.min(maxY, py)),
+		};
+	};
 
 	const pctFromEvent = (clientX: number, clientY: number): Point | null => {
 		const el = containerRef.current;
@@ -156,21 +178,17 @@ const DrawingCanvas = ({
 		// Two-finger pinch: start tracking
 		if (e.touches.length === 2) {
 			e.preventDefault();
+			// Cancel any pending longpress when a second finger arrives
+			if (longPressTimerRef.current) {
+				clearTimeout(longPressTimerRef.current);
+				longPressTimerRef.current = null;
+				touchStartPosRef.current = null;
+			}
 			dragRef.current = null;
 			const t1 = e.touches[0];
 			const t2 = e.touches[1];
-			const dist = Math.hypot(
-				t2.clientX - t1.clientX,
-				t2.clientY - t1.clientY,
-			);
-			pinchRef.current = {
-				dist,
-				midX: (t1.clientX + t2.clientX) / 2,
-				midY: (t1.clientY + t2.clientY) / 2,
-				startZoom: zoom,
-				startPanX: pan.x,
-				startPanY: pan.y,
-			};
+			const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+			pinchRef.current = { dist, startZoom: zoom };
 			return;
 		}
 
@@ -179,6 +197,12 @@ const DrawingCanvas = ({
 		const hit = nearestHandle(touch.clientX, touch.clientY);
 		if (hit) {
 			e.preventDefault();
+			// Cancel longpress — user is dragging a handle
+			if (longPressTimerRef.current) {
+				clearTimeout(longPressTimerRef.current);
+				longPressTimerRef.current = null;
+				touchStartPosRef.current = null;
+			}
 			if (hit.type === "mid") {
 				// Insert the point immediately so dragging tracks the finger live
 				const p = pctFromEvent(touch.clientX, touch.clientY);
@@ -191,31 +215,87 @@ const DrawingCanvas = ({
 				dragRef.current = hit;
 				dragStartedRef.current = false;
 			}
+		} else {
+			// No handle hit — start longpress timer to add a new point.
+			// preventDefault suppresses synthetic mouse events on Android WebView
+			// so handleMouseUp won't fire and add a point immediately.
+			e.preventDefault();
+			if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+			touchStartPosRef.current = { x: touch.clientX, y: touch.clientY };
+			longPressTimerRef.current = setTimeout(() => {
+				if (!dragRef.current && !pinchRef.current && touchStartPosRef.current) {
+					const p = pctFromEvent(
+						touchStartPosRef.current.x,
+						touchStartPosRef.current.y,
+					);
+					if (p) onAddPoint(p);
+				}
+				longPressTimerRef.current = null;
+			}, LONG_PRESS_MS);
 		}
 	};
 
 	const handleTouchMove = (e: React.TouchEvent) => {
-		// Two-finger pinch: update zoom and pan
+		// Two-finger pinch: update zoom (always centered on image center)
+		// Note: no e.preventDefault() here — React attaches touch listeners as passive,
+		// so preventDefault() would throw. touchAction:"none" on the outer wrapper
+		// already prevents the browser's default scroll/zoom behavior.
 		if (e.touches.length === 2 && pinchRef.current) {
-			e.preventDefault();
 			const t1 = e.touches[0];
 			const t2 = e.touches[1];
 			const newDist = Math.hypot(
 				t2.clientX - t1.clientX,
 				t2.clientY - t1.clientY,
 			);
-			const newMidX = (t1.clientX + t2.clientX) / 2;
-			const newMidY = (t1.clientY + t2.clientY) / 2;
 			const scale = newDist / pinchRef.current.dist;
 			const newZoom = Math.max(
 				1,
 				Math.min(5, pinchRef.current.startZoom * scale),
 			);
 			setZoom(newZoom);
-			setPan({
-				x: pinchRef.current.startPanX + (newMidX - pinchRef.current.midX),
-				y: pinchRef.current.startPanY + (newMidY - pinchRef.current.midY),
-			});
+			if (newZoom <= 1) {
+				setPan({ x: 0, y: 0 });
+			} else {
+				setPan((prev) => clampPan(prev.x, prev.y, newZoom));
+			}
+			return;
+		}
+
+		// Single finger moving
+		if (e.touches.length === 1 && !dragRef.current) {
+			const t = e.touches[0];
+			// If longpress is pending and finger moved beyond threshold, cancel it
+			// and start a pan gesture anchored at the current position
+			if (longPressTimerRef.current && touchStartPosRef.current) {
+				const dx = Math.abs(t.clientX - touchStartPosRef.current.x);
+				const dy = Math.abs(t.clientY - touchStartPosRef.current.y);
+				if (dx > PAN_THRESHOLD || dy > PAN_THRESHOLD) {
+					clearTimeout(longPressTimerRef.current);
+					longPressTimerRef.current = null;
+					touchStartPosRef.current = null;
+					// Only start panning when zoomed in; at zoom=1 there's nothing to pan
+					if (zoom > 1) {
+						panAnchorRef.current = {
+							touchX: t.clientX,
+							touchY: t.clientY,
+							panX: pan.x,
+							panY: pan.y,
+						};
+					}
+				}
+			}
+			// Continue panning if anchor is set
+			if (panAnchorRef.current) {
+				setPan(
+					clampPan(
+						panAnchorRef.current.panX +
+							(t.clientX - panAnchorRef.current.touchX),
+						panAnchorRef.current.panY +
+							(t.clientY - panAnchorRef.current.touchY),
+						zoom,
+					),
+				);
+			}
 			return;
 		}
 
@@ -232,6 +312,15 @@ const DrawingCanvas = ({
 	};
 
 	const handleTouchEnd = (e: React.TouchEvent) => {
+		// Always cancel any pending longpress on finger lift
+		if (longPressTimerRef.current) {
+			clearTimeout(longPressTimerRef.current);
+			longPressTimerRef.current = null;
+		}
+		touchStartPosRef.current = null;
+		panAnchorRef.current = null;
+		lastTouchEndRef.current = Date.now();
+
 		if (pinchRef.current && e.touches.length < 2) {
 			pinchRef.current = null;
 			return;
@@ -244,10 +333,9 @@ const DrawingCanvas = ({
 		}
 
 		if (e.changedTouches.length !== 1) return;
-		const touch = e.changedTouches[0];
 		const now = Date.now();
 
-		// Double-tap to reset zoom/pan
+		// Double-tap to reset zoom and pan
 		if (now - lastTapRef.current < 300) {
 			setZoom(1);
 			setPan({ x: 0, y: 0 });
@@ -255,13 +343,12 @@ const DrawingCanvas = ({
 			return;
 		}
 		lastTapRef.current = now;
-
-		// Single tap → add point
-		const p = pctFromEvent(touch.clientX, touch.clientY);
-		if (p) onAddPoint(p);
+		// Points are added via longpress timer — nothing else to do on tap end
 	};
 
 	const handleMouseDown = (e: React.MouseEvent) => {
+		// Ignore synthetic mouse events fired by Android WebView after touch
+		if (Date.now() - lastTouchEndRef.current < 500) return;
 		const hit = nearestHandle(e.clientX, e.clientY);
 		if (hit) {
 			if (hit.type === "mid") {
@@ -291,8 +378,10 @@ const DrawingCanvas = ({
 	};
 
 	const handleMouseUp = (e: React.MouseEvent) => {
+		// Ignore synthetic mouse events fired by Android WebView after touch
+		if (Date.now() - lastTouchEndRef.current < 500) return;
 		if (!dragRef.current) {
-			// Tap → add point
+			// Mouse click → add point immediately (desktop only; touch uses longpress)
 			const p = pctFromEvent(e.clientX, e.clientY);
 			if (p) onAddPoint(p);
 			return;
@@ -317,7 +406,7 @@ const DrawingCanvas = ({
 				className="relative w-full"
 				style={{
 					transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-					transformOrigin: "0 0",
+					transformOrigin: "center",
 				}}
 				onTouchStart={handleTouchStart}
 				onTouchMove={handleTouchMove}
@@ -459,16 +548,14 @@ export const WallTopoBuilder = ({
 	});
 
 	// Per-route colors: seed from existing lines, fall back to topoColor palette
-	const [routeColors, setRouteColors] = useState<Record<string, string>>(
-		() => {
-			const map: Record<string, string> = {};
-			routes.forEach((r, i) => {
-				const existingLine = lines.find((l) => l.route_id === r.id);
-				map[r.id] = existingLine?.color ?? topoColor(i);
-			});
-			return map;
-		},
-	);
+	const [routeColors, setRouteColors] = useState<Record<string, string>>(() => {
+		const map: Record<string, string> = {};
+		routes.forEach((r, i) => {
+			const existingLine = lines.find((l) => l.route_id === r.id);
+			map[r.id] = existingLine?.color ?? topoColor(i);
+		});
+		return map;
+	});
 
 	// Undo history — ref so it doesn't trigger re-renders on drag frames
 	const historyRef = useRef<Point[][]>([]);
@@ -506,16 +593,13 @@ export const WallTopoBuilder = ({
 
 	const handleSaveLine = () => {
 		if (!topo || draftPoints.length < 2) return;
-		upsertLine.mutate(
-			{
-				topoId: topo.id,
-				routeId: selectedRouteId,
-				points: draftPoints,
-				color: activeColor,
-				sortOrder: selectedRouteIndex,
-			},
-			{ onSuccess: () => setDraftPoints([]) },
-		);
+		upsertLine.mutate({
+			topoId: topo.id,
+			routeId: selectedRouteId,
+			points: draftPoints,
+			color: activeColor,
+			sortOrder: selectedRouteIndex,
+		});
 	};
 
 	const handleUndo = () => {
@@ -661,7 +745,13 @@ export const WallTopoBuilder = ({
 				>
 					{routes.map((r) => (
 						<option key={r.id} value={r.id}>
-							{r.name} ({r.route_type === "sport" ? "S" : r.route_type === "boulder" ? "B" : "T"} · {r.grade})
+							{r.name} (
+							{r.route_type === "sport"
+								? "S"
+								: r.route_type === "boulder"
+									? "B"
+									: "T"}{" "}
+							· {r.grade})
 						</option>
 					))}
 				</select>
@@ -1207,9 +1297,7 @@ export const RouteTopoBuilder = ({
 				/>
 
 				{/* Body */}
-				<div className="flex-1 overflow-y-auto">
-					{drawingCanvas}
-				</div>
+				<div className="flex-1 overflow-y-auto">{drawingCanvas}</div>
 
 				{/* Color picker */}
 				<div className="shrink-0 flex items-center gap-3 px-4 py-3 border-t border-border-subtle bg-surface-raised">

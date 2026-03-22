@@ -196,6 +196,13 @@ const ZoomTracker = ({ onZoom }: { onZoom: (zoom: number) => void }) => {
 	return null;
 };
 
+// ── Map click handler (closes sheet when tapping empty map) ─────────────────
+
+const MapClickHandler = ({ onMapClick }: { onMapClick: () => void }) => {
+	useMapEvents({ click: () => onMapClick() });
+	return null;
+};
+
 // ── Zoom-to button (rendered inside a Popup) ────────────────────────────────
 
 const ZoomToButton = ({ lat, lng }: { lat: number; lng: number }) => {
@@ -285,14 +292,8 @@ const PersonalPinModal = ({
 	});
 
 	return (
-		<div
-			className="fixed inset-0 z-[2000] flex flex-col justify-end"
-			onClick={onClose}
-		>
-			<div
-				className="bg-surface-card rounded-t-[var(--radius-lg)] max-h-[60dvh] flex flex-col shadow-xl"
-				onClick={(e) => e.stopPropagation()}
-			>
+		<div className="fixed inset-0 z-[2000] flex flex-col justify-end pointer-events-none">
+			<div className="bg-surface-card rounded-t-[var(--radius-lg)] max-h-[60dvh] flex flex-col shadow-xl pointer-events-auto">
 				{/* Header */}
 				<div className="flex items-center justify-between px-4 py-3 border-b border-border-default shrink-0">
 					<span className="font-semibold text-text-primary truncate">
@@ -624,6 +625,7 @@ const MapView = () => {
 					/>
 
 					<ZoomTracker onZoom={setZoom} />
+					<MapClickHandler onMapClick={() => setSelectedPin(null)} />
 					<TileErrorBanner />
 
 					{/* Crag pins (hidden for crags with wall coords at high zoom) */}
@@ -706,11 +708,11 @@ const MapView = () => {
 								icon={countIcon(personalFilteredCount(crag), "#d97706")}
 								eventHandlers={{
 									click: () =>
-										setSelectedPin({
-											type: "crag",
-											id: crag.id,
-											name: crag.name,
-										}),
+										setSelectedPin((prev) =>
+											prev?.id === crag.id && prev?.type === "crag"
+												? null
+												: { type: "crag", id: crag.id, name: crag.name },
+										),
 								}}
 							/>
 						))}
@@ -725,11 +727,11 @@ const MapView = () => {
 								icon={countIcon(personalFilteredCount(wall), "#eab308")}
 								eventHandlers={{
 									click: () =>
-										setSelectedPin({
-											type: "wall",
-											id: wall.id,
-											name: wall.name,
-										}),
+										setSelectedPin((prev) =>
+											prev?.id === wall.id && prev?.type === "wall"
+												? null
+												: { type: "wall", id: wall.id, name: wall.name },
+										),
 								}}
 							/>
 						))}
