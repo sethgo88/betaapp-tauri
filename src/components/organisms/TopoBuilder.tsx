@@ -1,10 +1,13 @@
 import { X } from "lucide-react";
 import { useRef, useState } from "react";
 import { Spinner } from "@/components/atoms/Spinner";
+import { ImagePickerGrid } from "@/components/molecules/ImagePickerGrid";
+import { Sheet } from "@/components/molecules/Sheet";
 import {
 	useDeleteRouteTopo,
 	useDeleteWallTopo,
 	useDeleteWallTopoLine,
+	useSetWallTopoFromUrl,
 	useUploadWallTopoImage,
 	useUpsertRouteTopo,
 	useUpsertWallTopoLine,
@@ -316,11 +319,17 @@ interface RouteInfo {
 	grade: string;
 }
 
+interface GalleryImage {
+	id: string;
+	image_url: string;
+}
+
 interface WallTopoBuilderProps {
 	wallId: string;
 	routes: RouteInfo[];
 	topo: WallTopo | null;
 	lines: WallTopoLine[];
+	galleryImages?: GalleryImage[];
 	onClose?: () => void;
 }
 
@@ -329,6 +338,7 @@ export const WallTopoBuilder = ({
 	routes,
 	topo,
 	lines,
+	galleryImages = [],
 	onClose,
 }: WallTopoBuilderProps) => {
 	const fileInputRef = useRef<HTMLInputElement>(null);
@@ -340,8 +350,10 @@ export const WallTopoBuilder = ({
 	const [confirmDeleteLineId, setConfirmDeleteLineId] = useState<string | null>(
 		null,
 	);
+	const [showImagePicker, setShowImagePicker] = useState(false);
 
 	const uploadImage = useUploadWallTopoImage(wallId);
+	const setTopoFromUrl = useSetWallTopoFromUrl(wallId);
 	const upsertLine = useUpsertWallTopoLine(wallId);
 	const deleteLine = useDeleteWallTopoLine(topo?.id ?? "");
 	const deleteTopo = useDeleteWallTopo(wallId);
@@ -435,14 +447,12 @@ export const WallTopoBuilder = ({
 	if (!topo) {
 		const uploadContent = (
 			<>
-				<button
-					type="button"
-					onClick={() => fileInputRef.current?.click()}
-					disabled={uploadImage.isPending}
-					className="flex items-center justify-center gap-2 rounded-[var(--radius-md)] border-2 border-dashed border-border-default p-6 text-text-tertiary disabled:opacity-50"
-				>
-					{uploadImage.isPending ? <Spinner /> : <span>+ Add topo image</span>}
-				</button>
+				<ImagePickerGrid
+					images={galleryImages}
+					onSelect={(url) => setTopoFromUrl.mutate(url)}
+					onUpload={() => fileInputRef.current?.click()}
+					isUploading={uploadImage.isPending || setTopoFromUrl.isPending}
+				/>
 				<input
 					ref={fileInputRef}
 					type="file"
@@ -511,14 +521,53 @@ export const WallTopoBuilder = ({
 					<h2 className="font-display font-semibold text-text-primary">
 						Edit Topo
 					</h2>
-					<button
-						type="button"
-						onClick={() => setConfirmDeleteTopo(true)}
-						className="text-xs text-red-400 py-1"
-					>
-						Delete
-					</button>
+					<div className="flex gap-3 items-center">
+						<button
+							type="button"
+							onClick={() => setShowImagePicker(true)}
+							className="text-xs text-accent-primary py-1"
+						>
+							Change
+						</button>
+						<button
+							type="button"
+							onClick={() => setConfirmDeleteTopo(true)}
+							className="text-xs text-red-400 py-1"
+						>
+							Delete
+						</button>
+					</div>
 				</div>
+
+				<Sheet
+					isOpen={showImagePicker}
+					onClose={() => setShowImagePicker(false)}
+					title="Choose Image"
+				>
+					<ImagePickerGrid
+						images={galleryImages}
+						onSelect={(url) => {
+							setTopoFromUrl.mutate(url);
+							setShowImagePicker(false);
+						}}
+						onUpload={() => {
+							setShowImagePicker(false);
+							fileInputRef.current?.click();
+						}}
+						isUploading={uploadImage.isPending || setTopoFromUrl.isPending}
+					/>
+				</Sheet>
+				<input
+					ref={fileInputRef}
+					type="file"
+					accept="image/*"
+					className="hidden"
+					onChange={(e) => {
+						const file = e.target.files?.[0];
+						if (file) uploadImage.mutate(file);
+						e.target.value = "";
+					}}
+				/>
 
 				{/* Body */}
 				<div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-3">
@@ -648,14 +697,53 @@ export const WallTopoBuilder = ({
 		<div className="flex flex-col gap-3">
 			<div className="flex items-center justify-between">
 				<p className="text-sm font-medium text-text-secondary">Topo</p>
-				<button
-					type="button"
-					onClick={() => setConfirmDeleteTopo(true)}
-					className="text-xs text-red-400"
-				>
-					Delete topo
-				</button>
+				<div className="flex gap-3">
+					<button
+						type="button"
+						onClick={() => setShowImagePicker(true)}
+						className="text-xs text-accent-primary"
+					>
+						Change image
+					</button>
+					<button
+						type="button"
+						onClick={() => setConfirmDeleteTopo(true)}
+						className="text-xs text-red-400"
+					>
+						Delete topo
+					</button>
+				</div>
 			</div>
+
+			<Sheet
+				isOpen={showImagePicker}
+				onClose={() => setShowImagePicker(false)}
+				title="Choose Image"
+			>
+				<ImagePickerGrid
+					images={galleryImages}
+					onSelect={(url) => {
+						setTopoFromUrl.mutate(url);
+						setShowImagePicker(false);
+					}}
+					onUpload={() => {
+						setShowImagePicker(false);
+						fileInputRef.current?.click();
+					}}
+					isUploading={uploadImage.isPending || setTopoFromUrl.isPending}
+				/>
+			</Sheet>
+			<input
+				ref={fileInputRef}
+				type="file"
+				accept="image/*"
+				className="hidden"
+				onChange={(e) => {
+					const file = e.target.files?.[0];
+					if (file) uploadImage.mutate(file);
+					e.target.value = "";
+				}}
+			/>
 
 			{routes.length > 0 && (
 				<div className="flex flex-col gap-1">
@@ -771,12 +859,14 @@ export const WallTopoBuilder = ({
 interface RouteTopoBuilderProps {
 	routeId: string;
 	topo: RouteTopo | null;
+	galleryImages?: GalleryImage[];
 	onClose?: () => void;
 }
 
 export const RouteTopoBuilder = ({
 	routeId,
 	topo,
+	galleryImages = [],
 	onClose,
 }: RouteTopoBuilderProps) => {
 	const fileInputRef = useRef<HTMLInputElement>(null);
@@ -787,6 +877,8 @@ export const RouteTopoBuilder = ({
 	const [selectedColor, setSelectedColor] = useState<string>(
 		topo?.color ?? LINE_COLORS[0],
 	);
+	const [galleryImageUrl, setGalleryImageUrl] = useState<string | null>(null);
+	const [showImagePicker, setShowImagePicker] = useState(false);
 
 	const upsertTopo = useUpsertRouteTopo(routeId);
 	const deleteTopo = useDeleteRouteTopo(routeId);
@@ -794,10 +886,18 @@ export const RouteTopoBuilder = ({
 	const imageUrl = previewUrl ?? topo?.image_url ?? null;
 	const color = selectedColor;
 
+	const handleSelectGalleryImage = (url: string) => {
+		setGalleryImageUrl(url);
+		setPendingFile(null);
+		setPreviewUrl(url);
+		setDraftPoints([]);
+	};
+
 	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0];
 		if (!file) return;
 		setPendingFile(file);
+		setGalleryImageUrl(null);
 		setPreviewUrl(URL.createObjectURL(file));
 		setDraftPoints([]);
 		e.target.value = "";
@@ -805,7 +905,12 @@ export const RouteTopoBuilder = ({
 
 	const handleSave = () => {
 		upsertTopo.mutate(
-			{ file: pendingFile, points: draftPoints, color },
+			{
+				file: pendingFile,
+				imageUrl: galleryImageUrl ?? undefined,
+				points: draftPoints,
+				color,
+			},
 			{
 				onSuccess: () => {
 					setPendingFile(null);
@@ -818,6 +923,7 @@ export const RouteTopoBuilder = ({
 
 	const isDirty =
 		pendingFile !== null ||
+		galleryImageUrl !== null ||
 		JSON.stringify(draftPoints) !== JSON.stringify(topo?.points ?? []) ||
 		selectedColor !== (topo?.color ?? LINE_COLORS[0]);
 
@@ -855,13 +961,11 @@ export const RouteTopoBuilder = ({
 	if (!imageUrl) {
 		const uploadContent = (
 			<>
-				<button
-					type="button"
-					onClick={() => fileInputRef.current?.click()}
-					className="flex items-center justify-center gap-2 rounded-[var(--radius-md)] border-2 border-dashed border-border-default p-6 text-text-tertiary"
-				>
-					+ Add topo image
-				</button>
+				<ImagePickerGrid
+					images={galleryImages}
+					onSelect={(url) => handleSelectGalleryImage(url)}
+					onUpload={() => fileInputRef.current?.click()}
+				/>
 				<input
 					ref={fileInputRef}
 					type="file"
@@ -929,7 +1033,7 @@ export const RouteTopoBuilder = ({
 					<div className="flex gap-3 items-center">
 						<button
 							type="button"
-							onClick={() => fileInputRef.current?.click()}
+							onClick={() => setShowImagePicker(true)}
 							className="text-xs text-accent-primary py-1"
 						>
 							Change
@@ -946,6 +1050,23 @@ export const RouteTopoBuilder = ({
 					</div>
 				</div>
 
+				<Sheet
+					isOpen={showImagePicker}
+					onClose={() => setShowImagePicker(false)}
+					title="Choose Image"
+				>
+					<ImagePickerGrid
+						images={galleryImages}
+						onSelect={(url) => {
+							handleSelectGalleryImage(url);
+							setShowImagePicker(false);
+						}}
+						onUpload={() => {
+							setShowImagePicker(false);
+							fileInputRef.current?.click();
+						}}
+					/>
+				</Sheet>
 				<input
 					ref={fileInputRef}
 					type="file"
@@ -1032,7 +1153,7 @@ export const RouteTopoBuilder = ({
 				<div className="flex gap-3">
 					<button
 						type="button"
-						onClick={() => fileInputRef.current?.click()}
+						onClick={() => setShowImagePicker(true)}
 						className="text-xs text-accent-primary"
 					>
 						Change image
@@ -1049,6 +1170,23 @@ export const RouteTopoBuilder = ({
 				</div>
 			</div>
 
+			<Sheet
+				isOpen={showImagePicker}
+				onClose={() => setShowImagePicker(false)}
+				title="Choose Image"
+			>
+				<ImagePickerGrid
+					images={galleryImages}
+					onSelect={(url) => {
+						handleSelectGalleryImage(url);
+						setShowImagePicker(false);
+					}}
+					onUpload={() => {
+						setShowImagePicker(false);
+						fileInputRef.current?.click();
+					}}
+				/>
+			</Sheet>
 			<input
 				ref={fileInputRef}
 				type="file"

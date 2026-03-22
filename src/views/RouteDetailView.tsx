@@ -20,6 +20,7 @@ import {
 	useAddRouteImage,
 	useDeleteRouteImage,
 	useRouteImages,
+	useWallImages,
 } from "@/features/route-images/route-images.queries";
 import {
 	useAddRouteLink,
@@ -53,6 +54,7 @@ const RouteDetailView = () => {
 	const existingClimb = climbs.find((c) => c.route_id === routeId);
 
 	// Topo data
+	const { data: wallImages = [] } = useWallImages(route?.wall_id ?? "");
 	const { data: routeTopo = null } = useRouteTopo(routeId);
 	const { data: wallTopo = null } = useWallTopo(route?.wall_id ?? null);
 	const { data: wallTopoLines = [] } = useWallTopoLines(wallTopo?.id ?? null);
@@ -302,6 +304,7 @@ const RouteDetailView = () => {
 				<RouteTopoBuilder
 					routeId={routeId}
 					topo={routeTopo}
+					galleryImages={wallImages}
 					onClose={() => setShowTopoEdit(false)}
 				/>
 			)}
