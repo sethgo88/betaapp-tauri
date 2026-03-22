@@ -8,7 +8,7 @@ export const RouteSchema = z.object({
 	wall_id: z.string(),
 	name: z.string(),
 	grade: z.string(),
-	route_type: z.enum(["sport", "boulder"]),
+	route_type: z.enum(["sport", "boulder", "trad"]),
 	description: z.string().nullable(),
 	status: SubmissionStatus,
 	created_by: z.string(),
@@ -19,7 +19,7 @@ export const RouteSubmitSchema = z.object({
 	wall_id: z.string().min(1, "Wall is required"),
 	name: z.string().min(1, "Name is required"),
 	grade: z.string().min(1, "Grade is required"),
-	route_type: z.enum(["sport", "boulder"]),
+	route_type: z.enum(["sport", "boulder", "trad"]),
 	description: z.string().optional(),
 });
 

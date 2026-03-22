@@ -5,10 +5,19 @@ import type {
 	WallTopoLine,
 } from "@/features/topos/topos.schema";
 
+type RouteType = "sport" | "boulder" | "trad";
+
 interface RouteInfo {
 	id: string;
 	name: string;
 	grade: string;
+	route_type: RouteType;
+}
+
+function routeTypeInitial(type: RouteType): string {
+	if (type === "sport") return "S";
+	if (type === "boulder") return "B";
+	return "T";
 }
 
 // ── Wall topo viewer (multiple lines, selectable) ─────────────────────────────
@@ -64,10 +73,11 @@ export const WallTopoViewer = ({
 					className="w-full h-full object-contain"
 					draggable={false}
 				/>
+				{/* preserveAspectRatio="xMidYMid meet" matches object-contain so lines align with image */}
 				<svg
 					className="absolute inset-0 w-full h-full"
 					viewBox="0 0 100 100"
-					preserveAspectRatio="none"
+					preserveAspectRatio="xMidYMid meet"
 					aria-hidden="true"
 				>
 					{visibleLines.map((line) => {
@@ -97,7 +107,7 @@ export const WallTopoViewer = ({
 								<polyline
 									points={pointsStr(line)}
 									stroke={line.color}
-									strokeWidth="2"
+									strokeWidth="4"
 									fill="none"
 									opacity={opacity}
 									strokeLinecap="round"
@@ -139,19 +149,8 @@ export const WallTopoPanel = ({
 	selectedRouteId,
 	onSelectRoute,
 }: WallTopoPanelProps) => {
-	const selectedRoute = routes.find((r) => r.id === selectedRouteId);
 	return (
 		<div className="shrink-0 bg-surface-card rounded-b-lg overflow-hidden">
-			{selectedRoute && (
-				<div className="flex items-center justify-between px-4 py-2 border-b border-border-default">
-					<span className="font-medium text-sm text-text-primary">
-						{selectedRoute.name}
-					</span>
-					<span className="text-xs text-text-secondary">
-						{selectedRoute.grade}
-					</span>
-				</div>
-			)}
 			<div
 				className="overflow-y-auto"
 				style={{ maxHeight: "40vh", scrollbarWidth: "none" }}
@@ -178,6 +177,9 @@ export const WallTopoPanel = ({
 								className={`flex-1 text-sm ${isActive ? "font-semibold text-text-primary" : "text-text-secondary"}`}
 							>
 								{route.name}
+							</span>
+							<span className="text-xs text-text-tertiary font-medium uppercase">
+								{routeTypeInitial(route.route_type)}
 							</span>
 							<span className="text-xs text-text-tertiary">{route.grade}</span>
 						</button>
@@ -217,7 +219,7 @@ export const RouteTopoViewer = ({ topo }: RouteTopoViewerProps) => {
 					<polyline
 						points={pointsStr}
 						stroke={topo.color}
-						strokeWidth="2"
+						strokeWidth="4"
 						fill="none"
 						strokeLinecap="round"
 						strokeLinejoin="round"

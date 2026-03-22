@@ -74,6 +74,8 @@ interface DrawingCanvasProps {
 	onAddPoint: (p: Point) => void;
 	onMovePoint: (index: number, p: Point) => void;
 	onInsertMidpoint: (afterIndex: number, p: Point) => void;
+	/** Called once when a handle drag begins — use to snapshot history */
+	onDragStart?: () => void;
 }
 
 const DrawingCanvas = ({
@@ -84,14 +86,32 @@ const DrawingCanvas = ({
 	onAddPoint,
 	onMovePoint,
 	onInsertMidpoint,
+	onDragStart,
 }: DrawingCanvasProps) => {
 	const containerRef = useRef<HTMLDivElement>(null);
 	// Track which handle is being dragged: { type: 'point' | 'mid', index }
 	const dragRef = useRef<{ type: "point" | "mid"; index: number } | null>(null);
+	const dragStartedRef = useRef(false); // whether onDragStart has fired for this drag
+
+	// Pinch-zoom state
+	const [zoom, setZoom] = useState(1);
+	const [pan, setPan] = useState({ x: 0, y: 0 });
+	const pinchRef = useRef<{
+		dist: number;
+		midX: number;
+		midY: number;
+		startZoom: number;
+		startPanX: number;
+		startPanY: number;
+	} | null>(null);
+
+	// Double-tap detection for zoom reset
+	const lastTapRef = useRef(0);
 
 	const pctFromEvent = (clientX: number, clientY: number): Point | null => {
 		const el = containerRef.current;
 		if (!el) return null;
+		// getBoundingClientRect accounts for the CSS transform (zoom/pan)
 		const rect = el.getBoundingClientRect();
 		return {
 			x_pct: Math.max(0, Math.min(1, (clientX - rect.left) / rect.width)),
@@ -133,6 +153,27 @@ const DrawingCanvas = ({
 	};
 
 	const handleTouchStart = (e: React.TouchEvent) => {
+		// Two-finger pinch: start tracking
+		if (e.touches.length === 2) {
+			e.preventDefault();
+			dragRef.current = null;
+			const t1 = e.touches[0];
+			const t2 = e.touches[1];
+			const dist = Math.hypot(
+				t2.clientX - t1.clientX,
+				t2.clientY - t1.clientY,
+			);
+			pinchRef.current = {
+				dist,
+				midX: (t1.clientX + t2.clientX) / 2,
+				midY: (t1.clientY + t2.clientY) / 2,
+				startZoom: zoom,
+				startPanX: pan.x,
+				startPanY: pan.y,
+			};
+			return;
+		}
+
 		if (e.touches.length !== 1) return;
 		const touch = e.touches[0];
 		const hit = nearestHandle(touch.clientX, touch.clientY);
@@ -144,32 +185,78 @@ const DrawingCanvas = ({
 				if (p) {
 					onInsertMidpoint(hit.index, p);
 					dragRef.current = { type: "point", index: hit.index + 1 };
+					dragStartedRef.current = false;
 				}
 			} else {
 				dragRef.current = hit;
+				dragStartedRef.current = false;
 			}
 		}
 	};
 
 	const handleTouchMove = (e: React.TouchEvent) => {
+		// Two-finger pinch: update zoom and pan
+		if (e.touches.length === 2 && pinchRef.current) {
+			e.preventDefault();
+			const t1 = e.touches[0];
+			const t2 = e.touches[1];
+			const newDist = Math.hypot(
+				t2.clientX - t1.clientX,
+				t2.clientY - t1.clientY,
+			);
+			const newMidX = (t1.clientX + t2.clientX) / 2;
+			const newMidY = (t1.clientY + t2.clientY) / 2;
+			const scale = newDist / pinchRef.current.dist;
+			const newZoom = Math.max(
+				1,
+				Math.min(5, pinchRef.current.startZoom * scale),
+			);
+			setZoom(newZoom);
+			setPan({
+				x: pinchRef.current.startPanX + (newMidX - pinchRef.current.midX),
+				y: pinchRef.current.startPanY + (newMidY - pinchRef.current.midY),
+			});
+			return;
+		}
+
 		if (!dragRef.current || e.touches.length !== 1) return;
 		e.preventDefault();
 		const touch = e.touches[0];
 		const p = pctFromEvent(touch.clientX, touch.clientY);
 		if (!p) return;
+		if (!dragStartedRef.current) {
+			onDragStart?.();
+			dragStartedRef.current = true;
+		}
 		onMovePoint(dragRef.current.index, p);
 	};
 
 	const handleTouchEnd = (e: React.TouchEvent) => {
-		if (e.changedTouches.length !== 1) return;
-
-		if (dragRef.current) {
-			dragRef.current = null;
+		if (pinchRef.current && e.touches.length < 2) {
+			pinchRef.current = null;
 			return;
 		}
 
-		// No drag — it was a tap → add point
+		if (dragRef.current) {
+			dragRef.current = null;
+			dragStartedRef.current = false;
+			return;
+		}
+
+		if (e.changedTouches.length !== 1) return;
 		const touch = e.changedTouches[0];
+		const now = Date.now();
+
+		// Double-tap to reset zoom/pan
+		if (now - lastTapRef.current < 300) {
+			setZoom(1);
+			setPan({ x: 0, y: 0 });
+			lastTapRef.current = 0;
+			return;
+		}
+		lastTapRef.current = now;
+
+		// Single tap → add point
 		const p = pctFromEvent(touch.clientX, touch.clientY);
 		if (p) onAddPoint(p);
 	};
@@ -183,9 +270,11 @@ const DrawingCanvas = ({
 				if (p) {
 					onInsertMidpoint(hit.index, p);
 					dragRef.current = { type: "point", index: hit.index + 1 };
+					dragStartedRef.current = false;
 				}
 			} else {
 				dragRef.current = hit;
+				dragStartedRef.current = false;
 			}
 		}
 	};
@@ -194,6 +283,10 @@ const DrawingCanvas = ({
 		if (!dragRef.current) return;
 		const p = pctFromEvent(e.clientX, e.clientY);
 		if (!p) return;
+		if (!dragStartedRef.current) {
+			onDragStart?.();
+			dragStartedRef.current = true;
+		}
 		onMovePoint(dragRef.current.index, p);
 	};
 
@@ -205,6 +298,7 @@ const DrawingCanvas = ({
 			return;
 		}
 		dragRef.current = null;
+		dragStartedRef.current = false;
 	};
 
 	const draftPointsStr = draftPoints
@@ -212,111 +306,123 @@ const DrawingCanvas = ({
 		.join(" ");
 
 	return (
-		// biome-ignore lint/a11y/noStaticElementInteractions: custom drawing canvas
+		// Outer wrapper clips overflow when zoomed
 		<div
-			ref={containerRef}
-			className="relative w-full select-none"
+			className="relative w-full overflow-hidden select-none"
 			style={{ touchAction: "none", userSelect: "none" }}
-			onTouchStart={handleTouchStart}
-			onTouchMove={handleTouchMove}
-			onTouchEnd={handleTouchEnd}
-			onMouseDown={handleMouseDown}
-			onMouseMove={handleMouseMove}
-			onMouseUp={handleMouseUp}
 		>
-			<img
-				src={imageUrl}
-				alt="Topo background"
-				className="w-full pointer-events-none"
-				draggable={false}
-			/>
-
-			{/* SVG renders lines only — no circles, so viewBox scaling doesn't affect dot size */}
-			<svg
-				className="absolute inset-0 w-full h-full"
-				viewBox="0 0 100 100"
-				preserveAspectRatio="none"
-				aria-hidden="true"
-				style={{ pointerEvents: "none" }}
+			{/* biome-ignore lint/a11y/noStaticElementInteractions: custom drawing canvas */}
+			<div
+				ref={containerRef}
+				className="relative w-full"
+				style={{
+					transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+					transformOrigin: "0 0",
+				}}
+				onTouchStart={handleTouchStart}
+				onTouchMove={handleTouchMove}
+				onTouchEnd={handleTouchEnd}
+				onMouseDown={handleMouseDown}
+				onMouseMove={handleMouseMove}
+				onMouseUp={handleMouseUp}
 			>
-				{/* Saved lines (background, dimmed) */}
-				{savedLines.map((line) => (
-					<polyline
-						key={line.routeId}
-						points={line.points
-							.map((p) => `${p.x_pct * 100},${p.y_pct * 100}`)
-							.join(" ")}
-						stroke={line.color}
-						strokeWidth="1.5"
-						fill="none"
-						opacity={0.5}
-						strokeLinecap="round"
-						strokeLinejoin="round"
-						vectorEffect="non-scaling-stroke"
-					/>
-				))}
+				<img
+					src={imageUrl}
+					alt="Topo background"
+					className="w-full pointer-events-none"
+					draggable={false}
+				/>
 
-				{/* Draft line */}
-				{draftPoints.length >= 2 && (
-					<polyline
-						points={draftPointsStr}
-						stroke={activeColor}
-						strokeWidth="2"
-						fill="none"
-						strokeLinecap="round"
-						strokeLinejoin="round"
-						vectorEffect="non-scaling-stroke"
-					/>
-				)}
-			</svg>
+				{/* SVG renders lines only — no circles, so viewBox scaling doesn't affect dot size */}
+				<svg
+					className="absolute inset-0 w-full h-full"
+					viewBox="0 0 100 100"
+					preserveAspectRatio="none"
+					aria-hidden="true"
+					style={{ pointerEvents: "none" }}
+				>
+					{/* Saved lines (background, dimmed) */}
+					{savedLines.map((line) => (
+						<polyline
+							key={line.routeId}
+							points={line.points
+								.map((p) => `${p.x_pct * 100},${p.y_pct * 100}`)
+								.join(" ")}
+							stroke={line.color}
+							strokeWidth="1.5"
+							fill="none"
+							opacity={0.5}
+							strokeLinecap="round"
+							strokeLinejoin="round"
+							vectorEffect="non-scaling-stroke"
+						/>
+					))}
 
-			{/* Midpoint handles — HTML divs so size is true screen pixels */}
-			{draftPoints.slice(0, -1).map((pt, i) => {
-				const next = draftPoints[i + 1];
-				return (
+					{/* Draft line */}
+					{draftPoints.length >= 2 && (
+						<polyline
+							points={draftPointsStr}
+							stroke={activeColor}
+							strokeWidth="4"
+							fill="none"
+							strokeLinecap="round"
+							strokeLinejoin="round"
+							vectorEffect="non-scaling-stroke"
+						/>
+					)}
+				</svg>
+
+				{/* Midpoint handles — HTML divs so size is true screen pixels */}
+				{draftPoints.slice(0, -1).map((pt, i) => {
+					const next = draftPoints[i + 1];
+					return (
+						<div
+							key={`mid-${pt.x_pct}-${pt.y_pct}`}
+							className="absolute rounded-full pointer-events-none"
+							style={{
+								width: MID_HANDLE_SIZE,
+								height: MID_HANDLE_SIZE,
+								left: `${((pt.x_pct + next.x_pct) / 2) * 100}%`,
+								top: `${((pt.y_pct + next.y_pct) / 2) * 100}%`,
+								transform: "translate(-50%, -50%)",
+								backgroundColor: "white",
+								border: `1.5px solid ${activeColor}`,
+								opacity: 0.8,
+							}}
+						/>
+					);
+				})}
+
+				{/* Point handles — HTML divs so size is true screen pixels */}
+				{draftPoints.map((pt, i) => (
 					<div
-						key={`mid-${pt.x_pct}-${pt.y_pct}`}
+						key={`pt-${pt.x_pct}-${pt.y_pct}`}
 						className="absolute rounded-full pointer-events-none"
 						style={{
-							width: MID_HANDLE_SIZE,
-							height: MID_HANDLE_SIZE,
-							left: `${((pt.x_pct + next.x_pct) / 2) * 100}%`,
-							top: `${((pt.y_pct + next.y_pct) / 2) * 100}%`,
+							width: HANDLE_SIZE,
+							height: HANDLE_SIZE,
+							left: `${pt.x_pct * 100}%`,
+							top: `${pt.y_pct * 100}%`,
 							transform: "translate(-50%, -50%)",
-							backgroundColor: "white",
-							border: `1.5px solid ${activeColor}`,
-							opacity: 0.8,
+							backgroundColor: i === 0 ? activeColor : "white",
+							border: `2px solid ${activeColor}`,
 						}}
 					/>
-				);
-			})}
-
-			{/* Point handles — HTML divs so size is true screen pixels */}
-			{draftPoints.map((pt, i) => (
-				<div
-					key={`pt-${pt.x_pct}-${pt.y_pct}`}
-					className="absolute rounded-full pointer-events-none"
-					style={{
-						width: HANDLE_SIZE,
-						height: HANDLE_SIZE,
-						left: `${pt.x_pct * 100}%`,
-						top: `${pt.y_pct * 100}%`,
-						transform: "translate(-50%, -50%)",
-						backgroundColor: i === 0 ? activeColor : "white",
-						border: `2px solid ${activeColor}`,
-					}}
-				/>
-			))}
+				))}
+			</div>
 		</div>
 	);
 };
 
 // ── Wall topo builder ─────────────────────────────────────────────────────────
 
+type RouteType = "sport" | "boulder" | "trad";
+
 interface RouteInfo {
 	id: string;
 	name: string;
 	grade: string;
+	route_type: RouteType;
 }
 
 interface GalleryImage {
@@ -345,7 +451,28 @@ export const WallTopoBuilder = ({
 	const [selectedRouteId, setSelectedRouteId] = useState<string>(
 		routes[0]?.id ?? "",
 	);
-	const [draftPoints, setDraftPoints] = useState<Point[]>([]);
+
+	// Load existing points for the initially selected route
+	const [draftPoints, setDraftPoints] = useState<Point[]>(() => {
+		const existing = lines.find((l) => l.route_id === routes[0]?.id);
+		return existing?.points ?? [];
+	});
+
+	// Per-route colors: seed from existing lines, fall back to topoColor palette
+	const [routeColors, setRouteColors] = useState<Record<string, string>>(
+		() => {
+			const map: Record<string, string> = {};
+			routes.forEach((r, i) => {
+				const existingLine = lines.find((l) => l.route_id === r.id);
+				map[r.id] = existingLine?.color ?? topoColor(i);
+			});
+			return map;
+		},
+	);
+
+	// Undo history — ref so it doesn't trigger re-renders on drag frames
+	const historyRef = useRef<Point[][]>([]);
+
 	const [confirmDeleteTopo, setConfirmDeleteTopo] = useState(false);
 	const [confirmDeleteLineId, setConfirmDeleteLineId] = useState<string | null>(
 		null,
@@ -359,7 +486,8 @@ export const WallTopoBuilder = ({
 	const deleteTopo = useDeleteWallTopo(wallId);
 
 	const selectedRouteIndex = routes.findIndex((r) => r.id === selectedRouteId);
-	const activeColor = topoColor(selectedRouteIndex);
+	const activeColor =
+		routeColors[selectedRouteId] ?? topoColor(selectedRouteIndex);
 
 	const savedLines = lines
 		.filter((l) => l.route_id !== selectedRouteId)
@@ -368,6 +496,13 @@ export const WallTopoBuilder = ({
 	const existingLineForRoute = lines.find(
 		(l) => l.route_id === selectedRouteId,
 	);
+
+	const handleRouteSwitch = (newId: string) => {
+		setSelectedRouteId(newId);
+		const existing = lines.find((l) => l.route_id === newId);
+		setDraftPoints(existing?.points ?? []);
+		historyRef.current = [];
+	};
 
 	const handleSaveLine = () => {
 		if (!topo || draftPoints.length < 2) return;
@@ -381,6 +516,13 @@ export const WallTopoBuilder = ({
 			},
 			{ onSuccess: () => setDraftPoints([]) },
 		);
+	};
+
+	const handleUndo = () => {
+		if (historyRef.current.length === 0) return;
+		const prev = historyRef.current[historyRef.current.length - 1];
+		historyRef.current = historyRef.current.slice(0, -1);
+		setDraftPoints(prev);
 	};
 
 	const confirmOverlays = (
@@ -501,6 +643,113 @@ export const WallTopoBuilder = ({
 		);
 	}
 
+	// Shared route selector + color picker UI (used in both modal and inline)
+	const routeControls = routes.length > 0 && (
+		<div className="flex flex-col gap-2">
+			<div className="flex flex-col gap-1">
+				<label
+					htmlFor="drawing-for-select"
+					className="text-xs text-text-tertiary"
+				>
+					Drawing for:
+				</label>
+				<select
+					id="drawing-for-select"
+					value={selectedRouteId}
+					onChange={(e) => handleRouteSwitch(e.target.value)}
+					className="text-sm bg-surface-page text-text-primary rounded-[var(--radius-sm)] px-2 py-1 border border-border-default"
+				>
+					{routes.map((r) => (
+						<option key={r.id} value={r.id}>
+							{r.name} ({r.route_type === "sport" ? "S" : r.route_type === "boulder" ? "B" : "T"} · {r.grade})
+						</option>
+					))}
+				</select>
+				{existingLineForRoute && draftPoints.length === 0 && (
+					<div className="flex items-center justify-between text-xs text-text-tertiary">
+						<span>Line saved — tap to redraw</span>
+						<button
+							type="button"
+							onClick={() => setConfirmDeleteLineId(existingLineForRoute.id)}
+							className="text-red-400"
+						>
+							Remove
+						</button>
+					</div>
+				)}
+			</div>
+			<div className="flex items-center gap-2">
+				<span className="text-xs text-text-tertiary shrink-0">Color</span>
+				<ColorPicker
+					value={activeColor}
+					onChange={(c) =>
+						setRouteColors((prev) => ({ ...prev, [selectedRouteId]: c }))
+					}
+				/>
+			</div>
+		</div>
+	);
+
+	// Shared footer buttons
+	const footerButtons = (
+		<>
+			<button
+				type="button"
+				onClick={handleUndo}
+				disabled={historyRef.current.length === 0 && draftPoints.length === 0}
+				className="flex-1 py-2 text-sm rounded-[var(--radius-md)] border border-border-default text-text-secondary disabled:opacity-40"
+			>
+				Undo
+			</button>
+			<button
+				type="button"
+				onClick={() => {
+					historyRef.current = [];
+					setDraftPoints([]);
+				}}
+				disabled={draftPoints.length === 0}
+				className="flex-1 py-2 text-sm rounded-[var(--radius-md)] border border-border-default text-text-secondary disabled:opacity-40"
+			>
+				Clear
+			</button>
+			<button
+				type="button"
+				disabled={draftPoints.length < 2 || upsertLine.isPending}
+				onClick={handleSaveLine}
+				className="flex-1 py-2 text-sm rounded-[var(--radius-md)] bg-accent-primary text-white font-medium disabled:opacity-50"
+			>
+				{upsertLine.isPending ? <Spinner /> : "Save line"}
+			</button>
+		</>
+	);
+
+	const drawingCanvas = (
+		<DrawingCanvas
+			imageUrl={topo.image_url}
+			draftPoints={draftPoints}
+			savedLines={savedLines}
+			activeColor={activeColor}
+			onDragStart={() => {
+				historyRef.current = [...historyRef.current, draftPoints];
+			}}
+			onAddPoint={(p) => {
+				historyRef.current = [...historyRef.current, draftPoints];
+				setDraftPoints((pts) => [...pts, p]);
+			}}
+			onMovePoint={(index, p) =>
+				setDraftPoints((pts) => pts.map((pt, i) => (i === index ? p : pt)))
+			}
+			onInsertMidpoint={(afterIndex, p) => {
+				historyRef.current = [...historyRef.current, draftPoints];
+				setDraftPoints((pts) => [
+					...pts.slice(0, afterIndex + 1),
+					p,
+					...pts.slice(afterIndex + 1),
+				]);
+			}}
+		/>
+	);
+
 	// ── With topo image — modal version ───────────────────────────────────────
 
 	if (onClose) {
@@ -571,65 +820,8 @@ export const WallTopoBuilder = ({
 
 				{/* Body */}
 				<div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-3">
-					{routes.length > 0 && (
-						<div className="flex flex-col gap-1">
-							<label
-								htmlFor="drawing-for-select-modal"
-								className="text-xs text-text-tertiary"
-							>
-								Drawing for:
-							</label>
-							<select
-								id="drawing-for-select-modal"
-								value={selectedRouteId}
-								onChange={(e) => {
-									setSelectedRouteId(e.target.value);
-									setDraftPoints([]);
-								}}
-								className="text-sm bg-surface-page text-text-primary rounded-[var(--radius-sm)] px-2 py-1 border border-border-default"
-							>
-								{routes.map((r) => (
-									<option key={r.id} value={r.id}>
-										{r.name} ({r.grade})
-									</option>
-								))}
-							</select>
-							{existingLineForRoute && draftPoints.length === 0 && (
-								<div className="flex items-center justify-between text-xs text-text-tertiary">
-									<span>Line saved — tap to redraw</span>
-									<button
-										type="button"
-										onClick={() =>
-											setConfirmDeleteLineId(existingLineForRoute.id)
-										}
-										className="text-red-400"
-									>
-										Remove
-									</button>
-								</div>
-							)}
-						</div>
-					)}
-
-					<DrawingCanvas
-						imageUrl={topo.image_url}
-						draftPoints={draftPoints}
-						savedLines={savedLines}
-						activeColor={activeColor}
-						onAddPoint={(p) => setDraftPoints((pts) => [...pts, p])}
-						onMovePoint={(index, p) =>
-							setDraftPoints((pts) =>
-								pts.map((pt, i) => (i === index ? p : pt)),
-							)
-						}
-						onInsertMidpoint={(afterIndex, p) =>
-							setDraftPoints((pts) => [
-								...pts.slice(0, afterIndex + 1),
-								p,
-								...pts.slice(afterIndex + 1),
-							])
-						}
-					/>
+					{routeControls}
+					{drawingCanvas}
 
 					{lines.length > 0 && (
 						<div className="flex flex-wrap gap-2">
@@ -660,30 +852,7 @@ export const WallTopoBuilder = ({
 						paddingBottom: "calc(env(safe-area-inset-bottom) + 1rem)",
 					}}
 				>
-					<button
-						type="button"
-						onClick={() => setDraftPoints((pts) => pts.slice(0, -1))}
-						disabled={draftPoints.length === 0}
-						className="flex-1 py-2 text-sm rounded-[var(--radius-md)] border border-border-default text-text-secondary disabled:opacity-40"
-					>
-						Undo
-					</button>
-					<button
-						type="button"
-						onClick={() => setDraftPoints([])}
-						disabled={draftPoints.length === 0}
-						className="flex-1 py-2 text-sm rounded-[var(--radius-md)] border border-border-default text-text-secondary disabled:opacity-40"
-					>
-						Clear
-					</button>
-					<button
-						type="button"
-						disabled={draftPoints.length < 2 || upsertLine.isPending}
-						onClick={handleSaveLine}
-						className="flex-1 py-2 text-sm rounded-[var(--radius-md)] bg-accent-primary text-white font-medium disabled:opacity-50"
-					>
-						{upsertLine.isPending ? <Spinner /> : "Save line"}
-					</button>
+					{footerButtons}
 				</div>
 
 				{confirmOverlays}
@@ -745,87 +914,11 @@ export const WallTopoBuilder = ({
 				}}
 			/>
 
-			{routes.length > 0 && (
-				<div className="flex flex-col gap-1">
-					<label
-						htmlFor="drawing-for-select"
-						className="text-xs text-text-tertiary"
-					>
-						Drawing for:
-					</label>
-					<select
-						id="drawing-for-select"
-						value={selectedRouteId}
-						onChange={(e) => {
-							setSelectedRouteId(e.target.value);
-							setDraftPoints([]);
-						}}
-						className="text-sm bg-surface-page text-text-primary rounded-[var(--radius-sm)] px-2 py-1 border border-border-default"
-					>
-						{routes.map((r) => (
-							<option key={r.id} value={r.id}>
-								{r.name} ({r.grade})
-							</option>
-						))}
-					</select>
-					{existingLineForRoute && draftPoints.length === 0 && (
-						<div className="flex items-center justify-between text-xs text-text-tertiary">
-							<span>Line saved — tap to redraw</span>
-							<button
-								type="button"
-								onClick={() => setConfirmDeleteLineId(existingLineForRoute.id)}
-								className="text-red-400"
-							>
-								Remove
-							</button>
-						</div>
-					)}
-				</div>
-			)}
-
-			<DrawingCanvas
-				imageUrl={topo.image_url}
-				draftPoints={draftPoints}
-				savedLines={savedLines}
-				activeColor={activeColor}
-				onAddPoint={(p) => setDraftPoints((pts) => [...pts, p])}
-				onMovePoint={(index, p) =>
-					setDraftPoints((pts) => pts.map((pt, i) => (i === index ? p : pt)))
-				}
-				onInsertMidpoint={(afterIndex, p) =>
-					setDraftPoints((pts) => [
-						...pts.slice(0, afterIndex + 1),
-						p,
-						...pts.slice(afterIndex + 1),
-					])
-				}
-			/>
+			{routeControls}
+			{drawingCanvas}
 
 			{draftPoints.length > 0 && (
-				<div className="flex gap-2">
-					<button
-						type="button"
-						onClick={() => setDraftPoints((pts) => pts.slice(0, -1))}
-						className="flex-1 py-2 text-sm rounded-[var(--radius-md)] border border-border-default text-text-secondary"
-					>
-						Undo
-					</button>
-					<button
-						type="button"
-						onClick={() => setDraftPoints([])}
-						className="flex-1 py-2 text-sm rounded-[var(--radius-md)] border border-border-default text-text-secondary"
-					>
-						Clear
-					</button>
-					<button
-						type="button"
-						disabled={draftPoints.length < 2 || upsertLine.isPending}
-						onClick={handleSaveLine}
-						className="flex-1 py-2 text-sm rounded-[var(--radius-md)] bg-accent-primary text-white font-medium disabled:opacity-50"
-					>
-						{upsertLine.isPending ? <Spinner /> : "Save line"}
-					</button>
-				</div>
+				<div className="flex gap-2">{footerButtons}</div>
 			)}
 
 			{lines.length > 0 && (
@@ -880,6 +973,8 @@ export const RouteTopoBuilder = ({
 	const [galleryImageUrl, setGalleryImageUrl] = useState<string | null>(null);
 	const [showImagePicker, setShowImagePicker] = useState(false);
 
+	const historyRef = useRef<Point[][]>([]);
+
 	const upsertTopo = useUpsertRouteTopo(routeId);
 	const deleteTopo = useDeleteRouteTopo(routeId);
 
@@ -891,6 +986,7 @@ export const RouteTopoBuilder = ({
 		setPendingFile(null);
 		setPreviewUrl(url);
 		setDraftPoints([]);
+		historyRef.current = [];
 	};
 
 	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -900,6 +996,7 @@ export const RouteTopoBuilder = ({
 		setGalleryImageUrl(null);
 		setPreviewUrl(URL.createObjectURL(file));
 		setDraftPoints([]);
+		historyRef.current = [];
 		e.target.value = "";
 	};
 
@@ -919,6 +1016,13 @@ export const RouteTopoBuilder = ({
 				},
 			},
 		);
+	};
+
+	const handleUndo = () => {
+		if (historyRef.current.length === 0) return;
+		const prev = historyRef.current[historyRef.current.length - 1];
+		historyRef.current = historyRef.current.slice(0, -1);
+		setDraftPoints(prev);
 	};
 
 	const isDirty =
@@ -954,6 +1058,33 @@ export const RouteTopoBuilder = ({
 				</button>
 			</div>
 		</div>
+	);
+
+	const drawingCanvas = imageUrl && (
+		<DrawingCanvas
+			imageUrl={imageUrl}
+			draftPoints={draftPoints}
+			savedLines={[]}
+			activeColor={color}
+			onDragStart={() => {
+				historyRef.current = [...historyRef.current, draftPoints];
+			}}
+			onAddPoint={(p) => {
+				historyRef.current = [...historyRef.current, draftPoints];
+				setDraftPoints((pts) => [...pts, p]);
+			}}
+			onMovePoint={(index, p) =>
+				setDraftPoints((pts) => pts.map((pt, i) => (i === index ? p : pt)))
+			}
+			onInsertMidpoint={(afterIndex, p) => {
+				historyRef.current = [...historyRef.current, draftPoints];
+				setDraftPoints((pts) => [
+					...pts.slice(0, afterIndex + 1),
+					p,
+					...pts.slice(afterIndex + 1),
+				]);
+			}}
+		/>
 	);
 
 	// ── No image yet ───────────────────────────────────────────────────────────
@@ -1077,25 +1208,7 @@ export const RouteTopoBuilder = ({
 
 				{/* Body */}
 				<div className="flex-1 overflow-y-auto">
-					<DrawingCanvas
-						imageUrl={imageUrl}
-						draftPoints={draftPoints}
-						savedLines={[]}
-						activeColor={color}
-						onAddPoint={(p) => setDraftPoints((pts) => [...pts, p])}
-						onMovePoint={(index, p) =>
-							setDraftPoints((pts) =>
-								pts.map((pt, i) => (i === index ? p : pt)),
-							)
-						}
-						onInsertMidpoint={(afterIndex, p) =>
-							setDraftPoints((pts) => [
-								...pts.slice(0, afterIndex + 1),
-								p,
-								...pts.slice(afterIndex + 1),
-							])
-						}
-					/>
+					{drawingCanvas}
 				</div>
 
 				{/* Color picker */}
@@ -1113,15 +1226,18 @@ export const RouteTopoBuilder = ({
 				>
 					<button
 						type="button"
-						onClick={() => setDraftPoints((pts) => pts.slice(0, -1))}
-						disabled={draftPoints.length === 0}
+						onClick={handleUndo}
+						disabled={historyRef.current.length === 0}
 						className="flex-1 py-2 text-sm rounded-[var(--radius-md)] border border-border-default text-text-secondary disabled:opacity-40"
 					>
 						Undo
 					</button>
 					<button
 						type="button"
-						onClick={() => setDraftPoints([])}
+						onClick={() => {
+							historyRef.current = [];
+							setDraftPoints([]);
+						}}
 						disabled={draftPoints.length === 0}
 						className="flex-1 py-2 text-sm rounded-[var(--radius-md)] border border-border-default text-text-secondary disabled:opacity-40"
 					>
@@ -1195,36 +1311,24 @@ export const RouteTopoBuilder = ({
 				onChange={handleFileChange}
 			/>
 
-			<DrawingCanvas
-				imageUrl={imageUrl}
-				draftPoints={draftPoints}
-				savedLines={[]}
-				activeColor={color}
-				onAddPoint={(p) => setDraftPoints((pts) => [...pts, p])}
-				onMovePoint={(index, p) =>
-					setDraftPoints((pts) => pts.map((pt, i) => (i === index ? p : pt)))
-				}
-				onInsertMidpoint={(afterIndex, p) =>
-					setDraftPoints((pts) => [
-						...pts.slice(0, afterIndex + 1),
-						p,
-						...pts.slice(afterIndex + 1),
-					])
-				}
-			/>
+			{drawingCanvas}
 
 			{draftPoints.length > 0 && (
 				<div className="flex gap-2">
 					<button
 						type="button"
-						onClick={() => setDraftPoints((pts) => pts.slice(0, -1))}
-						className="flex-1 py-2 text-sm rounded-[var(--radius-md)] border border-border-default text-text-secondary"
+						onClick={handleUndo}
+						disabled={historyRef.current.length === 0}
+						className="flex-1 py-2 text-sm rounded-[var(--radius-md)] border border-border-default text-text-secondary disabled:opacity-40"
 					>
 						Undo
 					</button>
 					<button
 						type="button"
-						onClick={() => setDraftPoints([])}
+						onClick={() => {
+							historyRef.current = [];
+							setDraftPoints([]);
+						}}
 						className="flex-1 py-2 text-sm rounded-[var(--radius-md)] border border-border-default text-text-secondary"
 					>
 						Clear
