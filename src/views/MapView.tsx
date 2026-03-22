@@ -447,6 +447,18 @@ const MapView = () => {
 		[personalCrags, showSent, showProject, showTodo],
 	);
 
+	// Filter personal walls by active status filters
+	const filteredPersonalWalls = useMemo(
+		() =>
+			personalWalls.filter((w) => {
+				if (showSent && w.sent_count > 0) return true;
+				if (showProject && w.project_count > 0) return true;
+				if (showTodo && w.todo_count > 0) return true;
+				return !showSent && !showProject && !showTodo;
+			}),
+		[personalWalls, showSent, showProject, showTodo],
+	);
+
 	// Compute map center — search params override marker-based center
 	const center = useMemo<[number, number]>(() => {
 		if (hasSearchCoords) return [searchLat, searchLng];
@@ -477,9 +489,9 @@ const MapView = () => {
 
 	const personalCragsWithWallCoords = useMemo(() => {
 		const set = new Set<string>();
-		for (const w of personalWalls) set.add(w.crag_id);
+		for (const w of filteredPersonalWalls) set.add(w.crag_id);
 		return set;
-	}, [personalWalls]);
+	}, [filteredPersonalWalls]);
 
 	// At high zoom: show wall pins, hide crag pins for crags that have wall coords
 	const visibleCrags = useMemo(
@@ -695,7 +707,7 @@ const MapView = () => {
 					{/* Personal wall pins at high zoom */}
 					{mode === "personal" &&
 						showWalls &&
-						personalWalls.map((wall) => (
+						filteredPersonalWalls.map((wall) => (
 							<Marker
 								key={wall.id}
 								position={[wall.lat, wall.lng]}
