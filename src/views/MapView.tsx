@@ -6,7 +6,7 @@ import {
 } from "@tauri-apps/plugin-geolocation";
 import L from "leaflet";
 import { Crosshair, Layers, MapPin, Minus, Plus, X } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
 	MapContainer,
 	Marker,
@@ -28,6 +28,16 @@ import {
 import { cn } from "@/lib/cn";
 import { tileLayers } from "@/lib/map-tiles";
 import { useUiStore } from "@/stores/ui.store";
+
+// ── Back-button override hook ────────────────────────────────────────────────
+
+function useBackHandlerOverride(handler: (() => void) | null) {
+	const setBackHandlerOverride = useUiStore((s) => s.setBackHandlerOverride);
+	useEffect(() => {
+		setBackHandlerOverride(handler);
+		return () => setBackHandlerOverride(null);
+	}, [handler, setBackHandlerOverride]);
+}
 
 // ── Marker icon with route count ────────────────────────────────────────────
 
@@ -265,6 +275,7 @@ const PersonalPinModal = ({
 }) => {
 	const navigate = useNavigate();
 	const { data: climbs = [], isLoading } = useClimbsAtPin(pin.type, pin.id);
+	useBackHandlerOverride(onClose);
 
 	const filtered = climbs.filter((c) => {
 		if (showSent && SENT_STATUSES.has(c.sent_status)) return true;

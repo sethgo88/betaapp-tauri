@@ -18,6 +18,9 @@ interface UiStore {
 	removeToast: (id: string) => void;
 	userLocation: UserLocation | null;
 	setUserLocation: (loc: UserLocation) => void;
+	/** When set, the Android back button calls this instead of navigating back. */
+	backHandlerOverride: (() => void) | null;
+	setBackHandlerOverride: (fn: (() => void) | null) => void;
 }
 
 const storedTheme =
@@ -59,4 +62,6 @@ export const useUiStore = create<UiStore>((set) => ({
 		localStorage.setItem("betaapp-user-location", JSON.stringify(loc));
 		set({ userLocation: loc });
 	},
+	backHandlerOverride: null,
+	setBackHandlerOverride: (fn) => set({ backHandlerOverride: fn }),
 }));

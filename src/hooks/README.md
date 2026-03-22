@@ -48,9 +48,12 @@ useAndroidBackButton()
 
 **What it does:**
 - Registers `onBackButtonPress` from `@tauri-apps/api/app`
+- If `backHandlerOverride` is set in `ui.store` (e.g. a modal is open): calls that instead of navigating — the modal is responsible for setting and clearing the override
 - If `router.history.length > 1`: calls `router.history.back()`
 - At root: does nothing — the OS closes the app naturally
 - Cleans up via `listener.unregister()` on unmount
+
+**Override pattern:** Components that render an overlay (modal, bottom sheet) can intercept the back button by calling `useUiStore.setBackHandlerOverride(fn)` on mount and `setBackHandlerOverride(null)` on unmount. The `useBackHandlerOverride(fn)` helper inside `MapView.tsx` demonstrates this pattern.
 
 ---
 
