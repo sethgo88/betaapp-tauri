@@ -64,6 +64,7 @@ export async function fetchPersonalCrags(
 		name: r.name,
 		lat: r.lat,
 		lng: r.lng,
+		approach: r.approach,
 		climb_count: r.climb_count,
 		route_count: r.route_count,
 		sent_count: r.sent_count,
