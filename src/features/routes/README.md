@@ -13,7 +13,7 @@ RouteSchema = {
   wall_id: string
   name: string
   grade: string
-  route_type: 'sport' | 'boulder'
+  route_type: 'sport' | 'boulder' | 'trad'
   description: string | null
   status: 'pending' | 'verified' | 'rejected'
   created_by: string   // Supabase user UUID
@@ -33,7 +33,7 @@ RouteSubmitSchema = {
   wall_id: string      // required — must select a wall
   name: string
   grade: string
-  route_type: 'sport' | 'boulder'
+  route_type: 'sport' | 'boulder' | 'trad'
   description?: string
 }
 

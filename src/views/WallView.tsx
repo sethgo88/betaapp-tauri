@@ -237,7 +237,7 @@ const WallView = () => {
 					lines={wallTopoLines}
 					routes={routes
 						.filter((r) => r.status === "verified")
-						.map((r) => ({ id: r.id, name: r.name, grade: r.grade }))}
+						.map((r) => ({ id: r.id, name: r.name, grade: r.grade, route_type: r.route_type }))}
 					onClose={() => setShowTopoModal(false)}
 				/>
 			)}

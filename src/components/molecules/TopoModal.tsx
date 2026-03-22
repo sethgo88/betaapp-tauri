@@ -11,6 +11,7 @@ interface RouteInfo {
 	id: string;
 	name: string;
 	grade: string;
+	route_type: "sport" | "boulder" | "trad";
 }
 
 interface BaseProps {
