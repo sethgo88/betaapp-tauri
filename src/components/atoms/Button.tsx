@@ -25,6 +25,8 @@ const sizeClasses: Record<ButtonSize, string> = {
 	large: "px-6 py-3 text-lg",
 };
 
+const defaultPadding = "px-4 py-2";
+
 export const Button = (props: ButtonProps) => {
 	const { className, type, variant = "primary", size, ...rest } = props;
 	return (
@@ -32,7 +34,7 @@ export const Button = (props: ButtonProps) => {
 			className={cn(
 				"cursor-pointer rounded-[var(--radius-md)] font-semibold transition-colors",
 				variantClasses[variant],
-				size && sizeClasses[size],
+				size ? sizeClasses[size] : defaultPadding,
 				className,
 			)}
 			type={type}
