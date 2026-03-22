@@ -9,6 +9,7 @@ import {
 	type PickerMarker,
 } from "@/components/molecules/CoordinatePicker";
 import { EditableDescription } from "@/components/molecules/EditableDescription";
+import { RouteDataModal } from "@/components/molecules/RouteDataModal";
 import { TopoModal } from "@/components/molecules/TopoModal";
 import { WallTopoBuilder } from "@/components/organisms/TopoBuilder";
 import { useAuthStore } from "@/features/auth/auth.store";
@@ -66,6 +67,10 @@ const WallView = () => {
 	const [showCoordEditor, setShowCoordEditor] = useState(false);
 	const [showTopoModal, setShowTopoModal] = useState(false);
 	const [showTopoEdit, setShowTopoEdit] = useState(false);
+	const [dataModalRouteId, setDataModalRouteId] = useState<string | null>(null);
+	const dataModalRoute = dataModalRouteId
+		? routes.find((r) => r.id === dataModalRouteId)
+		: null;
 	const { data: wallTopo = null } = useWallTopo(wallId);
 	const { data: wallTopoLines = [] } = useWallTopoLines(wallTopo?.id ?? null);
 
@@ -281,29 +286,40 @@ const WallView = () => {
 			)}
 
 			{routes.map((route) => (
-				<button
+				<div
 					key={route.id}
-					type="button"
-					disabled={route.status === "pending"}
-					className="rounded-lg bg-surface-card p-4 text-left flex items-center justify-between disabled:opacity-60"
-					onClick={() =>
-						navigate({
-							to: "/routes/$routeId",
-							params: { routeId: route.id },
-						})
-					}
+					className="rounded-lg bg-surface-card p-4 flex items-center gap-2"
 				>
-					<span className="font-medium">{route.name}</span>
-					<div className="flex items-center gap-2">
-						<span className="text-xs text-text-secondary">{route.grade}</span>
-						<span className="text-xs text-text-tertiary">
-							{route.route_type}
-						</span>
-						{route.status === "pending" && (
-							<span className="text-xs text-amber-400">pending</span>
-						)}
-					</div>
-				</button>
+					<button
+						type="button"
+						disabled={route.status === "pending"}
+						className="flex-1 text-left flex items-center justify-between gap-2 disabled:opacity-60"
+						onClick={() =>
+							navigate({
+								to: "/routes/$routeId",
+								params: { routeId: route.id },
+							})
+						}
+					>
+						<span className="font-medium">{route.name}</span>
+						<div className="flex items-center gap-2">
+							<span className="text-xs text-text-secondary">{route.grade}</span>
+							<span className="text-xs text-text-tertiary">
+								{route.route_type}
+							</span>
+							{route.status === "pending" && (
+								<span className="text-xs text-amber-400">pending</span>
+							)}
+						</div>
+					</button>
+					<button
+						type="button"
+						className="shrink-0 text-xs text-accent-primary font-semibold"
+						onClick={() => setDataModalRouteId(route.id)}
+					>
+						Data
+					</button>
+				</div>
 			))}
 
 			<Button
@@ -319,6 +335,16 @@ const WallView = () => {
 			>
 				Submit a route
 			</Button>
+
+			{dataModalRoute && (
+				<RouteDataModal
+					isOpen={!!dataModalRouteId}
+					onClose={() => setDataModalRouteId(null)}
+					routeId={dataModalRoute.id}
+					routeName={dataModalRoute.name}
+					routeType={dataModalRoute.route_type}
+				/>
+			)}
 		</div>
 	);
 };
