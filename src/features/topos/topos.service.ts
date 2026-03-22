@@ -71,7 +71,7 @@ export async function deleteWallTopo(
 	const storagePath = imageUrl.includes(marker)
 		? imageUrl.split(marker)[1]
 		: null;
-	if (storagePath) {
+	if (storagePath?.startsWith("topos/")) {
 		await supabase.storage.from("route-images").remove([storagePath]);
 	}
 }
@@ -221,7 +221,7 @@ export async function deleteRouteTopo(
 	const storagePath = imageUrl.includes(marker)
 		? imageUrl.split(marker)[1]
 		: null;
-	if (storagePath) {
+	if (storagePath?.startsWith("topos/")) {
 		await supabase.storage.from("route-images").remove([storagePath]);
 	}
 }

@@ -220,6 +220,7 @@ const WallView = () => {
 					routes={routes.filter((r) => r.status === "verified")}
 					topo={wallTopo}
 					lines={wallTopoLines}
+					galleryImages={wallImages}
 					onClose={() => setShowTopoEdit(false)}
 				/>
 			)}

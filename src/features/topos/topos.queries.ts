@@ -62,6 +62,21 @@ export function useUploadWallTopoImage(wallId: string) {
 	});
 }
 
+export function useSetWallTopoFromUrl(wallId: string) {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async (imageUrl: string) => {
+			const user = useAuthStore.getState().user;
+			if (!user) throw new Error("Not authenticated");
+			await upsertWallTopo(wallId, imageUrl, user.id);
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: [WALL_TOPO_KEY, wallId] });
+		},
+	});
+}
+
 export function useDeleteWallTopo(wallId: string) {
 	const queryClient = useQueryClient();
 
@@ -142,10 +157,12 @@ export function useUpsertRouteTopo(routeId: string) {
 	return useMutation({
 		mutationFn: async ({
 			file,
+			imageUrl: existingUrl,
 			points,
 			color,
 		}: {
 			file: File | null;
+			imageUrl?: string;
 			points: Point[];
 			color: string;
 		}) => {
@@ -164,6 +181,8 @@ export function useUpsertRouteTopo(routeId: string) {
 					.from("route-images")
 					.getPublicUrl(storagePath);
 				imageUrl = data.publicUrl;
+			} else if (existingUrl) {
+				imageUrl = existingUrl;
 			} else {
 				// Updating points only — get existing URL
 				const existing = await fetchRouteTopo(routeId);
