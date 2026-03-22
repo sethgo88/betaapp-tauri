@@ -39,6 +39,7 @@ templates   Layout shells with no real data — just children/slots.
 | `SyncStatus` | Reads `sync.store` and renders sync state indicator |
 | `CoordinatePicker` | Fullscreen Leaflet overlay for picking coordinates; fixed center pin with drag-to-position pattern. Props: `value`, `defaultCenter`, `defaultZoom`, `markers` (reference pins), `onChange`, `onClose`. Exports `PickerMarker` type. |
 | `LocationDrillDown` | Cascading location selector: Country → Region → Sub-Region → Crag → Wall. Uses existing location query hooks. Props: `onChange(selection)`, `stopAt` (defaults to `"wall"`), `initial` (for edit mode pre-population). Exports `LocationSelection` and `LocationDrillDownProps` types. |
+| `SiblingDropdown` | Dropdown showing sibling locations/routes at the current hierarchy level. Current item highlighted in accent-primary. Closes on outside tap. Props: `siblings` (from `useTopBar`), `onSelect(id)`. Hidden when fewer than 2 siblings. |
 | `Toast` | Single toast notification; rendered by `AppLayout` |
 | `AdminImageGallery` | Horizontal-scroll image strip with admin upload/delete controls. Non-admins see read-only gallery; returns `null` when empty for non-admins. Props: `images`, `isAdmin`, `onAdd(file)`, `onDelete(id, imageUrl)`, `isAdding?`. Tapping a thumbnail opens `PhotoViewer`. Includes delete-confirmation bottom sheet. |
 | `ClimbImageGallery` | User photo gallery for a climb log. Auto-fill grid of 96px thumbnails + a dotted `ImagePlus` add tile. Tapping a thumbnail opens a bottom action sheet; tapping the image preview in the sheet opens `PhotoViewer`. Action sheet also has sort arrows (move left/right), "Edit pins" (opens `ClimbImageViewer`), and delete with confirmation. Shows usage counter (n / 100). Props: `climbId`. |
@@ -64,7 +65,7 @@ templates   Layout shells with no real data — just children/slots.
 ### Templates
 | Component | Purpose |
 |---|---|
-| `AppLayout` | Root layout — safe areas, NavBar, Toast renderer, persistent back button (hidden on `/`) |
+| `AppLayout` | Root layout — safe areas, NavBar, Toast renderer, contextual back button (parent navigation with parent name) + sibling dropdown on hierarchy views |
 
 ---
 

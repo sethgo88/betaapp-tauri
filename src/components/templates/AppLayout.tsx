@@ -1,12 +1,12 @@
+import { ChevronLeft } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
-import { useRouter } from "@tanstack/react-router";
-import { ChevronLeft } from "lucide-react";
+import { SiblingDropdown } from "@/components/molecules/SiblingDropdown";
 import { Toast } from "@/components/molecules/Toast";
 import { Drawer } from "@/components/organisms/Drawer";
 import { NavBar } from "@/components/organisms/NavBar";
 import { useAndroidBackButton } from "@/hooks/useAndroidBackButton";
-import { useCurrentRoute } from "@/hooks/useCurrentRoute";
+import { useTopBar } from "@/hooks/useTopBar";
 import { useUiStore } from "@/stores/ui.store";
 
 interface AppLayoutProps {
@@ -16,11 +16,10 @@ interface AppLayoutProps {
 export const AppLayout = ({ children }: AppLayoutProps) => {
 	const toasts = useUiStore((s) => s.toasts);
 	const [drawerOpen, setDrawerOpen] = useState(false);
-	const currentRoute = useCurrentRoute();
-	const router = useRouter();
+	const topBar = useTopBar();
 	useAndroidBackButton();
 
-	const showBack = currentRoute !== "/";
+	const hasSiblings = topBar.siblings.length > 1;
 
 	return (
 		<div className="bg-surface-page min-h-screen min-w-screen max-w-screen text-text-primary pt-[env(safe-area-inset-top)]">
@@ -31,15 +30,23 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
 					))}
 				</div>
 				<main className="pt-4 px-4 pb-[calc(7vh+1.5rem)]">
-					{showBack && (
-						<button
-							type="button"
-							className="flex items-center gap-1 text-text-secondary text-sm mb-3 -ml-1"
-							onClick={() => router.history.back()}
-						>
-							<ChevronLeft size={16} />
-							Back
-						</button>
+					{topBar.backLabel && (
+						<div className="flex items-center justify-between mb-3 -ml-1">
+							<button
+								type="button"
+								className="flex items-center gap-1 text-text-secondary text-sm shrink-0"
+								onClick={topBar.goBack}
+							>
+								<ChevronLeft size={16} />
+								{topBar.backLabel}
+							</button>
+							{hasSiblings && (
+								<SiblingDropdown
+									siblings={topBar.siblings}
+									onSelect={topBar.goToSibling}
+								/>
+							)}
+						</div>
 					)}
 					{children}
 				</main>
