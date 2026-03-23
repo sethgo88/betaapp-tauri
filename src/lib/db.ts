@@ -485,6 +485,13 @@ const migrations: Migration[] = [
 	async (db) => {
 		await db.execute(`ALTER TABLE climbs ADD COLUMN sent_date TEXT`);
 	},
+
+	// v23: sort_order on routes_cache (#148)
+	async (db) => {
+		await db.execute(
+			`ALTER TABLE routes_cache ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0`,
+		);
+	},
 ];
 
 export async function runMigrations(db: DbAdapter): Promise<void> {

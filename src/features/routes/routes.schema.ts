@@ -13,6 +13,7 @@ export const RouteSchema = z.object({
 	status: SubmissionStatus,
 	created_by: z.string(),
 	created_at: z.string(),
+	sort_order: z.number().int().default(0),
 });
 
 export const RouteSubmitSchema = z.object({
