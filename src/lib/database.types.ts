@@ -158,6 +158,7 @@ export type Database = {
           route_id: string | null
           route_location: string | null
           route_type: string
+          sent_date: string | null
           sent_status: string
           sub_area: string | null
           updated_at: string
@@ -178,6 +179,7 @@ export type Database = {
           route_id?: string | null
           route_location?: string | null
           route_type?: string
+          sent_date?: string | null
           sent_status?: string
           sub_area?: string | null
           updated_at: string
@@ -198,6 +200,7 @@ export type Database = {
           route_id?: string | null
           route_location?: string | null
           route_type?: string
+          sent_date?: string | null
           sent_status?: string
           sub_area?: string | null
           updated_at?: string
@@ -508,6 +511,7 @@ export type Database = {
           id: string
           name: string
           route_type: string
+          sort_order: number
           status: string
           wall_id: string
         }
@@ -520,6 +524,7 @@ export type Database = {
           id?: string
           name: string
           route_type?: string
+          sort_order?: number
           status?: string
           wall_id: string
         }
@@ -532,6 +537,7 @@ export type Database = {
           id?: string
           name?: string
           route_type?: string
+          sort_order?: number
           status?: string
           wall_id?: string
         }

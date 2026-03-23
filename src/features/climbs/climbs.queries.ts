@@ -43,9 +43,10 @@ const silentPush = (userId: string | undefined) => {
 	const { addToast } = useUiStore.getState();
 	pushClimbs(userId)
 		.then(() => addToast({ message: "Synced", type: "success" }))
-		.catch(() =>
-			addToast({ message: "Sync failed — saved offline", type: "error" }),
-		);
+		.catch((err) => {
+			console.error("[silentPush] Supabase push failed:", err);
+			addToast({ message: "Sync failed — saved offline", type: "error" });
+		});
 };
 
 export function useAddClimb() {
