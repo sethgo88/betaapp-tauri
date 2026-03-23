@@ -104,7 +104,7 @@ export function useEditRoute() {
 				wall_id: string;
 				name: string;
 				grade: string;
-				route_type: "sport" | "boulder";
+				route_type: "sport" | "boulder" | "trad";
 				description?: string;
 			};
 		}) => editRoute(id, values),
@@ -187,7 +187,7 @@ export function useUpdateRouteFields() {
 			values: {
 				name: string;
 				grade: string;
-				route_type: "sport" | "boulder";
+				route_type: "sport" | "boulder" | "trad";
 				description?: string;
 			};
 		}) => updateRouteFields(id, values),

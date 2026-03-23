@@ -66,7 +66,7 @@ export const SentStatus = z.enum([
 ]);
 export type SentStatus = z.infer<typeof SentStatus>;
 
-export const RouteType = z.enum(["sport", "boulder"]);
+export const RouteType = z.enum(["sport", "boulder", "trad"]);
 export type RouteType = z.infer<typeof RouteType>;
 
 export const ClimbSchema = z.object({

@@ -28,7 +28,7 @@ type XMetric = "height" | "ape_index";
 
 interface Props {
 	routeId: string;
-	routeType: "sport" | "boulder";
+	routeType: "sport" | "boulder" | "trad";
 }
 
 export const RouteBodyChart = ({ routeId, routeType }: Props) => {

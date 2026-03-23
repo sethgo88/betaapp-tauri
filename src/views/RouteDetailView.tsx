@@ -69,7 +69,7 @@ const RouteDetailView = () => {
 	const updateRouteFields = useUpdateRouteFields();
 	const [editingMeta, setEditingMeta] = useState(false);
 	const [editName, setEditName] = useState("");
-	const [editRouteType, setEditRouteType] = useState<"sport" | "boulder">(
+	const [editRouteType, setEditRouteType] = useState<"sport" | "boulder" | "trad">(
 		"sport",
 	);
 	const [editGrade, setEditGrade] = useState("");
@@ -161,13 +161,14 @@ const RouteDetailView = () => {
 					<Select
 						value={editRouteType}
 						onChange={(e) => {
-							const val = e.target.value as "sport" | "boulder";
+							const val = e.target.value as "sport" | "boulder" | "trad";
 							setEditRouteType(val);
 							setEditGrade("");
 						}}
 					>
 						<option value="sport">Sport</option>
 						<option value="boulder">Boulder</option>
+						<option value="trad">Trad</option>
 					</Select>
 					<Select
 						value={
@@ -327,7 +328,7 @@ const RouteDetailView = () => {
 						lines={wallTopoLines}
 						routes={
 							route
-								? [{ id: route.id, name: route.name, grade: route.grade }]
+								? [{ id: route.id, name: route.name, grade: route.grade, route_type: route.route_type }]
 								: []
 						}
 						routeId={routeId}
