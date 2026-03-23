@@ -15,6 +15,7 @@ import {
 	fetchUnverifiedRoutes,
 	mergeRoute,
 	rejectRoute,
+	reorderRoutes,
 	searchLocalRoutes,
 	updateRouteDescription,
 	updateRouteFields,
@@ -123,6 +124,16 @@ export function useAdminDeleteRoute() {
 		onSuccess: (_data, { wallId }) => {
 			qc.invalidateQueries({ queryKey: ["routes", wallId] });
 			qc.invalidateQueries({ queryKey: ["all_routes"] });
+		},
+	});
+}
+
+export function useReorderRoutes(wallId: string) {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: (orderedIds: string[]) => reorderRoutes(orderedIds),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: ["routes", wallId] });
 		},
 	});
 }

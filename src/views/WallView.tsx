@@ -1,5 +1,21 @@
+import type { DragEndEvent } from "@dnd-kit/core";
+import {
+	closestCenter,
+	DndContext,
+	PointerSensor,
+	TouchSensor,
+	useSensor,
+	useSensors,
+} from "@dnd-kit/core";
+import {
+	arrayMove,
+	SortableContext,
+	useSortable,
+	verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { MapPin } from "lucide-react";
+import { GripVertical, MapPin } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/atoms/Button";
 import { Spinner } from "@/components/atoms/Spinner";
@@ -27,8 +43,54 @@ import {
 	useDeleteWallImage,
 	useWallImages,
 } from "@/features/route-images/route-images.queries";
-import { useRoutes } from "@/features/routes/routes.queries";
+import { useReorderRoutes, useRoutes } from "@/features/routes/routes.queries";
+import type { Route } from "@/features/routes/routes.schema";
 import { useWallTopo, useWallTopoLines } from "@/features/topos/topos.queries";
+
+// ── Sortable route card (reorder mode) ────────────────────────────────────────
+
+const SortableRouteCard = ({ route }: { route: Route }) => {
+	const {
+		attributes,
+		listeners,
+		setNodeRef,
+		transform,
+		transition,
+		isDragging,
+	} = useSortable({ id: route.id });
+
+	const style: React.CSSProperties = {
+		transform: CSS.Transform.toString(transform),
+		transition,
+		opacity: isDragging ? 0.4 : 1,
+		touchAction: "none",
+	};
+
+	return (
+		<div
+			ref={setNodeRef}
+			style={style}
+			className="rounded-lg bg-surface-card p-4 flex items-center gap-3"
+		>
+			<button
+				type="button"
+				className="shrink-0 text-text-tertiary touch-none cursor-grab active:cursor-grabbing"
+				aria-label="Drag to reorder"
+				{...attributes}
+				{...listeners}
+			>
+				<GripVertical size={18} />
+			</button>
+			<div className="flex-1 flex items-center justify-between gap-2">
+				<span className="font-medium">{route.name}</span>
+				<div className="flex items-center gap-2">
+					<span className="text-xs text-text-secondary">{route.grade}</span>
+					<span className="text-xs text-text-tertiary">{route.route_type}</span>
+				</div>
+			</div>
+		</div>
+	);
+};
 
 const ViewOnMap = ({ lat, lng }: { lat: number; lng: number }) => {
 	const navigate = useNavigate();
@@ -68,6 +130,38 @@ const WallView = () => {
 	const [showTopoModal, setShowTopoModal] = useState(false);
 	const [showTopoEdit, setShowTopoEdit] = useState(false);
 	const [dataModalRouteId, setDataModalRouteId] = useState<string | null>(null);
+	const [isReordering, setIsReordering] = useState(false);
+	const [reorderList, setReorderList] = useState<Route[]>([]);
+	const reorderRoutesMutation = useReorderRoutes(wallId);
+
+	const sensors = useSensors(
+		useSensor(PointerSensor),
+		useSensor(TouchSensor, {
+			activationConstraint: { delay: 250, tolerance: 5 },
+		}),
+	);
+
+	function handleStartReorder() {
+		setReorderList([...routes]);
+		setIsReordering(true);
+	}
+
+	function handleDragEnd(event: DragEndEvent) {
+		const { active, over } = event;
+		if (over && active.id !== over.id) {
+			setReorderList((prev) => {
+				const oldIndex = prev.findIndex((r) => r.id === active.id);
+				const newIndex = prev.findIndex((r) => r.id === over.id);
+				return arrayMove(prev, oldIndex, newIndex);
+			});
+		}
+	}
+
+	async function handleSaveOrder() {
+		await reorderRoutesMutation.mutateAsync(reorderList.map((r) => r.id));
+		setIsReordering(false);
+	}
+
 	const dataModalRoute = dataModalRouteId
 		? routes.find((r) => r.id === dataModalRouteId)
 		: null;
@@ -237,7 +331,12 @@ const WallView = () => {
 					lines={wallTopoLines}
 					routes={routes
 						.filter((r) => r.status === "verified")
-						.map((r) => ({ id: r.id, name: r.name, grade: r.grade, route_type: r.route_type }))}
+						.map((r) => ({
+							id: r.id,
+							name: r.name,
+							grade: r.grade,
+							route_type: r.route_type,
+						}))}
 					onClose={() => setShowTopoModal(false)}
 				/>
 			)}
@@ -285,42 +384,82 @@ const WallView = () => {
 				</p>
 			)}
 
-			{routes.map((route) => (
-				<div
-					key={route.id}
-					className="rounded-lg bg-surface-card p-4 flex items-center gap-2"
+			{isAdmin &&
+				routes.length > 1 &&
+				(isReordering ? (
+					<button
+						type="button"
+						onClick={handleSaveOrder}
+						disabled={reorderRoutesMutation.isPending}
+						className="text-sm text-accent-primary font-semibold text-left"
+					>
+						{reorderRoutesMutation.isPending ? "Saving…" : "Done"}
+					</button>
+				) : (
+					<button
+						type="button"
+						onClick={handleStartReorder}
+						className="text-sm text-accent-primary text-left"
+					>
+						Edit order
+					</button>
+				))}
+
+			{isReordering ? (
+				<DndContext
+					sensors={sensors}
+					collisionDetection={closestCenter}
+					onDragEnd={handleDragEnd}
 				>
-					<button
-						type="button"
-						disabled={route.status === "pending"}
-						className="flex-1 text-left flex items-center justify-between gap-2 disabled:opacity-60"
-						onClick={() =>
-							navigate({
-								to: "/routes/$routeId",
-								params: { routeId: route.id },
-							})
-						}
+					<SortableContext
+						items={reorderList.map((r) => r.id)}
+						strategy={verticalListSortingStrategy}
 					>
-						<span className="font-medium">{route.name}</span>
-						<div className="flex items-center gap-2">
-							<span className="text-xs text-text-secondary">{route.grade}</span>
-							<span className="text-xs text-text-tertiary">
-								{route.route_type}
-							</span>
-							{route.status === "pending" && (
-								<span className="text-xs text-amber-400">pending</span>
-							)}
-						</div>
-					</button>
-					<button
-						type="button"
-						className="shrink-0 text-xs text-accent-primary font-semibold"
-						onClick={() => setDataModalRouteId(route.id)}
+						{reorderList.map((route) => (
+							<SortableRouteCard key={route.id} route={route} />
+						))}
+					</SortableContext>
+				</DndContext>
+			) : (
+				routes.map((route) => (
+					<div
+						key={route.id}
+						className="rounded-lg bg-surface-card p-4 flex items-center gap-2"
 					>
-						Data
-					</button>
-				</div>
-			))}
+						<button
+							type="button"
+							disabled={route.status === "pending"}
+							className="flex-1 text-left flex items-center justify-between gap-2 disabled:opacity-60"
+							onClick={() =>
+								navigate({
+									to: "/routes/$routeId",
+									params: { routeId: route.id },
+								})
+							}
+						>
+							<span className="font-medium">{route.name}</span>
+							<div className="flex items-center gap-2">
+								<span className="text-xs text-text-secondary">
+									{route.grade}
+								</span>
+								<span className="text-xs text-text-tertiary">
+									{route.route_type}
+								</span>
+								{route.status === "pending" && (
+									<span className="text-xs text-accent-secondary">pending</span>
+								)}
+							</div>
+						</button>
+						<button
+							type="button"
+							className="shrink-0 text-xs text-accent-primary font-semibold"
+							onClick={() => setDataModalRouteId(route.id)}
+						>
+							Data
+						</button>
+					</div>
+				))
+			)}
 
 			<Button
 				type="button"

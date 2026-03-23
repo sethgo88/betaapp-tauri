@@ -10,9 +10,25 @@ import type {
 export async function fetchRoutes(wallId: string): Promise<Route[]> {
 	const db = await getDb();
 	return db.select<Route[]>(
-		"SELECT * FROM routes_cache WHERE wall_id = ? ORDER BY name ASC",
+		"SELECT * FROM routes_cache WHERE wall_id = ? ORDER BY sort_order ASC, name ASC",
 		[wallId],
 	);
+}
+
+export async function reorderRoutes(orderedIds: string[]): Promise<void> {
+	const db = await getDb();
+	for (let i = 0; i < orderedIds.length; i++) {
+		// biome-ignore lint/suspicious/noExplicitAny: sort_order not yet in generated types
+		const { error } = await (supabase as any)
+			.from("routes")
+			.update({ sort_order: i })
+			.eq("id", orderedIds[i]);
+		if (error) throw error;
+		await db.execute("UPDATE routes_cache SET sort_order = ? WHERE id = ?", [
+			i,
+			orderedIds[i],
+		]);
+	}
 }
 
 export async function fetchRoute(id: string): Promise<Route | null> {
