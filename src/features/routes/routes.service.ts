@@ -85,7 +85,7 @@ export async function editRoute(
 		wall_id: string;
 		name: string;
 		grade: string;
-		route_type: "sport" | "boulder";
+		route_type: "sport" | "boulder" | "trad";
 		description?: string;
 	},
 ): Promise<void> {
@@ -147,7 +147,7 @@ export type UnverifiedRoute = {
 	wall_id: string;
 	name: string;
 	grade: string;
-	route_type: "sport" | "boulder";
+	route_type: "sport" | "boulder" | "trad";
 	description: string | null;
 	status: "pending" | "verified" | "rejected";
 	created_by: string;
@@ -256,7 +256,7 @@ export async function updateRouteFields(
 	values: {
 		name: string;
 		grade: string;
-		route_type: "sport" | "boulder";
+		route_type: "sport" | "boulder" | "trad";
 		description?: string;
 	},
 ): Promise<void> {

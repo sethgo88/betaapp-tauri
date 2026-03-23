@@ -66,7 +66,7 @@ const addClimbRoute = createRoute({
 		routeId: z.string().optional(),
 		routeName: z.string().optional(),
 		grade: z.string().optional(),
-		routeType: z.enum(["sport", "boulder"]).optional(),
+		routeType: z.enum(["sport", "boulder", "trad"]).optional(),
 	}),
 	component: AddClimbView,
 });

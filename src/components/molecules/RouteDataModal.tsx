@@ -6,7 +6,7 @@ interface RouteDataModalProps {
 	onClose: () => void;
 	routeId: string;
 	routeName: string;
-	routeType: "sport" | "boulder";
+	routeType: "sport" | "boulder" | "trad";
 }
 
 export function RouteDataModal({

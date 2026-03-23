@@ -3,7 +3,7 @@ import { supabase } from "@/lib/supabase";
 import type { Grade } from "./grades.schema";
 
 export async function fetchGrades(
-	discipline: "sport" | "boulder",
+	discipline: "sport" | "boulder" | "trad",
 ): Promise<Grade[]> {
 	const db = await getDb();
 	return db.select<Grade[]>(

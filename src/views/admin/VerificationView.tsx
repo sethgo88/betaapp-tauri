@@ -72,13 +72,13 @@ const EditRouteForm = ({
 	onSave: (values: {
 		name: string;
 		grade: string;
-		route_type: "sport" | "boulder";
+		route_type: "sport" | "boulder" | "trad";
 		description?: string;
 	}) => void;
 	onCancel: () => void;
 }) => {
 	const [name, setName] = useState(route.name);
-	const [routeType, setRouteType] = useState<"sport" | "boulder">(
+	const [routeType, setRouteType] = useState<"sport" | "boulder" | "trad">(
 		route.route_type,
 	);
 	const [grade, setGrade] = useState(route.grade);
@@ -95,7 +95,7 @@ const EditRouteForm = ({
 			<Select
 				value={routeType}
 				onChange={(e) => {
-					const val = e.target.value as "sport" | "boulder";
+					const val = e.target.value as "sport" | "boulder" | "trad";
 					setRouteType(val);
 					setGrade("");
 				}}
@@ -246,7 +246,7 @@ const RouteRow = ({ route }: { route: UnverifiedRoute }) => {
 	const handleSaveEdit = (values: {
 		name: string;
 		grade: string;
-		route_type: "sport" | "boulder";
+		route_type: "sport" | "boulder" | "trad";
 		description?: string;
 	}) => {
 		updateFields(
