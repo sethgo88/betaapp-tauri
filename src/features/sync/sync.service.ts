@@ -85,10 +85,10 @@ export async function pullClimbs(
 	for (const row of data) {
 		await db.execute(
 			`INSERT OR REPLACE INTO climbs
-       (id, user_id, name, route_type, grade, moves, sent_status,
+       (id, user_id, name, route_type, grade, moves, sent_status, sent_date,
         country, area, sub_area, crag, wall, route_location, link, route_id,
         created_at, updated_at, deleted_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			[
 				row.id,
 				row.user_id,
@@ -97,6 +97,7 @@ export async function pullClimbs(
 				row.grade,
 				row.moves,
 				row.sent_status,
+				row.sent_date ?? null,
 				row.country ?? null,
 				row.area ?? null,
 				row.sub_area ?? null,
