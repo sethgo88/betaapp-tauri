@@ -1,4 +1,5 @@
 import { ChevronDown } from "lucide-react";
+import { useEffect, useRef } from "react";
 import type { Climb } from "@/features/climbs/climbs.schema";
 import type { SortKey } from "@/features/climbs/climbs.store";
 import { useClimbsStore } from "@/features/climbs/climbs.store";
@@ -51,6 +52,19 @@ export const FilterPanel = ({ climbs }: FilterPanelProps) => {
 	const sortKey = useClimbsStore((s) => s.sortKey);
 	const setSortKey = useClimbsStore((s) => s.setSortKey);
 
+	const wrapperRef = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		if (!filtersOpen) return;
+		const handleClick = (e: MouseEvent) => {
+			if (!wrapperRef.current?.contains(e.target as Node)) {
+				setFiltersOpen(false);
+			}
+		};
+		document.addEventListener("mousedown", handleClick);
+		return () => document.removeEventListener("mousedown", handleClick);
+	}, [filtersOpen, setFiltersOpen]);
+
 	// Status counts are filtered by active type filters
 	const typeFiltered = climbs.filter((c) => typeFilters.has(c.route_type));
 	const statusCounts = {
@@ -65,14 +79,24 @@ export const FilterPanel = ({ climbs }: FilterPanelProps) => {
 		boulder: statusFiltered.filter((c) => c.route_type === "boulder").length,
 	};
 
+	const isNonDefault =
+		statusFilters.size !== 2 ||
+		!statusFilters.has("sent") ||
+		!statusFilters.has("project") ||
+		typeFilters.size !== 2 ||
+		sortKey !== "name_asc";
+
 	return (
-		<div>
+		<div className="relative" ref={wrapperRef}>
 			<button
 				type="button"
-				className="flex items-center gap-1 text-sm text-text-secondary w-full"
+				className="flex items-center gap-1.5 text-sm text-text-secondary"
 				onClick={() => setFiltersOpen(!filtersOpen)}
 			>
 				<span>Filter / Sort</span>
+				{isNonDefault && (
+					<span className="w-2 h-2 rounded-full bg-accent-primary" />
+				)}
 				<ChevronDown
 					size={16}
 					className={cn("transition-transform", filtersOpen && "rotate-180")}
@@ -80,7 +104,7 @@ export const FilterPanel = ({ climbs }: FilterPanelProps) => {
 			</button>
 
 			{filtersOpen && (
-				<div className="mt-2 flex flex-col gap-3 rounded-[var(--radius-lg)] bg-surface-card border border-card-border p-3">
+				<div className="absolute top-full left-0 mt-1 z-10 w-64 flex flex-col gap-3 rounded-[var(--radius-lg)] bg-surface-card border border-card-border p-3 shadow-card">
 					<div>
 						<p className="text-xs text-text-secondary uppercase tracking-wide mb-1">
 							Status

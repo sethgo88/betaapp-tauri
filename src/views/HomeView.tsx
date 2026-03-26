@@ -53,12 +53,14 @@ const HomeView = () => {
 
 	return (
 		<div className="flex flex-col gap-3">
-			<Input
-				placeholder="Search climbs…"
-				value={searchText}
-				onChange={(e) => setSearchText(e.target.value)}
-			/>
-			<FilterPanel climbs={climbs} />
+			<div className="sticky top-0 z-10 bg-surface-page -mx-4 px-4 -mt-4 pt-[env(safe-area-inset-top)] pb-2 flex flex-col gap-2">
+				<Input
+					placeholder="Search climbs…"
+					value={searchText}
+					onChange={(e) => setSearchText(e.target.value)}
+				/>
+				<FilterPanel climbs={climbs} />
+			</div>
 			<ul className="flex flex-col gap-1.5">
 				{filtered.map((climb) => (
 					<ClimbCard
