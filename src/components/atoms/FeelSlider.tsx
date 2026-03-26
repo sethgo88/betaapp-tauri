@@ -1,12 +1,12 @@
 import { cn } from "@/lib/cn";
 
 const FEEL_LABELS: Record<number, string> = {
-	0: "Impossible",
-	1: "Very far",
-	2: "Far",
-	3: "Getting closer",
-	4: "Close",
-	5: "It will go",
+	0: "0",
+	1: "1",
+	2: "2",
+	3: "3",
+	4: "4",
+	5: "5",
 };
 
 interface FeelSliderProps {
@@ -28,10 +28,8 @@ export const FeelSlider = ({ value, onChange }: FeelSliderProps) => {
 							{/* label above selected */}
 							<span
 								className={cn(
-									"absolute bottom-full mb-2 text-xs whitespace-nowrap transition-opacity",
-									selected
-										? "text-accent-primary opacity-100"
-										: "opacity-0 pointer-events-none",
+									"absolute bottom-full mb-2 text-xs whitespace-nowrap",
+									selected && "text-accent-primary",
 								)}
 							>
 								{FEEL_LABELS[step]}
