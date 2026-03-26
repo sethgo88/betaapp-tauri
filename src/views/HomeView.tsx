@@ -1,4 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { Input } from "@/components/atoms/Input";
 import { Spinner } from "@/components/atoms/Spinner";
 import { ClimbCard } from "@/components/molecules/ClimbCard";
@@ -14,6 +15,11 @@ const HomeView = () => {
 	const setSearchText = useClimbsStore((s) => s.setSearchText);
 	const statusFilters = useClimbsStore((s) => s.statusFilters);
 	const typeFilters = useClimbsStore((s) => s.typeFilters);
+	const setFiltersOpen = useClimbsStore((s) => s.setFiltersOpen);
+
+	useEffect(() => {
+		setFiltersOpen(false);
+	}, [setFiltersOpen]);
 
 	if (isLoading) {
 		return (

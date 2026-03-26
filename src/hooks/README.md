@@ -48,9 +48,12 @@ useAndroidBackButton()
 
 **What it does:**
 - Registers `onBackButtonPress` from `@tauri-apps/api/app`
+- If `backHandlerOverride` is set in `ui.store` (e.g. a modal is open): calls that instead of navigating — the modal is responsible for setting and clearing the override
 - If `router.history.length > 1`: calls `router.history.back()`
 - At root: does nothing — the OS closes the app naturally
 - Cleans up via `listener.unregister()` on unmount
+
+**Override pattern:** Components that render an overlay (modal, bottom sheet) can intercept the back button by calling `useUiStore.setBackHandlerOverride(fn)` on mount and `setBackHandlerOverride(null)` on unmount. The `useBackHandlerOverride(fn)` helper inside `MapView.tsx` demonstrates this pattern.
 
 ---
 
@@ -68,6 +71,30 @@ const currentRoute = useCurrentRoute() // e.g. "/" or "/search"
 **What it does:**
 - Returns the current pathname from TanStack Router state via `useRouterState`
 - Used by `NavBar` to apply `text-accent-primary` to the active icon
+
+---
+
+## useTopBar
+
+**File:** `useTopBar.ts`
+**Call from:** `AppLayout` — once, unconditionally.
+
+```ts
+import { useTopBar } from '@/hooks/useTopBar'
+
+const topBar = useTopBar()
+// topBar.backLabel   — parent name for back button ("Astral Wall", "Home", etc.), null if no back button
+// topBar.goBack()    — navigate to parent
+// topBar.siblings    — sibling items at current level [{id, label, sublabel?, isCurrent}]
+// topBar.goToSibling(id) — navigate to a sibling
+```
+
+**What it does:**
+- Parses the current route to determine the back button target and sibling context
+- Hierarchy views (region, sub-region, crag, wall, route detail): back goes to parent, siblings show peers at the same level
+- Edit views: back goes to the detail view being edited
+- Most other views: back goes to Home
+- HomeView and ResetPasswordView: no back button (backLabel is null)
 
 ---
 

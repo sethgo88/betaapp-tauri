@@ -3,16 +3,19 @@ import { useAuthStore } from "@/features/auth/auth.store";
 import { pushClimbs } from "@/features/sync/sync.service";
 import { useUiStore } from "@/stores/ui.store";
 import type { ClimbFormValues } from "./climbs.schema";
-import { fetchClimbStats, type Discipline } from "./climbs.stats";
 import {
 	fetchClimb,
 	fetchClimbs,
+	fetchUnlinkedClimbs,
 	insertClimb,
 	linkClimbToRoute,
+	linkExistingClimbToRoute,
 	softDeleteClimb,
+	unlinkClimbFromRoute,
 	updateClimb,
 	updateClimbMoves,
 } from "./climbs.service";
+import { type Discipline, fetchClimbStats } from "./climbs.stats";
 import { useClimbsStore } from "./climbs.store";
 
 const CLIMBS_KEY = "climbs";
@@ -40,9 +43,10 @@ const silentPush = (userId: string | undefined) => {
 	const { addToast } = useUiStore.getState();
 	pushClimbs(userId)
 		.then(() => addToast({ message: "Synced", type: "success" }))
-		.catch(() =>
-			addToast({ message: "Sync failed — saved offline", type: "error" }),
-		);
+		.catch((err) => {
+			console.error("[silentPush] Supabase push failed:", err);
+			addToast({ message: "Sync failed — saved offline", type: "error" });
+		});
 };
 
 export function useAddClimb() {
@@ -89,6 +93,40 @@ export function useLinkClimbToRoute() {
 	return useMutation({
 		mutationFn: ({ climbId, routeId }: { climbId: string; routeId: string }) =>
 			linkClimbToRoute(climbId, routeId),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: [CLIMBS_KEY] });
+			silentPush(userId);
+		},
+	});
+}
+
+export function useUnlinkClimbFromRoute() {
+	const qc = useQueryClient();
+	const userId = useAuthStore((s) => s.user?.id);
+	return useMutation({
+		mutationFn: (climbId: string) => unlinkClimbFromRoute(climbId),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: [CLIMBS_KEY] });
+			silentPush(userId);
+		},
+	});
+}
+
+export function useUnlinkedClimbs() {
+	const userId = useAuthStore((s) => s.user?.id);
+	return useQuery({
+		queryKey: [CLIMBS_KEY, "unlinked", userId],
+		queryFn: () => fetchUnlinkedClimbs(userId ?? ""),
+		enabled: !!userId,
+	});
+}
+
+export function useLinkExistingClimbToRoute() {
+	const qc = useQueryClient();
+	const userId = useAuthStore((s) => s.user?.id);
+	return useMutation({
+		mutationFn: ({ climbId, routeId }: { climbId: string; routeId: string }) =>
+			linkExistingClimbToRoute(climbId, routeId),
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: [CLIMBS_KEY] });
 			silentPush(userId);

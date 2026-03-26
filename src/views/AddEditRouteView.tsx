@@ -65,7 +65,7 @@ const AddEditRouteView = ({ routeId }: AddEditRouteViewProps) => {
 
 	// Form state
 	const [name, setName] = useState("");
-	const [routeType, setRouteType] = useState<"sport" | "boulder">("sport");
+	const [routeType, setRouteType] = useState<"sport" | "boulder" | "trad">("sport");
 	const [grade, setGrade] = useState("");
 	const [description, setDescription] = useState("");
 	const [selection, setSelection] = useState<LocationSelection>({
@@ -193,14 +193,6 @@ const AddEditRouteView = ({ routeId }: AddEditRouteViewProps) => {
 
 	return (
 		<div className="flex flex-col gap-4">
-			<button
-				type="button"
-				className="text-text-secondary text-sm text-left"
-				onClick={() => router.history.back()}
-			>
-				← Back
-			</button>
-
 			<h1 className="text-lg font-display font-semibold">{title}</h1>
 
 			{/* Location — tappable summary opens full-screen sheet */}
@@ -282,13 +274,14 @@ const AddEditRouteView = ({ routeId }: AddEditRouteViewProps) => {
 				<Select
 					value={routeType}
 					onChange={(e) => {
-						const val = e.target.value as "sport" | "boulder";
+						const val = e.target.value as "sport" | "boulder" | "trad";
 						setRouteType(val);
 						setGrade("");
 					}}
 				>
 					<option value="sport">Sport</option>
 					<option value="boulder">Boulder</option>
+					<option value="trad">Trad</option>
 				</Select>
 
 				<Select

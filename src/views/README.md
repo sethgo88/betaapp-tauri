@@ -23,7 +23,7 @@ Router defined in `src/router.tsx` using `createMemoryHistory` (required for And
 | `/sub-regions/$subRegionId` | `SubRegionView` | required | Crags list with admin-editable description |
 | `/crags/$cragId` | `CragView` | required | Walls list with admin-editable description; tap navigates to WallView |
 | `/walls/$wallId` | `WallView` | required | Routes list with admin-editable description; tap navigates to RouteDetailView |
-| `/routes/$routeId` | `RouteDetailView` | required | Route detail with grade, type, description; "Log this climb" button |
+| `/routes/$routeId` | `RouteDetailView` | required | Route detail with grade, type, description; "Log this climb" button; admin inline edit for name/grade/type |
 | `/routes/submit` | `SubmitRouteView` | required | Submit a new route (`?wallId=&wallName=`) — legacy; use `/routes/add` |
 | `/locations/add` | `AddLocationView` | required | Add a sub-area/crag/wall using location drill-down; admin creates verified, user creates pending |
 | `/routes/add` | `AddEditRouteView` | required | Add a new route with location drill-down; admin creates verified, user creates pending |

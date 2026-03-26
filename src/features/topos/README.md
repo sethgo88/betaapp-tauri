@@ -56,10 +56,11 @@ Mirror the SQLite schema: `wall_topos`, `wall_topo_lines`, `route_topos`.
 | `useWallTopoLines(topoId)` | Fetch wall topo lines |
 | `useRouteTopo(routeId)` | Fetch route topo |
 | `useUploadWallTopoImage(wallId)` | Upload image and create/update wall topo |
+| `useSetWallTopoFromUrl(wallId)` | Set wall topo from existing gallery image URL (no upload) |
 | `useUpsertWallTopoLine(wallId)` | Save a route line |
 | `useDeleteWallTopoLine(topoId)` | Delete a route line |
 | `useDeleteWallTopo(wallId)` | Delete entire wall topo |
-| `useUpsertRouteTopo(routeId)` | Save route topo (image + points) |
+| `useUpsertRouteTopo(routeId)` | Save route topo (image + points); accepts optional `imageUrl` for gallery images |
 | `useDeleteRouteTopo(routeId)` | Delete route topo |
 
 ## Colors

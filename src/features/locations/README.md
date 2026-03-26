@@ -25,8 +25,8 @@ Country
 CountrySchema    = { id, name, code, sort_order, created_at }
 RegionSchema     = { id, country_id, name, sort_order, created_at }
 SubRegionSchema  = { id, region_id, name, description?, sort_order, status, created_by?, created_at }
-CragSchema       = { id, sub_region_id, name, description?, sort_order, status, created_by?, created_at, lat?, lng?, sport_count, trad_count, boulder_count }
-WallSchema       = { id, crag_id, name, description?, sort_order, status, created_by?, created_at, lat?, lng?, wall_type, sport_count, trad_count, boulder_count }
+CragSchema       = { id, sub_region_id, name, description?, approach?, sort_order, status, created_by?, created_at, lat?, lng?, sport_count, trad_count, boulder_count }
+WallSchema       = { id, crag_id, name, description?, approach?, sort_order, status, created_by?, created_at, lat?, lng?, wall_type, sport_count, trad_count, boulder_count }
 
 // wall_type: 'wall' | 'boulder' — physical feature type, set at creation
 
@@ -44,8 +44,8 @@ CREATE TABLE IF NOT EXISTS regions_cache   (id, country_id, name, sort_order, cr
 
 -- Populated on-demand / region download
 CREATE TABLE IF NOT EXISTS sub_regions_cache (id, region_id, name, description, sort_order, status, created_by, created_at);
-CREATE TABLE IF NOT EXISTS crags_cache       (id, sub_region_id, name, description, sort_order, status, created_by, created_at, lat, lng, sport_count, trad_count, boulder_count);
-CREATE TABLE IF NOT EXISTS walls_cache       (id, crag_id, name, description, sort_order, status, created_by, created_at, lat, lng, wall_type, sport_count, trad_count, boulder_count);
+CREATE TABLE IF NOT EXISTS crags_cache       (id, sub_region_id, name, description, approach, sort_order, status, created_by, created_at, lat, lng, sport_count, trad_count, boulder_count);
+CREATE TABLE IF NOT EXISTS walls_cache       (id, crag_id, name, description, approach, sort_order, status, created_by, created_at, lat, lng, wall_type, sport_count, trad_count, boulder_count);
 
 -- Download tracking
 CREATE TABLE IF NOT EXISTS downloaded_regions (region_id TEXT PRIMARY KEY, downloaded_at TEXT, server_updated_at TEXT);
@@ -113,8 +113,9 @@ Admin submissions are auto-verified and immediately visible to all users. Non-ad
 | `verifyLocation(table, id)` | Sets `status='verified'` in Supabase + local cache |
 | `rejectLocation(table, id)` | Sets `status='rejected'` + `deleted_at` in Supabase; `status='rejected'` in local cache |
 | `updateLocationDescription(table, id, description)` | Admin: updates description in Supabase + local cache |
+| `updateLocationApproach(table, id, approach)` | Admin: updates approach text in Supabase + local cache |
 
-`table` is `'sub_regions' | 'crags' | 'walls'`.
+`table` for description is `'sub_regions' | 'crags' | 'walls'`; `table` for approach is `'crags' | 'walls'`.
 
 ### Admin writes (Supabase direct)
 
@@ -152,6 +153,7 @@ useSubmitCrag()             // mutation — user submission
 useSubmitWall()             // mutation — user submission
 useSearchLocations(query)      // LIKE search across location caches (min 2 chars)
 useUpdateLocationDescription() // admin mutation — { table, id, description }
+useUpdateLocationApproach()    // admin mutation — { table: 'crags' | 'walls', id, approach }
 usePendingLocations()       // admin — all pending items
 useVerifyLocation()         // admin mutation — { table, id }
 useRejectLocation()         // admin mutation — { table, id }
@@ -171,8 +173,8 @@ public.countries   (id, name, code, sort_order, created_at)
 public.regions     (id, country_id, name, sort_order, created_at, updated_at)
 -- updated_at: maintained by trigger; bumped whenever a sub_region/crag/wall/route in this region is changed
 public.sub_regions (id, region_id, name, sort_order, created_at)
-public.crags       (id, sub_region_id, name, sort_order, created_at, lat, lng, sport_count, trad_count, boulder_count)
-public.walls       (id, crag_id, name, sort_order, created_at, lat, lng, wall_type, sport_count, trad_count, boulder_count)
+public.crags       (id, sub_region_id, name, description, approach, sort_order, created_at, lat, lng, sport_count, trad_count, boulder_count)
+public.walls       (id, crag_id, name, description, approach, sort_order, created_at, lat, lng, wall_type, sport_count, trad_count, boulder_count)
 -- RLS: authenticated users SELECT only; service role writes
 -- crags and walls have optional lat/lng REAL columns for map coordinates
 -- wall_type: 'wall' | 'boulder' — physical feature type

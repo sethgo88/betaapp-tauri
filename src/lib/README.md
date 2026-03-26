@@ -69,6 +69,10 @@ Versioned migration runner. Maintains a `schema_version` table (single row) and 
 | v17 | Backfill `server_updated_at` on `downloaded_regions` for devices that skipped v15 |
 | v18 | `crag`, `wall` on `climbs` — full 5-level location breadcrumb (#44) |
 | v19 | `wall_topos_cache`, `wall_topo_lines_cache`, `route_topos_cache` tables for topo photos |
+| v20 | `approach` on `crags_cache` and `walls_cache` (#92) |
+| v21 | `feel` on `burns` (#93) |
+| v22 | `sent_date` on `climbs` — date the climb was sent (#100) |
+| v23 | `sort_order` on `routes_cache` — admin-defined display order (#148) |
 
 ### Rules
 - Always use `?` positional parameters — never string interpolation (SQL injection)

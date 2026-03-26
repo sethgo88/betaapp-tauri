@@ -1,59 +1,13 @@
 import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import type {
-	RouteTopo,
-	WallTopo,
-	WallTopoLine,
-} from "@/features/topos/topos.schema";
-import { RouteTopoViewer, WallTopoPanel, WallTopoViewer } from "./TopoViewer";
 
-interface RouteInfo {
-	id: string;
-	name: string;
-	grade: string;
-	route_type: "sport" | "boulder" | "trad";
-}
-
-interface BaseProps {
+interface PhotoViewerProps {
+	src: string;
 	onClose: () => void;
 }
 
-interface WallTopoModalProps extends BaseProps {
-	mode: "wall";
-	topo: WallTopo;
-	lines: WallTopoLine[];
-	routes: RouteInfo[];
-}
-
-interface WallSingleTopoModalProps extends BaseProps {
-	mode: "wall-single";
-	topo: WallTopo;
-	lines: WallTopoLine[];
-	routes: RouteInfo[];
-	routeId: string;
-}
-
-interface RouteTopoModalProps extends BaseProps {
-	mode: "route";
-	topo: RouteTopo;
-}
-
-type TopoModalProps =
-	| WallTopoModalProps
-	| WallSingleTopoModalProps
-	| RouteTopoModalProps;
-
-export const TopoModal = (props: TopoModalProps) => {
-	const { onClose } = props;
-
-	// Wall mode: route selection state lifted out of WallTopoViewer so panel stays outside zoom
-	const [wallSelectedRouteId, setWallSelectedRouteId] = useState<string | null>(
-		null,
-	);
-
-	// Transform state: translate + scale (so we can pan independently of zoom)
+export const PhotoViewer = ({ src, onClose }: PhotoViewerProps) => {
 	const [xf, setXf] = useState({ scale: 1, tx: 0, ty: 0, animated: false });
-	// Live ref so touch handlers always see current values without stale closures
 	const xfRef = useRef(xf);
 	const containerRef = useRef<HTMLDivElement>(null);
 	const lastPinchDist = useRef<number | null>(null);
@@ -71,14 +25,12 @@ export const TopoModal = (props: TopoModalProps) => {
 		animated = false,
 	) => {
 		const s = clamp(scale, 1, 4);
-		// At 1× zoom: always snap to center (no panning)
 		if (s === 1) {
 			const next = { scale: 1, tx: 0, ty: 0, animated };
 			xfRef.current = next;
 			setXf(next);
 			return;
 		}
-		// Clamp pan so image edges can't go past the container edges
 		const rect = containerRef.current?.getBoundingClientRect();
 		const maxTx = rect ? (rect.width * (s - 1)) / 2 : 0;
 		const maxTy = rect ? (rect.height * (s - 1)) / 2 : 0;
@@ -92,7 +44,6 @@ export const TopoModal = (props: TopoModalProps) => {
 		setXf(next);
 	};
 
-	// Close on Android back (Escape key)
 	useEffect(() => {
 		const handler = (e: KeyboardEvent) => {
 			if (e.key === "Escape") onClose();
@@ -139,7 +90,6 @@ export const TopoModal = (props: TopoModalProps) => {
 			if (rect) {
 				const { scale, tx, ty } = xfRef.current;
 				const newScale = clamp(scale * (dist / lastPinchDist.current), 1, 4);
-				// Keep the pinch center point fixed in content space
 				const ccx = rect.left + rect.width / 2;
 				const ccy = rect.top + rect.height / 2;
 				const contentPx = (lastPinchMid.current.x - ccx - tx) / scale;
@@ -152,7 +102,6 @@ export const TopoModal = (props: TopoModalProps) => {
 			lastPinchDist.current = dist;
 			lastPinchMid.current = newMid;
 		} else if (e.touches.length === 1 && lastPanTouch.current !== null) {
-			// Single-finger pan — only when zoomed in
 			const { scale, tx, ty } = xfRef.current;
 			if (scale <= 1) return;
 			const panDx = e.touches[0].clientX - lastPanTouch.current.x;
@@ -167,7 +116,6 @@ export const TopoModal = (props: TopoModalProps) => {
 
 	const handleTouchEnd = (e: React.TouchEvent) => {
 		if (e.touches.length === 1) {
-			// Transition from pinch back to single finger — resume pan
 			lastPinchDist.current = null;
 			lastPinchMid.current = null;
 			lastPanTouch.current = {
@@ -178,7 +126,6 @@ export const TopoModal = (props: TopoModalProps) => {
 			lastPinchDist.current = null;
 			lastPinchMid.current = null;
 			lastPanTouch.current = null;
-			// Double-tap to reset zoom
 			if (e.changedTouches.length === 1) {
 				const now = Date.now();
 				if (now - lastTap.current < 300) {
@@ -193,7 +140,7 @@ export const TopoModal = (props: TopoModalProps) => {
 		<div className="fixed inset-0 z-50 bg-black flex flex-col">
 			{/* Header */}
 			<div
-				className="shrink-0 flex items-center px-4 py-3"
+				className="shrink-0 flex items-center justify-end px-4 py-3"
 				style={{ paddingTop: "calc(env(safe-area-inset-top) + 0.75rem)" }}
 			>
 				<button
@@ -206,7 +153,7 @@ export const TopoModal = (props: TopoModalProps) => {
 				</button>
 			</div>
 
-			{/* Zoomable + pannable content */}
+			{/* Zoomable + pannable image */}
 			<div
 				ref={containerRef}
 				className="flex-1 overflow-hidden relative flex items-center justify-center"
@@ -216,44 +163,21 @@ export const TopoModal = (props: TopoModalProps) => {
 				style={{ touchAction: "none" }}
 			>
 				<div
-					className="w-full h-full"
+					className="w-full h-full flex items-center justify-center"
 					style={{
 						transform: `translate(${xf.tx}px, ${xf.ty}px) scale(${xf.scale})`,
 						transformOrigin: "center center",
 						transition: xf.animated ? "transform 0.2s ease-out" : "none",
 					}}
 				>
-					{props.mode === "wall" && (
-						<WallTopoViewer
-							topo={props.topo}
-							lines={props.lines}
-							routes={props.routes}
-							selectedRouteId={wallSelectedRouteId}
-							onSelectRoute={setWallSelectedRouteId}
-							imageOnly={true}
-						/>
-					)}
-					{props.mode === "wall-single" && (
-						<WallTopoViewer
-							topo={props.topo}
-							lines={props.lines}
-							routes={props.routes}
-							singleRouteId={props.routeId}
-						/>
-					)}
-					{props.mode === "route" && <RouteTopoViewer topo={props.topo} />}
+					<img
+						src={src}
+						alt=""
+						className="max-w-full max-h-full object-contain"
+						draggable={false}
+					/>
 				</div>
 			</div>
-
-			{/* Route list panel — outside zoom so it stays fixed */}
-			{props.mode === "wall" && (
-				<WallTopoPanel
-					lines={props.lines}
-					routes={props.routes}
-					selectedRouteId={wallSelectedRouteId}
-					onSelectRoute={setWallSelectedRouteId}
-				/>
-			)}
 		</div>
 	);
 };

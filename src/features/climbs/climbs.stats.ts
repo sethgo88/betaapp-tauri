@@ -49,7 +49,13 @@ export async function fetchGradeDistribution(
 	for (const row of rows) {
 		let bucket = map.get(row.grade);
 		if (!bucket) {
-			bucket = { grade: row.grade, sort_order: row.sort_order, sent: 0, project: 0, todo: 0 };
+			bucket = {
+				grade: row.grade,
+				sort_order: row.sort_order,
+				sent: 0,
+				project: 0,
+				todo: 0,
+			};
 			map.set(row.grade, bucket);
 		}
 		if (row.sent_group === "sent") bucket.sent += row.count;

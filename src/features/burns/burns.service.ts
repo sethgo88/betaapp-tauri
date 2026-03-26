@@ -17,9 +17,9 @@ export async function insertBurn(
 	const db = await getDb();
 	const id = crypto.randomUUID();
 	await db.execute(
-		`INSERT INTO burns (id, climb_id, user_id, date, outcome, notes)
-     VALUES (?, ?, ?, ?, 'attempt', ?)`,
-		[id, climbId, userId, data.date, data.notes ?? null],
+		`INSERT INTO burns (id, climb_id, user_id, date, outcome, notes, feel)
+     VALUES (?, ?, ?, ?, 'attempt', ?, ?)`,
+		[id, climbId, userId, data.date, data.notes ?? null, data.feel ?? null],
 	);
 }
 
@@ -29,9 +29,9 @@ export async function updateBurn(
 ): Promise<void> {
 	const db = await getDb();
 	await db.execute(
-		`UPDATE burns SET date = ?, notes = ?
+		`UPDATE burns SET date = ?, notes = ?, feel = ?
      WHERE id = ? AND deleted_at IS NULL`,
-		[data.date, data.notes ?? null, id],
+		[data.date, data.notes ?? null, data.feel ?? null, id],
 	);
 }
 
@@ -47,9 +47,9 @@ export async function applyRemoteBurn(burn: Burn): Promise<void> {
 	const db = await getDb();
 	await db.execute(
 		`INSERT OR REPLACE INTO burns
-     (id, climb_id, user_id, date, outcome, notes,
+     (id, climb_id, user_id, date, outcome, notes, feel,
       created_at, updated_at, deleted_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		[
 			burn.id,
 			burn.climb_id,
@@ -57,6 +57,7 @@ export async function applyRemoteBurn(burn: Burn): Promise<void> {
 			burn.date,
 			burn.outcome,
 			burn.notes ?? null,
+			burn.feel ?? null,
 			burn.created_at,
 			burn.updated_at,
 			burn.deleted_at ?? null,

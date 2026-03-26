@@ -10,9 +10,25 @@ import type {
 export async function fetchRoutes(wallId: string): Promise<Route[]> {
 	const db = await getDb();
 	return db.select<Route[]>(
-		"SELECT * FROM routes_cache WHERE wall_id = ? ORDER BY name ASC",
+		"SELECT * FROM routes_cache WHERE wall_id = ? ORDER BY sort_order ASC, name ASC",
 		[wallId],
 	);
+}
+
+export async function reorderRoutes(orderedIds: string[]): Promise<void> {
+	const db = await getDb();
+	for (let i = 0; i < orderedIds.length; i++) {
+		// biome-ignore lint/suspicious/noExplicitAny: sort_order not yet in generated types
+		const { error } = await (supabase as any)
+			.from("routes")
+			.update({ sort_order: i })
+			.eq("id", orderedIds[i]);
+		if (error) throw error;
+		await db.execute("UPDATE routes_cache SET sort_order = ? WHERE id = ?", [
+			i,
+			orderedIds[i],
+		]);
+	}
 }
 
 export async function fetchRoute(id: string): Promise<Route | null> {
@@ -69,7 +85,7 @@ export async function editRoute(
 		wall_id: string;
 		name: string;
 		grade: string;
-		route_type: "sport" | "boulder";
+		route_type: "sport" | "boulder" | "trad";
 		description?: string;
 	},
 ): Promise<void> {
@@ -131,7 +147,7 @@ export type UnverifiedRoute = {
 	wall_id: string;
 	name: string;
 	grade: string;
-	route_type: "sport" | "boulder";
+	route_type: "sport" | "boulder" | "trad";
 	description: string | null;
 	status: "pending" | "verified" | "rejected";
 	created_by: string;
@@ -240,7 +256,7 @@ export async function updateRouteFields(
 	values: {
 		name: string;
 		grade: string;
-		route_type: "sport" | "boulder";
+		route_type: "sport" | "boulder" | "trad";
 		description?: string;
 	},
 ): Promise<void> {
@@ -342,7 +358,8 @@ export async function searchVerifiedRoutes(
 export async function fetchRouteBodyStats(
 	routeId: string,
 ): Promise<RouteBodyStat[]> {
-	const { data, error } = await supabase.rpc("get_route_body_stats", {
+	// biome-ignore lint/suspicious/noExplicitAny: get_route_body_stats not in generated types
+	const { data, error } = await (supabase as any).rpc("get_route_body_stats", {
 		p_route_id: routeId,
 	});
 	if (error) throw error;

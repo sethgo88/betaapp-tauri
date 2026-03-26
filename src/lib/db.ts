@@ -469,6 +469,29 @@ const migrations: Migration[] = [
       )
     `);
 	},
+
+	// v20: approach text on crags_cache and walls_cache (#92)
+	async (db) => {
+		await db.execute(`ALTER TABLE crags_cache ADD COLUMN approach TEXT`);
+		await db.execute(`ALTER TABLE walls_cache ADD COLUMN approach TEXT`);
+	},
+
+	// v21: feel rating on burns (#93)
+	async (db) => {
+		await db.execute(`ALTER TABLE burns ADD COLUMN feel INTEGER`);
+	},
+
+	// v22: sent_date on climbs (#100)
+	async (db) => {
+		await db.execute(`ALTER TABLE climbs ADD COLUMN sent_date TEXT`);
+	},
+
+	// v23: sort_order on routes_cache (#148)
+	async (db) => {
+		await db.execute(
+			`ALTER TABLE routes_cache ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0`,
+		);
+	},
 ];
 
 export async function runMigrations(db: DbAdapter): Promise<void> {

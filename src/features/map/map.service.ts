@@ -5,6 +5,7 @@ export type PersonalCrag = {
 	name: string;
 	lat: number;
 	lng: number;
+	approach: string | null;
 	route_count: number;
 	climb_count: number;
 	sent_count: number;
@@ -25,6 +26,7 @@ export async function fetchPersonalCrags(
 			name: string;
 			lat: number;
 			lng: number;
+			approach: string | null;
 			route_count: number;
 			climb_count: number;
 			sent_count: number;
@@ -37,6 +39,7 @@ export async function fetchPersonalCrags(
 			c.name,
 			c.lat,
 			c.lng,
+			c.approach,
 			(SELECT COUNT(*) FROM routes_cache r2
 			 JOIN walls_cache w2 ON r2.wall_id = w2.id
 			 WHERE w2.crag_id = c.id) AS route_count,
@@ -61,6 +64,7 @@ export async function fetchPersonalCrags(
 		name: r.name,
 		lat: r.lat,
 		lng: r.lng,
+		approach: r.approach,
 		climb_count: r.climb_count,
 		route_count: r.route_count,
 		sent_count: r.sent_count,
@@ -79,11 +83,50 @@ export type PersonalWall = {
 	crag_name: string;
 	lat: number;
 	lng: number;
+	approach: string | null;
 	route_count: number;
 	sent_count: number;
 	project_count: number;
 	todo_count: number;
 };
+
+export type PinClimb = {
+	id: string;
+	name: string;
+	grade: string;
+	sent_status: string;
+};
+
+export async function fetchClimbsAtPin(
+	userId: string,
+	pinType: "crag" | "wall",
+	pinId: string,
+): Promise<PinClimb[]> {
+	const db = await getDb();
+	if (pinType === "crag") {
+		return db.select<PinClimb[]>(
+			`SELECT cl.id, cl.name, cl.grade, cl.sent_status
+			 FROM climbs cl
+			 JOIN routes_cache r ON r.id = cl.route_id
+			 JOIN walls_cache w ON w.id = r.wall_id
+			 WHERE w.crag_id = ?
+			   AND cl.user_id = ?
+			   AND cl.deleted_at IS NULL
+			 ORDER BY cl.name COLLATE NOCASE ASC`,
+			[pinId, userId],
+		);
+	}
+	return db.select<PinClimb[]>(
+		`SELECT cl.id, cl.name, cl.grade, cl.sent_status
+		 FROM climbs cl
+		 JOIN routes_cache r ON r.id = cl.route_id
+		 WHERE r.wall_id = ?
+		   AND cl.user_id = ?
+		   AND cl.deleted_at IS NULL
+		 ORDER BY cl.name COLLATE NOCASE ASC`,
+		[pinId, userId],
+	);
+}
 
 export async function fetchPersonalWalls(
 	userId: string,
@@ -97,6 +140,7 @@ export async function fetchPersonalWalls(
 			c.name AS crag_name,
 			w.lat,
 			w.lng,
+			w.approach,
 			(SELECT COUNT(*) FROM routes_cache r2 WHERE r2.wall_id = w.id) AS route_count,
 			SUM(CASE WHEN cl.sent_status IN ('sent', 'flash', 'redpoint', 'onsight') THEN 1 ELSE 0 END) AS sent_count,
 			SUM(CASE WHEN cl.sent_status = 'project' THEN 1 ELSE 0 END) AS project_count,

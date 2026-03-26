@@ -24,7 +24,7 @@ const ROUTE_TOPO_KEY = "route-topo";
 export function useWallTopo(wallId: string | null) {
 	return useQuery({
 		queryKey: [WALL_TOPO_KEY, wallId],
-		queryFn: () => fetchWallTopo(wallId!),
+		queryFn: () => fetchWallTopo(wallId as string),
 		enabled: !!wallId,
 	});
 }
@@ -32,7 +32,7 @@ export function useWallTopo(wallId: string | null) {
 export function useWallTopoLines(topoId: string | null) {
 	return useQuery({
 		queryKey: [WALL_TOPO_LINES_KEY, topoId],
-		queryFn: () => fetchWallTopoLines(topoId!),
+		queryFn: () => fetchWallTopoLines(topoId as string),
 		enabled: !!topoId,
 	});
 }
@@ -55,6 +55,21 @@ export function useUploadWallTopoImage(wallId: string) {
 				.getPublicUrl(storagePath);
 
 			await upsertWallTopo(wallId, data.publicUrl, user.id);
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: [WALL_TOPO_KEY, wallId] });
+		},
+	});
+}
+
+export function useSetWallTopoFromUrl(wallId: string) {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async (imageUrl: string) => {
+			const user = useAuthStore.getState().user;
+			if (!user) throw new Error("Not authenticated");
+			await upsertWallTopo(wallId, imageUrl, user.id);
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: [WALL_TOPO_KEY, wallId] });
@@ -92,7 +107,18 @@ export function useUpsertWallTopoLine(wallId: string) {
 			color: string;
 			sortOrder: number;
 		}) => upsertWallTopoLine(topoId, routeId, points, color, sortOrder),
-		onSuccess: (_data, { topoId }: { topoId: string; routeId: string; points: Point[]; color: string; sortOrder: number }) => {
+		onSuccess: (
+			_data,
+			{
+				topoId,
+			}: {
+				topoId: string;
+				routeId: string;
+				points: Point[];
+				color: string;
+				sortOrder: number;
+			},
+		) => {
 			queryClient.invalidateQueries({
 				queryKey: [WALL_TOPO_LINES_KEY, topoId],
 			});
@@ -120,7 +146,7 @@ export function useDeleteWallTopoLine(topoId: string) {
 export function useRouteTopo(routeId: string | null) {
 	return useQuery({
 		queryKey: [ROUTE_TOPO_KEY, routeId],
-		queryFn: () => fetchRouteTopo(routeId!),
+		queryFn: () => fetchRouteTopo(routeId as string),
 		enabled: !!routeId,
 	});
 }
@@ -131,10 +157,12 @@ export function useUpsertRouteTopo(routeId: string) {
 	return useMutation({
 		mutationFn: async ({
 			file,
+			imageUrl: existingUrl,
 			points,
 			color,
 		}: {
 			file: File | null;
+			imageUrl?: string;
 			points: Point[];
 			color: string;
 		}) => {
@@ -153,6 +181,8 @@ export function useUpsertRouteTopo(routeId: string) {
 					.from("route-images")
 					.getPublicUrl(storagePath);
 				imageUrl = data.publicUrl;
+			} else if (existingUrl) {
+				imageUrl = existingUrl;
 			} else {
 				// Updating points only — get existing URL
 				const existing = await fetchRouteTopo(routeId);

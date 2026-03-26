@@ -4,23 +4,23 @@ import { ExternalLink, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
+import { Select } from "@/components/atoms/Select";
 import { Spinner } from "@/components/atoms/Spinner";
 import { AdminImageGallery } from "@/components/molecules/AdminImageGallery";
 import { EditableDescription } from "@/components/molecules/EditableDescription";
+import { LogClimbSheet } from "@/components/molecules/LogClimbSheet";
 import { RouteBodyChart } from "@/components/molecules/RouteBodyChart";
 import { TopoModal } from "@/components/molecules/TopoModal";
+import { RouteTopoViewer } from "@/components/molecules/TopoViewer";
 import { RouteTopoBuilder } from "@/components/organisms/TopoBuilder";
 import { useAuthStore } from "@/features/auth/auth.store";
-import {
-	useRouteTopo,
-	useWallTopo,
-	useWallTopoLines,
-} from "@/features/topos/topos.queries";
 import { useClimbs } from "@/features/climbs/climbs.queries";
+import { useGrades } from "@/features/grades/grades.queries";
 import {
 	useAddRouteImage,
 	useDeleteRouteImage,
 	useRouteImages,
+	useWallImages,
 } from "@/features/route-images/route-images.queries";
 import {
 	useAddRouteLink,
@@ -28,8 +28,14 @@ import {
 	useRoute,
 	useRouteLinks,
 	useUpdateRouteDescription,
+	useUpdateRouteFields,
 } from "@/features/routes/routes.queries";
 import { RouteLinkSubmitSchema } from "@/features/routes/routes.schema";
+import {
+	useRouteTopo,
+	useWallTopo,
+	useWallTopoLines,
+} from "@/features/topos/topos.queries";
 
 const RouteDetailView = () => {
 	const { routeId } = useParams({ from: "/routes/$routeId" });
@@ -48,13 +54,54 @@ const RouteDetailView = () => {
 	const existingClimb = climbs.find((c) => c.route_id === routeId);
 
 	// Topo data
+	const { data: wallImages = [] } = useWallImages(route?.wall_id ?? "");
 	const { data: routeTopo = null } = useRouteTopo(routeId);
 	const { data: wallTopo = null } = useWallTopo(route?.wall_id ?? null);
 	const { data: wallTopoLines = [] } = useWallTopoLines(wallTopo?.id ?? null);
-	const wallTopoLineForRoute = wallTopoLines.find((l) => l.route_id === routeId);
-	const showWallTopoFallback = !routeTopo && !!wallTopo && !!wallTopoLineForRoute;
+	const wallTopoLineForRoute = wallTopoLines.find(
+		(l) => l.route_id === routeId,
+	);
+	const showWallTopoFallback =
+		!routeTopo && !!wallTopo && !!wallTopoLineForRoute;
 	const [showTopoModal, setShowTopoModal] = useState(false);
+	const [showTopoEdit, setShowTopoEdit] = useState(false);
 
+	const updateRouteFields = useUpdateRouteFields();
+	const [editingMeta, setEditingMeta] = useState(false);
+	const [editName, setEditName] = useState("");
+	const [editRouteType, setEditRouteType] = useState<"sport" | "boulder" | "trad">(
+		"sport",
+	);
+	const [editGrade, setEditGrade] = useState("");
+	const { data: editGrades = [] } = useGrades(editRouteType);
+
+	const handleOpenMetaEdit = () => {
+		if (!route) return;
+		setEditName(route.name);
+		setEditRouteType(route.route_type);
+		setEditGrade(route.grade);
+		setEditingMeta(true);
+	};
+
+	const handleSaveMeta = () => {
+		if (!route) return;
+		const resolvedGrade =
+			editGrade || (editGrades.length > 0 ? editGrades[0].grade : "");
+		updateRouteFields.mutate(
+			{
+				id: routeId,
+				values: {
+					name: editName.trim(),
+					grade: resolvedGrade,
+					route_type: editRouteType,
+					description: route.description ?? undefined,
+				},
+			},
+			{ onSuccess: () => setEditingMeta(false) },
+		);
+	};
+
+	const [showLogSheet, setShowLogSheet] = useState(false);
 	const [linkUrl, setLinkUrl] = useState("");
 	const [linkTitle, setLinkTitle] = useState("");
 	const [linkError, setLinkError] = useState<string | null>(null);
@@ -104,28 +151,79 @@ const RouteDetailView = () => {
 
 	return (
 		<div className="flex flex-col gap-4">
-			<button
-				type="button"
-				className="text-text-secondary text-sm text-left"
-				onClick={() =>
-					navigate({
-						to: "/walls/$wallId",
-						params: { wallId: route.wall_id },
-					})
-				}
-			>
-				← Back to wall
-			</button>
-
-			<div>
-				<h1 className="text-xl font-display font-bold">{route.name}</h1>
-				<div className="flex items-center gap-2 mt-1">
-					<span className="text-text-secondary">{route.grade}</span>
-					<span className="text-xs px-2 py-0.5 rounded-full bg-surface-page text-text-secondary">
-						{route.route_type}
-					</span>
+			{editingMeta ? (
+				<div className="flex flex-col gap-2 rounded-lg bg-surface-card p-4">
+					<Input
+						placeholder="Route name"
+						value={editName}
+						onChange={(e) => setEditName(e.target.value)}
+					/>
+					<Select
+						value={editRouteType}
+						onChange={(e) => {
+							const val = e.target.value as "sport" | "boulder" | "trad";
+							setEditRouteType(val);
+							setEditGrade("");
+						}}
+					>
+						<option value="sport">Sport</option>
+						<option value="boulder">Boulder</option>
+						<option value="trad">Trad</option>
+					</Select>
+					<Select
+						value={
+							editGrade || (editGrades.length > 0 ? editGrades[0].grade : "")
+						}
+						onChange={(e) => setEditGrade(e.target.value)}
+					>
+						{editGrades.map((g) => (
+							<option key={g.id} value={g.grade}>
+								{g.grade}
+							</option>
+						))}
+					</Select>
+					<div className="flex gap-2">
+						<Button
+							type="button"
+							variant="primary"
+							size="small"
+							onClick={handleSaveMeta}
+							disabled={updateRouteFields.isPending || !editName.trim()}
+						>
+							{updateRouteFields.isPending ? "Saving…" : "Save"}
+						</Button>
+						<Button
+							type="button"
+							variant="secondary"
+							size="small"
+							onClick={() => setEditingMeta(false)}
+						>
+							Cancel
+						</Button>
+					</div>
 				</div>
-			</div>
+			) : (
+				<div>
+					<div className="flex items-start justify-between gap-2">
+						<h1 className="text-xl font-display font-bold">{route.name}</h1>
+						{isAdmin && (
+							<button
+								type="button"
+								onClick={handleOpenMetaEdit}
+								className="text-xs text-accent-primary shrink-0 mt-1"
+							>
+								Edit
+							</button>
+						)}
+					</div>
+					<div className="flex items-center gap-2 mt-1">
+						<span className="text-text-secondary">{route.grade}</span>
+						<span className="text-xs px-2 py-0.5 rounded-full bg-surface-page text-text-secondary">
+							{route.route_type}
+						</span>
+					</div>
+				</div>
+			)}
 
 			<EditableDescription
 				description={route.description}
@@ -153,23 +251,63 @@ const RouteDetailView = () => {
 					<button
 						type="button"
 						onClick={() => setShowTopoModal(true)}
-						className="relative w-full rounded-[var(--radius-md)] overflow-hidden"
+						className="relative max-w-1/2 max-h-75 rounded-[var(--radius-md)] overflow-hidden"
 						aria-label="View topo"
 					>
-						<img
-							src={routeTopo ? routeTopo.image_url : wallTopo!.image_url}
-							alt="Route topo"
-							className="w-full object-cover max-h-40"
-						/>
-						<span className="absolute inset-0 flex items-center justify-center bg-black/20 text-white text-xs font-medium">
-							View topo
-						</span>
+						{routeTopo ? (
+							<RouteTopoViewer topo={routeTopo} />
+						) : (
+							<div className="relative w-full">
+								<img
+									src={wallTopo?.image_url}
+									alt="Route topo"
+									className="w-full"
+									draggable={false}
+								/>
+								{wallTopoLineForRoute &&
+									wallTopoLineForRoute.points.length >= 2 && (
+										<svg
+											className="absolute inset-0 w-full h-full"
+											viewBox="0 0 100 100"
+											preserveAspectRatio="none"
+											aria-hidden="true"
+											style={{ pointerEvents: "none" }}
+										>
+											<polyline
+												points={wallTopoLineForRoute.points
+													.map((p) => `${p.x_pct * 100},${p.y_pct * 100}`)
+													.join(" ")}
+												stroke={wallTopoLineForRoute.color}
+												strokeWidth="2"
+												fill="none"
+												strokeLinecap="round"
+												strokeLinejoin="round"
+												vectorEffect="non-scaling-stroke"
+											/>
+										</svg>
+									)}
+							</div>
+						)}
 					</button>
 				</div>
 			)}
 
 			{isAdmin && (
-				<RouteTopoBuilder routeId={routeId} topo={routeTopo} />
+				<button
+					type="button"
+					onClick={() => setShowTopoEdit(true)}
+					className="text-sm text-accent-primary text-left"
+				>
+					{routeTopo ? "Edit topo" : "+ Add route topo"}
+				</button>
+			)}
+			{showTopoEdit && (
+				<RouteTopoBuilder
+					routeId={routeId}
+					topo={routeTopo}
+					galleryImages={wallImages}
+					onClose={() => setShowTopoEdit(false)}
+				/>
 			)}
 
 			{showTopoModal && routeTopo && (
@@ -180,16 +318,23 @@ const RouteDetailView = () => {
 				/>
 			)}
 
-			{showTopoModal && showWallTopoFallback && wallTopo && wallTopoLineForRoute && (
-				<TopoModal
-					mode="wall-single"
-					topo={wallTopo}
-					lines={wallTopoLines}
-					routes={route ? [{ id: route.id, name: route.name, grade: route.grade }] : []}
-					routeId={routeId}
-					onClose={() => setShowTopoModal(false)}
-				/>
-			)}
+			{showTopoModal &&
+				showWallTopoFallback &&
+				wallTopo &&
+				wallTopoLineForRoute && (
+					<TopoModal
+						mode="wall-single"
+						topo={wallTopo}
+						lines={wallTopoLines}
+						routes={
+							route
+								? [{ id: route.id, name: route.name, grade: route.grade, route_type: route.route_type }]
+								: []
+						}
+						routeId={routeId}
+						onClose={() => setShowTopoModal(false)}
+					/>
+				)}
 
 			{/* Links section */}
 			<div className="flex flex-col gap-2">
@@ -259,7 +404,7 @@ const RouteDetailView = () => {
 
 			<RouteBodyChart routeId={routeId} routeType={route.route_type} />
 
-		{existingClimb ? (
+			{existingClimb ? (
 				<Button
 					type="button"
 					variant="primary"
@@ -273,23 +418,20 @@ const RouteDetailView = () => {
 					View log
 				</Button>
 			) : (
-				<Button
-					type="button"
-					variant="primary"
-					onClick={() =>
-						navigate({
-							to: "/climbs/add",
-							search: {
-								routeId: route.id,
-								routeName: route.name,
-								grade: route.grade,
-								routeType: route.route_type,
-							},
-						})
-					}
-				>
-					Log this climb
-				</Button>
+				<>
+					<Button
+						type="button"
+						variant="primary"
+						onClick={() => setShowLogSheet(true)}
+					>
+						Log this climb
+					</Button>
+					<LogClimbSheet
+						isOpen={showLogSheet}
+						onClose={() => setShowLogSheet(false)}
+						route={route}
+					/>
+				</>
 			)}
 		</div>
 	);

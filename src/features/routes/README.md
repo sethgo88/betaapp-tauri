@@ -13,11 +13,12 @@ RouteSchema = {
   wall_id: string
   name: string
   grade: string
-  route_type: 'sport' | 'boulder'
+  route_type: 'sport' | 'boulder' | 'trad'
   description: string | null
   status: 'pending' | 'verified' | 'rejected'
   created_by: string   // Supabase user UUID
   created_at: string
+  sort_order: number   // admin-defined display order; default 0
 }
 
 // Admin-only type — not stored in SQLite
@@ -33,7 +34,7 @@ RouteSubmitSchema = {
   wall_id: string      // required — must select a wall
   name: string
   grade: string
-  route_type: 'sport' | 'boulder'
+  route_type: 'sport' | 'boulder' | 'trad'
   description?: string
 }
 
@@ -76,7 +77,8 @@ CREATE TABLE IF NOT EXISTS routes_cache (
     description TEXT,
     status      TEXT NOT NULL DEFAULT 'verified',
     created_by  TEXT NOT NULL,
-    created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+    created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+    sort_order  INTEGER NOT NULL DEFAULT 0   -- v23; admin-defined display order
 );
 ```
 
@@ -91,7 +93,8 @@ Only populated when the user downloads a region (see [`locations/README.md`](../
 | Function | What it does |
 |---|---|
 | `fetchRoute(id)` | Reads a single route from `routes_cache` by id; returns `null` if not found |
-| `fetchRoutes(wallId)` | Reads `routes_cache` for a wall, ordered by name |
+| `fetchRoutes(wallId)` | Reads `routes_cache` for a wall, ordered by `sort_order ASC, name ASC` |
+| `reorderRoutes(orderedIds)` | Admin — updates `sort_order` for each route id in Supabase + local cache |
 | `addRoute(values, userId, isAdmin)` | Inserts into Supabase `routes` + local `routes_cache`; returns the new route `id` |
 | `searchVerifiedRoutes(query)` | Full-text search against Supabase `routes` (verified only, limit 10) |
 | `searchLocalRoutes(query)` | LIKE search on local `routes_cache` by name or grade (verified only, limit 30) |
@@ -143,6 +146,7 @@ useRouteBodyStats(routeId) // body dimension vs grade scatter data from Supabase
 useRouteLinks(routeId)     // non-deleted links for a route from local cache
 useAddRouteLink(routeId)   // mutation — { url, title?, userId }
 useDeleteRouteLink(routeId) // mutation — id
+useReorderRoutes(wallId)   // admin mutation — orderedIds: string[]; invalidates routes for wall
 ```
 
 ---

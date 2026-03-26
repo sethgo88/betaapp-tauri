@@ -20,6 +20,7 @@ export type Database = {
           created_at: string
           date: string
           deleted_at: string | null
+          feel: number | null
           id: string
           notes: string | null
           outcome: string
@@ -31,6 +32,7 @@ export type Database = {
           created_at?: string
           date: string
           deleted_at?: string | null
+          feel?: number | null
           id?: string
           notes?: string | null
           outcome?: string
@@ -42,6 +44,7 @@ export type Database = {
           created_at?: string
           date?: string
           deleted_at?: string | null
+          feel?: number | null
           id?: string
           notes?: string | null
           outcome?: string
@@ -155,6 +158,7 @@ export type Database = {
           route_id: string | null
           route_location: string | null
           route_type: string
+          sent_date: string | null
           sent_status: string
           sub_area: string | null
           updated_at: string
@@ -175,6 +179,7 @@ export type Database = {
           route_id?: string | null
           route_location?: string | null
           route_type?: string
+          sent_date?: string | null
           sent_status?: string
           sub_area?: string | null
           updated_at: string
@@ -195,6 +200,7 @@ export type Database = {
           route_id?: string | null
           route_location?: string | null
           route_type?: string
+          sent_date?: string | null
           sent_status?: string
           sub_area?: string | null
           updated_at?: string
@@ -237,6 +243,7 @@ export type Database = {
       }
       crags: {
         Row: {
+          approach: string | null
           boulder_count: number
           created_at: string
           created_by: string | null
@@ -253,6 +260,7 @@ export type Database = {
           trad_count: number
         }
         Insert: {
+          approach?: string | null
           boulder_count?: number
           created_at?: string
           created_by?: string | null
@@ -269,6 +277,7 @@ export type Database = {
           trad_count?: number
         }
         Update: {
+          approach?: string | null
           boulder_count?: number
           created_at?: string
           created_by?: string | null
@@ -358,6 +367,7 @@ export type Database = {
           id: string
           name: string
           sort_order: number
+          updated_at: string
         }
         Insert: {
           country_id: string
@@ -365,6 +375,7 @@ export type Database = {
           id?: string
           name: string
           sort_order?: number
+          updated_at?: string
         }
         Update: {
           country_id?: string
@@ -372,6 +383,7 @@ export type Database = {
           id?: string
           name?: string
           sort_order?: number
+          updated_at?: string
         }
         Relationships: [
           {
@@ -459,6 +471,36 @@ export type Database = {
           },
         ]
       }
+      route_topos: {
+        Row: {
+          color: string
+          created_at: string
+          created_by: string | null
+          id: string
+          image_url: string
+          points: string
+          route_id: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          created_by?: string | null
+          id: string
+          image_url: string
+          points: string
+          route_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_url?: string
+          points?: string
+          route_id?: string
+        }
+        Relationships: []
+      }
       routes: {
         Row: {
           created_at: string
@@ -469,6 +511,7 @@ export type Database = {
           id: string
           name: string
           route_type: string
+          sort_order: number
           status: string
           wall_id: string
         }
@@ -481,6 +524,7 @@ export type Database = {
           id?: string
           name: string
           route_type?: string
+          sort_order?: number
           status?: string
           wall_id: string
         }
@@ -493,6 +537,7 @@ export type Database = {
           id?: string
           name?: string
           route_type?: string
+          sort_order?: number
           status?: string
           wall_id?: string
         }
@@ -645,8 +690,71 @@ export type Database = {
           },
         ]
       }
+      wall_topo_lines: {
+        Row: {
+          color: string
+          created_at: string
+          id: string
+          points: string
+          route_id: string
+          sort_order: number
+          topo_id: string
+        }
+        Insert: {
+          color: string
+          created_at?: string
+          id: string
+          points: string
+          route_id: string
+          sort_order?: number
+          topo_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          id?: string
+          points?: string
+          route_id?: string
+          sort_order?: number
+          topo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wall_topo_lines_topo_id_fkey"
+            columns: ["topo_id"]
+            isOneToOne: false
+            referencedRelation: "wall_topos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wall_topos: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          image_url: string
+          wall_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id: string
+          image_url: string
+          wall_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_url?: string
+          wall_id?: string
+        }
+        Relationships: []
+      }
       walls: {
         Row: {
+          approach: string | null
           boulder_count: number
           crag_id: string
           created_at: string
@@ -664,6 +772,7 @@ export type Database = {
           wall_type: string
         }
         Insert: {
+          approach?: string | null
           boulder_count?: number
           crag_id: string
           created_at?: string
@@ -681,6 +790,7 @@ export type Database = {
           wall_type?: string
         }
         Update: {
+          approach?: string | null
           boulder_count?: number
           crag_id?: string
           created_at?: string

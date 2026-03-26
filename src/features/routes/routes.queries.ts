@@ -15,6 +15,7 @@ import {
 	fetchUnverifiedRoutes,
 	mergeRoute,
 	rejectRoute,
+	reorderRoutes,
 	searchLocalRoutes,
 	updateRouteDescription,
 	updateRouteFields,
@@ -103,7 +104,7 @@ export function useEditRoute() {
 				wall_id: string;
 				name: string;
 				grade: string;
-				route_type: "sport" | "boulder";
+				route_type: "sport" | "boulder" | "trad";
 				description?: string;
 			};
 		}) => editRoute(id, values),
@@ -123,6 +124,16 @@ export function useAdminDeleteRoute() {
 		onSuccess: (_data, { wallId }) => {
 			qc.invalidateQueries({ queryKey: ["routes", wallId] });
 			qc.invalidateQueries({ queryKey: ["all_routes"] });
+		},
+	});
+}
+
+export function useReorderRoutes(wallId: string) {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: (orderedIds: string[]) => reorderRoutes(orderedIds),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: ["routes", wallId] });
 		},
 	});
 }
@@ -176,11 +187,12 @@ export function useUpdateRouteFields() {
 			values: {
 				name: string;
 				grade: string;
-				route_type: "sport" | "boulder";
+				route_type: "sport" | "boulder" | "trad";
 				description?: string;
 			};
 		}) => updateRouteFields(id, values),
-		onSuccess: () => {
+		onSuccess: (_data, { id }) => {
+			qc.invalidateQueries({ queryKey: ["route", id] });
 			qc.invalidateQueries({ queryKey: ["unverified_routes"] });
 			qc.invalidateQueries({ queryKey: ["all_routes"] });
 		},

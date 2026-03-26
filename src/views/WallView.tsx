@@ -1,5 +1,21 @@
+import type { DragEndEvent } from "@dnd-kit/core";
+import {
+	closestCenter,
+	DndContext,
+	PointerSensor,
+	TouchSensor,
+	useSensor,
+	useSensors,
+} from "@dnd-kit/core";
+import {
+	arrayMove,
+	SortableContext,
+	useSortable,
+	verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { MapPin } from "lucide-react";
+import { GripVertical, MapPin } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/atoms/Button";
 import { Spinner } from "@/components/atoms/Spinner";
@@ -9,6 +25,7 @@ import {
 	type PickerMarker,
 } from "@/components/molecules/CoordinatePicker";
 import { EditableDescription } from "@/components/molecules/EditableDescription";
+import { RouteDataModal } from "@/components/molecules/RouteDataModal";
 import { TopoModal } from "@/components/molecules/TopoModal";
 import { WallTopoBuilder } from "@/components/organisms/TopoBuilder";
 import { useAuthStore } from "@/features/auth/auth.store";
@@ -16,6 +33,7 @@ import {
 	useAdminUpdateWallCoords,
 	useAdminUpdateWallType,
 	useCrag,
+	useUpdateLocationApproach,
 	useUpdateLocationDescription,
 	useWall,
 	useWalls,
@@ -25,11 +43,54 @@ import {
 	useDeleteWallImage,
 	useWallImages,
 } from "@/features/route-images/route-images.queries";
-import {
-	useWallTopo,
-	useWallTopoLines,
-} from "@/features/topos/topos.queries";
-import { useRoutes } from "@/features/routes/routes.queries";
+import { useReorderRoutes, useRoutes } from "@/features/routes/routes.queries";
+import type { Route } from "@/features/routes/routes.schema";
+import { useWallTopo, useWallTopoLines } from "@/features/topos/topos.queries";
+
+// ── Sortable route card (reorder mode) ────────────────────────────────────────
+
+const SortableRouteCard = ({ route }: { route: Route }) => {
+	const {
+		attributes,
+		listeners,
+		setNodeRef,
+		transform,
+		transition,
+		isDragging,
+	} = useSortable({ id: route.id });
+
+	const style: React.CSSProperties = {
+		transform: CSS.Transform.toString(transform),
+		transition,
+		opacity: isDragging ? 0.4 : 1,
+		touchAction: "none",
+	};
+
+	return (
+		<div
+			ref={setNodeRef}
+			style={style}
+			className="rounded-lg bg-surface-card p-4 flex items-center gap-3"
+		>
+			<button
+				type="button"
+				className="shrink-0 text-text-tertiary touch-none cursor-grab active:cursor-grabbing"
+				aria-label="Drag to reorder"
+				{...attributes}
+				{...listeners}
+			>
+				<GripVertical size={18} />
+			</button>
+			<div className="flex-1 flex items-center justify-between gap-2">
+				<span className="font-medium">{route.name}</span>
+				<div className="flex items-center gap-2">
+					<span className="text-xs text-text-secondary">{route.grade}</span>
+					<span className="text-xs text-text-tertiary">{route.route_type}</span>
+				</div>
+			</div>
+		</div>
+	);
+};
 
 const ViewOnMap = ({ lat, lng }: { lat: number; lng: number }) => {
 	const navigate = useNavigate();
@@ -59,6 +120,7 @@ const WallView = () => {
 	const { data: routes = [] } = useRoutes(wallId);
 	const { data: wallImages = [] } = useWallImages(wallId);
 	const updateDescription = useUpdateLocationDescription();
+	const updateApproach = useUpdateLocationApproach();
 	const updateCoords = useAdminUpdateWallCoords();
 	const updateWallType = useAdminUpdateWallType();
 	const addWallImage = useAddWallImage(wallId);
@@ -66,6 +128,43 @@ const WallView = () => {
 	const isAdmin = useAuthStore((s) => s.user?.role === "admin");
 	const [showCoordEditor, setShowCoordEditor] = useState(false);
 	const [showTopoModal, setShowTopoModal] = useState(false);
+	const [showTopoEdit, setShowTopoEdit] = useState(false);
+	const [dataModalRouteId, setDataModalRouteId] = useState<string | null>(null);
+	const [isReordering, setIsReordering] = useState(false);
+	const [reorderList, setReorderList] = useState<Route[]>([]);
+	const reorderRoutesMutation = useReorderRoutes(wallId);
+
+	const sensors = useSensors(
+		useSensor(PointerSensor),
+		useSensor(TouchSensor, {
+			activationConstraint: { delay: 250, tolerance: 5 },
+		}),
+	);
+
+	function handleStartReorder() {
+		setReorderList([...routes]);
+		setIsReordering(true);
+	}
+
+	function handleDragEnd(event: DragEndEvent) {
+		const { active, over } = event;
+		if (over && active.id !== over.id) {
+			setReorderList((prev) => {
+				const oldIndex = prev.findIndex((r) => r.id === active.id);
+				const newIndex = prev.findIndex((r) => r.id === over.id);
+				return arrayMove(prev, oldIndex, newIndex);
+			});
+		}
+	}
+
+	async function handleSaveOrder() {
+		await reorderRoutesMutation.mutateAsync(reorderList.map((r) => r.id));
+		setIsReordering(false);
+	}
+
+	const dataModalRoute = dataModalRouteId
+		? routes.find((r) => r.id === dataModalRouteId)
+		: null;
 	const { data: wallTopo = null } = useWallTopo(wallId);
 	const { data: wallTopoLines = [] } = useWallTopoLines(wallTopo?.id ?? null);
 
@@ -98,19 +197,6 @@ const WallView = () => {
 
 	return (
 		<div className="flex flex-col gap-3">
-			<button
-				type="button"
-				className="text-text-secondary text-sm text-left"
-				onClick={() =>
-					navigate({
-						to: "/crags/$cragId",
-						params: { cragId: wall.crag_id },
-					})
-				}
-			>
-				← Back to crag
-			</button>
-
 			<h1 className="text-xl font-display font-bold">{wall.name}</h1>
 
 			{isAdmin ? (
@@ -142,6 +228,25 @@ const WallView = () => {
 				}}
 			/>
 
+			<div className="flex flex-col gap-1">
+				<p className="text-xs text-text-tertiary uppercase tracking-wide">
+					Approach
+				</p>
+				<EditableDescription
+					description={wall.approach}
+					isAdmin={isAdmin}
+					placeholder="Describe how to get here…"
+					emptyText="No approach info"
+					onSave={async (approach) => {
+						await updateApproach.mutateAsync({
+							table: "walls",
+							id: wallId,
+							approach,
+						});
+					}}
+				/>
+			</div>
+
 			<AdminImageGallery
 				images={wallImages}
 				isAdmin={isAdmin ?? false}
@@ -157,27 +262,65 @@ const WallView = () => {
 					<button
 						type="button"
 						onClick={() => setShowTopoModal(true)}
-						className="relative w-full rounded-[var(--radius-md)] overflow-hidden"
+						className="relative max-h-36 w-full rounded-[var(--radius-md)] overflow-hidden"
 						aria-label="View topo"
 					>
-						<img
-							src={wallTopo.image_url}
-							alt="Wall topo"
-							className="w-full object-cover max-h-40"
-						/>
-						<span className="absolute inset-0 flex items-center justify-center bg-black/20 text-white text-xs font-medium">
-							View topo
-						</span>
+						<div className="relative -translate-y-1/3">
+							<img
+								src={wallTopo.image_url}
+								alt="Wall topo"
+								className="w-full"
+								draggable={false}
+							/>
+							{wallTopoLines.length > 0 && (
+								<svg
+									className="absolute inset-0 w-full h-full"
+									viewBox="0 0 100 100"
+									preserveAspectRatio="none"
+									aria-hidden="true"
+									style={{ pointerEvents: "none" }}
+								>
+									{wallTopoLines.map(
+										(line) =>
+											line.points.length >= 2 && (
+												<polyline
+													key={line.id}
+													points={line.points
+														.map((p) => `${p.x_pct * 100},${p.y_pct * 100}`)
+														.join(" ")}
+													stroke={line.color}
+													strokeWidth="2"
+													fill="none"
+													strokeLinecap="round"
+													strokeLinejoin="round"
+													vectorEffect="non-scaling-stroke"
+												/>
+											),
+									)}
+								</svg>
+							)}
+						</div>
 					</button>
 				</div>
 			)}
 
 			{isAdmin && (
+				<button
+					type="button"
+					onClick={() => setShowTopoEdit(true)}
+					className="text-sm text-accent-primary text-left"
+				>
+					{wallTopo ? "Edit topo" : "+ Add topo"}
+				</button>
+			)}
+			{showTopoEdit && (
 				<WallTopoBuilder
 					wallId={wallId}
 					routes={routes.filter((r) => r.status === "verified")}
 					topo={wallTopo}
 					lines={wallTopoLines}
+					galleryImages={wallImages}
+					onClose={() => setShowTopoEdit(false)}
 				/>
 			)}
 
@@ -188,7 +331,12 @@ const WallView = () => {
 					lines={wallTopoLines}
 					routes={routes
 						.filter((r) => r.status === "verified")
-						.map((r) => ({ id: r.id, name: r.name, grade: r.grade }))}
+						.map((r) => ({
+							id: r.id,
+							name: r.name,
+							grade: r.grade,
+							route_type: r.route_type,
+						}))}
 					onClose={() => setShowTopoModal(false)}
 				/>
 			)}
@@ -236,31 +384,82 @@ const WallView = () => {
 				</p>
 			)}
 
-			{routes.map((route) => (
-				<button
-					key={route.id}
-					type="button"
-					disabled={route.status === "pending"}
-					className="rounded-lg bg-surface-card p-4 text-left flex items-center justify-between disabled:opacity-60"
-					onClick={() =>
-						navigate({
-							to: "/routes/$routeId",
-							params: { routeId: route.id },
-						})
-					}
+			{isAdmin &&
+				routes.length > 1 &&
+				(isReordering ? (
+					<button
+						type="button"
+						onClick={handleSaveOrder}
+						disabled={reorderRoutesMutation.isPending}
+						className="text-sm text-accent-primary font-semibold text-left"
+					>
+						{reorderRoutesMutation.isPending ? "Saving…" : "Done"}
+					</button>
+				) : (
+					<button
+						type="button"
+						onClick={handleStartReorder}
+						className="text-sm text-accent-primary text-left"
+					>
+						Edit order
+					</button>
+				))}
+
+			{isReordering ? (
+				<DndContext
+					sensors={sensors}
+					collisionDetection={closestCenter}
+					onDragEnd={handleDragEnd}
 				>
-					<span className="font-medium">{route.name}</span>
-					<div className="flex items-center gap-2">
-						<span className="text-xs text-text-secondary">{route.grade}</span>
-						<span className="text-xs text-text-tertiary">
-							{route.route_type}
-						</span>
-						{route.status === "pending" && (
-							<span className="text-xs text-amber-400">pending</span>
-						)}
+					<SortableContext
+						items={reorderList.map((r) => r.id)}
+						strategy={verticalListSortingStrategy}
+					>
+						{reorderList.map((route) => (
+							<SortableRouteCard key={route.id} route={route} />
+						))}
+					</SortableContext>
+				</DndContext>
+			) : (
+				routes.map((route) => (
+					<div
+						key={route.id}
+						className="rounded-lg bg-surface-card p-4 flex items-center gap-2"
+					>
+						<button
+							type="button"
+							disabled={route.status === "pending"}
+							className="flex-1 text-left flex items-center justify-between gap-2 disabled:opacity-60"
+							onClick={() =>
+								navigate({
+									to: "/routes/$routeId",
+									params: { routeId: route.id },
+								})
+							}
+						>
+							<span className="font-medium">{route.name}</span>
+							<div className="flex items-center gap-2">
+								<span className="text-xs text-text-secondary">
+									{route.grade}
+								</span>
+								<span className="text-xs text-text-tertiary">
+									{route.route_type}
+								</span>
+								{route.status === "pending" && (
+									<span className="text-xs text-accent-secondary">pending</span>
+								)}
+							</div>
+						</button>
+						<button
+							type="button"
+							className="shrink-0 text-xs text-accent-primary font-semibold"
+							onClick={() => setDataModalRouteId(route.id)}
+						>
+							Data
+						</button>
 					</div>
-				</button>
-			))}
+				))
+			)}
 
 			<Button
 				type="button"
@@ -275,6 +474,16 @@ const WallView = () => {
 			>
 				Submit a route
 			</Button>
+
+			{dataModalRoute && (
+				<RouteDataModal
+					isOpen={!!dataModalRouteId}
+					onClose={() => setDataModalRouteId(null)}
+					routeId={dataModalRoute.id}
+					routeName={dataModalRoute.name}
+					routeType={dataModalRoute.route_type}
+				/>
+			)}
 		</div>
 	);
 };

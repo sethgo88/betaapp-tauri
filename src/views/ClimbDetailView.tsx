@@ -2,6 +2,7 @@ import { useNavigate, useParams } from "@tanstack/react-router";
 import { ChevronDown, ExternalLink, Pencil, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/atoms/Button";
+import { FeelSlider } from "@/components/atoms/FeelSlider";
 import { Input } from "@/components/atoms/Input";
 import { Spinner } from "@/components/atoms/Spinner";
 import { ClimbImageGallery } from "@/components/molecules/ClimbImageGallery";
@@ -11,12 +12,25 @@ import {
 	useDeleteBurn,
 	useUpdateBurn,
 } from "@/features/burns/burns.queries";
-import { useClimb, useDeleteClimb } from "@/features/climbs/climbs.queries";
+import {
+	useClimb,
+	useDeleteClimb,
+	useUnlinkClimbFromRoute,
+} from "@/features/climbs/climbs.queries";
 import { parseBetas } from "@/features/climbs/climbs.schema";
 import { useClimbsStore } from "@/features/climbs/climbs.store";
 import { useRoute } from "@/features/routes/routes.queries";
 import { cn } from "@/lib/cn";
 import { buildLocationString } from "@/utils/build-location-string";
+
+const FEEL_LABELS: Record<number, string> = {
+	0: "Impossible",
+	1: "Very far",
+	2: "Far",
+	3: "Getting closer",
+	4: "Close",
+	5: "It will go",
+};
 
 const ClimbDetailView = () => {
 	const { climbId } = useParams({ from: "/climbs/$climbId" });
@@ -28,6 +42,7 @@ const ClimbDetailView = () => {
 	const updateBurn = useUpdateBurn();
 	const deleteBurn = useDeleteBurn();
 	const deleteClimb = useDeleteClimb();
+	const unlinkClimb = useUnlinkClimbFromRoute();
 	const setSelectedClimbId = useClimbsStore((s) => s.setSelectedClimbId);
 	const [openBetaIds, setOpenBetaIds] = useState<Set<string>>(new Set());
 	const [confirmDelete, setConfirmDelete] = useState(false);
@@ -37,9 +52,11 @@ const ClimbDetailView = () => {
 		new Date().toISOString().slice(0, 10),
 	);
 	const [addNotes, setAddNotes] = useState("");
+	const [addFeel, setAddFeel] = useState<number | null>(null);
 	const [editingBurnId, setEditingBurnId] = useState<string | null>(null);
 	const [editDate, setEditDate] = useState("");
 	const [editNotes, setEditNotes] = useState("");
+	const [editFeel, setEditFeel] = useState<number | null>(null);
 
 	useEffect(() => {
 		setSelectedClimbId(climbId);
@@ -158,6 +175,16 @@ const ClimbDetailView = () => {
 				Edit
 			</Button>
 
+			{climb.route_id && (
+				<Button
+					variant="outlined"
+					disabled={unlinkClimb.isPending}
+					onClick={() => unlinkClimb.mutate(climb.id)}
+				>
+					{unlinkClimb.isPending ? "Unlinking…" : "Unlink from route"}
+				</Button>
+			)}
+
 			{/* Burns section */}
 
 			{confirmDelete ? (
@@ -220,6 +247,7 @@ const ClimbDetailView = () => {
 									value={addNotes}
 									onChange={(e) => setAddNotes(e.target.value)}
 								/>
+								<FeelSlider value={addFeel} onChange={setAddFeel} />
 								<Button
 									size="small"
 									disabled={!addDate || addBurn.isPending}
@@ -230,6 +258,7 @@ const ClimbDetailView = () => {
 												data: {
 													date: addDate,
 													notes: addNotes || undefined,
+													feel: addFeel,
 												},
 											},
 											{
@@ -237,6 +266,7 @@ const ClimbDetailView = () => {
 													setShowAddBurn(false);
 													setAddDate(new Date().toISOString().slice(0, 10));
 													setAddNotes("");
+													setAddFeel(null);
 												},
 											},
 										);
@@ -266,6 +296,7 @@ const ClimbDetailView = () => {
 													value={editNotes}
 													onChange={(e) => setEditNotes(e.target.value)}
 												/>
+												<FeelSlider value={editFeel} onChange={setEditFeel} />
 												<div className="flex gap-2">
 													<Button
 														size="small"
@@ -277,6 +308,7 @@ const ClimbDetailView = () => {
 																	data: {
 																		date: editDate,
 																		notes: editNotes || undefined,
+																		feel: editFeel,
 																	},
 																},
 																{
@@ -300,6 +332,11 @@ const ClimbDetailView = () => {
 											<div className="flex items-center justify-between">
 												<div>
 													<p className="text-sm font-semibold">{burn.date}</p>
+													{burn.feel != null && (
+														<p className="text-xs text-accent-primary">
+															{FEEL_LABELS[burn.feel]}
+														</p>
+													)}
 													{burn.notes && (
 														<p className="text-sm text-text-secondary">
 															{burn.notes}
@@ -314,6 +351,7 @@ const ClimbDetailView = () => {
 															setEditingBurnId(burn.id);
 															setEditDate(burn.date);
 															setEditNotes(burn.notes ?? "");
+															setEditFeel(burn.feel ?? null);
 														}}
 													>
 														<Pencil size={16} />

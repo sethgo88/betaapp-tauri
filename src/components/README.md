@@ -27,6 +27,7 @@ templates   Layout shells with no real data — just children/slots.
 | `Select` | Dropdown select |
 | `Spinner` | Loading indicator |
 | `ToggleGroup` | Full-width segmented button toggle (e.g. todo/project/sent) |
+| `FeelSlider` | Horizontal segmented slider with 6 circular radio steps (0–5) and a dynamic label above the selected step. Tapping the active step deselects it (nullable). Used in burn add/edit forms. Props: `value: number \| null \| undefined`, `onChange(value: number \| null)`. |
 
 ### Molecules
 | Component | Purpose |
@@ -38,17 +39,22 @@ templates   Layout shells with no real data — just children/slots.
 | `SyncStatus` | Reads `sync.store` and renders sync state indicator |
 | `CoordinatePicker` | Fullscreen Leaflet overlay for picking coordinates; fixed center pin with drag-to-position pattern. Props: `value`, `defaultCenter`, `defaultZoom`, `markers` (reference pins), `onChange`, `onClose`. Exports `PickerMarker` type. |
 | `LocationDrillDown` | Cascading location selector: Country → Region → Sub-Region → Crag → Wall. Uses existing location query hooks. Props: `onChange(selection)`, `stopAt` (defaults to `"wall"`), `initial` (for edit mode pre-population). Exports `LocationSelection` and `LocationDrillDownProps` types. |
+| `SiblingDropdown` | Dropdown showing sibling locations/routes at the current hierarchy level. Current item highlighted in accent-primary. Closes on outside tap. Props: `siblings` (from `useTopBar`), `onSelect(id)`. Hidden when fewer than 2 siblings. |
 | `Toast` | Single toast notification; rendered by `AppLayout` |
-| `AdminImageGallery` | Horizontal-scroll image strip with admin upload/delete controls. Non-admins see read-only gallery; returns `null` when empty for non-admins. Props: `images`, `isAdmin`, `onAdd(file)`, `onDelete(id, imageUrl)`, `isAdding?`. Includes fullscreen viewer and delete-confirmation bottom sheet. |
-| `ClimbImageGallery` | User photo gallery for a climb log. Auto-fill grid of 96px thumbnails + a dotted `ImagePlus` add tile. Tapping a thumbnail opens a bottom action sheet with an image preview, sort arrows (move left/right), "Edit pins" (opens `ClimbImageViewer`), and delete with confirmation. Shows usage counter (n / 100). Props: `climbId`. |
+| `AdminImageGallery` | Horizontal-scroll image strip with admin upload/delete controls. Non-admins see read-only gallery; returns `null` when empty for non-admins. Props: `images`, `isAdmin`, `onAdd(file)`, `onDelete(id, imageUrl)`, `isAdding?`. Tapping a thumbnail opens `PhotoViewer`. Includes delete-confirmation bottom sheet. |
+| `ImagePickerGrid` | Grid of tappable gallery thumbnails + a dashed "+ Upload Image" button. Used by topo builders to select an existing gallery image or upload a new one. Props: `images`, `onSelect(imageUrl)`, `onUpload()`, `isUploading?`. |
+| `ClimbImageGallery` | User photo gallery for a climb log. Auto-fill grid of 96px thumbnails + a dotted `ImagePlus` add tile. Tapping a thumbnail opens a bottom action sheet; tapping the image preview in the sheet opens `PhotoViewer`. Action sheet also has sort arrows (move left/right), "Edit pins" (opens `ClimbImageViewer`), and delete with confirmation. Shows usage counter (n / 100). Props: `climbId`. |
 | `ClimbImageViewer` | Fullscreen photo viewer with pin annotation overlay. Read-only shows pins; "Edit pins" mode enables tap-to-place, drag-to-reposition, and per-pin description popovers. Four pin types: LH (blue), RH (red), LF (green), RF (amber). Props: `image` (ClimbImageWithUrl), `onClose`. |
 | `VideoFrameCapturer` | Fullscreen video scrubber for capturing a still frame as a climb image. Auto-opens the device file picker on mount. Shows play/pause + seek bar once a video is loaded; "Save frame" draws the current frame to a canvas, compresses to JPEG, and calls `onCapture(file)`. Props: `onCapture(file)`, `onClose`. |
 | `ImportBetaSheet` | Bottom sheet for importing a move list from plain text (one-per-line) or CSV. Auto-detects CSV when >1 line ends with a comma. Replaces existing moves on import. Props: `climbId`, `isOpen`, `onClose`. |
 | `ConfirmDialog` | Centred modal overlay for confirming destructive or navigating-away actions. Props: `isOpen`, `title`, `message`, `confirmLabel?`, `cancelLabel?`, `onConfirm`, `onCancel`. |
 | `RoutePickerSheet` | Full-screen sheet that chains `LocationDrillDown` with a route list (verified routes only for the selected wall). Used in `AddClimbView` to link a log entry to a community route. Props: `isOpen`, `onClose`, `onSelect(route)`. |
+| `LogClimbSheet` | Full-screen sheet shown when logging from `RouteDetailView`. Presents two options: **New log** (navigates to `AddClimbView` pre-filled with route data) and **Link existing log** (lists unlinked climbs; selecting one runs `useLinkExistingClimbToRoute` to set `route_id` and backfill location). Hides "Link existing log" list when user has no unlinked climbs. Props: `isOpen`, `onClose`, `route`. |
 | `RouteBodyChart` | Bubble chart (recharts `ScatterChart`) showing how climbers' body dimensions (height or ape index) correlate with grade on a specific route. Only sent climbs are included. Toggles X-axis between height and ape index. Renders an empty state when fewer than 5 climbers have data. Data comes from the `get_route_body_stats` Supabase RPC. Props: `routeId`, `routeType`. |
-| `TopoViewer` | SVG route-line overlay on a topo photo. Exports `WallTopoViewer` (multiple colour-coded lines, selectable bottom panel) and `RouteTopoViewer` (single line, no panel). Lines use `vector-effect="non-scaling-stroke"` and transparent fat hit targets for tap detection. Props for wall: `topo`, `lines[]`, `routes[]`, optional `singleRouteId`. Props for route: `topo`. |
-| `TopoModal` | Full-screen topo viewer with pinch-to-zoom (scale 1–4×) and double-tap-to-reset. Wraps `WallTopoViewer` or `RouteTopoViewer` depending on `mode` (`"wall"` \| `"wall-single"` \| `"route"`). Close button in top-left respects safe-area inset. |
+| `RouteDataModal` | Full-screen sheet showing route data graphs (wraps `RouteBodyChart`). Shows an empty/not-enough-data state automatically. Used from `WallView` via the per-route "Data" button. Props: `isOpen`, `onClose`, `routeId`, `routeName`, `routeType`. |
+| `TopoViewer` | SVG route-line overlay on a topo photo. Exports `WallTopoViewer` (multiple colour-coded lines, selectable bottom panel) and `RouteTopoViewer` (single line, no panel). Lines use strokeWidth 4, `vector-effect="non-scaling-stroke"`, and transparent fat hit targets for tap detection. `WallTopoViewer` uses `preserveAspectRatio="xMidYMid meet"` on its SVG to align correctly with the `object-contain` image. `WallTopoPanel` shows route name, route-type initial (S/T/B), and grade per row; the selected-route header has been removed. `RouteInfo` shape: `{ id, name, grade, route_type }`. Props for wall: `topo`, `lines[]`, `routes[]`, optional `singleRouteId`. Props for route: `topo`. |
+| `TopoModal` | Full-screen topo viewer with pinch-to-zoom (scale 1–4×) and double-tap-to-reset. Wraps `WallTopoViewer` or `RouteTopoViewer` depending on `mode` (`"wall"` \| `"wall-single"` \| `"route"`). `RouteInfo` now includes `route_type`. Close button in top-left respects safe-area inset. |
+| `PhotoViewer` | Full-screen photo viewer with pinch-to-zoom (1–4×), pan when zoomed, and double-tap to reset. Only the × button in the top-right closes the viewer (prevents accidental close during pan). Props: `src`, `onClose`. |
 
 ### Organisms
 | Component | Purpose |
@@ -56,12 +62,12 @@ templates   Layout shells with no real data — just children/slots.
 | `ClimbForm` | Full add/edit form — used by both `AddClimbView` and `EditClimbView`. Move list is drag-to-reorder via `@dnd-kit/sortable`; long-press the `GripVertical` handle to activate drag (250ms `TouchSensor` delay). Accepts optional `climbId` prop: when provided, moves auto-save after a 1-second debounce via `useUpdateClimbMoves`, shows a Saving/Saved indicator, and blocks navigation while unsaved changes are in-flight using `useBlocker`. Accepts optional `linkedRoute`, `onOpenRoutePicker`, `onUnlinkRoute` props for displaying/clearing a linked community route (shown above the Save button). |
 | `NavBar` | Bottom navigation bar: Home, Add, Search, Menu |
 | `Drawer` | Slide-up modal sheet |
-| `TopoBuilder` | Admin-only SVG drawing canvas for creating topo route lines. Exports `WallTopoBuilder` (image upload + per-route line drawing with route selector) and `RouteTopoBuilder` (image upload + single line). Point editing: tap to add, drag point handles to reposition, drag midpoint handles to insert new points between existing ones. Props for wall: `wallId`, `routes[]`, `topo`, `lines[]`. Props for route: `routeId`, `topo`. |
+| `TopoBuilder` | Admin-only SVG drawing canvas for creating topo route lines. Exports `WallTopoBuilder` (image upload + per-route line drawing with route selector, per-route colour picker, loads existing line points on route switch) and `RouteTopoBuilder` (image upload + single line with colour picker). Point editing: tap to add, drag handles to move, drag midpoint handles to insert. Undo uses a full history stack (covers adds, inserts, and moves). `DrawingCanvas` supports two-finger pinch-to-zoom (1–5×) and pan. Props for wall: `wallId`, `routes[]` (including `route_type`), `topo`, `lines[]`. Props for route: `routeId`, `topo`. |
 
 ### Templates
 | Component | Purpose |
 |---|---|
-| `AppLayout` | Root layout — safe areas, NavBar, Toast renderer |
+| `AppLayout` | Root layout — safe areas, NavBar, Toast renderer, contextual back button (parent navigation with parent name) + sibling dropdown on hierarchy views |
 
 ---
 

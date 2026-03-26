@@ -26,13 +26,13 @@ import { ConfirmDialog } from "@/components/molecules/ConfirmDialog";
 import { ImportBetaSheet } from "@/components/molecules/ImportBetaSheet";
 import { useUpdateClimbMoves } from "@/features/climbs/climbs.queries";
 import {
-	ClimbFormSchema,
 	type Beta,
+	ClimbFormSchema,
 	type ClimbFormValues,
 	type MoveItem,
+	parseBetas,
 	type RouteType,
 	type SentStatus,
-	parseBetas,
 } from "@/features/climbs/climbs.schema";
 import { useGrades } from "@/features/grades/grades.queries";
 import type { Route } from "@/features/routes/routes.schema";
@@ -172,6 +172,9 @@ export const ClimbForm = ({
 	const [importOpen, setImportOpen] = useState(false);
 	const [isDirty, setIsDirty] = useState(false);
 	const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+	const [pendingDeleteBetaId, setPendingDeleteBetaId] = useState<
+		string | null
+	>(null);
 
 	const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const savedStatusRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -195,7 +198,9 @@ export const ClimbForm = ({
 	const setActiveMoves = (updater: (moves: MoveItem[]) => MoveItem[]) => {
 		const currentId = activeBeta?.id ?? activeBetaId;
 		setBetas((prev) =>
-			prev.map((b) => (b.id === currentId ? { ...b, moves: updater(b.moves) } : b)),
+			prev.map((b) =>
+				b.id === currentId ? { ...b, moves: updater(b.moves) } : b,
+			),
 		);
 	};
 
@@ -381,6 +386,7 @@ export const ClimbForm = ({
 			wall: defaultValues?.wall ?? "",
 			route_location: defaultValues?.route_location ?? "",
 			link: defaultValues?.link ?? "",
+			sent_date: defaultValues?.sent_date ?? null,
 		},
 		onSubmit: async ({ value }) => {
 			const gradeValue =
@@ -465,10 +471,50 @@ export const ClimbForm = ({
 								{ value: "sent", label: "Sent" },
 							]}
 							value={field.state.value}
-							onChange={(v) => field.handleChange(v as SentStatus)}
+							onChange={(v) => {
+								const newStatus = v as SentStatus;
+								field.handleChange(newStatus);
+								if (newStatus === "sent") {
+									const today = new Date().toISOString().split("T")[0];
+									form.setFieldValue(
+										"sent_date",
+										form.getFieldValue("sent_date") ?? today,
+									);
+								} else {
+									form.setFieldValue("sent_date", null);
+								}
+							}}
 						/>
 					)}
 				</form.Field>
+
+				<form.Subscribe selector={(state) => state.values.sent_status}>
+					{(sentStatus) =>
+						sentStatus === "sent" ? (
+							<form.Field name="sent_date">
+								{(field) => (
+									<div className="flex flex-col gap-1">
+										<label
+											htmlFor="sent_date"
+											className="text-xs text-text-secondary"
+										>
+											Sent date
+										</label>
+										<Input
+											id="sent_date"
+											type="date"
+											value={field.state.value ?? ""}
+											onChange={(e) =>
+												field.handleChange(e.target.value || null)
+											}
+											max={new Date().toISOString().split("T")[0]}
+										/>
+									</div>
+								)}
+							</form.Field>
+						) : null
+					}
+				</form.Subscribe>
 
 				<form.Field name="link">
 					{(field) => (
@@ -599,6 +645,7 @@ export const ClimbForm = ({
 					/* Gallery mode: horizontal snap-scroll cards */
 					<div className="flex gap-3 overflow-x-auto snap-x snap-mandatory -mx-2 px-2 pb-1">
 						{betas.map((beta) => (
+							// biome-ignore lint/a11y/useSemanticElements: contains nested button so cannot use <button>
 							<div
 								key={beta.id}
 								role="button"
@@ -629,7 +676,7 @@ export const ClimbForm = ({
 											className="text-text-muted shrink-0"
 											onClick={(e) => {
 												e.stopPropagation();
-												deleteBeta(beta.id);
+												setPendingDeleteBetaId(beta.id);
 											}}
 										>
 											<Trash2 size={12} />
@@ -684,6 +731,17 @@ export const ClimbForm = ({
 				)}
 			</div>
 
+			<ConfirmDialog
+				isOpen={pendingDeleteBetaId !== null}
+				title="Delete beta"
+				message={`Are you sure you want to delete ${betas.find((b) => b.id === pendingDeleteBetaId)?.title ?? ""} beta?`}
+				confirmLabel="Delete"
+				onConfirm={() => {
+					if (pendingDeleteBetaId) deleteBeta(pendingDeleteBetaId);
+					setPendingDeleteBetaId(null);
+				}}
+				onCancel={() => setPendingDeleteBetaId(null)}
+			/>
 			<ConfirmDialog
 				isOpen={blocker.status === "blocked"}
 				title="Unsaved changes"

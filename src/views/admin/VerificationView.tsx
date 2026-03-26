@@ -1,4 +1,3 @@
-import { useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
@@ -73,13 +72,13 @@ const EditRouteForm = ({
 	onSave: (values: {
 		name: string;
 		grade: string;
-		route_type: "sport" | "boulder";
+		route_type: "sport" | "boulder" | "trad";
 		description?: string;
 	}) => void;
 	onCancel: () => void;
 }) => {
 	const [name, setName] = useState(route.name);
-	const [routeType, setRouteType] = useState<"sport" | "boulder">(
+	const [routeType, setRouteType] = useState<"sport" | "boulder" | "trad">(
 		route.route_type,
 	);
 	const [grade, setGrade] = useState(route.grade);
@@ -96,7 +95,7 @@ const EditRouteForm = ({
 			<Select
 				value={routeType}
 				onChange={(e) => {
-					const val = e.target.value as "sport" | "boulder";
+					const val = e.target.value as "sport" | "boulder" | "trad";
 					setRouteType(val);
 					setGrade("");
 				}}
@@ -247,7 +246,7 @@ const RouteRow = ({ route }: { route: UnverifiedRoute }) => {
 	const handleSaveEdit = (values: {
 		name: string;
 		grade: string;
-		route_type: "sport" | "boulder";
+		route_type: "sport" | "boulder" | "trad";
 		description?: string;
 	}) => {
 		updateFields(
@@ -478,7 +477,6 @@ const LocationRow = ({
 // ── Main view ─────────────────────────────────────────────────────────────────
 
 const VerificationView = () => {
-	const router = useRouter();
 	const addToast = useUiStore((s) => s.addToast);
 
 	const { data: routes = [], isLoading: routesLoading } = useUnverifiedRoutes();
@@ -519,14 +517,6 @@ const VerificationView = () => {
 
 	return (
 		<div className="flex flex-col gap-4">
-			<button
-				type="button"
-				className="text-text-secondary text-sm text-left"
-				onClick={() => router.history.back()}
-			>
-				← Back
-			</button>
-
 			<h1 className="text-lg font-display font-semibold">Verification</h1>
 
 			{isLoading && <p className="text-text-secondary text-sm">Loading…</p>}

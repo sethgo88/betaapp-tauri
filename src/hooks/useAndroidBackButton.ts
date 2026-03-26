@@ -1,9 +1,12 @@
 import { useRouter } from "@tanstack/react-router";
 import { onBackButtonPress } from "@tauri-apps/api/app";
 import { useEffect } from "react";
+import { useUiStore } from "@/stores/ui.store";
 
 /**
  * Intercepts the Android hardware back button.
+ * - If a `backHandlerOverride` is set in the UI store (e.g. a modal is open),
+ *   calls that instead of navigating back.
  * - Navigates back if there is history.
  * - Does nothing at the root so the OS can close the app naturally.
  *
@@ -11,9 +14,14 @@ import { useEffect } from "react";
  */
 export function useAndroidBackButton() {
 	const router = useRouter();
+	const backHandlerOverride = useUiStore((s) => s.backHandlerOverride);
 
 	useEffect(() => {
 		const unlistenPromise = onBackButtonPress(() => {
+			if (backHandlerOverride) {
+				backHandlerOverride();
+				return;
+			}
 			if (router.history.length > 1) {
 				router.history.back();
 			}
@@ -23,5 +31,5 @@ export function useAndroidBackButton() {
 		return () => {
 			unlistenPromise.then((listener) => listener.unregister());
 		};
-	}, [router]);
+	}, [router, backHandlerOverride]);
 }

@@ -5,8 +5,8 @@ import {
 	requestPermissions,
 } from "@tauri-apps/plugin-geolocation";
 import L from "leaflet";
-import { Crosshair, Layers, MapPin, Minus, Plus } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { Crosshair, Layers, MapPin, Minus, Plus, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
 	MapContainer,
 	Marker,
@@ -20,9 +20,24 @@ import {
 	useAllCragsWithCoords,
 	useAllWallsWithCoords,
 } from "@/features/locations/locations.queries";
-import { usePersonalCrags, usePersonalWalls } from "@/features/map/map.queries";
+import {
+	useClimbsAtPin,
+	usePersonalCrags,
+	usePersonalWalls,
+} from "@/features/map/map.queries";
+import { cn } from "@/lib/cn";
 import { tileLayers } from "@/lib/map-tiles";
 import { useUiStore } from "@/stores/ui.store";
+
+// ── Back-button override hook ────────────────────────────────────────────────
+
+function useBackHandlerOverride(handler: (() => void) | null) {
+	const setBackHandlerOverride = useUiStore((s) => s.setBackHandlerOverride);
+	useEffect(() => {
+		setBackHandlerOverride(handler);
+		return () => setBackHandlerOverride(null);
+	}, [handler, setBackHandlerOverride]);
+}
 
 // ── Marker icon with route count ────────────────────────────────────────────
 
@@ -181,6 +196,13 @@ const ZoomTracker = ({ onZoom }: { onZoom: (zoom: number) => void }) => {
 	return null;
 };
 
+// ── Map click handler (closes sheet when tapping empty map) ─────────────────
+
+const MapClickHandler = ({ onMapClick }: { onMapClick: () => void }) => {
+	useMapEvents({ click: () => onMapClick() });
+	return null;
+};
+
 // ── Zoom-to button (rendered inside a Popup) ────────────────────────────────
 
 const ZoomToButton = ({ lat, lng }: { lat: number; lng: number }) => {
@@ -239,6 +261,107 @@ const FilterCheck = ({
 	</label>
 );
 
+// ── Personal pin modal ───────────────────────────────────────────────────────
+
+const SENT_STATUSES = new Set(["sent", "flash", "redpoint", "onsight"]);
+
+type SelectedPin = { type: "crag" | "wall"; id: string; name: string };
+
+const PersonalPinModal = ({
+	pin,
+	showSent,
+	showProject,
+	showTodo,
+	onClose,
+}: {
+	pin: SelectedPin;
+	showSent: boolean;
+	showProject: boolean;
+	showTodo: boolean;
+	onClose: () => void;
+}) => {
+	const navigate = useNavigate();
+	const { data: climbs = [], isLoading } = useClimbsAtPin(pin.type, pin.id);
+	useBackHandlerOverride(onClose);
+
+	const filtered = climbs.filter((c) => {
+		if (showSent && SENT_STATUSES.has(c.sent_status)) return true;
+		if (showProject && c.sent_status === "project") return true;
+		if (showTodo && c.sent_status === "todo") return true;
+		return false;
+	});
+
+	return (
+		<div className="fixed inset-0 z-[2000] flex flex-col justify-end pointer-events-none">
+			<div className="bg-surface-card rounded-t-[var(--radius-lg)] max-h-[60dvh] flex flex-col shadow-xl pointer-events-auto">
+				{/* Header */}
+				<div className="flex items-center justify-between px-4 py-3 border-b border-border-default shrink-0">
+					<span className="font-semibold text-text-primary truncate">
+						{pin.name}
+					</span>
+					<button type="button" onClick={onClose} className="ml-2 shrink-0">
+						<X size={18} className="text-text-secondary" />
+					</button>
+				</div>
+
+				{/* List */}
+				<div className="overflow-y-auto flex-1 px-4 py-1">
+					{isLoading && (
+						<div className="flex justify-center py-4">
+							<Spinner />
+						</div>
+					)}
+					{!isLoading && filtered.length === 0 && (
+						<p className="text-sm text-text-secondary py-4 text-center">
+							No climbs match the active filters.
+						</p>
+					)}
+					{!isLoading &&
+						filtered.map((climb) => (
+							<button
+								key={climb.id}
+								type="button"
+								className="flex items-center justify-between w-full py-3 border-b border-border-default last:border-0 gap-3"
+								onClick={() => {
+									onClose();
+									navigate({
+										to: "/climbs/$climbId",
+										params: { climbId: climb.id },
+									});
+								}}
+							>
+								<span className="text-sm font-medium text-text-primary truncate text-left">
+									{climb.name}
+								</span>
+								<div className="flex items-center gap-2 shrink-0">
+									<span className="text-xs text-text-secondary">
+										{climb.grade}
+									</span>
+									<span
+										className={cn(
+											"text-xs px-1.5 py-0.5 rounded-full font-medium",
+											SENT_STATUSES.has(climb.sent_status) &&
+												"bg-accent-success/20 text-accent-success",
+											climb.sent_status === "project" &&
+												"bg-accent-primary/20 text-accent-primary",
+											climb.sent_status === "todo" &&
+												"bg-text-secondary/20 text-text-secondary",
+										)}
+									>
+										{climb.sent_status.charAt(0).toUpperCase() +
+											climb.sent_status.slice(1)}
+									</span>
+								</div>
+							</button>
+						))}
+				</div>
+
+				<div style={{ paddingBottom: "env(safe-area-inset-bottom)" }} />
+			</div>
+		</div>
+	);
+};
+
 // ── MapView ─────────────────────────────────────────────────────────────────
 
 type Mode = "discovery" | "personal";
@@ -267,6 +390,8 @@ const MapView = () => {
 	const [showProject, setShowProject] = useState(true);
 	const [showTodo, setShowTodo] = useState(true);
 
+	const [selectedPin, setSelectedPin] = useState<SelectedPin | null>(null);
+
 	const { data: allCrags = [], isLoading: loadingDiscovery } =
 		useAllCragsWithCoords();
 	const { data: allWalls = [] } = useAllWallsWithCoords();
@@ -285,6 +410,15 @@ const MapView = () => {
 			(showTrad ? pin.trad_count : 0) +
 			(showBoulder ? pin.boulder_count : 0),
 		[showSport, showTrad, showBoulder],
+	);
+
+	// Personal filtered count: sum only the checked status counts
+	const personalFilteredCount = useCallback(
+		(pin: { sent_count: number; project_count: number; todo_count: number }) =>
+			(showSent ? pin.sent_count : 0) +
+			(showProject ? pin.project_count : 0) +
+			(showTodo ? pin.todo_count : 0),
+		[showSent, showProject, showTodo],
 	);
 
 	// Filter discovery crags/walls by route type.
@@ -325,6 +459,18 @@ const MapView = () => {
 		[personalCrags, showSent, showProject, showTodo],
 	);
 
+	// Filter personal walls by active status filters
+	const filteredPersonalWalls = useMemo(
+		() =>
+			personalWalls.filter((w) => {
+				if (showSent && w.sent_count > 0) return true;
+				if (showProject && w.project_count > 0) return true;
+				if (showTodo && w.todo_count > 0) return true;
+				return !showSent && !showProject && !showTodo;
+			}),
+		[personalWalls, showSent, showProject, showTodo],
+	);
+
 	// Compute map center — search params override marker-based center
 	const center = useMemo<[number, number]>(() => {
 		if (hasSearchCoords) return [searchLat, searchLng];
@@ -355,9 +501,9 @@ const MapView = () => {
 
 	const personalCragsWithWallCoords = useMemo(() => {
 		const set = new Set<string>();
-		for (const w of personalWalls) set.add(w.crag_id);
+		for (const w of filteredPersonalWalls) set.add(w.crag_id);
 		return set;
-	}, [personalWalls]);
+	}, [filteredPersonalWalls]);
 
 	// At high zoom: show wall pins, hide crag pins for crags that have wall coords
 	const visibleCrags = useMemo(
@@ -479,6 +625,7 @@ const MapView = () => {
 					/>
 
 					<ZoomTracker onZoom={setZoom} />
+					<MapClickHandler onMapClick={() => setSelectedPin(null)} />
 					<TileErrorBanner />
 
 					{/* Crag pins (hidden for crags with wall coords at high zoom) */}
@@ -504,6 +651,11 @@ const MapView = () => {
 											<MapPin size={14} className="inline mr-1" />
 											{crag.name}
 										</button>
+										{crag.approach && (
+											<p className="text-xs text-gray-500 max-w-[180px]">
+												{crag.approach}
+											</p>
+										)}
 										<ZoomToButton lat={crag.lat} lng={crag.lng} />
 									</div>
 								</Popup>
@@ -537,6 +689,11 @@ const MapView = () => {
 										<span className="text-xs text-gray-500">
 											{wall.crag_name}
 										</span>
+										{wall.approach && (
+											<p className="text-xs text-gray-500 max-w-[180px]">
+												{wall.approach}
+											</p>
+										)}
 									</div>
 								</Popup>
 							</Marker>
@@ -548,76 +705,35 @@ const MapView = () => {
 							<Marker
 								key={crag.id}
 								position={[crag.lat, crag.lng]}
-								icon={countIcon(crag.route_count, "#d97706")}
-							>
-								<Popup>
-									<div className="flex flex-col gap-1">
-										<button
-											type="button"
-											className="text-sm font-medium text-accent-secondary"
-											onClick={() =>
-												navigate({
-													to: "/crags/$cragId",
-													params: { cragId: crag.id },
-												})
-											}
-										>
-											<MapPin size={14} className="inline mr-1" />
-											{crag.name}
-										</button>
-										<span className="text-xs text-gray-500">
-											{[
-												crag.sent_count > 0 && `${crag.sent_count} Sent`,
-												crag.project_count > 0 &&
-													`${crag.project_count} Project`,
-												crag.todo_count > 0 && `${crag.todo_count} Todo`,
-											]
-												.filter(Boolean)
-												.join(" · ")}
-										</span>
-										<ZoomToButton lat={crag.lat} lng={crag.lng} />
-									</div>
-								</Popup>
-							</Marker>
+								icon={countIcon(personalFilteredCount(crag), "#d97706")}
+								eventHandlers={{
+									click: () =>
+										setSelectedPin((prev) =>
+											prev?.id === crag.id && prev?.type === "crag"
+												? null
+												: { type: "crag", id: crag.id, name: crag.name },
+										),
+								}}
+							/>
 						))}
 
 					{/* Personal wall pins at high zoom */}
 					{mode === "personal" &&
 						showWalls &&
-						personalWalls.map((wall) => (
+						filteredPersonalWalls.map((wall) => (
 							<Marker
 								key={wall.id}
 								position={[wall.lat, wall.lng]}
-								icon={countIcon(wall.route_count, "#eab308")}
-							>
-								<Popup>
-									<div className="flex flex-col gap-0.5">
-										<button
-											type="button"
-											className="text-sm font-medium text-yellow-500"
-											onClick={() =>
-												navigate({
-													to: "/walls/$wallId",
-													params: { wallId: wall.id },
-												})
-											}
-										>
-											<MapPin size={14} className="inline mr-1" />
-											{wall.name}
-										</button>
-										<span className="text-xs text-gray-500">
-											{[
-												wall.sent_count > 0 && `${wall.sent_count} Sent`,
-												wall.project_count > 0 &&
-													`${wall.project_count} Project`,
-												wall.todo_count > 0 && `${wall.todo_count} Todo`,
-											]
-												.filter(Boolean)
-												.join(" · ")}
-										</span>
-									</div>
-								</Popup>
-							</Marker>
+								icon={countIcon(personalFilteredCount(wall), "#eab308")}
+								eventHandlers={{
+									click: () =>
+										setSelectedPin((prev) =>
+											prev?.id === wall.id && prev?.type === "wall"
+												? null
+												: { type: "wall", id: wall.id, name: wall.name },
+										),
+								}}
+							/>
 						))}
 				</MapContainer>
 
@@ -632,6 +748,16 @@ const MapView = () => {
 							</p>
 						</div>
 					)}
+
+				{selectedPin && (
+					<PersonalPinModal
+						pin={selectedPin}
+						showSent={showSent}
+						showProject={showProject}
+						showTodo={showTodo}
+						onClose={() => setSelectedPin(null)}
+					/>
+				)}
 			</div>
 		</div>
 	);
