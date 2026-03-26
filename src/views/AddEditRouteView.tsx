@@ -65,7 +65,9 @@ const AddEditRouteView = ({ routeId }: AddEditRouteViewProps) => {
 
 	// Form state
 	const [name, setName] = useState("");
-	const [routeType, setRouteType] = useState<"sport" | "boulder" | "trad">("sport");
+	const [routeType, setRouteType] = useState<"sport" | "boulder" | "trad">(
+		"sport",
+	);
 	const [grade, setGrade] = useState("");
 	const [description, setDescription] = useState("");
 	const [selection, setSelection] = useState<LocationSelection>({

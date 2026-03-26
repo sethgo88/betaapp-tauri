@@ -22,7 +22,7 @@ import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { Select } from "@/components/atoms/Select";
 import { ToggleGroup } from "@/components/atoms/ToggleGroup";
-import { ConfirmDialog } from "@/components/molecules/ConfirmDialog";
+import { ConfirmDeleteDialog } from "@/components/molecules/ConfirmDeleteDialog";
 import { ImportBetaSheet } from "@/components/molecules/ImportBetaSheet";
 import { useUpdateClimbMoves } from "@/features/climbs/climbs.queries";
 import {
@@ -78,7 +78,7 @@ const SortableMoveRow = ({
 			{/* Drag handle — long press to activate */}
 			<button
 				type="button"
-				className="flex-shrink-0 mt-1 p-1 text-text-tertiary touch-none cursor-grab active:cursor-grabbing"
+				className="flex-shrink-0 p-1 text-text-tertiary touch-none cursor-grab active:cursor-grabbing"
 				aria-label="Drag to reorder"
 				{...attributes}
 				{...listeners}
@@ -89,7 +89,7 @@ const SortableMoveRow = ({
 				onKeyDown={(e) => onKeyDown(e, move.id)}
 				onChange={(e) => onChange(e, move.id)}
 				onFocus={() => onFocus(index)}
-				className="flex-1 field-sizing-content border-l border-text-primary outline-none px-1 bg-transparent"
+				className="flex-1 field-sizing-content outline-none bg-transparent"
 				value={move.text}
 				ref={(el) => setRef(el, index)}
 			/>
@@ -172,9 +172,9 @@ export const ClimbForm = ({
 	const [importOpen, setImportOpen] = useState(false);
 	const [isDirty, setIsDirty] = useState(false);
 	const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
-	const [pendingDeleteBetaId, setPendingDeleteBetaId] = useState<
-		string | null
-	>(null);
+	const [pendingDeleteBetaId, setPendingDeleteBetaId] = useState<string | null>(
+		null,
+	);
 
 	const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const savedStatusRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -731,7 +731,7 @@ export const ClimbForm = ({
 				)}
 			</div>
 
-			<ConfirmDialog
+			<ConfirmDeleteDialog
 				isOpen={pendingDeleteBetaId !== null}
 				title="Delete beta"
 				message={`Are you sure you want to delete ${betas.find((b) => b.id === pendingDeleteBetaId)?.title ?? ""} beta?`}
@@ -742,7 +742,7 @@ export const ClimbForm = ({
 				}}
 				onCancel={() => setPendingDeleteBetaId(null)}
 			/>
-			<ConfirmDialog
+			<ConfirmDeleteDialog
 				isOpen={blocker.status === "blocked"}
 				title="Unsaved changes"
 				message="You have unsaved changes. Leave anyway?"

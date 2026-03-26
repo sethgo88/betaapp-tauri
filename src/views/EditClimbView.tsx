@@ -2,6 +2,7 @@ import { useNavigate, useParams } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/atoms/Button";
 import { Spinner } from "@/components/atoms/Spinner";
+import { ConfirmDeleteDialog } from "@/components/molecules/ConfirmDeleteDialog";
 import { ClimbForm } from "@/components/organisms/ClimbForm";
 import {
 	useClimb,
@@ -104,6 +105,7 @@ const EditClimbView = () => {
 	const { mutate: deleteClimb } = useDeleteClimb();
 	const addToast = useUiStore((s) => s.addToast);
 	const setSelectedClimbId = useClimbsStore((s) => s.setSelectedClimbId);
+	const [confirmDelete, setConfirmDelete] = useState(false);
 
 	useEffect(() => {
 		setSelectedClimbId(climbId);
@@ -165,9 +167,19 @@ const EditClimbView = () => {
 
 			{!climb.route_id && <LinkRouteSection climbId={climbId} />}
 
-			<Button variant="secondary" onClick={handleDelete}>
+			<Button variant="secondary" onClick={() => setConfirmDelete(true)}>
 				Delete climb
 			</Button>
+			<ConfirmDeleteDialog
+				isOpen={confirmDelete}
+				title="Delete climb"
+				message={`Are you sure you want to delete "${climb.name}"? This can't be undone.`}
+				onConfirm={() => {
+					handleDelete();
+					setConfirmDelete(false);
+				}}
+				onCancel={() => setConfirmDelete(false)}
+			/>
 		</div>
 	);
 };

@@ -7,6 +7,7 @@ import { Input } from "@/components/atoms/Input";
 import { Select } from "@/components/atoms/Select";
 import { Spinner } from "@/components/atoms/Spinner";
 import { AdminImageGallery } from "@/components/molecules/AdminImageGallery";
+import { ConfirmDeleteDialog } from "@/components/molecules/ConfirmDeleteDialog";
 import { EditableDescription } from "@/components/molecules/EditableDescription";
 import { LogClimbSheet } from "@/components/molecules/LogClimbSheet";
 import { RouteBodyChart } from "@/components/molecules/RouteBodyChart";
@@ -52,6 +53,9 @@ const RouteDetailView = () => {
 	const user = useAuthStore((s) => s.user);
 	const isAdmin = user?.role === "admin";
 	const existingClimb = climbs.find((c) => c.route_id === routeId);
+	const [pendingDeleteLinkId, setPendingDeleteLinkId] = useState<string | null>(
+		null,
+	);
 
 	// Topo data
 	const { data: wallImages = [] } = useWallImages(route?.wall_id ?? "");
@@ -69,9 +73,9 @@ const RouteDetailView = () => {
 	const updateRouteFields = useUpdateRouteFields();
 	const [editingMeta, setEditingMeta] = useState(false);
 	const [editName, setEditName] = useState("");
-	const [editRouteType, setEditRouteType] = useState<"sport" | "boulder" | "trad">(
-		"sport",
-	);
+	const [editRouteType, setEditRouteType] = useState<
+		"sport" | "boulder" | "trad"
+	>("sport");
 	const [editGrade, setEditGrade] = useState("");
 	const { data: editGrades = [] } = useGrades(editRouteType);
 
@@ -328,7 +332,14 @@ const RouteDetailView = () => {
 						lines={wallTopoLines}
 						routes={
 							route
-								? [{ id: route.id, name: route.name, grade: route.grade, route_type: route.route_type }]
+								? [
+										{
+											id: route.id,
+											name: route.name,
+											grade: route.grade,
+											route_type: route.route_type,
+										},
+									]
 								: []
 						}
 						routeId={routeId}
@@ -362,7 +373,7 @@ const RouteDetailView = () => {
 									<button
 										type="button"
 										className="shrink-0 text-text-secondary"
-										onClick={() => deleteRouteLink.mutate(link.id)}
+										onClick={() => setPendingDeleteLinkId(link.id)}
 										disabled={deleteRouteLink.isPending}
 									>
 										<Trash2 size={14} />
@@ -433,6 +444,16 @@ const RouteDetailView = () => {
 					/>
 				</>
 			)}
+			<ConfirmDeleteDialog
+				isOpen={pendingDeleteLinkId !== null}
+				title="Delete link"
+				message="Remove this link from the route?"
+				onConfirm={() => {
+					if (pendingDeleteLinkId) deleteRouteLink.mutate(pendingDeleteLinkId);
+					setPendingDeleteLinkId(null);
+				}}
+				onCancel={() => setPendingDeleteLinkId(null)}
+			/>
 		</div>
 	);
 };

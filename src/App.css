@@ -56,6 +56,7 @@
 	/* Surfaces & text */
 	--color-surface-page: var(--surface-page);
 	--color-surface-card: var(--surface-card);
+	--color-surface-raised: var(--surface-raised);
 	--color-surface-nav: var(--surface-nav);
 	--color-surface-input: var(--surface-input);
 	--color-surface-hover: var(--surface-hover);
@@ -103,6 +104,7 @@
 :root {
 	--surface-page: #3b3228;
 	--surface-card: #2a2420;
+	--surface-raised: #4a3f34;
 	--surface-nav: #1e1a16;
 	--surface-input: #2a2420;
 	--surface-hover: #3b3228;
@@ -132,6 +134,7 @@
 :root.light {
 	--surface-page: #faf6f1;
 	--surface-card: #ffffff;
+	--surface-raised: #f5efe8;
 	--surface-nav: #f5efe8;
 	--surface-input: #f5efe8;
 	--surface-hover: #f0e9e0;

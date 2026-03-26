@@ -1,6 +1,7 @@
 import { Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
 import { Spinner } from "@/components/atoms/Spinner";
+import { ConfirmDeleteDialog } from "./ConfirmDeleteDialog";
 import { PhotoViewer } from "./PhotoViewer";
 
 interface GalleryImage {
@@ -102,34 +103,17 @@ export const AdminImageGallery = ({
 				/>
 			)}
 
-			{/* Delete confirmation sheet */}
-			{confirmDeleteId && (
-				<div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40">
-					<div className="bg-surface-card rounded-t-2xl p-6 w-full flex flex-col gap-3">
-						<p className="text-text-primary font-medium text-center">
-							Delete this image?
-						</p>
-						<button
-							type="button"
-							onClick={() => {
-								const img = images.find((i) => i.id === confirmDeleteId);
-								if (img) onDelete(img.id, img.image_url);
-								setConfirmDeleteId(null);
-							}}
-							className="w-full py-3 rounded-[var(--radius-md)] bg-red-500 text-white font-medium"
-						>
-							Delete
-						</button>
-						<button
-							type="button"
-							onClick={() => setConfirmDeleteId(null)}
-							className="w-full py-2 text-text-secondary"
-						>
-							Cancel
-						</button>
-					</div>
-				</div>
-			)}
+			<ConfirmDeleteDialog
+				isOpen={confirmDeleteId !== null}
+				title="Delete image"
+				message="This image will be permanently deleted."
+				onConfirm={() => {
+					const img = images.find((i) => i.id === confirmDeleteId);
+					if (img) onDelete(img.id, img.image_url);
+					setConfirmDeleteId(null);
+				}}
+				onCancel={() => setConfirmDeleteId(null)}
+			/>
 		</div>
 	);
 };

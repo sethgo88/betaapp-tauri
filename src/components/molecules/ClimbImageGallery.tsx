@@ -17,6 +17,7 @@ import {
 } from "@/features/climb-images/climb-images.queries";
 import type { ClimbImageWithUrl } from "@/features/climb-images/climb-images.schema";
 import { ClimbImageViewer } from "./ClimbImageViewer";
+import { ConfirmDeleteDialog } from "./ConfirmDeleteDialog";
 import { PhotoViewer } from "./PhotoViewer";
 import { VideoFrameCapturer } from "./VideoFrameCapturer";
 
@@ -61,85 +62,65 @@ const ImageActionSheet = ({
 	const [confirmDelete, setConfirmDelete] = useState(false);
 
 	return (
-		<div
-			className="fixed inset-0 z-40 flex items-end justify-center bg-black/50"
-			onClick={onClose}
-			onKeyDown={(e) => e.key === "Escape" && onClose()}
-			role="dialog"
-			aria-modal="true"
-		>
-			{/* biome-ignore lint/a11y/noStaticElementInteractions: sheet stops backdrop tap from closing */}
-			{/* biome-ignore lint/a11y/useKeyWithClickEvents: touch surface, not a focusable control */}
+		<>
 			<div
-				className="bg-surface-card rounded-t-2xl w-full flex flex-col overflow-hidden"
-				style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
-				onClick={(e) => e.stopPropagation()}
+				className="fixed inset-0 z-40 flex items-end justify-center bg-black/50"
+				onClick={onClose}
+				onKeyDown={(e) => e.key === "Escape" && onClose()}
+				role="dialog"
+				aria-modal="true"
 			>
-				{/* Main image preview — tap to open full-screen PhotoViewer */}
-				<button
-					type="button"
-					onClick={onViewFullscreen}
-					className="w-full aspect-video bg-black flex items-center justify-center overflow-hidden"
-					aria-label="View full screen"
+				{/* biome-ignore lint/a11y/noStaticElementInteractions: sheet stops backdrop tap from closing */}
+				{/* biome-ignore lint/a11y/useKeyWithClickEvents: touch surface, not a focusable control */}
+				<div
+					className="bg-surface-card rounded-t-2xl w-full flex flex-col overflow-hidden"
+					style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+					onClick={(e) => e.stopPropagation()}
 				>
-					<img
-						src={image.signed_url}
-						alt=""
-						className="max-w-full max-h-full object-contain"
-					/>
-				</button>
+					{/* Main image preview — tap to open full-screen PhotoViewer */}
+					<button
+						type="button"
+						onClick={onViewFullscreen}
+						className="w-full aspect-video bg-black flex items-center justify-center overflow-hidden"
+						aria-label="View full screen"
+					>
+						<img
+							src={image.signed_url}
+							alt=""
+							className="max-w-full max-h-full object-contain"
+						/>
+					</button>
 
-				{/* Image carousel — visible when more than one image */}
-				{allImages.length > 1 && (
-					<div className="flex gap-2 px-3 py-2 overflow-x-auto">
-						{allImages.map((img) => (
-							<button
-								key={img.id}
-								type="button"
-								onClick={() => onSelectImage(img.id)}
-								aria-label="Select photo"
-								className="shrink-0 rounded overflow-hidden transition-opacity"
-								style={{
-									width: CAROUSEL_THUMB,
-									height: CAROUSEL_THUMB,
-									outline:
-										img.id === image.id
-											? "2px solid var(--color-accent-primary)"
-											: "2px solid transparent",
-									opacity: img.id === image.id ? 1 : 0.6,
-								}}
-							>
-								<img
-									src={img.signed_url}
-									alt=""
-									className="w-full h-full object-cover"
-								/>
-							</button>
-						))}
-					</div>
-				)}
+					{/* Image carousel — visible when more than one image */}
+					{allImages.length > 1 && (
+						<div className="flex gap-2 px-3 py-2 overflow-x-auto">
+							{allImages.map((img) => (
+								<button
+									key={img.id}
+									type="button"
+									onClick={() => onSelectImage(img.id)}
+									aria-label="Select photo"
+									className="shrink-0 rounded overflow-hidden transition-opacity"
+									style={{
+										width: CAROUSEL_THUMB,
+										height: CAROUSEL_THUMB,
+										outline:
+											img.id === image.id
+												? "2px solid var(--color-accent-primary)"
+												: "2px solid transparent",
+										opacity: img.id === image.id ? 1 : 0.6,
+									}}
+								>
+									<img
+										src={img.signed_url}
+										alt=""
+										className="w-full h-full object-cover"
+									/>
+								</button>
+							))}
+						</div>
+					)}
 
-				{confirmDelete ? (
-					<div className="flex flex-col gap-3 p-5">
-						<p className="text-text-primary font-medium text-center">
-							Delete this photo?
-						</p>
-						<button
-							type="button"
-							onClick={onDelete}
-							className="w-full py-3 rounded-[var(--radius-md)] bg-red-500 text-white font-medium"
-						>
-							Delete
-						</button>
-						<button
-							type="button"
-							onClick={() => setConfirmDelete(false)}
-							className="w-full py-2 text-text-secondary"
-						>
-							Cancel
-						</button>
-					</div>
-				) : (
 					<div className="flex flex-col gap-1 p-3">
 						{/* Sort row */}
 						<div className="flex items-center justify-between px-2 py-3 border-b border-border-default">
@@ -185,9 +166,19 @@ const ImageActionSheet = ({
 							Delete photo
 						</button>
 					</div>
-				)}
+				</div>
 			</div>
-		</div>
+			<ConfirmDeleteDialog
+				isOpen={confirmDelete}
+				title="Delete photo"
+				message="This photo will be permanently deleted."
+				onConfirm={() => {
+					onDelete();
+					setConfirmDelete(false);
+				}}
+				onCancel={() => setConfirmDelete(false)}
+			/>
+		</>
 	);
 };
 

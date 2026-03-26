@@ -1,6 +1,7 @@
 import { X } from "lucide-react";
 import { useRef, useState } from "react";
 import { Spinner } from "@/components/atoms/Spinner";
+import { ConfirmDeleteDialog } from "@/components/molecules/ConfirmDeleteDialog";
 import { ImagePickerGrid } from "@/components/molecules/ImagePickerGrid";
 import { Sheet } from "@/components/molecules/Sheet";
 import {
@@ -609,62 +610,36 @@ export const WallTopoBuilder = ({
 		setDraftPoints(prev);
 	};
 
+	const pendingDeleteLineName =
+		routes.find(
+			(r) => r.id === lines.find((l) => l.id === confirmDeleteLineId)?.route_id,
+		)?.name ?? "";
+
 	const confirmOverlays = (
 		<>
-			{confirmDeleteTopo && topo && (
-				<div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40">
-					<div className="bg-surface-card rounded-t-2xl p-6 w-full flex flex-col gap-3">
-						<p className="text-text-primary font-medium text-center">
-							Delete topo and all route lines?
-						</p>
-						<button
-							type="button"
-							onClick={() => {
-								deleteTopo.mutate({ id: topo.id, imageUrl: topo.image_url });
-								setConfirmDeleteTopo(false);
-								setDraftPoints([]);
-								onClose?.();
-							}}
-							className="w-full py-3 rounded-[var(--radius-md)] bg-red-500 text-white font-medium"
-						>
-							Delete
-						</button>
-						<button
-							type="button"
-							onClick={() => setConfirmDeleteTopo(false)}
-							className="w-full py-2 text-text-secondary"
-						>
-							Cancel
-						</button>
-					</div>
-				</div>
-			)}
-			{confirmDeleteLineId && (
-				<div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40">
-					<div className="bg-surface-card rounded-t-2xl p-6 w-full flex flex-col gap-3">
-						<p className="text-text-primary font-medium text-center">
-							Remove this route line?
-						</p>
-						<button
-							type="button"
-							onClick={() => {
-								deleteLine.mutate(confirmDeleteLineId);
-								setConfirmDeleteLineId(null);
-							}}
-							className="w-full py-3 rounded-[var(--radius-md)] bg-red-500 text-white font-medium"
-						>
-							Remove
-						</button>
-						<button
-							type="button"
-							onClick={() => setConfirmDeleteLineId(null)}
-							className="w-full py-2 text-text-secondary"
-						>
-							Cancel
-						</button>
-					</div>
-				</div>
-			)}
+			<ConfirmDeleteDialog
+				isOpen={confirmDeleteTopo && topo !== null}
+				title="Delete topo"
+				message="Delete this topo and all route lines? This can't be undone."
+				onConfirm={() => {
+					if (topo)
+						deleteTopo.mutate({ id: topo.id, imageUrl: topo.image_url });
+					setConfirmDeleteTopo(false);
+					setDraftPoints([]);
+					onClose?.();
+				}}
+				onCancel={() => setConfirmDeleteTopo(false)}
+			/>
+			<ConfirmDeleteDialog
+				isOpen={confirmDeleteLineId !== null}
+				title="Remove route line"
+				message={`Remove the line for "${pendingDeleteLineName}"?`}
+				onConfirm={() => {
+					if (confirmDeleteLineId) deleteLine.mutate(confirmDeleteLineId);
+					setConfirmDeleteLineId(null);
+				}}
+				onCancel={() => setConfirmDeleteLineId(null)}
+			/>
 		</>
 	);
 
@@ -1121,33 +1096,19 @@ export const RouteTopoBuilder = ({
 		JSON.stringify(draftPoints) !== JSON.stringify(topo?.points ?? []) ||
 		selectedColor !== (topo?.color ?? LINE_COLORS[0]);
 
-	const confirmDeleteOverlay = confirmDelete && topo && (
-		<div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40">
-			<div className="bg-surface-card rounded-t-2xl p-6 w-full flex flex-col gap-3">
-				<p className="text-text-primary font-medium text-center">
-					Delete this route topo?
-				</p>
-				<button
-					type="button"
-					onClick={() => {
-						deleteTopo.mutate({ id: topo.id, imageUrl: topo.image_url });
-						setConfirmDelete(false);
-						setDraftPoints([]);
-						onClose?.();
-					}}
-					className="w-full py-3 rounded-[var(--radius-md)] bg-red-500 text-white font-medium"
-				>
-					Delete
-				</button>
-				<button
-					type="button"
-					onClick={() => setConfirmDelete(false)}
-					className="w-full py-2 text-text-secondary"
-				>
-					Cancel
-				</button>
-			</div>
-		</div>
+	const confirmDeleteOverlay = (
+		<ConfirmDeleteDialog
+			isOpen={confirmDelete && topo !== null}
+			title="Delete topo"
+			message="Delete this route topo? This can't be undone."
+			onConfirm={() => {
+				if (topo) deleteTopo.mutate({ id: topo.id, imageUrl: topo.image_url });
+				setConfirmDelete(false);
+				setDraftPoints([]);
+				onClose?.();
+			}}
+			onCancel={() => setConfirmDelete(false)}
+		/>
 	);
 
 	const drawingCanvas = imageUrl && (

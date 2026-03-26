@@ -1,6 +1,6 @@
 import { Button } from "@/components/atoms/Button";
 
-interface ConfirmDialogProps {
+interface ConfirmDeleteDialogProps {
 	isOpen: boolean;
 	title: string;
 	message: string;
@@ -10,20 +10,20 @@ interface ConfirmDialogProps {
 	onCancel: () => void;
 }
 
-export function ConfirmDialog({
+export function ConfirmDeleteDialog({
 	isOpen,
 	title,
 	message,
-	confirmLabel = "Leave",
-	cancelLabel = "Stay",
+	confirmLabel = "Delete",
+	cancelLabel = "Cancel",
 	onConfirm,
 	onCancel,
-}: ConfirmDialogProps) {
+}: ConfirmDeleteDialogProps) {
 	if (!isOpen) return null;
 
 	return (
 		<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
-			<div className="w-full max-w-sm rounded-card bg-surface-raised p-5 flex flex-col gap-4 shadow-card">
+			<div className="w-full max-w-sm rounded-xl bg-surface-raised p-5 flex flex-col gap-4 shadow-card">
 				<div>
 					<p className="font-semibold text-text-primary">{title}</p>
 					<p className="text-sm text-text-secondary mt-1">{message}</p>
