@@ -3,6 +3,7 @@ import { MapPin } from "lucide-react";
 import { useCallback, useState } from "react";
 import { Button } from "@/components/atoms/Button";
 import { Spinner } from "@/components/atoms/Spinner";
+import { ConfirmDeleteDialog } from "@/components/molecules/ConfirmDeleteDialog";
 import { CoordinatePicker } from "@/components/molecules/CoordinatePicker";
 import { EditableDescription } from "@/components/molecules/EditableDescription";
 import {
@@ -221,6 +222,8 @@ const CragView = () => {
 		setShowWallForm(false);
 	};
 
+	const pendingDeleteWall = walls.find((w) => w.id === confirmDeleteWallId);
+
 	if (isLoading) {
 		return (
 			<div className="flex justify-center pt-12">
@@ -415,44 +418,6 @@ const CragView = () => {
 							</div>
 						</div>
 					)}
-					{confirmDeleteWallId === wall.id && (
-						<div className="rounded-lg bg-surface-card border border-red-800 p-3 flex flex-col gap-2">
-							<p className="text-sm text-text-primary">
-								Delete <span className="font-medium">{wall.name}</span>? This
-								cannot be undone.
-							</p>
-							<div className="flex gap-2">
-								<button
-									type="button"
-									disabled={deleteWall.isPending}
-									onClick={async () => {
-										try {
-											await deleteWall.mutateAsync({ id: wall.id, cragId });
-											setConfirmDeleteWallId(null);
-											addToast({ message: "Wall deleted", type: "success" });
-										} catch (e) {
-											addToast({
-												message:
-													e instanceof Error ? e.message : "Failed to delete",
-												type: "error",
-											});
-											setConfirmDeleteWallId(null);
-										}
-									}}
-									className="text-xs px-3 py-1.5 rounded-lg bg-red-800 hover:bg-red-700 disabled:opacity-40"
-								>
-									{deleteWall.isPending ? "Deleting…" : "Delete"}
-								</button>
-								<button
-									type="button"
-									onClick={() => setConfirmDeleteWallId(null)}
-									className="text-xs px-3 py-1.5 rounded-lg bg-surface-active"
-								>
-									Cancel
-								</button>
-							</div>
-						</div>
-					)}
 					{movingWallId === wall.id && (
 						<MoveWallPanel
 							wallId={wall.id}
@@ -479,6 +444,27 @@ const CragView = () => {
 					+ Add wall
 				</button>
 			)}
+
+			<ConfirmDeleteDialog
+				isOpen={confirmDeleteWallId !== null}
+				title="Delete wall"
+				message={`Delete "${pendingDeleteWall?.name ?? ""}"? This will also delete all routes and topos on this wall.`}
+				onConfirm={async () => {
+					if (!pendingDeleteWall) return;
+					try {
+						await deleteWall.mutateAsync({ id: pendingDeleteWall.id, cragId });
+						setConfirmDeleteWallId(null);
+						addToast({ message: "Wall deleted", type: "success" });
+					} catch (e) {
+						addToast({
+							message: e instanceof Error ? e.message : "Failed to delete",
+							type: "error",
+						});
+						setConfirmDeleteWallId(null);
+					}
+				}}
+				onCancel={() => setConfirmDeleteWallId(null)}
+			/>
 		</div>
 	);
 };

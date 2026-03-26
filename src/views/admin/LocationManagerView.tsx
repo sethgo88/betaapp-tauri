@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
+import { ConfirmDeleteDialog } from "@/components/molecules/ConfirmDeleteDialog";
 import {
 	useAdminAddCountry,
 	useAdminAddRegion,
@@ -28,6 +29,15 @@ const LocationManagerView = () => {
 	const { mutate: deleteCountry } = useAdminDeleteCountry();
 	const { mutate: addRegion } = useAdminAddRegion();
 	const { mutate: deleteRegion } = useAdminDeleteRegion();
+
+	const [pendingDeleteCountry, setPendingDeleteCountry] = useState<{
+		id: string;
+		name: string;
+	} | null>(null);
+	const [pendingDeleteRegion, setPendingDeleteRegion] = useState<{
+		id: string;
+		name: string;
+	} | null>(null);
 
 	const handleAddCountry = () => {
 		const name = newCountryName.trim();
@@ -131,7 +141,9 @@ const LocationManagerView = () => {
 								type="button"
 								variant="secondary"
 								size="small"
-								onClick={() => handleDeleteCountry(c.id, c.name)}
+								onClick={() =>
+									setPendingDeleteCountry({ id: c.id, name: c.name })
+								}
 							>
 								Delete
 							</Button>
@@ -170,7 +182,9 @@ const LocationManagerView = () => {
 									type="button"
 									variant="secondary"
 									size="small"
-									onClick={() => handleDeleteRegion(r.id, r.name)}
+									onClick={() =>
+										setPendingDeleteRegion({ id: r.id, name: r.name })
+									}
 								>
 									Delete
 								</Button>
@@ -182,6 +196,36 @@ const LocationManagerView = () => {
 					</div>
 				</div>
 			)}
+
+			<ConfirmDeleteDialog
+				isOpen={pendingDeleteCountry !== null}
+				title="Delete country"
+				message={`Delete "${pendingDeleteCountry?.name}"? This can't be undone.`}
+				onConfirm={() => {
+					if (pendingDeleteCountry)
+						handleDeleteCountry(
+							pendingDeleteCountry.id,
+							pendingDeleteCountry.name,
+						);
+					setPendingDeleteCountry(null);
+				}}
+				onCancel={() => setPendingDeleteCountry(null)}
+			/>
+
+			<ConfirmDeleteDialog
+				isOpen={pendingDeleteRegion !== null}
+				title="Delete region"
+				message={`Delete "${pendingDeleteRegion?.name}"? This can't be undone.`}
+				onConfirm={() => {
+					if (pendingDeleteRegion)
+						handleDeleteRegion(
+							pendingDeleteRegion.id,
+							pendingDeleteRegion.name,
+						);
+					setPendingDeleteRegion(null);
+				}}
+				onCancel={() => setPendingDeleteRegion(null)}
+			/>
 		</div>
 	);
 };

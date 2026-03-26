@@ -2,6 +2,7 @@ import { useNavigate, useParams } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
 import { Button } from "@/components/atoms/Button";
 import { Spinner } from "@/components/atoms/Spinner";
+import { ConfirmDeleteDialog } from "@/components/molecules/ConfirmDeleteDialog";
 import { CoordinatePicker } from "@/components/molecules/CoordinatePicker";
 import { EditableDescription } from "@/components/molecules/EditableDescription";
 import {
@@ -130,6 +131,8 @@ const SubRegionView = () => {
 		setCragCoords(null);
 		setShowCragForm(false);
 	};
+
+	const pendingDeleteCrag = crags.find((c) => c.id === confirmDeleteCragId);
 
 	if (isLoading) {
 		return (
@@ -269,47 +272,6 @@ const SubRegionView = () => {
 							</div>
 						</div>
 					)}
-					{confirmDeleteCragId === crag.id && (
-						<div className="rounded-lg bg-surface-card border border-red-800 p-3 flex flex-col gap-2">
-							<p className="text-sm text-text-primary">
-								Delete <span className="font-medium">{crag.name}</span>? This
-								cannot be undone.
-							</p>
-							<div className="flex gap-2">
-								<button
-									type="button"
-									disabled={deleteCrag.isPending}
-									onClick={async () => {
-										try {
-											await deleteCrag.mutateAsync({
-												id: crag.id,
-												subRegionId,
-											});
-											setConfirmDeleteCragId(null);
-											addToast({ message: "Crag deleted", type: "success" });
-										} catch (e) {
-											addToast({
-												message:
-													e instanceof Error ? e.message : "Failed to delete",
-												type: "error",
-											});
-											setConfirmDeleteCragId(null);
-										}
-									}}
-									className="text-xs px-3 py-1.5 rounded-lg bg-red-800 hover:bg-red-700 disabled:opacity-40"
-								>
-									{deleteCrag.isPending ? "Deleting…" : "Delete"}
-								</button>
-								<button
-									type="button"
-									onClick={() => setConfirmDeleteCragId(null)}
-									className="text-xs px-3 py-1.5 rounded-lg bg-surface-active"
-								>
-									Cancel
-								</button>
-							</div>
-						</div>
-					)}
 					{movingCragId === crag.id && (
 						<MoveCragPanel
 							cragId={crag.id}
@@ -384,6 +346,30 @@ const SubRegionView = () => {
 					+ Add crag
 				</button>
 			)}
+
+			<ConfirmDeleteDialog
+				isOpen={confirmDeleteCragId !== null}
+				title="Delete crag"
+				message={`Delete "${pendingDeleteCrag?.name ?? ""}"? This will also delete all walls and routes within it.`}
+				onConfirm={async () => {
+					if (!pendingDeleteCrag) return;
+					try {
+						await deleteCrag.mutateAsync({
+							id: pendingDeleteCrag.id,
+							subRegionId,
+						});
+						setConfirmDeleteCragId(null);
+						addToast({ message: "Crag deleted", type: "success" });
+					} catch (e) {
+						addToast({
+							message: e instanceof Error ? e.message : "Failed to delete",
+							type: "error",
+						});
+						setConfirmDeleteCragId(null);
+					}
+				}}
+				onCancel={() => setConfirmDeleteCragId(null)}
+			/>
 		</div>
 	);
 };

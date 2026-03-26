@@ -31,7 +31,8 @@ export function useClimbsAtPin(
 	const userId = useAuthStore((s) => s.user?.id ?? "");
 	return useQuery({
 		queryKey: ["pin_climbs", userId, pinType, pinId],
-		queryFn: () => fetchClimbsAtPin(userId, pinType!, pinId!),
+		queryFn: () =>
+			fetchClimbsAtPin(userId, pinType as "crag" | "wall", pinId as string),
 		enabled: !!userId && !!pinType && !!pinId,
 	});
 }

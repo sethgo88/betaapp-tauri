@@ -72,6 +72,7 @@ src/
 - **Design tokens** — see `.claude/rules/design.md` for full token/theme/font rules
 - **Grades seed** — `grades-seed.ts` populates `grades_cache` on first install; Supabase overrides on sync
 - **Admin role** — fetched from `user_roles` Supabase table after login; gates admin views in UI; Supabase RLS enforces on backend
+- **Delete confirmations** — every destructive delete must use `ConfirmDeleteDialog` (never inline confirm UI). Default labels are "Delete" / "Cancel". Title: `"Delete <thing>"`. Message: describes what will be lost. Exception: pin deletion (no confirm needed).
 - **Auth details** — see `.claude/rules/auth.md` for Supabase auth, credentials, and RLS rules
 
 ## Android

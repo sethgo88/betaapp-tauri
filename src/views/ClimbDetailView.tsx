@@ -6,6 +6,7 @@ import { FeelSlider } from "@/components/atoms/FeelSlider";
 import { Input } from "@/components/atoms/Input";
 import { Spinner } from "@/components/atoms/Spinner";
 import { ClimbImageGallery } from "@/components/molecules/ClimbImageGallery";
+import { ConfirmDeleteDialog } from "@/components/molecules/ConfirmDeleteDialog";
 import {
 	useAddBurn,
 	useBurns,
@@ -46,6 +47,9 @@ const ClimbDetailView = () => {
 	const setSelectedClimbId = useClimbsStore((s) => s.setSelectedClimbId);
 	const [openBetaIds, setOpenBetaIds] = useState<Set<string>>(new Set());
 	const [confirmDelete, setConfirmDelete] = useState(false);
+	const [pendingDeleteBurnId, setPendingDeleteBurnId] = useState<string | null>(
+		null,
+	);
 	const [burnsOpen, setBurnsOpen] = useState(false);
 	const [showAddBurn, setShowAddBurn] = useState(false);
 	const [addDate, setAddDate] = useState(() =>
@@ -187,27 +191,34 @@ const ClimbDetailView = () => {
 
 			{/* Burns section */}
 
-			{confirmDelete ? (
-				<div className="flex gap-2">
-					<Button variant="outlined" onClick={() => setConfirmDelete(false)}>
-						Cancel
-					</Button>
-					<Button
-						onClick={() => {
-							deleteClimb.mutate(climb.id, {
-								onSuccess: () => navigate({ to: "/" }),
-							});
-						}}
-						disabled={deleteClimb.isPending}
-					>
-						Confirm Delete
-					</Button>
-				</div>
-			) : (
-				<Button variant="outlined" onClick={() => setConfirmDelete(true)}>
-					Delete
-				</Button>
-			)}
+			<Button variant="outlined" onClick={() => setConfirmDelete(true)}>
+				Delete
+			</Button>
+
+			<ConfirmDeleteDialog
+				isOpen={confirmDelete}
+				title="Delete climb"
+				message={`Are you sure you want to delete "${climb.name}"? This can't be undone.`}
+				onConfirm={() => {
+					deleteClimb.mutate(climb.id, {
+						onSuccess: () => navigate({ to: "/" }),
+					});
+					setConfirmDelete(false);
+				}}
+				onCancel={() => setConfirmDelete(false)}
+			/>
+
+			<ConfirmDeleteDialog
+				isOpen={pendingDeleteBurnId !== null}
+				title="Delete burn"
+				message="Are you sure you want to delete this burn?"
+				onConfirm={() => {
+					if (pendingDeleteBurnId) deleteBurn.mutate(pendingDeleteBurnId);
+					setPendingDeleteBurnId(null);
+				}}
+				onCancel={() => setPendingDeleteBurnId(null)}
+			/>
+
 			<div className="rounded-md bg-surface-card">
 				<button
 					type="button"
@@ -359,7 +370,7 @@ const ClimbDetailView = () => {
 													<button
 														type="button"
 														className="text-text-secondary"
-														onClick={() => deleteBurn.mutate(burn.id)}
+														onClick={() => setPendingDeleteBurnId(burn.id)}
 													>
 														<Trash2 size={16} />
 													</button>
