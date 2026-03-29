@@ -60,6 +60,10 @@ useGrades(discipline: 'sport' | 'boulder')
 
 The seed runs during app initialization via `pullGrades()` falling back to seed data when the cache is empty. Supabase data overwrites the seed on first successful sync.
 
+**Sport grades:** 68 grades covering `5.5-` through `5.15a`, following the `a / - / a/b / b / (base) / b/c / c / c/d / + / d` pattern per grade number. Grades 5.5–5.9 use only `-` / base / `+`. Two special project grades — `Open Project` and `Closed Project` — sit at the end of the sport list.
+
+**Boulder grades:** 21 grades covering `v5` through `v11`.
+
 ---
 
 ## Supabase table
