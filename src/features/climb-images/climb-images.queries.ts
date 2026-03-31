@@ -1,6 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/features/auth/auth.store";
-import { uploadToStorage } from "@/lib/image-utils";
+import {
+	blobToBase64,
+	resizeAndCompress,
+	uploadBlobToStorage,
+} from "@/lib/image-utils";
 import { supabase } from "@/lib/supabase";
 import { useUiStore } from "@/stores/ui.store";
 import type { PinType, PointerDir } from "./climb-images.schema";
@@ -12,6 +16,7 @@ import {
 	getUserImageCount,
 	insertClimbImage,
 	insertClimbImagePin,
+	markImageUploaded,
 	reorderClimbImagePins,
 	reorderClimbImages,
 	softDeleteClimbImage,
@@ -63,8 +68,26 @@ export function useAddClimbImage(climbId: string) {
 			const imageId = crypto.randomUUID();
 			const storagePath = `${userId}/${climbId}/${imageId}.jpg`;
 
-			await uploadToStorage("climb-images", storagePath, file);
-			await insertClimbImage(climbId, userId, storagePath, sortOrder);
+			// Compress once; save locally as base64, then attempt upload if online.
+			const blob = await resizeAndCompress(file);
+			const localData = await blobToBase64(blob);
+			const id = await insertClimbImage(
+				climbId,
+				userId,
+				storagePath,
+				sortOrder,
+				localData,
+				"pending",
+			);
+
+			if (navigator.onLine) {
+				try {
+					await uploadBlobToStorage("climb-images", storagePath, blob);
+					await markImageUploaded(id);
+				} catch {
+					// Stays 'pending' — will be retried on next sync.
+				}
+			}
 		},
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: [CLIMB_IMAGES_KEY, climbId] });
@@ -87,12 +110,16 @@ export function useDeleteClimbImage(climbId: string) {
 		mutationFn: async ({
 			id,
 			storagePath,
+			uploadStatus,
 		}: {
 			id: string;
 			storagePath: string;
+			uploadStatus?: string;
 		}) => {
 			await softDeleteClimbImage(id);
-			await supabase.storage.from("climb-images").remove([storagePath]);
+			if (uploadStatus === "uploaded") {
+				await supabase.storage.from("climb-images").remove([storagePath]);
+			}
 		},
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: [CLIMB_IMAGES_KEY, climbId] });

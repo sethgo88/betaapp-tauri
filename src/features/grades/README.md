@@ -58,11 +58,11 @@ useGrades(discipline: 'sport' | 'boulder')
 
 `grades-seed.ts` contains a static array of grades for both disciplines. It is used to populate `grades_cache` on first install before Supabase is reachable.
 
-The seed runs during app initialization via `pullGrades()` falling back to seed data when the cache is empty. Supabase data overwrites the seed on first successful sync.
+`seedGrades()` runs during app initialization. It compares the cached row count against the expected total (sport + boulder). If the counts match, it skips. If they differ (e.g. after a grade list expansion), it clears `grades_cache` and re-inserts the full seed. Supabase data overwrites the seed on first successful sync.
 
 **Sport grades:** 68 grades covering `5.5-` through `5.15a`, following the `a / - / a/b / b / (base) / b/c / c / c/d / + / d` pattern per grade number. Grades 5.5–5.9 use only `-` / base / `+`. Two special project grades — `Open Project` and `Closed Project` — sit at the end of the sport list.
 
-**Boulder grades:** 21 grades covering `v5` through `v11`.
+**Boulder grades:** 69 grades covering `v0` through `v17`, following the `- / base / + / /next` pattern per grade. `v0` starts without a `-`; `v17` ends without a `+` or `/next`.
 
 ---
 

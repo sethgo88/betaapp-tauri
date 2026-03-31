@@ -517,6 +517,25 @@ const migrations: Migration[] = [
 			);
 		}
 	},
+
+	// v25: offline image upload queue (#165)
+	// local_data stores a base64 data URI for display before upload completes.
+	// upload_status tracks pending / uploaded / error; defaults to 'uploaded' so
+	// all existing rows are treated as already synced to storage.
+	async (db) => {
+		const cols = await db.select<{ name: string }[]>(
+			`PRAGMA table_info(climb_images)`,
+		);
+		const names = cols.map((c) => c.name);
+		if (!names.includes("local_data")) {
+			await db.execute(`ALTER TABLE climb_images ADD COLUMN local_data TEXT`);
+		}
+		if (!names.includes("upload_status")) {
+			await db.execute(
+				`ALTER TABLE climb_images ADD COLUMN upload_status TEXT NOT NULL DEFAULT 'uploaded'`,
+			);
+		}
+	},
 ];
 
 export async function runMigrations(db: DbAdapter): Promise<void> {

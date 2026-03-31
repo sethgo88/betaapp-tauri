@@ -377,7 +377,7 @@ export const ClimbForm = ({
 		defaultValues: {
 			name: defaultValues?.name ?? "",
 			route_type: defaultValues?.route_type ?? ("sport" as RouteType),
-			grade: defaultValues?.grade ?? "",
+			grade: defaultValues?.grade ?? (routeType === "boulder" ? "v5" : "5.12a"),
 			sent_status: defaultValues?.sent_status ?? "project",
 			country: defaultValues?.country ?? "",
 			area: defaultValues?.area ?? "",
@@ -390,7 +390,7 @@ export const ClimbForm = ({
 		},
 		onSubmit: async ({ value }) => {
 			const gradeValue =
-				value.grade || (grades.length > 0 ? grades[0].grade : "");
+				value.grade || (routeType === "boulder" ? "v5" : "5.12a");
 			const parsed = ClimbFormSchema.safeParse({
 				...value,
 				grade: gradeValue,
@@ -446,7 +446,7 @@ export const ClimbForm = ({
 									id="grade"
 									value={
 										field.state.value ||
-										(grades.length > 0 ? grades[0].grade : "")
+										(routeType === "boulder" ? "v5" : "5.12a")
 									}
 									onChange={(e) => field.handleChange(e.target.value)}
 									name="grade"

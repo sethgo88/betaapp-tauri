@@ -1,6 +1,8 @@
 import {
+	AlertCircle,
 	ChevronLeft,
 	ChevronRight,
+	Clock,
 	Film,
 	ImagePlus,
 	Trash2,
@@ -219,6 +221,7 @@ export const ClimbImageGallery = ({ climbId }: ClimbImageGalleryProps) => {
 		deleteImage.mutate({
 			id: sheetImage.id,
 			storagePath: sheetImage.image_url,
+			uploadStatus: sheetImage.upload_status,
 		});
 		setSheetImageId(null);
 	}
@@ -253,7 +256,7 @@ export const ClimbImageGallery = ({ climbId }: ClimbImageGalleryProps) => {
 						type="button"
 						onClick={() => setSheetImageId(img.id)}
 						aria-label="View photo options"
-						className="rounded-[var(--radius-md)] overflow-hidden block"
+						className="relative rounded-[var(--radius-md)] overflow-hidden block"
 						style={{ width: THUMB_SIZE, height: THUMB_SIZE }}
 					>
 						<img
@@ -261,6 +264,16 @@ export const ClimbImageGallery = ({ climbId }: ClimbImageGalleryProps) => {
 							alt=""
 							className="w-full h-full object-cover"
 						/>
+						{img.upload_status === "pending" && (
+							<div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+								<Clock size={18} className="text-white" />
+							</div>
+						)}
+						{img.upload_status === "error" && (
+							<div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+								<AlertCircle size={18} className="text-red-400" />
+							</div>
+						)}
 					</button>
 				))}
 

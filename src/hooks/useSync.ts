@@ -25,6 +25,7 @@ import {
 	pushClimbs,
 	pushRouteLinks,
 	setSyncMeta,
+	uploadPendingImages,
 } from "@/features/sync/sync.service";
 import { useSyncStore } from "@/features/sync/sync.store";
 import { supabase } from "@/lib/supabase";
@@ -54,6 +55,7 @@ export function useSync(userId: string | undefined) {
 			await pullClimbs(userId, since);
 			await pushBurns(userId, since);
 			await pullBurns(userId, since);
+			await uploadPendingImages(userId);
 			await pushClimbImages(userId, since);
 			await pullClimbImages(userId, since);
 			await pushClimbImagePins(userId, since);
