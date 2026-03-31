@@ -11,13 +11,15 @@ User-owned photos attached to a climb log, with pin annotations marking hand/foo
 ```sql
 -- climb_images: one row per photo
 CREATE TABLE climb_images (
-  id          TEXT PRIMARY KEY,
-  climb_id    TEXT NOT NULL,
-  user_id     TEXT NOT NULL,
-  image_url   TEXT NOT NULL,   -- storage path, e.g. "{userId}/{climbId}/{imageId}.jpg"
-  sort_order  INTEGER NOT NULL DEFAULT 0,
-  created_at  TEXT NOT NULL DEFAULT (datetime('now')),
-  deleted_at  TEXT             -- soft delete
+  id            TEXT PRIMARY KEY,
+  climb_id      TEXT NOT NULL,
+  user_id       TEXT NOT NULL,
+  image_url     TEXT NOT NULL,      -- storage path, e.g. "{userId}/{climbId}/{imageId}.jpg"
+  sort_order    INTEGER NOT NULL DEFAULT 0,
+  local_data    TEXT,               -- base64 data URI; set while upload is pending, cleared after
+  upload_status TEXT NOT NULL DEFAULT 'uploaded',  -- 'pending' | 'uploaded' | 'error'
+  created_at    TEXT NOT NULL DEFAULT (datetime('now')),
+  deleted_at    TEXT                -- soft delete
 );
 
 -- climb_image_pins: annotation pins per photo
@@ -47,8 +49,9 @@ CREATE TABLE climb_image_pins (
 |---|---|
 | `PinType` | `'lh' \| 'rh' \| 'lf' \| 'rf'` |
 | `PointerDir` | `'top' \| 'bottom' \| 'left' \| 'right'` — direction the pin triangle points |
+| `UploadStatus` | `'pending' \| 'uploaded' \| 'error'` |
 | `ClimbImage` | Row shape from `climb_images` table |
-| `ClimbImageWithUrl` | `ClimbImage` + `signed_url: string` (short-lived display URL) |
+| `ClimbImageWithUrl` | `ClimbImage` + `signed_url: string` (signed URL when uploaded; base64 data URI when pending) |
 | `ClimbImagePin` | Row shape from `climb_image_pins` table (includes `pointer_dir`) |
 
 ---
@@ -57,12 +60,14 @@ CREATE TABLE climb_image_pins (
 
 | Function | Description |
 |---|---|
-| `fetchClimbImages(climbId)` | Returns images ordered by `sort_order`; generates a 1hr signed URL per image |
+| `fetchClimbImages(climbId)` | Returns images ordered by `sort_order`; signed URL for uploaded, base64 data URI for pending |
 | `getUserImageCount(userId)` | Count of non-deleted images across all climb logs (for 100-cap enforcement) |
-| `insertClimbImage(climbId, userId, storagePath, sortOrder)` | Inserts a new row; `storagePath` is stored in `image_url` |
+| `insertClimbImage(climbId, userId, storagePath, sortOrder, localData?, uploadStatus?)` | Inserts a new row; defaults to `upload_status='uploaded'` |
+| `markImageUploaded(id)` | Sets `upload_status='uploaded'` after a successful upload |
+| `uploadPendingImages(userId)` | Finds all `pending`/`error` rows, uploads each, marks as `uploaded`; sets `error` on failure |
 | `softDeleteClimbImage(id)` | Sets `deleted_at` |
 | `reorderClimbImages(ids[])` | Updates `sort_order` for each id in the given order |
-| `applyRemoteClimbImage(image)` | `INSERT OR REPLACE` — used by sync pull |
+| `applyRemoteClimbImage(image)` | `INSERT OR REPLACE` — always sets `upload_status='uploaded'` — used by sync pull |
 | `fetchClimbImagePins(climbImageId)` | Returns pins ordered by `sort_order` |
 | `insertClimbImagePin(climbImageId, pinType, xPct, yPct, sortOrder, pointerDir?)` | Inserts a new pin; defaults `pointer_dir` to `'bottom'` |
 | `updateClimbImagePin(id, patch)` | Partial update of `x_pct`, `y_pct`, `description`, and/or `pointer_dir` |
@@ -77,8 +82,8 @@ CREATE TABLE climb_image_pins (
 |---|---|
 | `useClimbImages(climbId)` | Query; `staleTime: 50min` to avoid signed URL expiry |
 | `useUserImageCount()` | Query; reads userId from auth store |
-| `useAddClimbImage(climbId)` | Mutation; enforces 100-image cap, uploads to Storage, inserts row |
-| `useDeleteClimbImage(climbId)` | Mutation; soft-deletes row + removes from Storage |
+| `useAddClimbImage(climbId)` | Mutation; enforces 100-image cap; compresses → saves locally (pending) → uploads if online |
+| `useDeleteClimbImage(climbId)` | Mutation; soft-deletes row; removes from Storage only if `upload_status='uploaded'` |
 | `useReorderClimbImages(climbId)` | Mutation; updates sort_order for all images |
 | `useClimbImagePins(climbImageId)` | Query; disabled when `climbImageId` is null |
 | `useAddPin(climbImageId)` | Mutation; inserts pin at given x_pct/y_pct with optional `pointerDir` (default `'bottom'`) |
@@ -91,7 +96,9 @@ CREATE TABLE climb_image_pins (
 
 - **Bucket:** `climb-images` (private)
 - **Path pattern:** `{userId}/{climbId}/{imageId}.jpg`
-- **Upload:** `uploadToStorage('climb-images', path, file)` from `@/lib/image-utils` — resizes to max 1920px, JPEG 80% quality before upload
+- **Upload flow:** compress → `blobToBase64` → insert row with `upload_status='pending'` → upload if online → `markImageUploaded`
+- **Offline fallback:** `local_data` base64 URI serves as thumbnail src until upload completes
+- **Retry:** `uploadPendingImages(userId)` runs at the start of each sync cycle (via `useSync`) to flush the queue
 - **Display:** `createSignedUrl(path, 3600)` — 1hr expiry; query staleTime is 50min to ensure refresh before expiry
 
 ## Per-user cap

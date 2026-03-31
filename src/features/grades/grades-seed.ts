@@ -84,31 +84,93 @@ const sportGrades = [
 ];
 
 const boulderGrades = [
+	// v0
+	"v0",
+	"v0+",
+	"v0/1",
+	// v1
+	"v1-",
+	"v1",
+	"v1+",
+	"v1/2",
+	// v2
+	"v2-",
+	"v2",
+	"v2+",
+	"v2/3",
+	// v3
+	"v3-",
+	"v3",
+	"v3+",
+	"v3/4",
+	// v4
+	"v4-",
+	"v4",
+	"v4+",
+	"v4/5",
+	// v5
+	"v5-",
 	"v5",
 	"v5+",
 	"v5/6",
+	// v6
 	"v6-",
 	"v6",
 	"v6+",
 	"v6/7",
+	// v7
 	"v7-",
 	"v7",
 	"v7+",
 	"v7/8",
+	// v8
 	"v8-",
 	"v8",
 	"v8+",
 	"v8/9",
+	// v9
 	"v9-",
 	"v9",
 	"v9+",
 	"v9/10",
+	// v10
 	"v10-",
 	"v10",
 	"v10+",
 	"v10/11",
+	// v11
 	"v11-",
 	"v11",
+	"v11+",
+	"v11/12",
+	// v12
+	"v12-",
+	"v12",
+	"v12+",
+	"v12/13",
+	// v13
+	"v13-",
+	"v13",
+	"v13+",
+	"v13/14",
+	// v14
+	"v14-",
+	"v14",
+	"v14+",
+	"v14/15",
+	// v15
+	"v15-",
+	"v15",
+	"v15+",
+	"v15/16",
+	// v16
+	"v16-",
+	"v16",
+	"v16+",
+	"v16/17",
+	// v17
+	"v17-",
+	"v17",
 ];
 
 export async function seedGrades(): Promise<void> {
@@ -116,7 +178,11 @@ export async function seedGrades(): Promise<void> {
 	const existing = await db.select<[{ count: number }]>(
 		"SELECT COUNT(*) as count FROM grades_cache",
 	);
-	if (existing[0].count > 0) return;
+	const expectedCount = sportGrades.length + boulderGrades.length;
+	if (existing[0].count === expectedCount) return;
+
+	// Count mismatch — clear and re-seed (handles grade list expansions)
+	await db.execute("DELETE FROM grades_cache");
 
 	for (let i = 0; i < sportGrades.length; i++) {
 		await db.execute(
@@ -130,4 +196,5 @@ export async function seedGrades(): Promise<void> {
 			[crypto.randomUUID(), "boulder", boulderGrades[i], i],
 		);
 	}
+
 }
