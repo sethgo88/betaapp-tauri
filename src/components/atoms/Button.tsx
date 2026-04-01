@@ -21,20 +21,18 @@ const variantClasses: Record<ButtonVariant, string> = {
 
 const sizeClasses: Record<ButtonSize, string> = {
 	small: "px-3 py-1 text-sm",
-	medium: "px-4 py-2 text-base",
-	large: "px-6 py-3 text-lg",
+	medium: "px-4 py-2 text-base min-h-[48px]",
+	large: "px-6 py-3 text-lg min-h-[48px]",
 };
 
-const defaultPadding = "px-4 py-2";
-
 export const Button = (props: ButtonProps) => {
-	const { className, type, variant = "primary", size, ...rest } = props;
+	const { className, type = "button", variant = "primary", size = "medium", ...rest } = props;
 	return (
 		<button
 			className={cn(
 				"cursor-pointer rounded-[var(--radius-md)] font-semibold transition-colors",
 				variantClasses[variant],
-				size ? sizeClasses[size] : defaultPadding,
+				sizeClasses[size],
 				className,
 			)}
 			type={type}
