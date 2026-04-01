@@ -69,7 +69,13 @@ interface SyncStore {
 - On INSERT/UPDATE: calls `applyRemoteClimb(payload.new)` + invalidates `['climbs']`
 - Soft deletes arrive as UPDATE with `deleted_at` set — handled correctly
 
-**Cleanup:** Realtime channel is removed when `userId` becomes undefined (logout).
+**Online event listener (offline → online recovery):**
+- Adds a `window` `online` event listener on mount
+- When the device comes back online, `runSync()` fires automatically
+- Handles the case where the app launched offline (Bootstrap loaded from local cache) and later regained connectivity
+- Listener is cleaned up when `userId` changes or becomes undefined
+
+**Cleanup:** Realtime channel and `online` listener are removed when `userId` becomes undefined (logout).
 
 ---
 
@@ -82,18 +88,21 @@ Last-write-wins via `updated_at`. During a pull, `INSERT OR REPLACE` applies the
 ## Auth + sync lifecycle
 
 ```
-App launch:
-  useSync receives userId = undefined → no sync, no Realtime
-
-User logs in → userId set in auth.store:
-  useSync fires
+App launch (online):
+  useSync receives userId (set by Bootstrap) → runSync fires immediately
   Reads last_synced_at from sync_meta
   → null: full push → full pull → reference data pull → write last_synced_at
   → set: delta push → delta pull → reference data pull → write last_synced_at
   Realtime subscription starts (live updates from this point)
 
+App launch (offline):
+  Bootstrap loads user from local SQLite (no session set)
+  useSync receives userId → runSync fires → navigator.onLine false → setOffline(), returns
+  Realtime subscription starts (will connect when online)
+  When device comes online → window 'online' event → runSync fires automatically
+
 User logs out → userId becomes undefined:
-  useSync cleanup: Realtime channel removed
+  useSync cleanup: Realtime channel + online listener removed
   Local data retained (local-first — not deleted on logout)
   last_synced_at persists in sync_meta for next login
 ```

@@ -82,7 +82,8 @@ Role is **not** read from `public.users.role` — always fetched from `user_role
 | `sendPasswordReset(email)` | `resetPasswordForEmail` — sends reset link; redirects via Supabase Edge Function → `betaapp://auth/callback` |
 | `updatePassword(newPassword)` | `updateUser({ password })` — call from ResetPasswordView after `PASSWORD_RECOVERY` event |
 | `sendMagicLink(email)` | `signInWithOtp` — sends magic link email; redirects via Supabase Edge Function → `betaapp://auth/callback` |
-| `restoreSession()` | `supabase.auth.getSession()` — call on app launch |
+| `restoreSession(timeoutMs?)` | `supabase.auth.getSession()` with a 5s timeout (default). Rejects on timeout so Bootstrap can fall back to local cache. Call on app launch. |
+| `fetchLocalUser()` | Reads the last-cached user from local SQLite `users`. Used as the offline fallback in Bootstrap. Returns `null` if never logged in. |
 | `signOut()` | Clears Supabase session |
 | `updateUserProfile(userId, profile)` | Upserts to Supabase `profiles` (throws on error), then updates local SQLite; returns updated User |
 | `fetchAndApplyProfile(userId)` | Fetches from Supabase `profiles`, merges into local SQLite `users`; returns updated User |
@@ -111,12 +112,19 @@ interface AuthStore {
 ## Session lifecycle
 
 ```
-App launch:
-  restoreSession() → if session exists → setSession
+App launch (online):
+  navigator.onLine check → true
+  restoreSession() [5s timeout] → if session exists → setSession
   fetchOrCreateSupabaseUser(id) → get role
   upsertLocalUser(id, email, role)
   fetchAndApplyProfile(id) → merge Supabase profile into local SQLite → setUser
   useSync fires (userId now defined)
+
+App launch (offline or timeout):
+  navigator.onLine check → false (or restoreSession times out)
+  fetchLocalUser() → load cached user from local SQLite → setUser (no setSession)
+  App renders with cached data; no sync attempted
+  When connectivity returns → window 'online' event fires → useSync.runSync() auto-triggered
 
 Login (password):
   signIn(email, password) → setSession

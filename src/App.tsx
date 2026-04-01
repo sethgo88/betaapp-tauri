@@ -16,6 +16,7 @@ import { Spinner } from "@/components/atoms/Spinner";
 import {
 	checkPendingDeepLink,
 	fetchAndApplyProfile,
+	fetchLocalUser,
 	fetchOrCreateSupabaseUser,
 	initDeepLinkHandler,
 	restoreSession,
@@ -67,7 +68,26 @@ function Bootstrap() {
 			// Refresh user location in background (don't block startup)
 			refreshUserLocation(setUserLocation);
 
-			const session = await restoreSession();
+			// If device is definitely offline, skip all network calls and load cached local user.
+			if (!navigator.onLine) {
+				const localUser = await fetchLocalUser();
+				if (localUser) setUser(localUser);
+				return null;
+			}
+
+			// Online path: restore session with a 5-second timeout so an
+			// expired-token network refresh cannot hang indefinitely.
+			let session: Session | null = null;
+			try {
+				session = await restoreSession();
+			} catch (err) {
+				console.warn("[Bootstrap] session restore failed, loading from cache:", err);
+				// Timed out or failed (captive portal, no upstream). Fall back to local cache.
+				const localUser = await fetchLocalUser();
+				if (localUser) setUser(localUser);
+				return null;
+			}
+
 			if (session) {
 				setSession(session);
 				const role = await fetchOrCreateSupabaseUser(

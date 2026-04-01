@@ -96,6 +96,13 @@ export function useSync(userId: string | undefined) {
 		setTriggerSync(runSync);
 	}, [runSync, setTriggerSync]);
 
+	// Auto-sync when connectivity is restored (e.g. app launched offline then came online).
+	useEffect(() => {
+		if (!userId) return;
+		window.addEventListener("online", runSync);
+		return () => window.removeEventListener("online", runSync);
+	}, [userId, runSync]);
+
 	useEffect(() => {
 		if (!userId) return;
 
