@@ -22,7 +22,7 @@ templates   Layout shells with no real data — just children/slots.
 ### Atoms
 | Component | Purpose |
 |---|---|
-| `Button` | Primary action button, touch-target safe (`min-h-[48px]`) |
+| `Button` | Action button. Props: `variant` (`primary` \| `secondary` \| `outlined` \| `unstyled`, default `primary`), `size` (`small` \| `medium` \| `large`, default `medium`). Medium and large enforce `min-h-[48px]` for Android touch targets. Defaults `type="button"` to prevent accidental form submission. |
 | `Input` | Text input with label support |
 | `Select` | Dropdown select |
 | `Spinner` | Loading indicator |
@@ -232,6 +232,8 @@ Follow these rules when creating or modifying any component:
 - `secondary` variant → `bg-accent-secondary text-white`
 - `outlined` variant → `border-accent-primary text-accent-primary`
 - All variants use `rounded-[var(--radius-md)]` and `font-semibold`
+- Default size is `medium` (`min-h-[48px]`); use `size="small"` for compact inline buttons (e.g. burn form actions)
+- Always defaults to `type="button"` — override with `type="submit"` in forms
 
 **ToggleGroup:**
 - Active state: `bg-accent-primary text-white`

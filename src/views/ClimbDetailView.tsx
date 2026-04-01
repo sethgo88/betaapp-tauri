@@ -233,18 +233,19 @@ const ClimbDetailView = () => {
 				</button>
 				{burnsOpen && (
 					<div className="flex flex-col gap-2 px-3 pb-3">
-						<button
-							type="button"
-							className="flex items-center gap-1 text-sm text-accent-primary self-start"
+						<Button
+							size="small"
+							variant="outlined"
+							className="flex items-center gap-1 self-start"
 							onClick={() => {
 								setShowAddBurn(!showAddBurn);
 								setAddDate(new Date().toISOString().slice(0, 10));
 								setAddNotes("");
 							}}
 						>
-							<Plus size={16} />
+							<Plus size={14} />
 							Add burn
-						</button>
+						</Button>
 
 						{showAddBurn && (
 							<div className="rounded-[var(--radius-md)] bg-surface-input p-3 flex flex-col gap-2">
