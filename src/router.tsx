@@ -17,7 +17,6 @@ import LocationManagerView from "@/views/admin/LocationManagerView";
 import VerificationView from "@/views/admin/VerificationView";
 import ClimbDetailView from "@/views/ClimbDetailView";
 import CragView from "@/views/CragView";
-import EditClimbView from "@/views/EditClimbView";
 import HomeView from "@/views/HomeView";
 import MapView from "@/views/MapView";
 import ProfileView from "@/views/ProfileView";
@@ -76,13 +75,6 @@ const climbDetailRoute = createRoute({
 	path: "/climbs/$climbId",
 	beforeLoad: requireAuth,
 	component: ClimbDetailView,
-});
-
-const editClimbRoute = createRoute({
-	getParentRoute: () => rootRoute,
-	path: "/climbs/$climbId/edit",
-	beforeLoad: requireAuth,
-	component: EditClimbView,
 });
 
 const profileRoute = createRoute({
@@ -220,7 +212,6 @@ const routeTree = rootRoute.addChildren([
 	homeRoute,
 	addClimbRoute,
 	climbDetailRoute,
-	editClimbRoute,
 	profileRoute,
 	resetPasswordRoute,
 	mapRoute,

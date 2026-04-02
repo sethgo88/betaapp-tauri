@@ -96,6 +96,9 @@ CREATE TABLE IF NOT EXISTS climbs (
 | `unlinkClimbFromRoute(climbId)` | Sets `route_id = NULL`; preserves all other fields |
 | `fetchUnlinkedClimbs(userId)` | Returns climbs where `route_id IS NULL AND deleted_at IS NULL`, ordered by name |
 | `linkExistingClimbToRoute(climbId, routeId)` | Sets `route_id` and backfills `country/area/sub_area/crag/wall` from the route's location hierarchy |
+| `patchClimbGrade(id, grade)` | Updates only `grade` |
+| `patchClimbStatus(id, sentStatus)` | Updates only `sent_status` |
+| `patchClimbLink(id, link)` | Updates only `link` (pass `null` to clear) |
 | `softDeleteClimb(id)` | Sets `deleted_at = datetime('now')` |
 | `applyRemoteClimb(climb)` | `INSERT OR REPLACE` — preserves server `updated_at`; used by sync + Realtime |
 
@@ -112,7 +115,10 @@ CREATE TABLE IF NOT EXISTS climbs (
 | `useAddClimb()` | Mutation — `{ data, routeId? }` — inserts + silent push |
 | `useUpdateClimb()` | Mutation — `{ id, data, routeId? }` — updates + silent push |
 | `useUpdateClimbMoves()` | Mutation — `{ id, moves }` — replaces moves JSON string + silent push |
-| `useLinkClimbToRoute()` | Mutation — `{ climbId, routeId }` — upgrade flow in EditClimbView |
+| `usePatchClimbGrade()` | Mutation — `{ id, grade }` — updates grade only + silent push |
+| `usePatchClimbStatus()` | Mutation — `{ id, sentStatus }` — updates sent_status only + silent push |
+| `usePatchClimbLink()` | Mutation — `{ id, link }` — updates link only + silent push |
+| `useLinkClimbToRoute()` | Mutation — `{ climbId, routeId }` — links climb to a route |
 | `useUnlinkClimbFromRoute()` | Mutation — `(climbId)` — clears `route_id`; invalidates climbs + silent push |
 | `useUnlinkedClimbs()` | Query — climbs where `route_id IS NULL` for current user |
 | `useLinkExistingClimbToRoute()` | Mutation — `{ climbId, routeId }` — sets route link + backfills location + silent push |
