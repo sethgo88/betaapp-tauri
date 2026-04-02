@@ -102,11 +102,7 @@ const EditRouteForm = ({
 				<option value="sport">Sport</option>
 				<option value="boulder">Boulder</option>
 			</Select>
-			<GradeSelect
-				routeType={routeType}
-				value={grade}
-				onChange={setGrade}
-			/>
+			<GradeSelect routeType={routeType} value={grade} onChange={setGrade} />
 			<textarea
 				placeholder="Description (optional)"
 				value={description}

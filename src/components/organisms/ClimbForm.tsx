@@ -23,6 +23,7 @@ import { Input } from "@/components/atoms/Input";
 import { Select } from "@/components/atoms/Select";
 import { ToggleGroup } from "@/components/atoms/ToggleGroup";
 import { ConfirmDeleteDialog } from "@/components/molecules/ConfirmDeleteDialog";
+import { GradeSelect } from "@/components/molecules/GradeSelect";
 import { ImportBetaSheet } from "@/components/molecules/ImportBetaSheet";
 import { useUpdateClimbMoves } from "@/features/climbs/climbs.queries";
 import {
@@ -34,7 +35,6 @@ import {
 	type RouteType,
 	type SentStatus,
 } from "@/features/climbs/climbs.schema";
-import { GradeSelect } from "@/components/molecules/GradeSelect";
 import type { Route } from "@/features/routes/routes.schema";
 import { cn } from "@/lib/cn";
 
@@ -280,7 +280,7 @@ export const ClimbForm = ({
 		if (e.key === "Enter") {
 			e.preventDefault();
 			pendingFocusIndex.current =
-				inputRefs.current.findIndex((el) => el === e.currentTarget) + 1;
+				inputRefs.current.indexOf(e.currentTarget) + 1;
 			addMove(id);
 		}
 		if (e.key === "Backspace" && e.currentTarget.value === "") {
@@ -292,6 +292,7 @@ export const ClimbForm = ({
 	};
 
 	// Auto-focus the newly inserted move after Enter
+	// biome-ignore lint/correctness/useExhaustiveDependencies: activeMoveCount is an intentional trigger
 	useEffect(() => {
 		if (pendingFocusIndex.current !== null) {
 			const i = pendingFocusIndex.current;
@@ -413,7 +414,11 @@ export const ClimbForm = ({
 	return (
 		<form
 			id="climb-form"
-			className={showBeta ? "grid grid-rows-[auto_1fr] h-full gap-4" : "flex flex-col gap-4"}
+			className={
+				showBeta
+					? "grid grid-rows-[auto_1fr] h-full gap-4"
+					: "flex flex-col gap-4"
+			}
 			onSubmit={(e) => {
 				e.preventDefault();
 				e.stopPropagation();
@@ -452,9 +457,9 @@ export const ClimbForm = ({
 										field.handleChange(newType);
 										setRouteType(newType);
 										form.setFieldValue(
-							"grade",
-							newType === "boulder" ? "v5" : "5.12a",
-						);
+											"grade",
+											newType === "boulder" ? "v5" : "5.12a",
+										);
 									}}
 									name="route_type"
 								>
@@ -620,141 +625,143 @@ export const ClimbForm = ({
 				)}
 			</div>
 
-			{showBeta && <div className="w-full rounded-md bg-surface-card p-2 flex flex-col gap-2 overflow-y-auto">
-				{/* Beta header: title input / gallery toggle / add beta */}
-				<div className="flex items-center gap-2 px-1 min-h-[28px]">
-					{galleryMode ? (
-						<>
-							<span className="flex-1 text-sm font-medium text-text-secondary">
-								All betas
-							</span>
-							<button
-								type="button"
-								className="text-xs text-accent-primary shrink-0"
-								onClick={() => setGalleryMode(false)}
-							>
-								Close
-							</button>
-						</>
-					) : (
-						<>
-							<input
-								type="text"
-								className="flex-1 text-sm font-medium bg-transparent outline-none border-b border-text-muted pb-0.5 min-w-0"
-								value={activeBeta?.title ?? ""}
-								onChange={(e) => updateActiveBetaTitle(e.target.value)}
-								placeholder="Beta title"
-							/>
-							{betas.length > 1 && (
+			{showBeta && (
+				<div className="w-full rounded-md bg-surface-card p-2 flex flex-col gap-2 overflow-y-auto">
+					{/* Beta header: title input / gallery toggle / add beta */}
+					<div className="flex items-center gap-2 px-1 min-h-[28px]">
+						{galleryMode ? (
+							<>
+								<span className="flex-1 text-sm font-medium text-text-secondary">
+									All betas
+								</span>
 								<button
 									type="button"
 									className="text-xs text-accent-primary shrink-0"
-									onClick={() => setGalleryMode(true)}
+									onClick={() => setGalleryMode(false)}
 								>
-									Gallery
+									Close
 								</button>
-							)}
-						</>
-					)}
-					<button
-						type="button"
-						className="flex items-center gap-0.5 text-xs text-accent-primary shrink-0"
-						onClick={addBeta}
-					>
-						<Plus size={12} />
-						Add Beta
-					</button>
-				</div>
-
-				{galleryMode ? (
-					/* Gallery mode: horizontal snap-scroll cards */
-					<div className="flex gap-3 overflow-x-auto snap-x snap-mandatory -mx-2 px-2 pb-1">
-						{betas.map((beta) => (
-							// biome-ignore lint/a11y/useSemanticElements: contains nested button so cannot use <button>
-							<div
-								key={beta.id}
-								role="button"
-								tabIndex={0}
-								className={cn(
-									"snap-center shrink-0 w-40 rounded-md p-3 flex flex-col gap-1 bg-surface-input cursor-pointer",
-									activeBetaId === beta.id && "ring-1 ring-accent-primary",
+							</>
+						) : (
+							<>
+								<input
+									type="text"
+									className="flex-1 text-sm font-medium bg-transparent outline-none border-b border-text-muted pb-0.5 min-w-0"
+									value={activeBeta?.title ?? ""}
+									onChange={(e) => updateActiveBetaTitle(e.target.value)}
+									placeholder="Beta title"
+								/>
+								{betas.length > 1 && (
+									<button
+										type="button"
+										className="text-xs text-accent-primary shrink-0"
+										onClick={() => setGalleryMode(true)}
+									>
+										Gallery
+									</button>
 								)}
-								onClick={() => {
-									setActiveBetaId(beta.id);
-									setGalleryMode(false);
-								}}
-								onKeyDown={(e) => {
-									if (e.key === "Enter" || e.key === " ") {
-										e.preventDefault();
+							</>
+						)}
+						<button
+							type="button"
+							className="flex items-center gap-0.5 text-xs text-accent-primary shrink-0"
+							onClick={addBeta}
+						>
+							<Plus size={12} />
+							Add Beta
+						</button>
+					</div>
+
+					{galleryMode ? (
+						/* Gallery mode: horizontal snap-scroll cards */
+						<div className="flex gap-3 overflow-x-auto snap-x snap-mandatory -mx-2 px-2 pb-1">
+							{betas.map((beta) => (
+								// biome-ignore lint/a11y/useSemanticElements: contains nested button so cannot use <button>
+								<div
+									key={beta.id}
+									role="button"
+									tabIndex={0}
+									className={cn(
+										"snap-center shrink-0 w-40 rounded-md p-3 flex flex-col gap-1 bg-surface-input cursor-pointer",
+										activeBetaId === beta.id && "ring-1 ring-accent-primary",
+									)}
+									onClick={() => {
 										setActiveBetaId(beta.id);
 										setGalleryMode(false);
-									}
-								}}
-							>
-								<div className="flex items-center justify-between gap-1">
-									<p className="font-medium text-sm truncate flex-1">
-										{beta.title}
+									}}
+									onKeyDown={(e) => {
+										if (e.key === "Enter" || e.key === " ") {
+											e.preventDefault();
+											setActiveBetaId(beta.id);
+											setGalleryMode(false);
+										}
+									}}
+								>
+									<div className="flex items-center justify-between gap-1">
+										<p className="font-medium text-sm truncate flex-1">
+											{beta.title}
+										</p>
+										{betas.length > 1 && (
+											<button
+												type="button"
+												className="text-text-muted shrink-0"
+												onClick={(e) => {
+													e.stopPropagation();
+													setPendingDeleteBetaId(beta.id);
+												}}
+											>
+												<Trash2 size={12} />
+											</button>
+										)}
+									</div>
+									<p className="text-xs text-text-secondary">
+										{beta.moves.length} move
+										{beta.moves.length !== 1 ? "s" : ""}
 									</p>
-									{betas.length > 1 && (
-										<button
-											type="button"
-											className="text-text-muted shrink-0"
-											onClick={(e) => {
-												e.stopPropagation();
-												setPendingDeleteBetaId(beta.id);
-											}}
-										>
-											<Trash2 size={12} />
-										</button>
-									)}
+									{beta.moves.slice(0, 2).map((m, i) => (
+										<p key={m.id} className="text-xs text-text-muted truncate">
+											{i + 1}. {m.text || "…"}
+										</p>
+									))}
 								</div>
-								<p className="text-xs text-text-secondary">
-									{beta.moves.length} move
-									{beta.moves.length !== 1 ? "s" : ""}
+							))}
+						</div>
+					) : (
+						/* Normal mode: save status + DnD moves */
+						<>
+							{climbId && saveStatus !== "idle" && (
+								<p className="text-xs text-text-secondary px-1">
+									{saveStatus === "saving" ? "Saving…" : "Saved"}
 								</p>
-								{beta.moves.slice(0, 2).map((m, i) => (
-									<p key={m.id} className="text-xs text-text-muted truncate">
-										{i + 1}. {m.text || "…"}
-									</p>
-								))}
-							</div>
-						))}
-					</div>
-				) : (
-					/* Normal mode: save status + DnD moves */
-					<>
-						{climbId && saveStatus !== "idle" && (
-							<p className="text-xs text-text-secondary px-1">
-								{saveStatus === "saving" ? "Saving…" : "Saved"}
-							</p>
-						)}
-						<DndContext
-							sensors={sensors}
-							collisionDetection={closestCenter}
-							onDragEnd={handleDragEnd}
-						>
-							<SortableContext
-								items={activeMoves.map((m) => m.id)}
-								strategy={verticalListSortingStrategy}
+							)}
+							<DndContext
+								sensors={sensors}
+								collisionDetection={closestCenter}
+								onDragEnd={handleDragEnd}
 							>
-								{activeMoves.map((move, index) => (
-									<SortableMoveRow
-										key={move.id}
-										move={move}
-										index={index}
-										onKeyDown={handleTextAreaKeyDown}
-										onChange={handleMoveChange}
-										onFocus={handleMoveFocus}
-										setRef={(el, i) => {
-											inputRefs.current[i] = el;
-										}}
-									/>
-								))}
-							</SortableContext>
-						</DndContext>
-					</>
-				)}
-			</div>}
+								<SortableContext
+									items={activeMoves.map((m) => m.id)}
+									strategy={verticalListSortingStrategy}
+								>
+									{activeMoves.map((move, index) => (
+										<SortableMoveRow
+											key={move.id}
+											move={move}
+											index={index}
+											onKeyDown={handleTextAreaKeyDown}
+											onChange={handleMoveChange}
+											onFocus={handleMoveFocus}
+											setRef={(el, i) => {
+												inputRefs.current[i] = el;
+											}}
+										/>
+									))}
+								</SortableContext>
+							</DndContext>
+						</>
+					)}
+				</div>
+			)}
 
 			<ConfirmDeleteDialog
 				isOpen={pendingDeleteBetaId !== null}

@@ -4,13 +4,13 @@ import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { Select } from "@/components/atoms/Select";
 import { Spinner } from "@/components/atoms/Spinner";
+import { GradeSelect } from "@/components/molecules/GradeSelect";
 import {
 	LocationDrillDown,
 	type LocationSelection,
 } from "@/components/molecules/LocationDrillDown";
 import { Sheet } from "@/components/molecules/Sheet";
 import { useAuthStore } from "@/features/auth/auth.store";
-import { GradeSelect } from "@/components/molecules/GradeSelect";
 import {
 	useCrag,
 	useRegion,
@@ -291,11 +291,7 @@ const AddEditRouteView = ({ routeId }: AddEditRouteViewProps) => {
 					<option value="trad">Trad</option>
 				</Select>
 
-				<GradeSelect
-					routeType={routeType}
-					value={grade}
-					onChange={setGrade}
-				/>
+				<GradeSelect routeType={routeType} value={grade} onChange={setGrade} />
 
 				<textarea
 					placeholder="Description (optional)"
