@@ -196,5 +196,4 @@ export async function seedGrades(): Promise<void> {
 			[crypto.randomUUID(), "boulder", boulderGrades[i], i],
 		);
 	}
-
 }

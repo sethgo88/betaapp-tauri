@@ -25,7 +25,6 @@ import {
 	Settings,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { formatDate } from "@/lib/date";
 import { Button } from "@/components/atoms/Button";
 import { FeelSlider } from "@/components/atoms/FeelSlider";
 import { Input } from "@/components/atoms/Input";
@@ -61,6 +60,7 @@ import { useGrades } from "@/features/grades/grades.queries";
 import { useRoute } from "@/features/routes/routes.queries";
 import type { Route } from "@/features/routes/routes.schema";
 import { cn } from "@/lib/cn";
+import { formatDate } from "@/lib/date";
 import { buildLocationString } from "@/utils/build-location-string";
 
 // ── Feel labels ───────────────────────────────────────────────────────────────
@@ -91,8 +91,14 @@ const SortableMoveRow = ({
 	setRef,
 	onFocus,
 }: SortableMoveRowProps) => {
-	const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-		useSortable({ id: move.id });
+	const {
+		attributes,
+		listeners,
+		setNodeRef,
+		transform,
+		transition,
+		isDragging,
+	} = useSortable({ id: move.id });
 
 	const style: React.CSSProperties = {
 		transform: CSS.Transform.toString(transform),
@@ -155,7 +161,9 @@ const BetaEditSheet = ({
 	const inputRefs = useRef<Array<HTMLTextAreaElement | null>>([]);
 
 	const sensors = useSensors(
-		useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
+		useSensor(TouchSensor, {
+			activationConstraint: { delay: 250, tolerance: 5 },
+		}),
 		useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
 	);
 
@@ -235,7 +243,10 @@ const BetaEditSheet = ({
 						setIsDirty(false);
 						setSaveStatus("saved");
 						if (savedStatusRef.current) clearTimeout(savedStatusRef.current);
-						savedStatusRef.current = setTimeout(() => setSaveStatus("idle"), 2000);
+						savedStatusRef.current = setTimeout(
+							() => setSaveStatus("idle"),
+							2000,
+						);
 					},
 					onError: () => setSaveStatus("idle"),
 				},
@@ -307,7 +318,11 @@ const BetaEditSheet = ({
 										const rect = el.getBoundingClientRect();
 										const navbarHeight = window.innerHeight * 0.07;
 										if (rect.bottom > window.innerHeight - navbarHeight - 8) {
-											window.scrollBy({ top: rect.bottom - (window.innerHeight - navbarHeight - 8), behavior: "smooth" });
+											window.scrollBy({
+												top:
+													rect.bottom - (window.innerHeight - navbarHeight - 8),
+												behavior: "smooth",
+											});
 										}
 									}, 300);
 								}}
@@ -322,7 +337,11 @@ const BetaEditSheet = ({
 
 			{/* Fixed footer */}
 			<div className="flex gap-2 px-4 py-3 border-t border-border-default shrink-0">
-				<Button className="flex-1" onClick={handleSave} disabled={updateMoves.isPending}>
+				<Button
+					className="flex-1"
+					onClick={handleSave}
+					disabled={updateMoves.isPending}
+				>
 					Save
 				</Button>
 				<Button className="flex-1" variant="outlined" onClick={handleCancel}>
@@ -354,10 +373,11 @@ interface BetaCarouselProps {
 const BetaCarousel = ({ betas, climbId, onBetasChange }: BetaCarouselProps) => {
 	// Total slots: betas + 1 "add new" card at the end
 	const total = betas.length + 1;
-	const addIndex = betas.length;
 	const [activeIndex, setActiveIndex] = useState(0);
 	const [gearOpenId, setGearOpenId] = useState<string | null>(null);
-	const [pendingDeleteBetaId, setPendingDeleteBetaId] = useState<string | null>(null);
+	const [pendingDeleteBetaId, setPendingDeleteBetaId] = useState<string | null>(
+		null,
+	);
 	const [editingBetaId, setEditingBetaId] = useState<string | null>(null);
 	const [importOpen, setImportOpen] = useState(false);
 
@@ -410,7 +430,8 @@ const BetaCarousel = ({ betas, climbId, onBetasChange }: BetaCarouselProps) => {
 		const updated = betas.filter((b) => b.id !== betaId);
 		onBetasChange(updated);
 		updateMoves.mutate({ id: climbId, moves: JSON.stringify(updated) });
-		if (activeIndex >= updated.length) setActiveIndex(Math.max(0, updated.length - 1));
+		if (activeIndex >= updated.length)
+			setActiveIndex(Math.max(0, updated.length - 1));
 	};
 
 	const handleImport = (moves: MoveItem[]) => {
@@ -528,7 +549,9 @@ const BetaCarousel = ({ betas, climbId, onBetasChange }: BetaCarouselProps) => {
 									))}
 								</ul>
 							) : (
-								<p className="text-sm text-text-secondary">No moves logged yet.</p>
+								<p className="text-sm text-text-secondary">
+									No moves logged yet.
+								</p>
 							)}
 						</div>
 					))}
@@ -633,7 +656,9 @@ const ClimbDetailView = () => {
 	const [betasInitialized, setBetasInitialized] = useState(false);
 
 	const [confirmDelete, setConfirmDelete] = useState(false);
-	const [pendingDeleteBurnId, setPendingDeleteBurnId] = useState<string | null>(null);
+	const [pendingDeleteBurnId, setPendingDeleteBurnId] = useState<string | null>(
+		null,
+	);
 	const [gearMenuOpen, setGearMenuOpen] = useState(false);
 	const [gradePickerOpen, setGradePickerOpen] = useState(false);
 	const [routePickerOpen, setRoutePickerOpen] = useState(false);
@@ -642,7 +667,9 @@ const ClimbDetailView = () => {
 
 	const [burnsOpen, setBurnsOpen] = useState(false);
 	const [showAddBurn, setShowAddBurn] = useState(false);
-	const [addDate, setAddDate] = useState(() => new Date().toISOString().slice(0, 10));
+	const [addDate, setAddDate] = useState(() =>
+		new Date().toISOString().slice(0, 10),
+	);
 	const [addNotes, setAddNotes] = useState("");
 	const [addFeel, setAddFeel] = useState<number | null>(null);
 	const [editingBurnId, setEditingBurnId] = useState<string | null>(null);
@@ -719,7 +746,10 @@ const ClimbDetailView = () => {
 							}
 						>
 							<h1 className="text-2xl font-display font-bold">{climb.name}</h1>
-							<ExternalLink size={16} className="text-text-secondary shrink-0 mt-1" />
+							<ExternalLink
+								size={16}
+								className="text-text-secondary shrink-0 mt-1"
+							/>
 						</button>
 					) : (
 						<h1 className="text-2xl font-display font-bold">{climb.name}</h1>
@@ -753,7 +783,8 @@ const ClimbDetailView = () => {
 										type="button"
 										className={cn(
 											"w-full text-left px-4 py-2 text-sm hover:bg-surface-hover",
-											g.grade === climb.grade && "text-accent-primary font-medium",
+											g.grade === climb.grade &&
+												"text-accent-primary font-medium",
 										)}
 										onClick={() => {
 											patchGrade.mutate({ id: climbId, grade: g.grade });
@@ -857,18 +888,16 @@ const ClimbDetailView = () => {
 					{ value: "project", label: "Project" },
 					{ value: "sent", label: "Sent" },
 				]}
-				value={["todo", "project", "sent"].includes(climb.sent_status)
-					? climb.sent_status
-					: "project"}
+				value={
+					["todo", "project", "sent"].includes(climb.sent_status)
+						? climb.sent_status
+						: "project"
+				}
 				onChange={(v) => patchStatus.mutate({ id: climbId, sentStatus: v })}
 			/>
 
 			{/* Betas */}
-			<BetaCarousel
-				betas={betas}
-				climbId={climbId}
-				onBetasChange={setBetas}
-			/>
+			<BetaCarousel betas={betas} climbId={climbId} onBetasChange={setBetas} />
 
 			{/* Burns section */}
 			<div className="rounded-md bg-surface-card">
@@ -994,14 +1023,18 @@ const ClimbDetailView = () => {
 										) : (
 											<div className="flex items-start justify-between">
 												<div>
-													<p className="text-sm font-semibold">{formatDate(burn.date)}</p>
+													<p className="text-sm font-semibold">
+														{formatDate(burn.date)}
+													</p>
 													{burn.feel != null && (
 														<p className="text-xs text-accent-primary">
 															{FEEL_LABELS[burn.feel]}
 														</p>
 													)}
 													{burn.notes && (
-														<p className="text-sm text-text-secondary">{burn.notes}</p>
+														<p className="text-sm text-text-secondary">
+															{burn.notes}
+														</p>
 													)}
 												</div>
 												<div className="relative">
@@ -1050,7 +1083,9 @@ const ClimbDetailView = () => {
 								))}
 							</ul>
 						) : (
-							<p className="text-sm text-text-secondary">No burns logged yet.</p>
+							<p className="text-sm text-text-secondary">
+								No burns logged yet.
+							</p>
 						)}
 					</div>
 				)}

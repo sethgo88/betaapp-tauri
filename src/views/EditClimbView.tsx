@@ -98,7 +98,7 @@ const LinkRouteSection = ({ climbId }: { climbId: string }) => {
 // ── Edit climb view ───────────────────────────────────────────────────────────
 
 const EditClimbView = () => {
-	const { climbId } = useParams({ from: "/climbs/$climbId/edit" });
+	const { climbId } = useParams({ from: "/climbs/$climbId" });
 	const navigate = useNavigate();
 	const { data: climb, isLoading } = useClimb(climbId);
 	const { mutateAsync: updateClimb } = useUpdateClimb();

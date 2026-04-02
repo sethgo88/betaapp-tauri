@@ -1,5 +1,5 @@
-import { base64ToBlob, uploadBlobToStorage } from "@/lib/image-utils";
 import { getDb } from "@/lib/db";
+import { base64ToBlob, uploadBlobToStorage } from "@/lib/image-utils";
 import { supabase } from "@/lib/supabase";
 import type {
 	ClimbImage,
@@ -75,7 +75,15 @@ export async function insertClimbImage(
 	await db.execute(
 		`INSERT INTO climb_images (id, climb_id, user_id, image_url, sort_order, local_data, upload_status, created_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
-		[id, climbId, userId, storagePath, sortOrder, localData ?? null, uploadStatus],
+		[
+			id,
+			climbId,
+			userId,
+			storagePath,
+			sortOrder,
+			localData ?? null,
+			uploadStatus,
+		],
 	);
 	return id;
 }

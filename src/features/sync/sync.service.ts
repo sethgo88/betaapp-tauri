@@ -9,6 +9,7 @@ import {
 	uploadPendingImages,
 } from "@/features/climb-images/climb-images.service";
 export { uploadPendingImages };
+
 import type { Climb } from "@/features/climbs/climbs.schema";
 import type {
 	RouteImage,
