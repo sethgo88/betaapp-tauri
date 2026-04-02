@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatDate } from "@/lib/date";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { Select } from "@/components/atoms/Select";
@@ -292,7 +293,7 @@ const RouteRow = ({ route }: { route: UnverifiedRoute }) => {
 					</span>
 				</div>
 				<span className="text-xs text-text-tertiary">
-					{new Date(route.created_at).toLocaleDateString()}
+					{formatDate(route.created_at)}
 				</span>
 			</div>
 			{submitterLabel && (
@@ -445,7 +446,7 @@ const LocationRow = ({
 				</p>
 			</div>
 			<span className="text-xs text-text-tertiary shrink-0">
-				{new Date(item.created_at).toLocaleDateString()}
+				{formatDate(item.created_at)}
 			</span>
 		</div>
 

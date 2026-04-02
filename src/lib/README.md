@@ -161,6 +161,26 @@ Wraps `clsx` + `tailwind-merge`. Use for all conditional Tailwind class composit
 
 ---
 
+## date.ts — date display formatting
+
+```ts
+import { formatDate } from '@/lib/date'
+```
+
+### `formatDate(date, format?): string`
+
+Formats a date for display. Accepts a `Date` object, an ISO timestamp string, or a `YYYY-MM-DD` date string. The optional `format` argument uses `DD`, `MM`, `YY`, and `YYYY` tokens; defaults to `'DD-MM-YY'`.
+
+```ts
+formatDate('2025-03-05')               // '05-03-25'
+formatDate('2025-03-05', 'DD/MM/YYYY') // '05/03/2025'
+formatDate(someIsoTimestamp)           // e.g. '05-03-25'
+```
+
+Use this function for **every** date shown to the user — never call `toLocaleDateString()` or render a raw date string directly.
+
+---
+
 ## units.ts — imperial/metric conversion
 
 ```ts

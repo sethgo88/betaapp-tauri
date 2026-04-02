@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { ChevronDown, ExternalLink, Pencil, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { formatDate } from "@/lib/date";
 import { Button } from "@/components/atoms/Button";
 import { FeelSlider } from "@/components/atoms/FeelSlider";
 import { Input } from "@/components/atoms/Input";
@@ -343,7 +344,7 @@ const ClimbDetailView = () => {
 										) : (
 											<div className="flex items-center justify-between">
 												<div>
-													<p className="text-sm font-semibold">{burn.date}</p>
+													<p className="text-sm font-semibold">{formatDate(burn.date)}</p>
 													{burn.feel != null && (
 														<p className="text-xs text-accent-primary">
 															{FEEL_LABELS[burn.feel]}
