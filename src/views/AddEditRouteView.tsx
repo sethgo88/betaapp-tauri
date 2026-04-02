@@ -10,7 +10,7 @@ import {
 } from "@/components/molecules/LocationDrillDown";
 import { Sheet } from "@/components/molecules/Sheet";
 import { useAuthStore } from "@/features/auth/auth.store";
-import { useGrades } from "@/features/grades/grades.queries";
+import { GradeSelect } from "@/components/molecules/GradeSelect";
 import {
 	useCrag,
 	useRegion,
@@ -113,7 +113,6 @@ const AddEditRouteView = ({ routeId }: AddEditRouteViewProps) => {
 		setPendingSelection(sel);
 	}, []);
 
-	const { data: grades = [] } = useGrades(routeType);
 	const { mutateAsync: addRoute, isPending: adding } = useAddRoute();
 	const { mutateAsync: editRoute, isPending: editing } = useEditRoute();
 
@@ -130,7 +129,7 @@ const AddEditRouteView = ({ routeId }: AddEditRouteViewProps) => {
 	const canSubmit = !!selection.wallId && name.trim().length > 0;
 
 	const handleSubmit = async () => {
-		const resolvedGrade = grade || (grades.length > 0 ? grades[0].grade : "");
+		const resolvedGrade = grade || (routeType === "boulder" ? "v5" : "5.12a");
 		const parsed = RouteSubmitSchema.safeParse({
 			wall_id: selection.wallId,
 			name: name.trim(),
@@ -284,7 +283,7 @@ const AddEditRouteView = ({ routeId }: AddEditRouteViewProps) => {
 					onChange={(e) => {
 						const val = e.target.value as "sport" | "boulder" | "trad";
 						setRouteType(val);
-						setGrade("");
+						setGrade(val === "boulder" ? "v5" : "5.12a");
 					}}
 				>
 					<option value="sport">Sport</option>
@@ -292,16 +291,11 @@ const AddEditRouteView = ({ routeId }: AddEditRouteViewProps) => {
 					<option value="trad">Trad</option>
 				</Select>
 
-				<Select
-					value={grade || (grades.length > 0 ? grades[0].grade : "")}
-					onChange={(e) => setGrade(e.target.value)}
-				>
-					{grades.map((g) => (
-						<option key={g.id} value={g.grade}>
-							{g.grade}
-						</option>
-					))}
-				</Select>
+				<GradeSelect
+					routeType={routeType}
+					value={grade}
+					onChange={setGrade}
+				/>
 
 				<textarea
 					placeholder="Description (optional)"

@@ -34,7 +34,7 @@ import {
 	type RouteType,
 	type SentStatus,
 } from "@/features/climbs/climbs.schema";
-import { useGrades } from "@/features/grades/grades.queries";
+import { GradeSelect } from "@/components/molecules/GradeSelect";
 import type { Route } from "@/features/routes/routes.schema";
 import { cn } from "@/lib/cn";
 
@@ -373,8 +373,6 @@ export const ClimbForm = ({
 
 	// ── Form ──────────────────────────────────────────────────────────────────
 
-	const { data: grades = [] } = useGrades(routeType);
-
 	const form = useForm({
 		canSubmitWhenInvalid: true,
 		defaultValues: {
@@ -452,7 +450,10 @@ export const ClimbForm = ({
 										const newType = e.target.value as RouteType;
 										field.handleChange(newType);
 										setRouteType(newType);
-										form.setFieldValue("grade", "");
+										form.setFieldValue(
+							"grade",
+							newType === "boulder" ? "v5" : "5.12a",
+						);
 									}}
 									name="route_type"
 								>
@@ -469,21 +470,13 @@ export const ClimbForm = ({
 						</label>
 						<form.Field name="grade">
 							{(field) => (
-								<Select
+								<GradeSelect
 									id="grade"
-									value={
-										field.state.value ||
-										(routeType === "boulder" ? "v0" : "5.10a")
-									}
-									onChange={(e) => field.handleChange(e.target.value)}
 									name="grade"
-								>
-									{grades.map((g) => (
-										<option key={g.id} value={g.grade}>
-											{g.grade}
-										</option>
-									))}
-								</Select>
+									routeType={routeType}
+									value={field.state.value}
+									onChange={(v) => field.handleChange(v)}
+								/>
 							)}
 						</form.Field>
 					</div>

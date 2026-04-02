@@ -3,7 +3,7 @@ import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { Select } from "@/components/atoms/Select";
 import { CoordinatePicker } from "@/components/molecules/CoordinatePicker";
-import { useGrades } from "@/features/grades/grades.queries";
+import { GradeSelect } from "@/components/molecules/GradeSelect";
 import {
 	useAdminUpdateCragCoords,
 	usePendingLocations,
@@ -84,8 +84,6 @@ const EditRouteForm = ({
 	);
 	const [grade, setGrade] = useState(route.grade);
 	const [description, setDescription] = useState(route.description ?? "");
-	const { data: grades = [] } = useGrades(routeType);
-
 	return (
 		<div className="flex flex-col gap-2 mt-3 pt-3 border-t border-border-default">
 			<Input
@@ -98,22 +96,17 @@ const EditRouteForm = ({
 				onChange={(e) => {
 					const val = e.target.value as "sport" | "boulder" | "trad";
 					setRouteType(val);
-					setGrade("");
+					setGrade(val === "boulder" ? "v5" : "5.12a");
 				}}
 			>
 				<option value="sport">Sport</option>
 				<option value="boulder">Boulder</option>
 			</Select>
-			<Select
-				value={grade || (grades.length > 0 ? grades[0].grade : "")}
-				onChange={(e) => setGrade(e.target.value)}
-			>
-				{grades.map((g) => (
-					<option key={g.id} value={g.grade}>
-						{g.grade}
-					</option>
-				))}
-			</Select>
+			<GradeSelect
+				routeType={routeType}
+				value={grade}
+				onChange={setGrade}
+			/>
 			<textarea
 				placeholder="Description (optional)"
 				value={description}
@@ -129,7 +122,7 @@ const EditRouteForm = ({
 					onClick={() =>
 						onSave({
 							name,
-							grade: grade || (grades.length > 0 ? grades[0].grade : ""),
+							grade: grade || (routeType === "boulder" ? "v5" : "5.12a"),
 							route_type: routeType,
 							description: description || undefined,
 						})

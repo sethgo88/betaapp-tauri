@@ -35,6 +35,7 @@ templates   Layout shells with no real data — just children/slots.
 | `ClimbCard` | Displays a single climb summary; handles tap + delete |
 | `EditableDescription` | Read-only description text; admins see pencil icon for inline edit + save |
 | `FilterPanel` | Collapsible status/type filter checkboxes with cross-filtered counts |
+| `GradeSelect` | Controlled grade dropdown. Fetches grades for `routeType` via `useGrades`. Defaults empty value to `5.12a` (sport/trad) or `v5` (boulder). Props: `routeType`, `value`, `onChange`, optional `id`/`name`. |
 | `FormField` | Label + input/select + error message wrapper |
 | `SyncStatus` | Reads `sync.store` and renders sync state indicator |
 | `CoordinatePicker` | Fullscreen Leaflet overlay for picking coordinates; fixed center pin with drag-to-position pattern. Props: `value`, `defaultCenter`, `defaultZoom`, `markers` (reference pins), `onChange`, `onClose`. Exports `PickerMarker` type. |
