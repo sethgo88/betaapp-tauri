@@ -203,12 +203,16 @@ const BetaEditSheet = ({
 		}
 	};
 
+	const pendingFocusIndex = useRef<number | null>(null);
+
 	const handleKeyDown = (
 		e: React.KeyboardEvent<HTMLTextAreaElement>,
 		id: string,
 	) => {
 		if (e.key === "Enter") {
 			e.preventDefault();
+			pendingFocusIndex.current =
+				inputRefs.current.findIndex((el) => el === e.currentTarget) + 1;
 			addMove(id);
 		}
 		if (e.key === "Backspace" && e.currentTarget.value === "") {
@@ -220,6 +224,15 @@ const BetaEditSheet = ({
 			inputRefs.current[focusedIndex - 1]?.focus();
 		}
 	};
+
+	// Auto-focus the newly inserted move after Enter
+	useEffect(() => {
+		if (pendingFocusIndex.current !== null) {
+			const i = pendingFocusIndex.current;
+			pendingFocusIndex.current = null;
+			inputRefs.current[i]?.focus();
+		}
+	}, [moves.length]);
 
 	// Auto-save on changes
 	// biome-ignore lint/correctness/useExhaustiveDependencies: updateMoves.mutate is stable

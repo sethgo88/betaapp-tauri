@@ -185,6 +185,7 @@ export const ClimbForm = ({
 	const updateMoves = useUpdateClimbMoves();
 
 	const inputRefs = useRef<Array<HTMLTextAreaElement | null>>([]);
+	const pendingFocusIndex = useRef<number | null>(null);
 
 	// ── DnD sensors: touch with 250ms long-press delay, pointer for dev ────────
 	const sensors = useSensors(
@@ -278,6 +279,8 @@ export const ClimbForm = ({
 	) => {
 		if (e.key === "Enter") {
 			e.preventDefault();
+			pendingFocusIndex.current =
+				inputRefs.current.findIndex((el) => el === e.currentTarget) + 1;
 			addMove(id);
 		}
 		if (e.key === "Backspace" && e.currentTarget.value === "") {
@@ -288,14 +291,12 @@ export const ClimbForm = ({
 		}
 	};
 
+	// Auto-focus the newly inserted move after Enter
 	useEffect(() => {
-		if (inputRefs.current.length > 0 && activeMoveCount > 0) {
-			const focused = inputRefs.current.find(
-				(input) => input === document.activeElement,
-			);
-			if (!focused) return;
-			const focusedIndex = inputRefs.current.indexOf(focused);
-			inputRefs.current[focusedIndex + 1]?.focus();
+		if (pendingFocusIndex.current !== null) {
+			const i = pendingFocusIndex.current;
+			pendingFocusIndex.current = null;
+			inputRefs.current[i]?.focus();
 		}
 	}, [activeMoveCount]);
 
