@@ -12,8 +12,7 @@ Router defined in `src/router.tsx` using `createMemoryHistory` (required for And
 |---|---|---|---|
 | `/` | `HomeView` | required | Climb log list; tap to detail, swipe/tap to delete |
 | `/climbs/add` | `AddClimbView` | required | New climb form; accepts optional `?routeId=&routeName=&grade=&routeType=` to pre-fill from a route |
-| `/climbs/$climbId` | `ClimbDetailView` | required | Full climb detail; navigate to edit |
-| `/climbs/$climbId/edit` | `EditClimbView` | required | Edit existing climb |
+| `/climbs/$climbId` | `ClimbDetailView` | required | Full climb detail; inline grade/status editing, betas, burns, link |
 | `/profile` | `ProfileView` | public | Login / logout / forgot password; shows user info when authenticated |
 | `/reset-password` | `ResetPasswordView` | public | Set new password after tapping reset link from email |
 | `/map` | `MapView` | required | Interactive map with Discovery (all downloaded crags) and Personal (crags with user's climbs) modes |
@@ -51,10 +50,14 @@ Loads `useClimbs()`. Renders search input, `FilterPanel` molecule, and filtered 
 Renders `ClimbForm` organism in "add" mode. Reads optional search params (`routeId`, `routeName`, `grade`, `routeType`) to pre-fill the form when logging a specific route from `CragView`. On success navigates to `/`.
 
 ### ClimbDetailView `/climbs/$climbId`
-Loads `useClimb(climbId)` and `useBurns(climbId)`. Displays all climb fields. Has "Edit" button → `/climbs/$climbId/edit`. Burns section with inline add/edit forms and soft-delete. Each burn has a date and optional notes. Betas section renders one collapsible accordion per beta (parsed via `parseBetas`); shows "No betas logged yet." when empty.
+Loads `useClimb(climbId)`, `useBurns(climbId)`, and `useGrades(routeType)`. No separate edit view — all editing is inline.
 
-### EditClimbView `/climbs/$climbId/edit`
-Loads `useClimb(climbId)`. Renders `ClimbForm` in "edit" mode with prefilled values. If `climb.route_id` is null, shows a "Link to route" search section (`useLinkClimbToRoute`). On success navigates back to detail.
+- **Grade**: tappable badge opens a grade dropdown; on selection calls `usePatchClimbGrade` and syncs.
+- **Status**: three-way toggle (Todo / Project / Sent) calls `usePatchClimbStatus` and syncs.
+- **Gear icon**: popup menu with Link/Unlink route (`RoutePickerSheet` / `useUnlinkClimbFromRoute`) and Delete (`ConfirmDeleteDialog`).
+- **Betas**: horizontal swipeable carousel (circular). Each beta card shows title + gear icon (Edit / Delete). Edit opens a full-page `BetaEditSheet` with DnD move list, auto-save, unsaved-changes guard, Save/Cancel buttons. "Add new beta" card at the end of the carousel. Import beta available from the carousel header.
+- **Burns**: collapsible section with inline add/edit/delete (unchanged).
+- **Link**: inline add/edit/display; calls `usePatchClimbLink` on save.
 
 ### ProfileView `/profile`
 Public (no auth guard). Shows login form when unauthenticated (`signIn` / `signUp` / `forgot password`). Shows user info + logout when authenticated. Settings panel includes a Dark/Light theme toggle (persisted to localStorage via `ui.store`).

@@ -89,7 +89,7 @@ const SortableMoveRow = ({
 				onKeyDown={(e) => onKeyDown(e, move.id)}
 				onChange={(e) => onChange(e, move.id)}
 				onFocus={() => onFocus(index)}
-				className="flex-1 field-sizing-content outline-none bg-transparent"
+				className="flex-1 field-sizing-content outline-none bg-transparent min-h-[1.5rem]"
 				value={move.text}
 				ref={(el) => setRef(el, index)}
 			/>
