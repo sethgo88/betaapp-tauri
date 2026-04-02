@@ -649,6 +649,7 @@ const ClimbDetailView = () => {
 	const [editDate, setEditDate] = useState("");
 	const [editNotes, setEditNotes] = useState("");
 	const [editFeel, setEditFeel] = useState<number | null>(null);
+	const [openBurnMenuId, setOpenBurnMenuId] = useState<string | null>(null);
 
 	useEffect(() => {
 		setSelectedClimbId(climbId);
@@ -833,7 +834,7 @@ const ClimbDetailView = () => {
 			</div>
 
 			{/* Close overlays on outside tap */}
-			{(gearMenuOpen || gradePickerOpen) && (
+			{(gearMenuOpen || gradePickerOpen || openBurnMenuId !== null) && (
 				// biome-ignore lint/a11y/useSemanticElements: transparent overlay
 				<div
 					role="button"
@@ -842,6 +843,7 @@ const ClimbDetailView = () => {
 					onClick={() => {
 						setGearMenuOpen(false);
 						setGradePickerOpen(false);
+						setOpenBurnMenuId(null);
 					}}
 					onKeyDown={() => {}}
 					aria-label="Close menu"
@@ -946,7 +948,7 @@ const ClimbDetailView = () => {
 						{burns && burns.length > 0 ? (
 							<ul className="flex flex-col gap-2">
 								{burns.map((burn) => (
-									<li key={burn.id} className="border-l border-text-primary pl-2">
+									<li key={burn.id}>
 										{editingBurnId === burn.id ? (
 											<div className="flex flex-col gap-2">
 												<Input
@@ -990,7 +992,7 @@ const ClimbDetailView = () => {
 												</div>
 											</div>
 										) : (
-											<div className="flex items-center justify-between">
+											<div className="flex items-start justify-between">
 												<div>
 													<p className="text-sm font-semibold">{formatDate(burn.date)}</p>
 													{burn.feel != null && (
@@ -1002,26 +1004,45 @@ const ClimbDetailView = () => {
 														<p className="text-sm text-text-secondary">{burn.notes}</p>
 													)}
 												</div>
-												<div className="flex items-center gap-3">
+												<div className="relative">
 													<button
 														type="button"
-														className="text-xs text-text-secondary"
-														onClick={() => {
-															setEditingBurnId(burn.id);
-															setEditDate(burn.date);
-															setEditNotes(burn.notes ?? "");
-															setEditFeel(burn.feel ?? null);
-														}}
+														className="p-1 text-text-secondary"
+														onClick={() =>
+															setOpenBurnMenuId(
+																openBurnMenuId === burn.id ? null : burn.id,
+															)
+														}
 													>
-														Edit
+														<Settings size={16} />
 													</button>
-													<button
-														type="button"
-														className="text-xs text-text-secondary"
-														onClick={() => setPendingDeleteBurnId(burn.id)}
-													>
-														Delete
-													</button>
+													{openBurnMenuId === burn.id && (
+														<div className="absolute right-0 top-7 z-20 bg-surface-card border border-border-default rounded-lg shadow-lg min-w-[120px] overflow-hidden">
+															<button
+																type="button"
+																className="w-full text-left px-4 py-2.5 text-sm hover:bg-surface-hover"
+																onClick={() => {
+																	setEditingBurnId(burn.id);
+																	setEditDate(burn.date);
+																	setEditNotes(burn.notes ?? "");
+																	setEditFeel(burn.feel ?? null);
+																	setOpenBurnMenuId(null);
+																}}
+															>
+																Edit
+															</button>
+															<button
+																type="button"
+																className="w-full text-left px-4 py-2.5 text-sm text-destructive hover:bg-surface-hover"
+																onClick={() => {
+																	setPendingDeleteBurnId(burn.id);
+																	setOpenBurnMenuId(null);
+																}}
+															>
+																Delete
+															</button>
+														</div>
+													)}
 												</div>
 											</div>
 										)}
