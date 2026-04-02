@@ -159,7 +159,7 @@ const AddEditRouteView = ({ routeId }: AddEditRouteViewProps) => {
 				});
 				addToast({ message: "Route updated", type: "success" });
 			} else {
-				await addRoute({
+				const newRouteId = await addRoute({
 					values: parsed.data,
 					userId: user?.id ?? "",
 					isAdmin,
@@ -168,6 +168,12 @@ const AddEditRouteView = ({ routeId }: AddEditRouteViewProps) => {
 					message: isAdmin ? "Route added" : "Route submitted for review",
 					type: "success",
 				});
+				router.navigate({
+					to: "/routes/$routeId",
+					params: { routeId: newRouteId },
+					replace: true,
+				});
+				return;
 			}
 			router.history.back();
 		} catch {

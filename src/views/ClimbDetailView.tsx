@@ -220,6 +220,50 @@ const ClimbDetailView = () => {
 				onCancel={() => setPendingDeleteBurnId(null)}
 			/>
 
+			{betas.length === 0 ? (
+				<div className="rounded-md bg-surface-card px-3 py-3">
+					<p className="text-sm text-text-secondary">No betas logged yet.</p>
+				</div>
+			) : (
+				betas.map((beta) => (
+					<div key={beta.id} className="rounded-md bg-surface-card">
+						<button
+							type="button"
+							className="flex items-center justify-between w-full p-3 text-sm text-text-secondary"
+							onClick={() => toggleBeta(beta.id)}
+						>
+							<span>
+								{beta.title} ({beta.moves.length})
+							</span>
+							<ChevronDown
+								size={16}
+								className={cn(
+									"transition-transform",
+									openBetaIds.has(beta.id) && "rotate-180",
+								)}
+							/>
+						</button>
+						{openBetaIds.has(beta.id) &&
+							(beta.moves.length > 0 ? (
+								<ul className="flex flex-col gap-1 px-3 pb-3">
+									{beta.moves.map((move, i) => (
+										<li
+											key={move.id}
+											className="border-l border-text-primary pl-2 text-sm"
+										>
+											{i + 1}. {move.text}
+										</li>
+									))}
+								</ul>
+							) : (
+								<p className="text-sm text-text-secondary px-3 pb-3">
+									No moves logged yet.
+								</p>
+							))}
+					</div>
+				))
+			)}
+
 			<div className="rounded-md bg-surface-card">
 				<button
 					type="button"
@@ -390,50 +434,6 @@ const ClimbDetailView = () => {
 					</div>
 				)}
 			</div>
-
-			{betas.length === 0 ? (
-				<div className="rounded-md bg-surface-card px-3 py-3">
-					<p className="text-sm text-text-secondary">No betas logged yet.</p>
-				</div>
-			) : (
-				betas.map((beta) => (
-					<div key={beta.id} className="rounded-md bg-surface-card">
-						<button
-							type="button"
-							className="flex items-center justify-between w-full p-3 text-sm text-text-secondary"
-							onClick={() => toggleBeta(beta.id)}
-						>
-							<span>
-								{beta.title} ({beta.moves.length})
-							</span>
-							<ChevronDown
-								size={16}
-								className={cn(
-									"transition-transform",
-									openBetaIds.has(beta.id) && "rotate-180",
-								)}
-							/>
-						</button>
-						{openBetaIds.has(beta.id) &&
-							(beta.moves.length > 0 ? (
-								<ul className="flex flex-col gap-1 px-3 pb-3">
-									{beta.moves.map((move, i) => (
-										<li
-											key={move.id}
-											className="border-l border-text-primary pl-2 text-sm"
-										>
-											{i + 1}. {move.text}
-										</li>
-									))}
-								</ul>
-							) : (
-								<p className="text-sm text-text-secondary px-3 pb-3">
-									No moves logged yet.
-								</p>
-							))}
-					</div>
-				))
-			)}
 
 			{climb.link && (
 				<a
