@@ -55,7 +55,7 @@ Loads `useClimb(climbId)`, `useBurns(climbId)`, and `useGrades(routeType)`. No s
 - **Grade**: tappable badge opens a grade dropdown; on selection calls `usePatchClimbGrade` and syncs.
 - **Status**: three-way toggle (Todo / Project / Sent) calls `usePatchClimbStatus` and syncs.
 - **Gear icon**: popup menu with Link/Unlink route (`RoutePickerSheet` / `useUnlinkClimbFromRoute`) and Delete (`ConfirmDeleteDialog`).
-- **Betas**: horizontal swipeable carousel (circular). Each beta card shows title + gear icon (Edit / Delete). Edit opens a full-page `BetaEditSheet` with DnD move list, auto-save, unsaved-changes guard, Save/Cancel buttons. "Add new beta" card at the end of the carousel. Import beta available from the carousel header.
+- **Betas**: collapsible section. When expanded, shows a horizontal swipeable carousel (circular, scroll-aware — vertical scroll does not trigger swipe). Dot pagination centered above cards. Section header has a gear icon with "Add Beta" (opens `BetaEditSheet` immediately) and "Import" options. Each beta card shows title + inline Edit / Delete buttons. Edit opens a full-page `BetaEditSheet` with DnD move list, auto-save, unsaved-changes guard, Save/Cancel buttons.
 - **Burns**: collapsible section with inline add/edit/delete (unchanged).
 - **Link**: inline add/edit/display; calls `usePatchClimbLink` on save.
 

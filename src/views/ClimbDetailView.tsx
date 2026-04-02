@@ -16,14 +16,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { uuid } from "@tanstack/react-form";
 import { useNavigate, useParams } from "@tanstack/react-router";
-import {
-	ChevronLeft,
-	ChevronRight,
-	ExternalLink,
-	GripVertical,
-	Plus,
-	Settings,
-} from "lucide-react";
+import { ExternalLink, GripVertical, Plus, Settings } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/atoms/Button";
 import { FeelSlider } from "@/components/atoms/FeelSlider";
@@ -212,20 +205,21 @@ const BetaEditSheet = ({
 		if (e.key === "Enter") {
 			e.preventDefault();
 			pendingFocusIndex.current =
-				inputRefs.current.findIndex((el) => el === e.currentTarget) + 1;
+				inputRefs.current.indexOf(e.currentTarget) + 1;
 			addMove(id);
 		}
 		if (e.key === "Backspace" && e.currentTarget.value === "") {
 			e.preventDefault();
 			handleMoveDelete(id);
-			const focusedIndex = inputRefs.current.findIndex(
-				(el) => el === document.activeElement,
+			const focusedIndex = inputRefs.current.indexOf(
+				document.activeElement as HTMLTextAreaElement | null,
 			);
 			inputRefs.current[focusedIndex - 1]?.focus();
 		}
 	};
 
 	// Auto-focus the newly inserted move after Enter
+	// biome-ignore lint/correctness/useExhaustiveDependencies: moves.length is an intentional trigger
 	useEffect(() => {
 		if (pendingFocusIndex.current !== null) {
 			const i = pendingFocusIndex.current;
@@ -384,10 +378,10 @@ interface BetaCarouselProps {
 }
 
 const BetaCarousel = ({ betas, climbId, onBetasChange }: BetaCarouselProps) => {
-	// Total slots: betas + 1 "add new" card at the end
-	const total = betas.length + 1;
+	const total = betas.length;
 	const [activeIndex, setActiveIndex] = useState(0);
-	const [gearOpenId, setGearOpenId] = useState<string | null>(null);
+	const [betasOpen, setBetasOpen] = useState(true);
+	const [sectionGearOpen, setSectionGearOpen] = useState(false);
 	const [pendingDeleteBetaId, setPendingDeleteBetaId] = useState<string | null>(
 		null,
 	);
@@ -396,9 +390,8 @@ const BetaCarousel = ({ betas, climbId, onBetasChange }: BetaCarouselProps) => {
 
 	// Swipe tracking
 	const touchStartX = useRef<number | null>(null);
+	const touchStartY = useRef<number | null>(null);
 	const updateMoves = useUpdateClimbMoves();
-
-	const [newBetaTitle, setNewBetaTitle] = useState("");
 
 	const goTo = (index: number) => {
 		// Circular wrap
@@ -413,29 +406,32 @@ const BetaCarousel = ({ betas, climbId, onBetasChange }: BetaCarouselProps) => {
 
 	const handleTouchStart = (e: React.TouchEvent) => {
 		touchStartX.current = e.touches[0].clientX;
+		touchStartY.current = e.touches[0].clientY;
 	};
 
 	const handleTouchEnd = (e: React.TouchEvent) => {
-		if (touchStartX.current === null) return;
-		const delta = e.changedTouches[0].clientX - touchStartX.current;
+		if (touchStartX.current === null || touchStartY.current === null) return;
+		const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+		const deltaY = e.changedTouches[0].clientY - touchStartY.current;
 		touchStartX.current = null;
-		if (Math.abs(delta) < 40) return;
-		if (delta < 0) goTo(activeIndex + 1);
+		touchStartY.current = null;
+		if (Math.abs(deltaX) < 40 || Math.abs(deltaX) <= Math.abs(deltaY)) return;
+		if (deltaX < 0) goTo(activeIndex + 1);
 		else goTo(activeIndex - 1);
 	};
 
 	const handleAddBeta = () => {
-		const title = newBetaTitle.trim() || `Beta ${betas.length + 1}`;
 		const newBeta: Beta = {
 			id: uuid(),
-			title,
+			title: `Beta ${betas.length + 1}`,
 			moves: [{ id: uuid(), text: "" }],
 		};
 		const updated = [...betas, newBeta];
 		onBetasChange(updated);
 		updateMoves.mutate({ id: climbId, moves: JSON.stringify(updated) });
-		setNewBetaTitle("");
-		setActiveIndex(betas.length); // points to the newly added beta (was addIndex, now last beta)
+		setActiveIndex(betas.length);
+		setEditingBetaId(newBeta.id);
+		setSectionGearOpen(false);
 	};
 
 	const handleDeleteBeta = (betaId: string) => {
@@ -463,14 +459,83 @@ const BetaCarousel = ({ betas, climbId, onBetasChange }: BetaCarouselProps) => {
 
 	return (
 		<div className="rounded-md bg-surface-card overflow-hidden">
-			{/* Header */}
-			<div className="flex items-center justify-between px-3 pt-3 pb-2">
+			{/* Collapsible header */}
+			<button
+				type="button"
+				className="flex items-center justify-between w-full px-3 pt-3 pb-2"
+				onClick={() => setBetasOpen(!betasOpen)}
+			>
 				<span className="text-sm font-medium text-text-secondary">
-					Betas{betas.length > 1 ? ` (${betas.length})` : ""}
+					Beta{betas.length > 1 ? ` (${betas.length})` : ""}
 				</span>
 				<div className="flex items-center gap-2">
+					{betasOpen && (
+						<div className="relative">
+							<button
+								type="button"
+								className="p-1 text-text-secondary"
+								onClick={(e) => {
+									e.stopPropagation();
+									setSectionGearOpen(!sectionGearOpen);
+								}}
+							>
+								<Settings size={15} />
+							</button>
+							{sectionGearOpen && (
+								<div className="absolute right-0 top-7 z-20 bg-surface-card border border-border-default rounded-lg shadow-lg min-w-[120px] overflow-hidden">
+									<button
+										type="button"
+										className="w-full text-left px-4 py-2.5 text-sm hover:bg-surface-hover"
+										onClick={(e) => {
+											e.stopPropagation();
+											handleAddBeta();
+										}}
+									>
+										Add Beta
+									</button>
+									<button
+										type="button"
+										className="w-full text-left px-4 py-2.5 text-sm hover:bg-surface-hover"
+										onClick={(e) => {
+											e.stopPropagation();
+											setImportOpen(true);
+											setSectionGearOpen(false);
+										}}
+									>
+										Import
+									</button>
+								</div>
+							)}
+						</div>
+					)}
+					<span
+						className={cn(
+							"transition-transform inline-block text-text-secondary",
+							betasOpen && "rotate-180",
+						)}
+					>
+						▾
+					</span>
+				</div>
+			</button>
+
+			{sectionGearOpen && (
+				// biome-ignore lint/a11y/useSemanticElements: transparent overlay
+				<div
+					role="button"
+					tabIndex={-1}
+					className="fixed inset-0 z-10"
+					onClick={() => setSectionGearOpen(false)}
+					onKeyDown={() => {}}
+					aria-label="Close menu"
+				/>
+			)}
+
+			{betasOpen && (
+				<>
+					{/* Dot pagination */}
 					{total > 1 && (
-						<div className="flex items-center gap-1">
+						<div className="flex justify-center items-center gap-1.5 pb-2">
 							{Array.from({ length: total }).map((_, i) => (
 								<button
 									// biome-ignore lint/suspicious/noArrayIndexKey: positional dots
@@ -487,128 +552,62 @@ const BetaCarousel = ({ betas, climbId, onBetasChange }: BetaCarouselProps) => {
 							))}
 						</div>
 					)}
-					<button
-						type="button"
-						className="text-xs text-accent-primary"
-						onClick={() => setImportOpen(true)}
+
+					{/* Carousel */}
+					<div
+						className="relative overflow-hidden"
+						onTouchStart={handleTouchStart}
+						onTouchEnd={handleTouchEnd}
 					>
-						Import
-					</button>
-				</div>
-			</div>
-
-			{/* Carousel */}
-			<div
-				className="relative overflow-hidden"
-				onTouchStart={handleTouchStart}
-				onTouchEnd={handleTouchEnd}
-			>
-				<div
-					className="flex transition-transform duration-200"
-					style={{ transform: `translateX(-${activeIndex * 100}%)` }}
-				>
-					{betas.map((beta) => (
-						<div key={beta.id} className="w-full shrink-0 px-3 pb-3">
-							{/* Beta card header */}
-							<div className="flex items-center justify-between mb-2 relative">
-								<span className="text-sm font-medium">{beta.title}</span>
-								<button
-									type="button"
-									className="p-1 text-text-secondary"
-									onClick={() =>
-										setGearOpenId(gearOpenId === beta.id ? null : beta.id)
-									}
-								>
-									<Settings size={15} />
-								</button>
-								{gearOpenId === beta.id && (
-									<div className="absolute right-0 top-7 z-10 bg-surface-card border border-border-default rounded-lg shadow-lg min-w-[120px] overflow-hidden">
-										<button
-											type="button"
-											className="w-full text-left px-4 py-2.5 text-sm hover:bg-surface-hover"
-											onClick={() => {
-												setEditingBetaId(beta.id);
-												setGearOpenId(null);
-											}}
-										>
-											Edit
-										</button>
-										{betas.length > 1 && (
-											<button
-												type="button"
-												className="w-full text-left px-4 py-2.5 text-sm text-destructive hover:bg-surface-hover"
-												onClick={() => {
-													setPendingDeleteBetaId(beta.id);
-													setGearOpenId(null);
-												}}
-											>
-												Delete
-											</button>
-										)}
-									</div>
-								)}
-							</div>
-
-							{/* Moves list */}
-							{beta.moves.length > 0 ? (
-								<ul className="flex flex-col gap-1">
-									{beta.moves.map((move) => (
-										<li
-											key={move.id}
-											className="border-l border-text-primary pl-2 text-sm"
-										>
-											{move.text}
-										</li>
-									))}
-								</ul>
-							) : (
-								<p className="text-sm text-text-secondary">
-									No moves logged yet.
-								</p>
-							)}
-						</div>
-					))}
-
-					{/* Add new beta card */}
-					<div className="w-full shrink-0 px-3 pb-3">
-						<p className="text-sm font-medium mb-2 text-text-secondary">
-							Add new beta
-						</p>
-						<Input
-							placeholder="Beta title (optional)"
-							value={newBetaTitle}
-							onChange={(e) => setNewBetaTitle(e.target.value)}
-						/>
-						<Button
-							size="small"
-							className="mt-2 w-full"
-							onClick={handleAddBeta}
+						<div
+							className="flex transition-transform duration-200"
+							style={{ transform: `translateX(-${activeIndex * 100}%)` }}
 						>
-							<Plus size={14} className="mr-1" />
-							Add
-						</Button>
-					</div>
-				</div>
-			</div>
+							{betas.map((beta) => (
+								<div key={beta.id} className="w-full shrink-0 px-3 pb-3">
+									{/* Beta card header */}
+									<div className="flex items-center justify-between mb-2">
+										<span className="text-sm font-medium">{beta.title}</span>
+										<div className="flex items-center gap-2">
+											<Button
+												size="small"
+												onClick={() => setEditingBetaId(beta.id)}
+											>
+												Edit
+											</Button>
+											{betas.length > 1 && (
+												<Button
+													size="small"
+													onClick={() => setPendingDeleteBetaId(beta.id)}
+												>
+													Delete
+												</Button>
+											)}
+										</div>
+									</div>
 
-			{/* Nav arrows when >1 card */}
-			{total > 1 && (
-				<div className="flex justify-between px-1 pb-2">
-					<button
-						type="button"
-						className="p-1 text-text-secondary"
-						onClick={() => goTo(activeIndex - 1)}
-					>
-						<ChevronLeft size={16} />
-					</button>
-					<button
-						type="button"
-						className="p-1 text-text-secondary"
-						onClick={() => goTo(activeIndex + 1)}
-					>
-						<ChevronRight size={16} />
-					</button>
-				</div>
+									{/* Moves list */}
+									{beta.moves.length > 0 ? (
+										<ul className="flex flex-col gap-1">
+											{beta.moves.map((move) => (
+												<li
+													key={move.id}
+													className="border-l border-text-primary pl-2 text-sm"
+												>
+													{move.text}
+												</li>
+											))}
+										</ul>
+									) : (
+										<p className="text-sm text-text-secondary">
+											No moves logged yet.
+										</p>
+									)}
+								</div>
+							))}
+						</div>
+					</div>
+				</>
 			)}
 
 			{pendingDeleteBetaId !== null && (

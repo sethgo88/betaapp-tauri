@@ -3,8 +3,8 @@ import { useEffect, useRef } from "react";
 import type { Climb } from "@/features/climbs/climbs.schema";
 import type { SortKey } from "@/features/climbs/climbs.store";
 import { useClimbsStore } from "@/features/climbs/climbs.store";
-import { useUiStore } from "@/stores/ui.store";
 import { cn } from "@/lib/cn";
+import { useUiStore } from "@/stores/ui.store";
 
 interface FilterPanelProps {
 	climbs: Climb[];
