@@ -108,7 +108,7 @@ export async function insertClimb(
 	userId: string,
 	data: ClimbFormValues,
 	routeId?: string,
-): Promise<void> {
+): Promise<string> {
 	const db = await getDb();
 	const id = crypto.randomUUID();
 
@@ -149,6 +149,7 @@ export async function insertClimb(
 			data.sent_date ?? null,
 		],
 	);
+	return id;
 }
 
 export async function updateClimb(
