@@ -5,7 +5,7 @@ import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { Select } from "@/components/atoms/Select";
 import { useAuthStore } from "@/features/auth/auth.store";
-import { useGrades } from "@/features/grades/grades.queries";
+import { GradeSelect } from "@/components/molecules/GradeSelect";
 import { useSubmitRoute } from "@/features/routes/routes.queries";
 import { RouteSubmitSchema } from "@/features/routes/routes.schema";
 import { useUiStore } from "@/stores/ui.store";
@@ -18,7 +18,6 @@ const SubmitRouteView = () => {
 	const { mutateAsync: submitRoute } = useSubmitRoute();
 
 	const [routeType, setRouteType] = useState<"sport" | "boulder">("sport");
-	const { data: grades = [] } = useGrades(routeType);
 
 	const form = useForm({
 		canSubmitWhenInvalid: true,
@@ -29,7 +28,7 @@ const SubmitRouteView = () => {
 			description: "",
 		},
 		onSubmit: async ({ value }) => {
-			const grade = value.grade || (grades.length > 0 ? grades[0].grade : "");
+			const grade = value.grade || (routeType === "boulder" ? "v5" : "5.12a");
 			const parsed = RouteSubmitSchema.safeParse({
 				wall_id: wallId,
 				name: value.name,
@@ -100,6 +99,7 @@ const SubmitRouteView = () => {
 								const val = e.target.value as "sport" | "boulder";
 								field.handleChange(val);
 								setRouteType(val);
+								form.setFieldValue("grade", val === "boulder" ? "v5" : "5.12a");
 							}}
 						>
 							<option value="sport">Sport</option>
@@ -110,18 +110,11 @@ const SubmitRouteView = () => {
 
 				<form.Field name="grade">
 					{(field) => (
-						<Select
-							value={
-								field.state.value || (grades.length > 0 ? grades[0].grade : "")
-							}
-							onChange={(e) => field.handleChange(e.target.value)}
-						>
-							{grades.map((g) => (
-								<option key={g.id} value={g.grade}>
-									{g.grade}
-								</option>
-							))}
-						</Select>
+						<GradeSelect
+							routeType={routeType}
+							value={field.state.value}
+							onChange={(v) => field.handleChange(v)}
+						/>
 					)}
 				</form.Field>
 
