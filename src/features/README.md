@@ -48,6 +48,13 @@ addToast({ message: 'Saved', type: 'success' })
 
 **Toast types:** `'success' | 'error' | 'warning'`
 
+**Persisted keys (localStorage):**
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| `betaapp-theme` | `"dark" \| "light"` | `"dark"` | App color theme |
+| `betaapp-user-location` | `{ lat, lng }` JSON | `null` | Last known map center |
+| `betaapp-default-status-filters` | `string[]` JSON | `["project"]` | Default home screen status filters (configurable in Profile → Settings) |
+
 ---
 
 ## Patterns

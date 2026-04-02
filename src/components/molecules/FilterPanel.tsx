@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import type { Climb } from "@/features/climbs/climbs.schema";
 import type { SortKey } from "@/features/climbs/climbs.store";
 import { useClimbsStore } from "@/features/climbs/climbs.store";
+import { useUiStore } from "@/stores/ui.store";
 import { cn } from "@/lib/cn";
 
 interface FilterPanelProps {
@@ -51,6 +52,7 @@ export const FilterPanel = ({ climbs }: FilterPanelProps) => {
 	const toggleTypeFilter = useClimbsStore((s) => s.toggleTypeFilter);
 	const sortKey = useClimbsStore((s) => s.sortKey);
 	const setSortKey = useClimbsStore((s) => s.setSortKey);
+	const defaultStatusFilters = useUiStore((s) => s.defaultStatusFilters);
 
 	const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -80,9 +82,8 @@ export const FilterPanel = ({ climbs }: FilterPanelProps) => {
 	};
 
 	const isNonDefault =
-		statusFilters.size !== 2 ||
-		!statusFilters.has("sent") ||
-		!statusFilters.has("project") ||
+		statusFilters.size !== defaultStatusFilters.size ||
+		[...defaultStatusFilters].some((s) => !statusFilters.has(s)) ||
 		typeFilters.size !== 2 ||
 		sortKey !== "name_asc";
 

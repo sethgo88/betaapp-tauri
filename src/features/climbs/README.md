@@ -159,7 +159,7 @@ interface ClimbsStore {
   setSearchText: (text: string) => void
   filtersOpen: boolean
   setFiltersOpen: (open: boolean) => void
-  statusFilters: Set<string>          // default: sent, project
+  statusFilters: Set<string>          // initialized from localStorage betaapp-default-status-filters (default: project)
   toggleStatusFilter: (status: string) => void
   typeFilters: Set<string>            // default: sport, boulder
   toggleTypeFilter: (type: string) => void
