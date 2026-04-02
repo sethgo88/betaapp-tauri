@@ -34,8 +34,12 @@ export async function signUp(
 
 // ── Session restore ──────────────────────────────────────────────────────────
 
-export async function restoreSession(timeoutMs = 5_000): Promise<Session | null> {
-	const sessionPromise = supabase.auth.getSession().then(({ data }) => data.session);
+export async function restoreSession(
+	timeoutMs = 5_000,
+): Promise<Session | null> {
+	const sessionPromise = supabase.auth
+		.getSession()
+		.then(({ data }) => data.session);
 	return Promise.race([
 		sessionPromise,
 		new Promise<never>((_, reject) =>

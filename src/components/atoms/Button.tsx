@@ -26,7 +26,13 @@ const sizeClasses: Record<ButtonSize, string> = {
 };
 
 export const Button = (props: ButtonProps) => {
-	const { className, type = "button", variant = "primary", size = "medium", ...rest } = props;
+	const {
+		className,
+		type = "button",
+		variant = "primary",
+		size = "medium",
+		...rest
+	} = props;
 	return (
 		<button
 			className={cn(

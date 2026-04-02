@@ -81,7 +81,10 @@ function Bootstrap() {
 			try {
 				session = await restoreSession();
 			} catch (err) {
-				console.warn("[Bootstrap] session restore failed, loading from cache:", err);
+				console.warn(
+					"[Bootstrap] session restore failed, loading from cache:",
+					err,
+				);
 				// Timed out or failed (captive portal, no upstream). Fall back to local cache.
 				const localUser = await fetchLocalUser();
 				if (localUser) setUser(localUser);
