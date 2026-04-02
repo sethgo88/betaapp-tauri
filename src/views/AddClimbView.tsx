@@ -31,9 +31,9 @@ const AddClimbView = () => {
 	};
 
 	const handleSubmit = async (values: ClimbFormValues) => {
-		await addClimb({ data: values, routeId: linkedRoute?.id });
+		const climbId = await addClimb({ data: values, routeId: linkedRoute?.id });
 		addToast({ message: "Climb added", type: "success" });
-		navigate({ to: "/" });
+		navigate({ to: "/climbs/$climbId", params: { climbId } });
 	};
 
 	return (
@@ -48,6 +48,7 @@ const AddClimbView = () => {
 				linkedRoute={linkedRoute}
 				onOpenRoutePicker={() => setPickerOpen(true)}
 				onUnlinkRoute={() => setLinkedRoute(null)}
+				showBeta={false}
 			/>
 
 			<RoutePickerSheet

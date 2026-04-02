@@ -112,6 +112,8 @@ interface ClimbFormProps {
 	onOpenRoutePicker?: () => void;
 	/** Called when the user taps "Unlink". */
 	onUnlinkRoute?: () => void;
+	/** Whether to show the beta/moves section. Defaults to true. */
+	showBeta?: boolean;
 }
 
 export const ClimbForm = ({
@@ -121,6 +123,7 @@ export const ClimbForm = ({
 	linkedRoute,
 	onOpenRoutePicker,
 	onUnlinkRoute,
+	showBeta = true,
 }: ClimbFormProps) => {
 	// ── Beta state ────────────────────────────────────────────────────────────
 	// Use a ref to share the initial betas across the two useState initializers.
@@ -166,7 +169,7 @@ export const ClimbForm = ({
 	const activeMoveCount = activeMoves.length;
 
 	// ── Form metadata ─────────────────────────────────────────────────────────
-	const [routeType, _setRouteType] = useState<RouteType>(
+	const [routeType, setRouteType] = useState<RouteType>(
 		defaultValues?.route_type ?? "sport",
 	);
 	const [importOpen, setImportOpen] = useState(false);
@@ -411,7 +414,7 @@ export const ClimbForm = ({
 	return (
 		<form
 			id="climb-form"
-			className="grid grid-rows-[auto_1fr] h-full gap-4"
+			className={showBeta ? "grid grid-rows-[auto_1fr] h-full gap-4" : "flex flex-col gap-4"}
 			onSubmit={(e) => {
 				e.preventDefault();
 				e.stopPropagation();
@@ -437,6 +440,30 @@ export const ClimbForm = ({
 
 				<div className="flex gap-2">
 					<div className="flex flex-col gap-1 flex-1">
+						<label htmlFor="route_type" className="text-xs text-text-secondary">
+							Type
+						</label>
+						<form.Field name="route_type">
+							{(field) => (
+								<Select
+									id="route_type"
+									value={field.state.value}
+									onChange={(e) => {
+										const newType = e.target.value as RouteType;
+										field.handleChange(newType);
+										setRouteType(newType);
+										form.setFieldValue("grade", "");
+									}}
+									name="route_type"
+								>
+									<option value="sport">Sport</option>
+									<option value="boulder">Boulder</option>
+									<option value="trad">Trad</option>
+								</Select>
+							)}
+						</form.Field>
+					</div>
+					<div className="flex flex-col gap-1 flex-1">
 						<label htmlFor="grade" className="text-xs text-text-secondary">
 							Personal grade
 						</label>
@@ -446,7 +473,7 @@ export const ClimbForm = ({
 									id="grade"
 									value={
 										field.state.value ||
-										(routeType === "boulder" ? "v5" : "5.12a")
+										(routeType === "boulder" ? "v0" : "5.10a")
 									}
 									onChange={(e) => field.handleChange(e.target.value)}
 									name="grade"
@@ -580,22 +607,26 @@ export const ClimbForm = ({
 					Save
 				</Button>
 
-				<Button
-					variant="outlined"
-					className="w-full"
-					onClick={() => setImportOpen(true)}
-				>
-					Import Beta
-				</Button>
+				{showBeta && (
+					<>
+						<Button
+							variant="outlined"
+							className="w-full"
+							onClick={() => setImportOpen(true)}
+						>
+							Import Beta
+						</Button>
 
-				<ImportBetaSheet
-					isOpen={importOpen}
-					onClose={() => setImportOpen(false)}
-					onImport={(moves) => setActiveMoves(() => moves)}
-				/>
+						<ImportBetaSheet
+							isOpen={importOpen}
+							onClose={() => setImportOpen(false)}
+							onImport={(moves) => setActiveMoves(() => moves)}
+						/>
+					</>
+				)}
 			</div>
 
-			<div className="w-full rounded-md bg-surface-card p-2 flex flex-col gap-2 overflow-y-auto">
+			{showBeta && <div className="w-full rounded-md bg-surface-card p-2 flex flex-col gap-2 overflow-y-auto">
 				{/* Beta header: title input / gallery toggle / add beta */}
 				<div className="flex items-center gap-2 px-1 min-h-[28px]">
 					{galleryMode ? (
@@ -729,7 +760,7 @@ export const ClimbForm = ({
 						</DndContext>
 					</>
 				)}
-			</div>
+			</div>}
 
 			<ConfirmDeleteDialog
 				isOpen={pendingDeleteBetaId !== null}
