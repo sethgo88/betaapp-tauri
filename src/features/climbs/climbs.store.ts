@@ -1,5 +1,17 @@
 import { create } from "zustand";
 
+const storedDefaultStatusFilters: Set<string> = (() => {
+	try {
+		const raw = localStorage.getItem("betaapp-default-status-filters");
+		if (!raw) return new Set(["project"]);
+		const parsed = JSON.parse(raw);
+		if (Array.isArray(parsed)) return new Set(parsed);
+		return new Set(["project"]);
+	} catch {
+		return new Set(["project"]);
+	}
+})();
+
 export type SortKey =
 	| "name_asc"
 	| "name_desc"
@@ -33,7 +45,7 @@ export const useClimbsStore = create<ClimbsStore>((set) => ({
 	setSearchText: (searchText) => set({ searchText }),
 	filtersOpen: false,
 	setFiltersOpen: (filtersOpen) => set({ filtersOpen }),
-	statusFilters: new Set(["sent", "project"]),
+	statusFilters: storedDefaultStatusFilters,
 	toggleStatusFilter: (status) =>
 		set((state) => {
 			const next = new Set(state.statusFilters);
