@@ -10,6 +10,7 @@ export const CountrySchema = z.object({
 	code: z.string().default(""),
 	sort_order: z.number(),
 	created_at: z.string(),
+	region_count: z.number().default(0),
 });
 
 export const RegionSchema = z.object({
@@ -18,6 +19,7 @@ export const RegionSchema = z.object({
 	name: z.string(),
 	sort_order: z.number(),
 	created_at: z.string(),
+	sub_region_count: z.number().default(0),
 });
 
 export const SubRegionSchema = z.object({
@@ -29,6 +31,7 @@ export const SubRegionSchema = z.object({
 	status: SubmissionStatus.default("verified"),
 	created_by: z.string().nullable().optional(),
 	created_at: z.string(),
+	crag_count: z.number().default(0),
 });
 
 export const CragSchema = z.object({
@@ -46,6 +49,7 @@ export const CragSchema = z.object({
 	sport_count: z.number().default(0),
 	trad_count: z.number().default(0),
 	boulder_count: z.number().default(0),
+	wall_count: z.number().default(0),
 });
 
 export const WallSchema = z.object({
@@ -64,6 +68,7 @@ export const WallSchema = z.object({
 	sport_count: z.number().default(0),
 	trad_count: z.number().default(0),
 	boulder_count: z.number().default(0),
+	route_count: z.number().default(0),
 });
 
 export type Country = z.infer<typeof CountrySchema>;

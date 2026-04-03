@@ -125,6 +125,7 @@ Only populated when the user downloads a region (see [`locations/README.md`](../
 | `rejectRoute(id)` | Sets `status = 'rejected'` in Supabase + local cache (soft — stays visible to creator) |
 | `updateRouteFields(id, values)` | Updates name/grade/route_type/description in both Supabase and cache |
 | `mergeRoute(unverifiedId, targetId)` | Reassigns climbs from unverified to target route (Supabase + local), then deletes the unverified route |
+| `adminDeleteRoute(id)` | Unlinks any climbs referencing this route (`route_id = NULL`), soft-deletes in Supabase, hard-deletes from local cache |
 
 ---
 
@@ -147,6 +148,7 @@ useRouteLinks(routeId)     // non-deleted links for a route from local cache
 useAddRouteLink(routeId)   // mutation — { url, title?, userId }
 useDeleteRouteLink(routeId) // mutation — id
 useReorderRoutes(wallId)   // admin mutation — orderedIds: string[]; invalidates routes for wall
+useAdminDeleteRoute()      // admin mutation — { id, wallId }; unlinks climbs then deletes route
 ```
 
 ---
