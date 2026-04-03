@@ -1,4 +1,4 @@
-import { useRouter } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
@@ -51,7 +51,7 @@ interface AddEditRouteViewProps {
 }
 
 const AddEditRouteView = ({ routeId }: AddEditRouteViewProps) => {
-	const router = useRouter();
+	const navigate = useNavigate();
 	const addToast = useUiStore((s) => s.addToast);
 	const user = useAuthStore((s) => s.user);
 	const isAdmin = user?.role === "admin";
@@ -157,6 +157,11 @@ const AddEditRouteView = ({ routeId }: AddEditRouteViewProps) => {
 					},
 				});
 				addToast({ message: "Route updated", type: "success" });
+				navigate({
+					to: "/routes/$routeId",
+					params: { routeId: routeId! },
+					replace: true,
+				});
 			} else {
 				const newRouteId = await addRoute({
 					values: parsed.data,
@@ -167,14 +172,16 @@ const AddEditRouteView = ({ routeId }: AddEditRouteViewProps) => {
 					message: isAdmin ? "Route added" : "Route submitted for review",
 					type: "success",
 				});
-				router.navigate({
-					to: "/routes/$routeId",
-					params: { routeId: newRouteId },
-					replace: true,
-				});
-				return;
+				if (isAdmin) {
+					navigate({
+						to: "/routes/$routeId",
+						params: { routeId: newRouteId },
+						replace: true,
+					});
+				} else {
+					navigate({ to: "/", replace: true });
+				}
 			}
-			router.history.back();
 		} catch {
 			addToast({
 				message: isEditMode ? "Failed to update route" : "Failed to add route",
