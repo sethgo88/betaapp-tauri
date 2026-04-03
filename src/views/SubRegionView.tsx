@@ -256,17 +256,19 @@ const SubRegionView = () => {
 										>
 											{movingCragId === crag.id ? "Cancel" : "Move"}
 										</button>
-										<button
-											type="button"
-											className="text-xs text-red-400 hover:text-red-300"
-											onClick={() => {
-												setConfirmDeleteCragId(crag.id);
-												setMovingCragId(null);
-												setRenamingCragId(null);
-											}}
-										>
-											Delete
-										</button>
+										{crag.wall_count === 0 && (
+											<button
+												type="button"
+												className="text-xs text-red-400 hover:text-red-300"
+												onClick={() => {
+													setConfirmDeleteCragId(crag.id);
+													setMovingCragId(null);
+													setRenamingCragId(null);
+												}}
+											>
+												Delete
+											</button>
+										)}
 									</>
 								)}
 							</div>
@@ -350,7 +352,7 @@ const SubRegionView = () => {
 			<ConfirmDeleteDialog
 				isOpen={confirmDeleteCragId !== null}
 				title="Delete crag"
-				message={`Delete "${pendingDeleteCrag?.name ?? ""}"? This will also delete all walls and routes within it.`}
+				message={`Are you sure you want to delete "${pendingDeleteCrag?.name ?? ""}"?`}
 				onConfirm={async () => {
 					if (!pendingDeleteCrag) return;
 					try {

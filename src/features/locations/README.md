@@ -22,11 +22,13 @@ Country
 ## Schema
 
 ```ts
-CountrySchema    = { id, name, code, sort_order, created_at }
-RegionSchema     = { id, country_id, name, sort_order, created_at }
-SubRegionSchema  = { id, region_id, name, description?, sort_order, status, created_by?, created_at }
-CragSchema       = { id, sub_region_id, name, description?, approach?, sort_order, status, created_by?, created_at, lat?, lng?, sport_count, trad_count, boulder_count }
-WallSchema       = { id, crag_id, name, description?, approach?, sort_order, status, created_by?, created_at, lat?, lng?, wall_type, sport_count, trad_count, boulder_count }
+CountrySchema    = { id, name, code, sort_order, created_at, region_count }
+RegionSchema     = { id, country_id, name, sort_order, created_at, sub_region_count }
+SubRegionSchema  = { id, region_id, name, description?, sort_order, status, created_by?, created_at, crag_count }
+CragSchema       = { id, sub_region_id, name, description?, approach?, sort_order, status, created_by?, created_at, lat?, lng?, sport_count, trad_count, boulder_count, wall_count }
+WallSchema       = { id, crag_id, name, description?, approach?, sort_order, status, created_by?, created_at, lat?, lng?, wall_type, sport_count, trad_count, boulder_count, route_count }
+
+// *_count fields are computed at query time via correlated subqueries — not stored columns
 
 // wall_type: 'wall' | 'boulder' — physical feature type, set at creation
 
@@ -59,11 +61,11 @@ CREATE TABLE IF NOT EXISTS downloaded_regions (region_id TEXT PRIMARY KEY, downl
 
 | Function | What it does |
 |---|---|
-| `fetchCountries()` | All countries from cache, ordered by `sort_order` |
-| `fetchRegions(countryId)` | Regions for a country |
-| `fetchSubRegions(regionId)` | Sub-regions for a region |
-| `fetchCrags(subRegionId)` | Crags for a sub-region |
-| `fetchWalls(cragId)` | Walls for a crag |
+| `fetchCountries()` | All countries from cache, ordered by `sort_order`; includes `region_count` |
+| `fetchRegions(countryId)` | Regions for a country; includes `sub_region_count` |
+| `fetchSubRegions(regionId)` | Sub-regions for a region; includes `crag_count` |
+| `fetchCrags(subRegionId)` | Crags for a sub-region; includes `wall_count` |
+| `fetchWalls(cragId)` | Walls for a crag; includes `route_count` |
 | `fetchSubRegion(id)` | Single sub-region by ID |
 | `fetchCrag(id)` | Single crag by ID |
 | `fetchWall(id)` | Single wall by ID |
@@ -125,6 +127,9 @@ Admin submissions are auto-verified and immediately visible to all users. Non-ad
 | `adminDeleteCountry(id)` | Deletes from Supabase `countries` |
 | `adminAddRegion(countryId, name, sortOrder)` | Inserts into Supabase `regions` |
 | `adminDeleteRegion(id)` | Deletes from Supabase `regions` |
+| `adminDeleteSubRegion(id)` | Soft-deletes in Supabase + local cache; throws if child crags exist |
+| `adminDeleteCrag(id)` | Soft-deletes in Supabase + local cache; throws if child walls exist |
+| `adminDeleteWall(id)` | Soft-deletes in Supabase + local cache; throws if child routes exist |
 | `adminUpdateCragCoords(id, lat, lng)` | Sets crag lat/lng in Supabase + local cache |
 | `adminUpdateWallCoords(id, lat, lng, cragId)` | Sets wall lat/lng in local cache + Supabase (warns on Supabase failure); triggers `inheritWallCoordsToCrag` |
 | `adminUpdateWallType(id, wallType)` | Sets wall_type in Supabase + local cache |

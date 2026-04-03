@@ -137,16 +137,18 @@ const LocationManagerView = () => {
 							>
 								{c.name} ({c.code})
 							</button>
-							<Button
-								type="button"
-								variant="secondary"
-								size="small"
-								onClick={() =>
-									setPendingDeleteCountry({ id: c.id, name: c.name })
-								}
-							>
-								Delete
-							</Button>
+							{c.region_count === 0 && (
+								<Button
+									type="button"
+									variant="secondary"
+									size="small"
+									onClick={() =>
+										setPendingDeleteCountry({ id: c.id, name: c.name })
+									}
+								>
+									Delete
+								</Button>
+							)}
 						</div>
 					))}
 					{countries.length === 0 && (
@@ -178,16 +180,18 @@ const LocationManagerView = () => {
 								className="flex items-center justify-between py-1 border-b border-border-default last:border-0"
 							>
 								<span className="text-sm">{r.name}</span>
-								<Button
-									type="button"
-									variant="secondary"
-									size="small"
-									onClick={() =>
-										setPendingDeleteRegion({ id: r.id, name: r.name })
-									}
-								>
-									Delete
-								</Button>
+								{r.sub_region_count === 0 && (
+									<Button
+										type="button"
+										variant="secondary"
+										size="small"
+										onClick={() =>
+											setPendingDeleteRegion({ id: r.id, name: r.name })
+										}
+									>
+										Delete
+									</Button>
+								)}
 							</div>
 						))}
 						{regions.length === 0 && (
@@ -200,7 +204,7 @@ const LocationManagerView = () => {
 			<ConfirmDeleteDialog
 				isOpen={pendingDeleteCountry !== null}
 				title="Delete country"
-				message={`Delete "${pendingDeleteCountry?.name}"? This can't be undone.`}
+				message={`Are you sure you want to delete "${pendingDeleteCountry?.name}"?`}
 				onConfirm={() => {
 					if (pendingDeleteCountry)
 						handleDeleteCountry(
@@ -215,7 +219,7 @@ const LocationManagerView = () => {
 			<ConfirmDeleteDialog
 				isOpen={pendingDeleteRegion !== null}
 				title="Delete region"
-				message={`Delete "${pendingDeleteRegion?.name}"? This can't be undone.`}
+				message={`Are you sure you want to delete "${pendingDeleteRegion?.name}"?`}
 				onConfirm={() => {
 					if (pendingDeleteRegion)
 						handleDeleteRegion(

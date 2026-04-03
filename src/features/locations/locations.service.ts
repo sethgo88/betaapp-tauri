@@ -14,14 +14,16 @@ import type {
 export async function fetchCountries(): Promise<Country[]> {
 	const db = await getDb();
 	return db.select<Country[]>(
-		"SELECT * FROM countries_cache ORDER BY sort_order ASC",
+		`SELECT c.*, (SELECT COUNT(*) FROM regions_cache r WHERE r.country_id = c.id) AS region_count
+		 FROM countries_cache c ORDER BY c.sort_order ASC`,
 	);
 }
 
 export async function fetchRegions(countryId: string): Promise<Region[]> {
 	const db = await getDb();
 	return db.select<Region[]>(
-		"SELECT * FROM regions_cache WHERE country_id = ? ORDER BY sort_order ASC",
+		`SELECT r.*, (SELECT COUNT(*) FROM sub_regions_cache sr WHERE sr.region_id = r.id) AS sub_region_count
+		 FROM regions_cache r WHERE r.country_id = ? ORDER BY r.sort_order ASC`,
 		[countryId],
 	);
 }
@@ -29,7 +31,8 @@ export async function fetchRegions(countryId: string): Promise<Region[]> {
 export async function fetchSubRegions(regionId: string): Promise<SubRegion[]> {
 	const db = await getDb();
 	return db.select<SubRegion[]>(
-		"SELECT * FROM sub_regions_cache WHERE region_id = ? ORDER BY sort_order ASC",
+		`SELECT sr.*, (SELECT COUNT(*) FROM crags_cache c WHERE c.sub_region_id = sr.id) AS crag_count
+		 FROM sub_regions_cache sr WHERE sr.region_id = ? ORDER BY sr.sort_order ASC`,
 		[regionId],
 	);
 }
@@ -37,7 +40,8 @@ export async function fetchSubRegions(regionId: string): Promise<SubRegion[]> {
 export async function fetchCrags(subRegionId: string): Promise<Crag[]> {
 	const db = await getDb();
 	return db.select<Crag[]>(
-		"SELECT * FROM crags_cache WHERE sub_region_id = ? ORDER BY sort_order ASC",
+		`SELECT c.*, (SELECT COUNT(*) FROM walls_cache w WHERE w.crag_id = c.id) AS wall_count
+		 FROM crags_cache c WHERE c.sub_region_id = ? ORDER BY c.sort_order ASC`,
 		[subRegionId],
 	);
 }
@@ -45,7 +49,8 @@ export async function fetchCrags(subRegionId: string): Promise<Crag[]> {
 export async function fetchWalls(cragId: string): Promise<Wall[]> {
 	const db = await getDb();
 	return db.select<Wall[]>(
-		"SELECT * FROM walls_cache WHERE crag_id = ? ORDER BY sort_order ASC",
+		`SELECT w.*, (SELECT COUNT(*) FROM routes_cache r WHERE r.wall_id = w.id) AS route_count
+		 FROM walls_cache w WHERE w.crag_id = ? ORDER BY w.sort_order ASC`,
 		[cragId],
 	);
 }
