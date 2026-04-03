@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Input } from "@/components/atoms/Input";
 import { Select } from "@/components/atoms/Select";
 import { Spinner } from "@/components/atoms/Spinner";
 import {
@@ -10,6 +11,7 @@ import {
 	useCountries,
 	useCrags,
 	useRegions,
+	useSearchLocations,
 	useSubRegions,
 	useWalls,
 } from "@/features/locations/locations.queries";
@@ -20,6 +22,7 @@ import type {
 	SubRegion,
 	Wall,
 } from "@/features/locations/locations.schema";
+import { getLocationAncestors } from "@/features/locations/locations.service";
 import { useUiStore } from "@/stores/ui.store";
 
 // Stable empty-array references — avoids infinite useEffect loops caused by
@@ -141,6 +144,20 @@ export function LocationDrillDown({
 		"country" | "region" | "sub_region" | "crag" | "wall" | null
 	>(null);
 
+	// Search
+	const [searchQuery, setSearchQuery] = useState("");
+	const [debouncedQuery, setDebouncedQuery] = useState("");
+	useEffect(() => {
+		const timer = setTimeout(() => setDebouncedQuery(searchQuery), 300);
+		return () => clearTimeout(timer);
+	}, [searchQuery]);
+	const searchEnabled = stopAt !== "region";
+	const effectiveStopAt: "sub_region" | "crag" | "wall" =
+		stopAt === "region" ? "sub_region" : stopAt;
+	const { data: searchResults = [], isFetching: isSearchFetching } =
+		useSearchLocations(debouncedQuery, effectiveStopAt, searchEnabled);
+	const showSearchResults = searchEnabled && debouncedQuery.length >= 2;
+
 	const { data: countries = NO_COUNTRIES } = useCountries();
 	const { data: regions = NO_REGIONS } = useRegions(countryId || null);
 	const { data: subRegions = NO_SUB_REGIONS } = useSubRegions(
@@ -239,8 +256,79 @@ export function LocationDrillDown({
 		setAddingLevel(null);
 	};
 
+	const kindLabel = (kind: "sub_region" | "crag" | "wall") => {
+		if (kind === "sub_region") return "Area";
+		if (kind === "crag") return "Crag";
+		return "Wall";
+	};
+
+	const handleSearchSelect = async (result: {
+		id: string;
+		kind: "sub_region" | "crag" | "wall";
+	}) => {
+		try {
+			const ancestors = await getLocationAncestors(result.id, result.kind);
+			setCountryId(ancestors.countryId);
+			setRegionId(ancestors.regionId);
+			setSubRegionId(ancestors.subRegionId ?? "");
+			setCragId(ancestors.cragId ?? "");
+			setWallId(ancestors.wallId ?? "");
+			setAddingLevel(null);
+			setSearchQuery("");
+			setDebouncedQuery("");
+		} catch {
+			addToast({ message: "Location not found", type: "error" });
+		}
+	};
+
 	return (
 		<div className="flex flex-col gap-3">
+			{/* Search */}
+			{searchEnabled && (
+				<div className="flex flex-col gap-1">
+					<Input
+						placeholder="Search by name…"
+						value={searchQuery}
+						onChange={(e) => setSearchQuery(e.target.value)}
+					/>
+					{showSearchResults && (
+						<div className="flex flex-col rounded-[var(--radius-lg)] border border-border-default bg-surface-card overflow-hidden">
+							{isSearchFetching && searchResults.length === 0 && (
+								<div className="flex justify-center py-3">
+									<Spinner size="sm" />
+								</div>
+							)}
+							{!isSearchFetching && searchResults.length === 0 && (
+								<p className="text-sm text-text-muted px-3 py-3">No results</p>
+							)}
+							{searchResults.map((result) => (
+								<button
+									key={result.id}
+									type="button"
+									onClick={() => handleSearchSelect(result)}
+									className="flex items-center justify-between gap-3 px-3 py-2.5 text-left hover:bg-surface-raised active:bg-surface-raised border-b border-border-subtle last:border-0"
+								>
+									<div className="flex flex-col min-w-0">
+										<span className="text-sm text-text-primary truncate">
+											{result.name}
+										</span>
+										<span className="text-xs text-text-muted truncate">
+											{result.parent_name}
+										</span>
+									</div>
+									<span className="text-xs text-text-muted shrink-0">
+										{kindLabel(result.kind)}
+									</span>
+								</button>
+							))}
+						</div>
+					)}
+				</div>
+			)}
+
+			{/* Drill-down selects — hidden when showing search results */}
+			{!showSearchResults && (
+			<>
 			{/* Country */}
 			<Select
 				variant="text"
@@ -420,6 +508,8 @@ export function LocationDrillDown({
 						/>
 					)}
 				</>
+			)}
+			</>
 			)}
 		</div>
 	);
