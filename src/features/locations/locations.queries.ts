@@ -166,11 +166,15 @@ export function useUpdateLocationApproach() {
 	});
 }
 
-export function useSearchLocations(query: string) {
+export function useSearchLocations(
+	query: string,
+	stopAt: "sub_region" | "crag" | "wall" = "wall",
+	enabled = true,
+) {
 	return useQuery({
-		queryKey: ["search_locations", query],
-		queryFn: () => searchLocations(query),
-		enabled: query.length >= 2,
+		queryKey: ["search_locations", query, stopAt],
+		queryFn: () => searchLocations(query, stopAt),
+		enabled: enabled && query.length >= 2,
 	});
 }
 

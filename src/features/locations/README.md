@@ -72,7 +72,8 @@ CREATE TABLE IF NOT EXISTS downloaded_regions (region_id TEXT PRIMARY KEY, downl
 | `fetchDownloadedRegionIds()` | IDs of all downloaded regions |
 | `fetchDownloadedRegions()` | Full rows from `downloaded_regions` including `server_updated_at` |
 | `checkRegionStaleness()` | Fetches `updated_at` from Supabase for all downloaded regions; returns IDs where server timestamp is newer than `server_updated_at` |
-| `searchLocations(query)` | LIKE search across sub_regions/crags/walls cache; returns typed results with `kind` |
+| `searchLocations(query, stopAt?)` | LIKE search across location caches up to `stopAt` depth; results include `kind` and `parent_name` |
+| `getLocationAncestors(id, kind)` | Resolves full parent chain (countryId → wallId) for a given location item — used by LocationDrillDown search |
 | `fetchAllCragsWithCoords()` | All crags with non-null lat/lng + sport/trad/boulder counts (for map Discovery mode); reads stored counts directly — no route JOIN |
 | `fetchAllWallsWithCoords()` | All walls with non-null lat/lng + wall_type + sport/trad/boulder counts + crag_name (for map Discovery mode); reads stored counts directly — no route JOIN |
 
@@ -156,7 +157,7 @@ useDownloadRegion()         // mutation
 useSubmitSubRegion()        // mutation — user submission
 useSubmitCrag()             // mutation — user submission
 useSubmitWall()             // mutation — user submission
-useSearchLocations(query)      // LIKE search across location caches (min 2 chars)
+useSearchLocations(query, stopAt?, enabled?)  // LIKE search across location caches (min 2 chars); stopAt filters depth ("sub_region"|"crag"|"wall", default "wall"); results include parent_name
 useUpdateLocationDescription() // admin mutation — { table, id, description }
 useUpdateLocationApproach()    // admin mutation — { table: 'crags' | 'walls', id, approach }
 usePendingLocations()       // admin — all pending items
