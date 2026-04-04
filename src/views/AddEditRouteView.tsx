@@ -159,7 +159,7 @@ const AddEditRouteView = ({ routeId }: AddEditRouteViewProps) => {
 				addToast({ message: "Route updated", type: "success" });
 				navigate({
 					to: "/routes/$routeId",
-					params: { routeId: routeId! },
+					params: { routeId: routeId },
 					replace: true,
 				});
 			} else {

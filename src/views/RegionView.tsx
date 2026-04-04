@@ -71,7 +71,8 @@ const RegionView = () => {
 	const isAdmin = useAuthStore((s) => s.user?.role === "admin");
 	const adminDeleteSubRegion = useAdminDeleteSubRegion();
 	const [showSubRegionForm, setShowSubRegionForm] = useState(false);
-	const [pendingDeleteSubRegion, setPendingDeleteSubRegion] = useState<SubRegion | null>(null);
+	const [pendingDeleteSubRegion, setPendingDeleteSubRegion] =
+		useState<SubRegion | null>(null);
 
 	const handleAddSubRegion = async (name: string) => {
 		await submitSubRegion.mutateAsync({ region_id: regionId, name });
@@ -160,7 +161,10 @@ const RegionView = () => {
 				message={`Are you sure you want to delete "${pendingDeleteSubRegion?.name}"?`}
 				onConfirm={() => {
 					if (pendingDeleteSubRegion) {
-						adminDeleteSubRegion.mutate({ id: pendingDeleteSubRegion.id, regionId });
+						adminDeleteSubRegion.mutate({
+							id: pendingDeleteSubRegion.id,
+							regionId,
+						});
 					}
 					setPendingDeleteSubRegion(null);
 				}}
