@@ -1,48 +1,76 @@
-import { useState } from "react";
 import {
+	Bar,
+	BarChart,
 	CartesianGrid,
-	ResponsiveContainer,
-	Scatter,
-	ScatterChart,
-	Tooltip,
+	Cell,
+	LabelList,
 	XAxis,
 	YAxis,
-	ZAxis,
 } from "recharts";
-import { ToggleGroup } from "@/components/atoms/ToggleGroup";
+import { useAuthStore } from "@/features/auth/auth.store";
 import { useGrades } from "@/features/grades/grades.queries";
 import { useRouteBodyStats } from "@/features/routes/routes.queries";
 
 // ── Chart colours (hardcoded — recharts doesn't read CSS vars) ────────────────
 
-const COLOR_SENT = "#059669";
 const AXIS_COLOR = "#b5a99b";
 const GRID_COLOR = "#4a3f34";
-const TOOLTIP_BG = "#2a2420";
-const TOOLTIP_BORDER = "#4a3f34";
+const GRADE_COLORS = [
+	"#059669",
+	"#0891b2",
+	"#7c3aed",
+	"#d97706",
+	"#dc2626",
+	"#db2777",
+	"#65a30d",
+	"#ea580c",
+];
 
-// Minimum number of climbers (sum of counts) required to show the chart
-const MIN_CLIMBERS = 5;
+const MIN_CLIMBERS = 1;
+const BAR_WIDTH = 45; // px per real data bar
+const SPACER_WIDTH = 16; // px per grade-group spacer
+const Y_AXIS_LEFT = 40; // approx px offset of plot area left edge (yAxis width + margin)
 
-type XMetric = "height" | "ape_index";
+// ── Unit helpers ──────────────────────────────────────────────────────────────
+
+function cmToFtIn(cm: number): string {
+	const totalIn = cm / 2.54;
+	const ft = Math.floor(totalIn / 12);
+	const inches = Math.round(totalIn % 12);
+	return `${ft}'${inches}"`;
+}
+
+function formatHeight(cm: number, imperial: boolean): string {
+	return imperial ? cmToFtIn(cm) : `${cm}cm`;
+}
+
+function formatApeFactor(diffCm: number, imperial: boolean): string {
+	if (imperial) {
+		const inches = Math.round(diffCm / 2.54);
+		return inches >= 0 ? `+${inches}"` : `${inches}"`;
+	}
+	return diffCm >= 0 ? `+${diffCm}` : `${diffCm}`;
+}
+
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+type DataRow = { comboLabel: string; displayLabel: string; grade: string; count: number; isSpacer: false };
+type SpacerRow = { comboLabel: ""; displayLabel: ""; count: 0; isSpacer: true };
+type FlatRow = DataRow | SpacerRow;
 
 interface Props {
 	routeId: string;
 	routeType: "sport" | "boulder" | "trad";
 }
 
+// ── Component ─────────────────────────────────────────────────────────────────
+
 export const RouteBodyChart = ({ routeId, routeType }: Props) => {
-	const [xMetric, setXMetric] = useState<XMetric>("height");
-	const { data: stats = [], isLoading } = useRouteBodyStats(routeId);
+	const { data: stats = [], isLoading, isError, error } = useRouteBodyStats(routeId);
 	const { data: grades = [] } = useGrades(routeType);
+	const imperial = useAuthStore((s) => s.user?.default_unit !== "metric");
 
 	const gradeOrder = new Map(grades.map((g) => [g.grade, g.sort_order]));
-	const gradeByOrder = new Map(grades.map((g) => [g.sort_order, g.grade]));
-
-	const filtered = stats.filter((s) =>
-		xMetric === "height" ? s.height_cm != null : s.ape_index_cm != null,
-	);
-	const totalClimbers = filtered.reduce((sum, s) => sum + s.count, 0);
 
 	const title = (
 		<p className="text-sm font-semibold text-text-secondary uppercase tracking-wide">
@@ -50,7 +78,37 @@ export const RouteBodyChart = ({ routeId, routeType }: Props) => {
 		</p>
 	);
 
-	if (isLoading) return null;
+	if (isLoading) {
+		return (
+			<div className="rounded-[var(--radius-lg)] bg-surface-card border border-card-border shadow-card p-4 flex flex-col gap-3">
+				{title}
+				<div className="flex justify-center py-4">
+					<div className="w-5 h-5 rounded-full border-2 border-accent-primary border-t-transparent animate-spin" />
+				</div>
+			</div>
+		);
+	}
+
+	if (isError) {
+		return (
+			<div className="rounded-[var(--radius-lg)] bg-surface-card border border-card-border shadow-card p-4 flex flex-col gap-3">
+				{title}
+				<p className="text-text-tertiary text-sm text-center py-4">
+					Failed to load data.
+				</p>
+				<p className="text-red-400 text-xs text-center font-mono break-all">
+					{error instanceof Error
+						? error.message
+						: JSON.stringify(error, null, 2)}
+				</p>
+			</div>
+		);
+	}
+
+	const withBoth = stats.filter(
+		(s) => s.height_cm != null && s.ape_index_cm != null,
+	);
+	const totalClimbers = withBoth.reduce((sum, s) => sum + s.count, 0);
 
 	if (totalClimbers < MIN_CLIMBERS) {
 		return (
@@ -63,87 +121,182 @@ export const RouteBodyChart = ({ routeId, routeType }: Props) => {
 		);
 	}
 
-	const chartData = filtered.map((s) => ({
-		x: xMetric === "height" ? s.height_cm : (s.ape_index_cm ?? 0),
-		y: gradeOrder.get(s.grade) ?? 0,
-		z: s.count,
-		grade: s.grade,
-		count: s.count,
-	}));
+	// ── Grades sorted by difficulty ───────────────────────────────────────────
 
-	const uniqueGrades = [...new Set(filtered.map((s) => s.grade))].sort(
+	const uniqueGrades = [...new Set(withBoth.map((s) => s.grade))].sort(
 		(a, b) => (gradeOrder.get(a) ?? 0) - (gradeOrder.get(b) ?? 0),
 	);
-	const yTicks = uniqueGrades.map((g) => gradeOrder.get(g) ?? 0);
-	const yMin = Math.min(...yTicks) - 1;
-	const yMax = Math.max(...yTicks) + 1;
+
+	const gradeColorMap = new Map(
+		uniqueGrades.map((g, i) => [g, GRADE_COLORS[i % GRADE_COLORS.length]]),
+	);
+
+	// ── Combos sorted by height then ape factor ───────────────────────────────
+
+	type Combo = { height_cm: number; ape_index_cm: number; label: string };
+	const comboMap = new Map<string, Combo>();
+	for (const s of withBoth) {
+		const key = `${s.height_cm}|${s.ape_index_cm}`;
+		if (!comboMap.has(key)) {
+			const apeFactor = s.ape_index_cm!;
+			comboMap.set(key, {
+				height_cm: s.height_cm,
+				ape_index_cm: s.ape_index_cm!,
+				label: `${formatHeight(s.height_cm, imperial)} ${formatApeFactor(apeFactor, imperial)}`,
+			});
+		}
+	}
+	const sortedCombos = [...comboMap.values()].sort((a, b) =>
+		a.height_cm !== b.height_cm
+			? a.height_cm - b.height_cm
+			: a.ape_index_cm - b.ape_index_cm,
+	);
+
+	// ── Flat dataset: one entry per real data point, spacers between grades ───
+
+	const flatData: FlatRow[] = [];
+	let spacerCount = 0;
+
+	for (const [gi, grade] of uniqueGrades.entries()) {
+		if (gi > 0) {
+			flatData.push({ comboLabel: "", displayLabel: "", count: 0, isSpacer: true });
+			spacerCount++;
+		}
+		const gradeStats = withBoth.filter((s) => s.grade === grade);
+		const gradeCombos = sortedCombos.filter((c) =>
+			gradeStats.some(
+				(s) => s.height_cm === c.height_cm && s.ape_index_cm === c.ape_index_cm,
+			),
+		);
+		for (const combo of gradeCombos) {
+			const stat = gradeStats.find(
+				(s) =>
+					s.height_cm === combo.height_cm &&
+					s.ape_index_cm === combo.ape_index_cm,
+			);
+			if (stat) {
+				flatData.push({
+					comboLabel: combo.label,
+					displayLabel: combo.label,
+					grade,
+					count: stat.count,
+					isSpacer: false,
+				});
+			}
+		}
+	}
+
+	// ── Grade group index ranges for label positioning ────────────────────────
+
+	const gradeGroups = uniqueGrades.map((grade) => {
+		const indices = flatData
+			.map((r, i) => ({ r, i }))
+			.filter(({ r }) => !r.isSpacer && (r as DataRow).grade === grade)
+			.map(({ i }) => i);
+		return {
+			grade,
+			startIdx: indices[0] ?? 0,
+			endIdx: indices[indices.length - 1] ?? 0,
+		};
+	});
+
+	const RIGHT_MARGIN = 8;
+	const realBars = flatData.filter((r) => !r.isSpacer).length;
+	const chartWidth = Math.max(
+		300,
+		realBars * BAR_WIDTH + spacerCount * SPACER_WIDTH + 60,
+	);
+	const categoryWidth = (chartWidth - Y_AXIS_LEFT - RIGHT_MARGIN) / flatData.length;
 
 	return (
 		<div className="rounded-[var(--radius-lg)] bg-surface-card border border-card-border shadow-card p-4 flex flex-col gap-3">
 			{title}
-			<ToggleGroup
-				options={[
-					{ value: "height", label: "Height" },
-					{ value: "ape_index", label: "Ape index" },
-				]}
-				value={xMetric}
-				onChange={(v) => setXMetric(v as XMetric)}
-			/>
-			<ResponsiveContainer width="100%" height={220}>
-				<ScatterChart margin={{ top: 8, right: 16, left: -16, bottom: 0 }}>
-					<CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} />
-					<XAxis
-						type="number"
-						dataKey="x"
-						name={xMetric === "height" ? "Height" : "Ape index"}
-						unit="cm"
-						tick={{ fill: AXIS_COLOR, fontSize: 10 }}
-						axisLine={false}
-						tickLine={false}
-					/>
-					<YAxis
-						type="number"
-						dataKey="y"
-						name="Grade"
-						domain={[yMin, yMax]}
-						ticks={yTicks}
-						tickFormatter={(v: number) => gradeByOrder.get(v) ?? String(v)}
-						tick={{ fill: AXIS_COLOR, fontSize: 10 }}
-						axisLine={false}
-						tickLine={false}
-					/>
-					<ZAxis type="number" dataKey="z" range={[40, 400]} name="Climbers" />
-					<Tooltip
-						cursor={{ strokeDasharray: "3 3" }}
-						content={({ payload }) => {
-							if (!payload?.length) return null;
-							const d = payload[0]?.payload as (typeof chartData)[0];
-							if (!d) return null;
+			<div className="overflow-x-auto [&_svg]:outline-none [&_svg]:pointer-events-none">
+				<div style={{ width: chartWidth }}>
+					<BarChart
+						width={chartWidth}
+						height={220}
+						data={flatData}
+						barCategoryGap={2}
+						margin={{ top: 8, right: RIGHT_MARGIN, left: -20, bottom: 0 }}
+						style={{ outline: "none" }}
+					>
+						<CartesianGrid
+							strokeDasharray="3 3"
+							stroke={GRID_COLOR}
+							vertical={false}
+						/>
+						<XAxis dataKey="comboLabel" hide />
+						<YAxis
+							allowDecimals={false}
+							tick={{ fill: AXIS_COLOR, fontSize: 10 }}
+							axisLine={false}
+							tickLine={false}
+						/>
+						<Bar dataKey="count" maxBarSize={BAR_WIDTH - 4} isAnimationActive={false}>
+							{flatData.map((entry, i) => (
+								<Cell
+									key={i}
+									fill={
+										entry.isSpacer
+											? "transparent"
+											: (gradeColorMap.get(entry.grade) ?? "#666")
+									}
+								/>
+							))}
+							<LabelList
+								dataKey="displayLabel"
+								content={({ x, y, width, height, value }) => {
+									if (
+										typeof x !== "number" ||
+										typeof y !== "number" ||
+										typeof width !== "number" ||
+										typeof height !== "number" ||
+										!value
+									)
+										return null;
+									if (height < 14) return null;
+									return (
+										<text
+											x={x + width / 2}
+											y={y + height - 4}
+											textAnchor="middle"
+											dominantBaseline="auto"
+											fill="#fff"
+											fontSize={9}
+											fontWeight={600}
+										>
+											{String(value)}
+										</text>
+									);
+								}}
+							/>
+						</Bar>
+					</BarChart>
+					<div style={{ position: "relative", height: 20 }}>
+						{gradeGroups.map(({ grade, startIdx, endIdx }) => {
+							const cx =
+								Y_AXIS_LEFT +
+								((startIdx + endIdx + 1) / 2) * categoryWidth;
 							return (
-								<div
+								<span
+									key={grade}
 									style={{
-										backgroundColor: TOOLTIP_BG,
-										border: `1px solid ${TOOLTIP_BORDER}`,
-										borderRadius: "0.5rem",
-										color: "#f5f0eb",
-										fontSize: "0.75rem",
-										padding: "8px 12px",
+										position: "absolute",
+										left: cx,
+										transform: "translateX(-50%)",
+										color: AXIS_COLOR,
+										fontSize: 10,
+										whiteSpace: "nowrap",
 									}}
 								>
-									<p style={{ fontWeight: 600 }}>{d.grade}</p>
-									<p>
-										{xMetric === "height" ? "Height" : "Ape index"}: {d.x}cm
-									</p>
-									<p>
-										{d.count} climber{d.count !== 1 ? "s" : ""}
-									</p>
-								</div>
+									{grade}
+								</span>
 							);
-						}}
-					/>
-					<Scatter data={chartData} fill={COLOR_SENT} fillOpacity={0.75} />
-				</ScatterChart>
-			</ResponsiveContainer>
+						})}
+					</div>
+				</div>
+			</div>
 		</div>
 	);
 };
