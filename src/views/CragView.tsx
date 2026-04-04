@@ -402,17 +402,19 @@ const CragView = () => {
 										>
 											{movingWallId === wall.id ? "Cancel" : "Move"}
 										</button>
-										<button
-											type="button"
-											className="text-xs text-red-400 hover:text-red-300"
-											onClick={() => {
-												setConfirmDeleteWallId(wall.id);
-												setMovingWallId(null);
-												setRenamingWallId(null);
-											}}
-										>
-											Delete
-										</button>
+										{wall.route_count === 0 && (
+											<button
+												type="button"
+												className="text-xs text-red-400 hover:text-red-300"
+												onClick={() => {
+													setConfirmDeleteWallId(wall.id);
+													setMovingWallId(null);
+													setRenamingWallId(null);
+												}}
+											>
+												Delete
+											</button>
+										)}
 									</>
 								)}
 							</div>
@@ -448,7 +450,7 @@ const CragView = () => {
 			<ConfirmDeleteDialog
 				isOpen={confirmDeleteWallId !== null}
 				title="Delete wall"
-				message={`Delete "${pendingDeleteWall?.name ?? ""}"? This will also delete all routes and topos on this wall.`}
+				message={`Are you sure you want to delete "${pendingDeleteWall?.name ?? ""}"?`}
 				onConfirm={async () => {
 					if (!pendingDeleteWall) return;
 					try {

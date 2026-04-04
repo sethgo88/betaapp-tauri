@@ -224,6 +224,15 @@ const AuthenticatedProfile = ({
 	const addToast = useUiStore((s) => s.addToast);
 	const theme = useUiStore((s) => s.theme);
 	const setTheme = useUiStore((s) => s.setTheme);
+	const defaultStatusFilters = useUiStore((s) => s.defaultStatusFilters);
+	const setDefaultStatusFilters = useUiStore((s) => s.setDefaultStatusFilters);
+
+	const toggleDefaultStatus = (status: string) => {
+		const next = new Set(defaultStatusFilters);
+		if (next.has(status)) next.delete(status);
+		else next.add(status);
+		setDefaultStatusFilters(next);
+	};
 	const unit = user.default_unit ?? "imperial";
 	const { data: sportGrades = [] } = useGrades("sport");
 	const { data: boulderGrades = [] } = useGrades("boulder");
@@ -382,6 +391,25 @@ const AuthenticatedProfile = ({
 						value={theme}
 						onChange={(v) => setTheme(v as Theme)}
 					/>
+				</div>
+				<div>
+					<p className="text-sm mb-1">Home screen</p>
+					<div className="flex flex-wrap gap-x-4 gap-y-1">
+						{(["sent", "project", "todo"] as const).map((status) => (
+							<label
+								key={status}
+								className="flex items-center gap-2 text-sm cursor-pointer capitalize"
+							>
+								<input
+									type="checkbox"
+									checked={defaultStatusFilters.has(status)}
+									onChange={() => toggleDefaultStatus(status)}
+									className="accent-accent-primary w-4 h-4"
+								/>
+								{status}
+							</label>
+						))}
+					</div>
 				</div>
 			</div>
 

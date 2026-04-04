@@ -25,6 +25,7 @@ import {
 	pushClimbs,
 	pushRouteLinks,
 	setSyncMeta,
+	uploadPendingImages,
 } from "@/features/sync/sync.service";
 import { useSyncStore } from "@/features/sync/sync.store";
 import { supabase } from "@/lib/supabase";
@@ -54,6 +55,7 @@ export function useSync(userId: string | undefined) {
 			await pullClimbs(userId, since);
 			await pushBurns(userId, since);
 			await pullBurns(userId, since);
+			await uploadPendingImages(userId);
 			await pushClimbImages(userId, since);
 			await pullClimbImages(userId, since);
 			await pushClimbImagePins(userId, since);
@@ -93,6 +95,13 @@ export function useSync(userId: string | undefined) {
 	useEffect(() => {
 		setTriggerSync(runSync);
 	}, [runSync, setTriggerSync]);
+
+	// Auto-sync when connectivity is restored (e.g. app launched offline then came online).
+	useEffect(() => {
+		if (!userId) return;
+		window.addEventListener("online", runSync);
+		return () => window.removeEventListener("online", runSync);
+	}, [userId, runSync]);
 
 	useEffect(() => {
 		if (!userId) return;

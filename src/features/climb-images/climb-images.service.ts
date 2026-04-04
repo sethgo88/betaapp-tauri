@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/db";
+import { base64ToBlob, uploadBlobToStorage } from "@/lib/image-utils";
 import { supabase } from "@/lib/supabase";
 import type {
 	ClimbImage,
@@ -32,10 +33,14 @@ export async function fetchClimbImages(
 		[climbId],
 	);
 	return Promise.all(
-		rows.map(async (row) => ({
-			...row,
-			signed_url: await signUrl(row.image_url),
-		})),
+		rows.map(async (row) => {
+			const upload_status = row.upload_status ?? "uploaded";
+			const signed_url =
+				upload_status === "uploaded"
+					? await signUrl(row.image_url)
+					: (row.local_data ?? "");
+			return { ...row, upload_status, signed_url };
+		}),
 	);
 }
 
@@ -62,15 +67,58 @@ export async function insertClimbImage(
 	userId: string,
 	storagePath: string,
 	sortOrder: number,
+	localData?: string,
+	uploadStatus: "pending" | "uploaded" = "uploaded",
 ): Promise<string> {
 	const db = await getDb();
 	const id = crypto.randomUUID();
 	await db.execute(
-		`INSERT INTO climb_images (id, climb_id, user_id, image_url, sort_order, created_at)
-     VALUES (?, ?, ?, ?, ?, datetime('now'))`,
-		[id, climbId, userId, storagePath, sortOrder],
+		`INSERT INTO climb_images (id, climb_id, user_id, image_url, sort_order, local_data, upload_status, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
+		[
+			id,
+			climbId,
+			userId,
+			storagePath,
+			sortOrder,
+			localData ?? null,
+			uploadStatus,
+		],
 	);
 	return id;
+}
+
+export async function markImageUploaded(id: string): Promise<void> {
+	const db = await getDb();
+	await db.execute(
+		"UPDATE climb_images SET upload_status = 'uploaded' WHERE id = ?",
+		[id],
+	);
+}
+
+export async function uploadPendingImages(userId: string): Promise<void> {
+	const db = await getDb();
+	const pending = await db.select<ClimbImage[]>(
+		"SELECT * FROM climb_images WHERE user_id = ? AND upload_status IN ('pending', 'error') AND deleted_at IS NULL",
+		[userId],
+	);
+
+	for (const img of pending) {
+		if (!img.local_data) continue;
+		try {
+			const blob = base64ToBlob(img.local_data);
+			await uploadBlobToStorage("climb-images", img.image_url, blob);
+			await db.execute(
+				"UPDATE climb_images SET upload_status = 'uploaded' WHERE id = ?",
+				[img.id],
+			);
+		} catch {
+			await db.execute(
+				"UPDATE climb_images SET upload_status = 'error' WHERE id = ?",
+				[img.id],
+			);
+		}
+	}
 }
 
 export async function softDeleteClimbImage(id: string): Promise<void> {
@@ -95,8 +143,8 @@ export async function applyRemoteClimbImage(image: ClimbImage): Promise<void> {
 	const db = await getDb();
 	await db.execute(
 		`INSERT OR REPLACE INTO climb_images
-     (id, climb_id, user_id, image_url, sort_order, created_at, deleted_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+     (id, climb_id, user_id, image_url, sort_order, upload_status, created_at, deleted_at)
+     VALUES (?, ?, ?, ?, ?, 'uploaded', ?, ?)`,
 		[
 			image.id,
 			image.climb_id,

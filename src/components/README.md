@@ -22,7 +22,7 @@ templates   Layout shells with no real data — just children/slots.
 ### Atoms
 | Component | Purpose |
 |---|---|
-| `Button` | Primary action button, touch-target safe (`min-h-[48px]`) |
+| `Button` | Action button. Props: `variant` (`primary` \| `secondary` \| `outlined` \| `unstyled`, default `primary`), `size` (`small` \| `medium` \| `large`, default `medium`). Medium and large enforce `min-h-[48px]` for Android touch targets. Defaults `type="button"` to prevent accidental form submission. |
 | `Input` | Text input with label support |
 | `Select` | Dropdown select |
 | `Spinner` | Loading indicator |
@@ -35,10 +35,11 @@ templates   Layout shells with no real data — just children/slots.
 | `ClimbCard` | Displays a single climb summary; handles tap + delete |
 | `EditableDescription` | Read-only description text; admins see pencil icon for inline edit + save |
 | `FilterPanel` | Collapsible status/type filter checkboxes with cross-filtered counts |
+| `GradeSelect` | Controlled grade dropdown. Fetches grades for `routeType` via `useGrades`. Defaults empty value to `5.12a` (sport/trad) or `v5` (boulder). Props: `routeType`, `value`, `onChange`, optional `id`/`name`. |
 | `FormField` | Label + input/select + error message wrapper |
 | `SyncStatus` | Reads `sync.store` and renders sync state indicator |
 | `CoordinatePicker` | Fullscreen Leaflet overlay for picking coordinates; fixed center pin with drag-to-position pattern. Props: `value`, `defaultCenter`, `defaultZoom`, `markers` (reference pins), `onChange`, `onClose`. Exports `PickerMarker` type. |
-| `LocationDrillDown` | Cascading location selector: Country → Region → Sub-Region → Crag → Wall. Uses existing location query hooks. Props: `onChange(selection)`, `stopAt` (defaults to `"wall"`), `initial` (for edit mode pre-population). Exports `LocationSelection` and `LocationDrillDownProps` types. |
+| `LocationDrillDown` | Cascading location selector: Country → Region → Sub-Region → Crag → Wall. Includes a search input (debounced, ≥2 chars) that lets users jump directly to any location by name; selecting a result pre-populates the full hierarchy. Props: `onChange(selection)`, `stopAt` (defaults to `"wall"`), `initial` (for edit mode pre-population). Exports `LocationSelection` and `LocationDrillDownProps` types. |
 | `SiblingDropdown` | Dropdown showing sibling locations/routes at the current hierarchy level. Current item highlighted in accent-primary. Closes on outside tap. Props: `siblings` (from `useTopBar`), `onSelect(id)`. Hidden when fewer than 2 siblings. |
 | `Toast` | Single toast notification; rendered by `AppLayout` |
 | `AdminImageGallery` | Horizontal-scroll image strip with admin upload/delete controls. Non-admins see read-only gallery; returns `null` when empty for non-admins. Props: `images`, `isAdmin`, `onAdd(file)`, `onDelete(id, imageUrl)`, `isAdding?`. Tapping a thumbnail opens `PhotoViewer`. Includes delete-confirmation bottom sheet. |
@@ -50,7 +51,7 @@ templates   Layout shells with no real data — just children/slots.
 | `ConfirmDeleteDialog` | Centred modal overlay for confirming destructive actions. Default labels: "Delete" / "Cancel" — override with `confirmLabel`/`cancelLabel` for non-delete uses (e.g. "Leave" / "Stay"). Props: `isOpen`, `title`, `message`, `confirmLabel?`, `cancelLabel?`, `onConfirm`, `onCancel`. |
 | `RoutePickerSheet` | Full-screen sheet that chains `LocationDrillDown` with a route list (verified routes only for the selected wall). Used in `AddClimbView` to link a log entry to a community route. Props: `isOpen`, `onClose`, `onSelect(route)`. |
 | `LogClimbSheet` | Full-screen sheet shown when logging from `RouteDetailView`. Presents two options: **New log** (navigates to `AddClimbView` pre-filled with route data) and **Link existing log** (lists unlinked climbs; selecting one runs `useLinkExistingClimbToRoute` to set `route_id` and backfill location). Hides "Link existing log" list when user has no unlinked climbs. Props: `isOpen`, `onClose`, `route`. |
-| `RouteBodyChart` | Bubble chart (recharts `ScatterChart`) showing how climbers' body dimensions (height or ape index) correlate with grade on a specific route. Only sent climbs are included. Toggles X-axis between height and ape index. Renders an empty state when fewer than 5 climbers have data. Data comes from the `get_route_body_stats` Supabase RPC. Props: `routeId`, `routeType`. |
+| `RouteBodyChart` | Grouped bar chart (recharts `BarChart`) showing how climbers' body dimensions correlate with grade on a specific route. X axis is grade (sorted by difficulty); bars within each grade cluster are unique height + ape index combinations, coloured per grade. Only sent climbs with both `height_cm` and `ape_index_cm` set in their profile are included. Horizontally scrollable. Renders a spinner while loading and an empty state when there is no qualifying data. Data comes from the `get_route_body_stats` Supabase RPC (joins `profiles`, not `users`). Props: `routeId`, `routeType`. |
 | `RouteDataModal` | Full-screen sheet showing route data graphs (wraps `RouteBodyChart`). Shows an empty/not-enough-data state automatically. Used from `WallView` via the per-route "Data" button. Props: `isOpen`, `onClose`, `routeId`, `routeName`, `routeType`. |
 | `TopoViewer` | SVG route-line overlay on a topo photo. Exports `WallTopoViewer` (multiple colour-coded lines, selectable bottom panel) and `RouteTopoViewer` (single line, no panel). Lines use strokeWidth 4, `vector-effect="non-scaling-stroke"`, and transparent fat hit targets for tap detection. `WallTopoViewer` uses `preserveAspectRatio="xMidYMid meet"` on its SVG to align correctly with the `object-contain` image. `WallTopoPanel` shows route name, route-type initial (S/T/B), and grade per row; the selected-route header has been removed. `RouteInfo` shape: `{ id, name, grade, route_type }`. Props for wall: `topo`, `lines[]`, `routes[]`, optional `singleRouteId`. Props for route: `topo`. |
 | `TopoModal` | Full-screen topo viewer with pinch-to-zoom (scale 1–4×) and double-tap-to-reset. Wraps `WallTopoViewer` or `RouteTopoViewer` depending on `mode` (`"wall"` \| `"wall-single"` \| `"route"`). `RouteInfo` now includes `route_type`. Close button in top-left respects safe-area inset. |
@@ -232,6 +233,8 @@ Follow these rules when creating or modifying any component:
 - `secondary` variant → `bg-accent-secondary text-white`
 - `outlined` variant → `border-accent-primary text-accent-primary`
 - All variants use `rounded-[var(--radius-md)]` and `font-semibold`
+- Default size is `medium` (`min-h-[48px]`); use `size="small"` for compact inline buttons (e.g. burn form actions)
+- Always defaults to `type="button"` — override with `type="submit"` in forms
 
 **ToggleGroup:**
 - Active state: `bg-accent-primary text-white`

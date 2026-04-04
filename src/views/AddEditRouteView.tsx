@@ -1,16 +1,16 @@
-import { useRouter } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { Select } from "@/components/atoms/Select";
 import { Spinner } from "@/components/atoms/Spinner";
+import { GradeSelect } from "@/components/molecules/GradeSelect";
 import {
 	LocationDrillDown,
 	type LocationSelection,
 } from "@/components/molecules/LocationDrillDown";
 import { Sheet } from "@/components/molecules/Sheet";
 import { useAuthStore } from "@/features/auth/auth.store";
-import { useGrades } from "@/features/grades/grades.queries";
 import {
 	useCrag,
 	useRegion,
@@ -51,7 +51,7 @@ interface AddEditRouteViewProps {
 }
 
 const AddEditRouteView = ({ routeId }: AddEditRouteViewProps) => {
-	const router = useRouter();
+	const navigate = useNavigate();
 	const addToast = useUiStore((s) => s.addToast);
 	const user = useAuthStore((s) => s.user);
 	const isAdmin = user?.role === "admin";
@@ -113,7 +113,6 @@ const AddEditRouteView = ({ routeId }: AddEditRouteViewProps) => {
 		setPendingSelection(sel);
 	}, []);
 
-	const { data: grades = [] } = useGrades(routeType);
 	const { mutateAsync: addRoute, isPending: adding } = useAddRoute();
 	const { mutateAsync: editRoute, isPending: editing } = useEditRoute();
 
@@ -130,7 +129,7 @@ const AddEditRouteView = ({ routeId }: AddEditRouteViewProps) => {
 	const canSubmit = !!selection.wallId && name.trim().length > 0;
 
 	const handleSubmit = async () => {
-		const resolvedGrade = grade || (grades.length > 0 ? grades[0].grade : "");
+		const resolvedGrade = grade || (routeType === "boulder" ? "v5" : "5.12a");
 		const parsed = RouteSubmitSchema.safeParse({
 			wall_id: selection.wallId,
 			name: name.trim(),
@@ -158,8 +157,13 @@ const AddEditRouteView = ({ routeId }: AddEditRouteViewProps) => {
 					},
 				});
 				addToast({ message: "Route updated", type: "success" });
+				navigate({
+					to: "/routes/$routeId",
+					params: { routeId: routeId! },
+					replace: true,
+				});
 			} else {
-				await addRoute({
+				const newRouteId = await addRoute({
 					values: parsed.data,
 					userId: user?.id ?? "",
 					isAdmin,
@@ -168,8 +172,16 @@ const AddEditRouteView = ({ routeId }: AddEditRouteViewProps) => {
 					message: isAdmin ? "Route added" : "Route submitted for review",
 					type: "success",
 				});
+				if (isAdmin) {
+					navigate({
+						to: "/routes/$routeId",
+						params: { routeId: newRouteId },
+						replace: true,
+					});
+				} else {
+					navigate({ to: "/", replace: true });
+				}
 			}
-			router.history.back();
 		} catch {
 			addToast({
 				message: isEditMode ? "Failed to update route" : "Failed to add route",
@@ -278,7 +290,7 @@ const AddEditRouteView = ({ routeId }: AddEditRouteViewProps) => {
 					onChange={(e) => {
 						const val = e.target.value as "sport" | "boulder" | "trad";
 						setRouteType(val);
-						setGrade("");
+						setGrade(val === "boulder" ? "v5" : "5.12a");
 					}}
 				>
 					<option value="sport">Sport</option>
@@ -286,16 +298,7 @@ const AddEditRouteView = ({ routeId }: AddEditRouteViewProps) => {
 					<option value="trad">Trad</option>
 				</Select>
 
-				<Select
-					value={grade || (grades.length > 0 ? grades[0].grade : "")}
-					onChange={(e) => setGrade(e.target.value)}
-				>
-					{grades.map((g) => (
-						<option key={g.id} value={g.grade}>
-							{g.grade}
-						</option>
-					))}
-				</Select>
+				<GradeSelect routeType={routeType} value={grade} onChange={setGrade} />
 
 				<textarea
 					placeholder="Description (optional)"

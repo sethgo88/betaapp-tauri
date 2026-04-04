@@ -6,7 +6,10 @@ import type {
 import {
 	applyRemoteClimbImage,
 	applyRemoteClimbImagePin,
+	uploadPendingImages,
 } from "@/features/climb-images/climb-images.service";
+export { uploadPendingImages };
+
 import type { Climb } from "@/features/climbs/climbs.schema";
 import type {
 	RouteImage,
@@ -172,10 +175,11 @@ export async function pushClimbImages(
 	since?: string,
 ): Promise<void> {
 	const db = await getDb();
+	// Only push rows where the file has been uploaded to storage.
 	const images = await db.select<ClimbImage[]>(
 		since
-			? "SELECT * FROM climb_images WHERE user_id = ? AND created_at > ?"
-			: "SELECT * FROM climb_images WHERE user_id = ?",
+			? "SELECT * FROM climb_images WHERE user_id = ? AND created_at > ? AND (upload_status = 'uploaded' OR upload_status IS NULL)"
+			: "SELECT * FROM climb_images WHERE user_id = ? AND (upload_status = 'uploaded' OR upload_status IS NULL)",
 		since ? [userId, since] : [userId],
 	);
 	if (images.length === 0) return;

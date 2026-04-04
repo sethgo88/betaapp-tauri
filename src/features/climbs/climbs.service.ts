@@ -108,7 +108,7 @@ export async function insertClimb(
 	userId: string,
 	data: ClimbFormValues,
 	routeId?: string,
-): Promise<void> {
+): Promise<string> {
 	const db = await getDb();
 	const id = crypto.randomUUID();
 
@@ -149,6 +149,7 @@ export async function insertClimb(
 			data.sent_date ?? null,
 		],
 	);
+	return id;
 }
 
 export async function updateClimb(
@@ -231,6 +232,39 @@ export async function linkExistingClimbToRoute(
      SET route_id = ?, country = ?, area = ?, sub_area = ?, crag = ?, wall = ?
      WHERE id = ? AND deleted_at IS NULL`,
 		[routeId, loc.country, loc.area, loc.sub_area, loc.crag, loc.wall, climbId],
+	);
+}
+
+export async function patchClimbGrade(
+	id: string,
+	grade: string,
+): Promise<void> {
+	const db = await getDb();
+	await db.execute(
+		"UPDATE climbs SET grade = ? WHERE id = ? AND deleted_at IS NULL",
+		[grade, id],
+	);
+}
+
+export async function patchClimbStatus(
+	id: string,
+	sentStatus: string,
+): Promise<void> {
+	const db = await getDb();
+	await db.execute(
+		"UPDATE climbs SET sent_status = ? WHERE id = ? AND deleted_at IS NULL",
+		[sentStatus, id],
+	);
+}
+
+export async function patchClimbLink(
+	id: string,
+	link: string | null,
+): Promise<void> {
+	const db = await getDb();
+	await db.execute(
+		"UPDATE climbs SET link = ? WHERE id = ? AND deleted_at IS NULL",
+		[link, id],
 	);
 }
 

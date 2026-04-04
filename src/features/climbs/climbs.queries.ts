@@ -10,6 +10,9 @@ import {
 	insertClimb,
 	linkClimbToRoute,
 	linkExistingClimbToRoute,
+	patchClimbGrade,
+	patchClimbLink,
+	patchClimbStatus,
 	softDeleteClimb,
 	unlinkClimbFromRoute,
 	updateClimb,
@@ -140,6 +143,45 @@ export function useUpdateClimbMoves() {
 	return useMutation({
 		mutationFn: ({ id, moves }: { id: string; moves: string }) =>
 			updateClimbMoves(id, moves),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: [CLIMBS_KEY] });
+			silentPush(userId);
+		},
+	});
+}
+
+export function usePatchClimbGrade() {
+	const qc = useQueryClient();
+	const userId = useAuthStore((s) => s.user?.id);
+	return useMutation({
+		mutationFn: ({ id, grade }: { id: string; grade: string }) =>
+			patchClimbGrade(id, grade),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: [CLIMBS_KEY] });
+			silentPush(userId);
+		},
+	});
+}
+
+export function usePatchClimbStatus() {
+	const qc = useQueryClient();
+	const userId = useAuthStore((s) => s.user?.id);
+	return useMutation({
+		mutationFn: ({ id, sentStatus }: { id: string; sentStatus: string }) =>
+			patchClimbStatus(id, sentStatus),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: [CLIMBS_KEY] });
+			silentPush(userId);
+		},
+	});
+}
+
+export function usePatchClimbLink() {
+	const qc = useQueryClient();
+	const userId = useAuthStore((s) => s.user?.id);
+	return useMutation({
+		mutationFn: ({ id, link }: { id: string; link: string | null }) =>
+			patchClimbLink(id, link),
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: [CLIMBS_KEY] });
 			silentPush(userId);

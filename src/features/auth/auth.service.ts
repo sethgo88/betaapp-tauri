@@ -34,11 +34,29 @@ export async function signUp(
 
 // ── Session restore ──────────────────────────────────────────────────────────
 
-export async function restoreSession(): Promise<Session | null> {
-	const {
-		data: { session },
-	} = await supabase.auth.getSession();
-	return session;
+export async function restoreSession(
+	timeoutMs = 5_000,
+): Promise<Session | null> {
+	const sessionPromise = supabase.auth
+		.getSession()
+		.then(({ data }) => data.session);
+	return Promise.race([
+		sessionPromise,
+		new Promise<never>((_, reject) =>
+			setTimeout(
+				() => reject(new Error("[restoreSession] timed out")),
+				timeoutMs,
+			),
+		),
+	]);
+}
+
+export async function fetchLocalUser(): Promise<User | null> {
+	const db = await getDb();
+	const rows = await db.select<User[]>(
+		"SELECT * FROM users WHERE deleted_at IS NULL LIMIT 1",
+	);
+	return rows[0] ?? null;
 }
 
 // ── Sign out ─────────────────────────────────────────────────────────────────

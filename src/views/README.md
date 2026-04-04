@@ -12,8 +12,7 @@ Router defined in `src/router.tsx` using `createMemoryHistory` (required for And
 |---|---|---|---|
 | `/` | `HomeView` | required | Climb log list; tap to detail, swipe/tap to delete |
 | `/climbs/add` | `AddClimbView` | required | New climb form; accepts optional `?routeId=&routeName=&grade=&routeType=` to pre-fill from a route |
-| `/climbs/$climbId` | `ClimbDetailView` | required | Full climb detail; navigate to edit |
-| `/climbs/$climbId/edit` | `EditClimbView` | required | Edit existing climb |
+| `/climbs/$climbId` | `ClimbDetailView` | required | Full climb detail; inline grade/status editing, betas, burns, link |
 | `/profile` | `ProfileView` | public | Login / logout / forgot password; shows user info when authenticated |
 | `/reset-password` | `ResetPasswordView` | public | Set new password after tapping reset link from email |
 | `/map` | `MapView` | required | Interactive map with Discovery (all downloaded crags) and Personal (crags with user's climbs) modes |
@@ -51,10 +50,14 @@ Loads `useClimbs()`. Renders search input, `FilterPanel` molecule, and filtered 
 Renders `ClimbForm` organism in "add" mode. Reads optional search params (`routeId`, `routeName`, `grade`, `routeType`) to pre-fill the form when logging a specific route from `CragView`. On success navigates to `/`.
 
 ### ClimbDetailView `/climbs/$climbId`
-Loads `useClimb(climbId)` and `useBurns(climbId)`. Displays all climb fields. Has "Edit" button → `/climbs/$climbId/edit`. Burns section with inline add/edit forms and soft-delete. Each burn has a date and optional notes. Betas section renders one collapsible accordion per beta (parsed via `parseBetas`); shows "No betas logged yet." when empty.
+Loads `useClimb(climbId)`, `useBurns(climbId)`, and `useGrades(routeType)`. No separate edit view — all editing is inline.
 
-### EditClimbView `/climbs/$climbId/edit`
-Loads `useClimb(climbId)`. Renders `ClimbForm` in "edit" mode with prefilled values. If `climb.route_id` is null, shows a "Link to route" search section (`useLinkClimbToRoute`). On success navigates back to detail.
+- **Grade**: tappable badge opens a grade dropdown; on selection calls `usePatchClimbGrade` and syncs.
+- **Status**: three-way toggle (Todo / Project / Sent) calls `usePatchClimbStatus` and syncs.
+- **Gear icon**: popup menu with Link/Unlink route (`RoutePickerSheet` / `useUnlinkClimbFromRoute`) and Delete (`ConfirmDeleteDialog`).
+- **Betas**: collapsible section. When expanded, shows a horizontal swipeable carousel (circular, scroll-aware — vertical scroll does not trigger swipe). Dot pagination centered above cards. Section header has a gear icon with "Add Beta" (opens `BetaEditSheet` immediately) and "Import" options. Each beta card shows title + inline Edit / Delete buttons. Edit opens a full-page `BetaEditSheet` with DnD move list, auto-save, unsaved-changes guard, Save/Cancel buttons.
+- **Burns**: collapsible section with inline add/edit/delete (unchanged).
+- **Link**: inline add/edit/display; calls `usePatchClimbLink` on save.
 
 ### ProfileView `/profile`
 Public (no auth guard). Shows login form when unauthenticated (`signIn` / `signUp` / `forgot password`). Shows user info + logout when authenticated. Settings panel includes a Dark/Light theme toggle (persisted to localStorage via `ui.store`).
@@ -77,7 +80,7 @@ Real-time search across all downloaded locations (sub-regions, crags, walls) and
 Route Manager. Loads `useCountries()`, `useDownloadedRegionIds()`, and `useStaleRegionIds()`. Renders all countries with their region lists expanded immediately (no collapse). Each region shows download status and a download/refresh button. Downloaded regions with newer server data show an amber "Outdated" badge instead of the green "Downloaded" badge. Navigates to `/regions/$regionId` on tap.
 
 ### RegionView `/regions/$regionId`
-Loads `useSubRegions(regionId)` and `useStaleRegionIds()`. Lists sub-regions as tappable cards. If the current region is stale, shows an amber banner ("Newer data is available") with a "Refresh" button that re-runs `downloadRegion`. Tap navigates to `/sub-regions/$subRegionId`. Has "Add sub-area" inline form. Back button navigates to `/routes`.
+Loads `useSubRegions(regionId)` and `useStaleRegionIds()`. Lists sub-regions as tappable cards. If the current region is stale, shows an amber banner ("Newer data is available") with a "Refresh" button that re-runs `downloadRegion`. Tap navigates to `/sub-regions/$subRegionId`. Has "Add sub-area" inline form. Admin: trash icon on each verified sub-region row opens a `ConfirmDeleteDialog`; deletion blocked by the service if the sub-region still has crags. Back button navigates to `/routes`.
 
 ### SubRegionView `/sub-regions/$subRegionId`
 Loads `useSubRegion(id)` and `useCrags(subRegionId)`. Shows name, admin-editable description (`EditableDescription`), and list of crags. Tap navigates to `/crags/$cragId`. Back button navigates up to `/regions/$regionId`.
@@ -86,7 +89,7 @@ Loads `useSubRegion(id)` and `useCrags(subRegionId)`. Shows name, admin-editable
 Loads `useCrag(id)` and `useWalls(cragId)`. Shows name, admin-editable description, and list of walls with wall_type label. Tap navigates to `/walls/$wallId`. Has "Add wall" inline form with Wall/Boulder type toggle (`useSubmitWall`). Back button navigates up to `/sub-regions/$subRegionId`.
 
 ### WallView `/walls/$wallId`
-Loads `useWall(id)`, `useCrag(cragId)`, `useWalls(cragId)`, and `useRoutes(wallId)`. Shows name, wall_type (admin-editable via dropdown using `useAdminUpdateWallType`), admin-editable description, coordinates with "View on map" link, and list of routes. Admin coordinate editor defaults to crag location and shows sibling wall pins as reference markers. Tap a verified route to navigate to `/routes/$routeId`. Has "Submit a route" button. Back button navigates up to `/crags/$cragId`.
+Loads `useWall(id)`, `useCrag(cragId)`, `useWalls(cragId)`, and `useRoutes(wallId)`. Shows name, wall_type (admin-editable via dropdown using `useAdminUpdateWallType`), admin-editable description, coordinates with "View on map" link, and list of routes. Admin coordinate editor defaults to crag location and shows sibling wall pins as reference markers. Tap a verified route to navigate to `/routes/$routeId`. Admin: trash icon on each verified route opens a `ConfirmDeleteDialog`; on confirm the route is soft-deleted and any linked climbs have their `route_id` set to NULL. Has "Submit a route" button. Back button navigates up to `/crags/$cragId`.
 
 ### RouteDetailView `/routes/$routeId`
 Loads `useRoute(id)`. Shows route name, grade, route type badge, description, admin image gallery, and a "Links" section. Links section lists community-shared external links (tappable — opens in device browser via opener plugin); any authenticated user can add a link via an inline URL+title form; the link's author or an admin can delete it. "Log this climb" button navigates to `/climbs/add` with route pre-filled. Back button navigates up to `/walls/$wallId`.

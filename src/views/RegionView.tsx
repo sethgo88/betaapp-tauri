@@ -1,12 +1,17 @@
 import { useNavigate, useParams } from "@tanstack/react-router";
+import { Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/atoms/Button";
+import { ConfirmDeleteDialog } from "@/components/molecules/ConfirmDeleteDialog";
+import { useAuthStore } from "@/features/auth/auth.store";
 import {
+	useAdminDeleteSubRegion,
 	useDownloadRegion,
 	useStaleRegionIds,
 	useSubmitSubRegion,
 	useSubRegions,
 } from "@/features/locations/locations.queries";
+import type { SubRegion } from "@/features/locations/locations.schema";
 
 // ── Inline name form ──────────────────────────────────────────────────────────
 
@@ -63,7 +68,10 @@ const RegionView = () => {
 	const { data: staleIds = [] } = useStaleRegionIds();
 	const { mutate: refresh, isPending: isRefreshing } = useDownloadRegion();
 	const isStale = staleIds.includes(regionId);
+	const isAdmin = useAuthStore((s) => s.user?.role === "admin");
+	const adminDeleteSubRegion = useAdminDeleteSubRegion();
 	const [showSubRegionForm, setShowSubRegionForm] = useState(false);
+	const [pendingDeleteSubRegion, setPendingDeleteSubRegion] = useState<SubRegion | null>(null);
 
 	const handleAddSubRegion = async (name: string) => {
 		await submitSubRegion.mutateAsync({ region_id: regionId, name });
@@ -96,24 +104,37 @@ const RegionView = () => {
 			)}
 
 			{subRegions.map((sr) => (
-				<button
+				<div
 					key={sr.id}
-					type="button"
-					className="rounded-lg bg-surface-card p-4 text-left font-medium flex items-center justify-between"
-					onClick={() =>
-						sr.status === "pending"
-							? undefined
-							: navigate({
-									to: "/sub-regions/$subRegionId",
-									params: { subRegionId: sr.id },
-								})
-					}
+					className="rounded-lg bg-surface-card p-4 flex items-center justify-between gap-2"
 				>
-					<span>{sr.name}</span>
-					{sr.status === "pending" && (
-						<span className="text-xs text-amber-400">pending</span>
+					<button
+						type="button"
+						className="flex-1 text-left font-medium flex items-center justify-between gap-2 disabled:opacity-60"
+						disabled={sr.status === "pending"}
+						onClick={() =>
+							navigate({
+								to: "/sub-regions/$subRegionId",
+								params: { subRegionId: sr.id },
+							})
+						}
+					>
+						<span>{sr.name}</span>
+						{sr.status === "pending" && (
+							<span className="text-xs text-amber-400">pending</span>
+						)}
+					</button>
+					{isAdmin && sr.status === "verified" && sr.crag_count === 0 && (
+						<button
+							type="button"
+							aria-label="Delete sub-area"
+							className="shrink-0 text-text-tertiary hover:text-red-400"
+							onClick={() => setPendingDeleteSubRegion(sr)}
+						>
+							<Trash2 size={15} />
+						</button>
 					)}
-				</button>
+				</div>
 			))}
 
 			{showSubRegionForm ? (
@@ -132,6 +153,19 @@ const RegionView = () => {
 					+ Add sub-area
 				</button>
 			)}
+
+			<ConfirmDeleteDialog
+				isOpen={pendingDeleteSubRegion !== null}
+				title="Delete sub-area"
+				message={`Are you sure you want to delete "${pendingDeleteSubRegion?.name}"?`}
+				onConfirm={() => {
+					if (pendingDeleteSubRegion) {
+						adminDeleteSubRegion.mutate({ id: pendingDeleteSubRegion.id, regionId });
+					}
+					setPendingDeleteSubRegion(null);
+				}}
+				onCancel={() => setPendingDeleteSubRegion(null)}
+			/>
 		</div>
 	);
 };

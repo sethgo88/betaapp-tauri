@@ -15,7 +15,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { GripVertical, MapPin } from "lucide-react";
+import { GripVertical, MapPin, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/atoms/Button";
 import { Spinner } from "@/components/atoms/Spinner";
@@ -24,6 +24,7 @@ import {
 	CoordinatePicker,
 	type PickerMarker,
 } from "@/components/molecules/CoordinatePicker";
+import { ConfirmDeleteDialog } from "@/components/molecules/ConfirmDeleteDialog";
 import { EditableDescription } from "@/components/molecules/EditableDescription";
 import { RouteDataModal } from "@/components/molecules/RouteDataModal";
 import { TopoModal } from "@/components/molecules/TopoModal";
@@ -43,7 +44,11 @@ import {
 	useDeleteWallImage,
 	useWallImages,
 } from "@/features/route-images/route-images.queries";
-import { useReorderRoutes, useRoutes } from "@/features/routes/routes.queries";
+import {
+	useAdminDeleteRoute,
+	useReorderRoutes,
+	useRoutes,
+} from "@/features/routes/routes.queries";
 import type { Route } from "@/features/routes/routes.schema";
 import { useWallTopo, useWallTopoLines } from "@/features/topos/topos.queries";
 
@@ -132,7 +137,9 @@ const WallView = () => {
 	const [dataModalRouteId, setDataModalRouteId] = useState<string | null>(null);
 	const [isReordering, setIsReordering] = useState(false);
 	const [reorderList, setReorderList] = useState<Route[]>([]);
+	const [pendingDeleteRoute, setPendingDeleteRoute] = useState<Route | null>(null);
 	const reorderRoutesMutation = useReorderRoutes(wallId);
+	const adminDeleteRoute = useAdminDeleteRoute();
 
 	const sensors = useSensors(
 		useSensor(PointerSensor),
@@ -457,6 +464,16 @@ const WallView = () => {
 						>
 							Data
 						</button>
+						{isAdmin && route.status === "verified" && (
+							<button
+								type="button"
+								aria-label="Delete route"
+								className="shrink-0 text-text-tertiary hover:text-red-400"
+								onClick={() => setPendingDeleteRoute(route)}
+							>
+								<Trash2 size={15} />
+							</button>
+						)}
 					</div>
 				))
 			)}
@@ -484,6 +501,19 @@ const WallView = () => {
 					routeType={dataModalRoute.route_type}
 				/>
 			)}
+
+			<ConfirmDeleteDialog
+				isOpen={pendingDeleteRoute !== null}
+				title="Delete route"
+				message={`Delete "${pendingDeleteRoute?.name}"? Any logged climbs linked to this route will be unlinked.`}
+				onConfirm={() => {
+					if (pendingDeleteRoute) {
+						adminDeleteRoute.mutate({ id: pendingDeleteRoute.id, wallId });
+					}
+					setPendingDeleteRoute(null);
+				}}
+				onCancel={() => setPendingDeleteRoute(null)}
+			/>
 		</div>
 	);
 };

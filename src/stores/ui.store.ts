@@ -21,10 +21,24 @@ interface UiStore {
 	/** When set, the Android back button calls this instead of navigating back. */
 	backHandlerOverride: (() => void) | null;
 	setBackHandlerOverride: (fn: (() => void) | null) => void;
+	defaultStatusFilters: Set<string>;
+	setDefaultStatusFilters: (filters: Set<string>) => void;
 }
 
 const storedTheme =
 	(localStorage.getItem("betaapp-theme") as Theme | null) ?? "dark";
+
+const storedDefaultStatusFilters: Set<string> = (() => {
+	try {
+		const raw = localStorage.getItem("betaapp-default-status-filters");
+		if (!raw) return new Set(["project"]);
+		const parsed = JSON.parse(raw);
+		if (Array.isArray(parsed)) return new Set(parsed);
+		return new Set(["project"]);
+	} catch {
+		return new Set(["project"]);
+	}
+})();
 
 const storedLocation: UserLocation | null = (() => {
 	try {
@@ -64,4 +78,12 @@ export const useUiStore = create<UiStore>((set) => ({
 	},
 	backHandlerOverride: null,
 	setBackHandlerOverride: (fn) => set({ backHandlerOverride: fn }),
+	defaultStatusFilters: storedDefaultStatusFilters,
+	setDefaultStatusFilters: (filters) => {
+		localStorage.setItem(
+			"betaapp-default-status-filters",
+			JSON.stringify([...filters]),
+		);
+		set({ defaultStatusFilters: filters });
+	},
 }));

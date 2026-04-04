@@ -309,16 +309,8 @@ export async function mergeRoute(
 
 export async function adminDeleteRoute(id: string): Promise<void> {
 	const db = await getDb();
-	// Check if any climbs reference this route
-	const [linked] = await db.select<{ count: number }[]>(
-		"SELECT COUNT(*) as count FROM climbs WHERE route_id = ?",
-		[id],
-	);
-	if (linked.count > 0) {
-		throw new Error(
-			`Cannot delete: ${linked.count} climb(s) are linked to this route. Unlink them first.`,
-		);
-	}
+	// Unlink any climbs that reference this route
+	await db.execute("UPDATE climbs SET route_id = NULL WHERE route_id = ?", [id]);
 	const { error } = await supabase
 		.from("routes")
 		.update({ deleted_at: new Date().toISOString() })
