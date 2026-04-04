@@ -328,188 +328,208 @@ export function LocationDrillDown({
 
 			{/* Drill-down selects — hidden when showing search results */}
 			{!showSearchResults && (
-			<>
-			{/* Country */}
-			<Select
-				variant="text"
-				value={countryId}
-				onChange={(e) => handleCountryChange(e.target.value)}
-			>
-				<option value="">Country…</option>
-				{countries.map((c) => (
-					<option key={c.id} value={c.id}>
-						{c.name}
-					</option>
-				))}
-				{allowAdd && <option value={ADD_SENTINEL}>＋ Add new country…</option>}
-			</Select>
-			{allowAdd && addingLevel === "country" && (
-				<InlineAdd
-					placeholder="Country name…"
-					isPending={addingCountry}
-					onSave={async (name) => {
-						const { id } = await addCountry({ name });
-						setCountryId(id);
-						setRegionId("");
-						setSubRegionId("");
-						setCragId("");
-						setWallId("");
-						setAddingLevel(null);
-						addToast({ message: `Country "${name}" added`, type: "success" });
-					}}
-					onCancel={() => setAddingLevel(null)}
-				/>
-			)}
-
-			{/* Region */}
-			{countryId && (
 				<>
+					{/* Country */}
 					<Select
 						variant="text"
-						value={regionId}
-						onChange={(e) => handleRegionChange(e.target.value)}
+						value={countryId}
+						onChange={(e) => handleCountryChange(e.target.value)}
 					>
-						<option value="">Region…</option>
-						{regions.map((r) => (
-							<option key={r.id} value={r.id}>
-								{r.name}
+						<option value="">Country…</option>
+						{countries.map((c) => (
+							<option key={c.id} value={c.id}>
+								{c.name}
 							</option>
 						))}
 						{allowAdd && (
-							<option value={ADD_SENTINEL}>＋ Add new region…</option>
+							<option value={ADD_SENTINEL}>＋ Add new country…</option>
 						)}
 					</Select>
-					{allowAdd && addingLevel === "region" && (
+					{allowAdd && addingLevel === "country" && (
 						<InlineAdd
-							placeholder="Region name…"
-							isPending={addingRegion}
+							placeholder="Country name…"
+							isPending={addingCountry}
 							onSave={async (name) => {
-								const { id } = await addRegion({ countryId, name });
-								setRegionId(id);
+								const { id } = await addCountry({ name });
+								setCountryId(id);
+								setRegionId("");
 								setSubRegionId("");
 								setCragId("");
 								setWallId("");
 								setAddingLevel(null);
 								addToast({
-									message: `Region "${name}" added`,
+									message: `Country "${name}" added`,
 									type: "success",
 								});
 							}}
 							onCancel={() => setAddingLevel(null)}
 						/>
 					)}
-				</>
-			)}
 
-			{/* Sub-Region */}
-			{regionId && stopAt !== "region" && (
-				<>
-					<Select
-						variant="text"
-						value={subRegionId}
-						onChange={(e) => handleSubRegionChange(e.target.value)}
-					>
-						<option value="">Area…</option>
-						{subRegions.map((sr) => (
-							<option key={sr.id} value={sr.id}>
-								{sr.name}
-							</option>
-						))}
-						{allowAdd && <option value={ADD_SENTINEL}>＋ Add new area…</option>}
-					</Select>
-					{allowAdd && addingLevel === "sub_region" && (
-						<InlineAdd
-							placeholder="Area name…"
-							isPending={addingSR}
-							onSave={async (name) => {
-								const { id } = await addSubRegion({
-									region_id: regionId,
-									name,
-								});
-								setSubRegionId(id);
-								setCragId("");
-								setWallId("");
-								setAddingLevel(null);
-								addToast({ message: `Area "${name}" added`, type: "success" });
-							}}
-							onCancel={() => setAddingLevel(null)}
-						/>
+					{/* Region */}
+					{countryId && (
+						<>
+							<Select
+								variant="text"
+								value={regionId}
+								onChange={(e) => handleRegionChange(e.target.value)}
+							>
+								<option value="">Region…</option>
+								{regions.map((r) => (
+									<option key={r.id} value={r.id}>
+										{r.name}
+									</option>
+								))}
+								{allowAdd && (
+									<option value={ADD_SENTINEL}>＋ Add new region…</option>
+								)}
+							</Select>
+							{allowAdd && addingLevel === "region" && (
+								<InlineAdd
+									placeholder="Region name…"
+									isPending={addingRegion}
+									onSave={async (name) => {
+										const { id } = await addRegion({ countryId, name });
+										setRegionId(id);
+										setSubRegionId("");
+										setCragId("");
+										setWallId("");
+										setAddingLevel(null);
+										addToast({
+											message: `Region "${name}" added`,
+											type: "success",
+										});
+									}}
+									onCancel={() => setAddingLevel(null)}
+								/>
+							)}
+						</>
+					)}
+
+					{/* Sub-Region */}
+					{regionId && stopAt !== "region" && (
+						<>
+							<Select
+								variant="text"
+								value={subRegionId}
+								onChange={(e) => handleSubRegionChange(e.target.value)}
+							>
+								<option value="">Area…</option>
+								{subRegions.map((sr) => (
+									<option key={sr.id} value={sr.id}>
+										{sr.name}
+									</option>
+								))}
+								{allowAdd && (
+									<option value={ADD_SENTINEL}>＋ Add new area…</option>
+								)}
+							</Select>
+							{allowAdd && addingLevel === "sub_region" && (
+								<InlineAdd
+									placeholder="Area name…"
+									isPending={addingSR}
+									onSave={async (name) => {
+										const { id } = await addSubRegion({
+											region_id: regionId,
+											name,
+										});
+										setSubRegionId(id);
+										setCragId("");
+										setWallId("");
+										setAddingLevel(null);
+										addToast({
+											message: `Area "${name}" added`,
+											type: "success",
+										});
+									}}
+									onCancel={() => setAddingLevel(null)}
+								/>
+							)}
+						</>
+					)}
+
+					{/* Crag */}
+					{subRegionId && stopAt !== "region" && stopAt !== "sub_region" && (
+						<>
+							<Select
+								variant="text"
+								value={cragId}
+								onChange={(e) => handleCragChange(e.target.value)}
+							>
+								<option value="">Crag…</option>
+								{crags.map((c) => (
+									<option key={c.id} value={c.id}>
+										{c.name}
+									</option>
+								))}
+								{allowAdd && (
+									<option value={ADD_SENTINEL}>＋ Add new crag…</option>
+								)}
+							</Select>
+							{allowAdd && addingLevel === "crag" && (
+								<InlineAdd
+									placeholder="Crag name…"
+									isPending={addingCrag}
+									onSave={async (name) => {
+										const { id } = await addCrag({
+											sub_region_id: subRegionId,
+											name,
+										});
+										setCragId(id);
+										setWallId("");
+										setAddingLevel(null);
+										addToast({
+											message: `Crag "${name}" added`,
+											type: "success",
+										});
+									}}
+									onCancel={() => setAddingLevel(null)}
+								/>
+							)}
+						</>
+					)}
+
+					{/* Wall */}
+					{cragId && stopAt === "wall" && (
+						<>
+							<Select
+								variant="text"
+								value={wallId}
+								onChange={(e) => handleWallChange(e.target.value)}
+							>
+								<option value="">Wall…</option>
+								{walls.map((w) => (
+									<option key={w.id} value={w.id}>
+										{w.name}
+									</option>
+								))}
+								{allowAdd && (
+									<option value={ADD_SENTINEL}>＋ Add new wall…</option>
+								)}
+							</Select>
+							{allowAdd && addingLevel === "wall" && (
+								<InlineAdd
+									placeholder="Wall name…"
+									isPending={addingWall}
+									onSave={async (name) => {
+										const { id } = await addWall({
+											crag_id: cragId,
+											name,
+											wall_type: "wall",
+										});
+										setWallId(id);
+										setAddingLevel(null);
+										addToast({
+											message: `Wall "${name}" added`,
+											type: "success",
+										});
+									}}
+									onCancel={() => setAddingLevel(null)}
+								/>
+							)}
+						</>
 					)}
 				</>
-			)}
-
-			{/* Crag */}
-			{subRegionId && stopAt !== "region" && stopAt !== "sub_region" && (
-				<>
-					<Select
-						variant="text"
-						value={cragId}
-						onChange={(e) => handleCragChange(e.target.value)}
-					>
-						<option value="">Crag…</option>
-						{crags.map((c) => (
-							<option key={c.id} value={c.id}>
-								{c.name}
-							</option>
-						))}
-						{allowAdd && <option value={ADD_SENTINEL}>＋ Add new crag…</option>}
-					</Select>
-					{allowAdd && addingLevel === "crag" && (
-						<InlineAdd
-							placeholder="Crag name…"
-							isPending={addingCrag}
-							onSave={async (name) => {
-								const { id } = await addCrag({
-									sub_region_id: subRegionId,
-									name,
-								});
-								setCragId(id);
-								setWallId("");
-								setAddingLevel(null);
-								addToast({ message: `Crag "${name}" added`, type: "success" });
-							}}
-							onCancel={() => setAddingLevel(null)}
-						/>
-					)}
-				</>
-			)}
-
-			{/* Wall */}
-			{cragId && stopAt === "wall" && (
-				<>
-					<Select
-						variant="text"
-						value={wallId}
-						onChange={(e) => handleWallChange(e.target.value)}
-					>
-						<option value="">Wall…</option>
-						{walls.map((w) => (
-							<option key={w.id} value={w.id}>
-								{w.name}
-							</option>
-						))}
-						{allowAdd && <option value={ADD_SENTINEL}>＋ Add new wall…</option>}
-					</Select>
-					{allowAdd && addingLevel === "wall" && (
-						<InlineAdd
-							placeholder="Wall name…"
-							isPending={addingWall}
-							onSave={async (name) => {
-								const { id } = await addWall({
-									crag_id: cragId,
-									name,
-									wall_type: "wall",
-								});
-								setWallId(id);
-								setAddingLevel(null);
-								addToast({ message: `Wall "${name}" added`, type: "success" });
-							}}
-							onCancel={() => setAddingLevel(null)}
-						/>
-					)}
-				</>
-			)}
-			</>
 			)}
 		</div>
 	);

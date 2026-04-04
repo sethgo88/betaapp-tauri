@@ -20,11 +20,11 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/atoms/Button";
 import { Spinner } from "@/components/atoms/Spinner";
 import { AdminImageGallery } from "@/components/molecules/AdminImageGallery";
+import { ConfirmDeleteDialog } from "@/components/molecules/ConfirmDeleteDialog";
 import {
 	CoordinatePicker,
 	type PickerMarker,
 } from "@/components/molecules/CoordinatePicker";
-import { ConfirmDeleteDialog } from "@/components/molecules/ConfirmDeleteDialog";
 import { EditableDescription } from "@/components/molecules/EditableDescription";
 import { RouteDataModal } from "@/components/molecules/RouteDataModal";
 import { TopoModal } from "@/components/molecules/TopoModal";
@@ -137,7 +137,9 @@ const WallView = () => {
 	const [dataModalRouteId, setDataModalRouteId] = useState<string | null>(null);
 	const [isReordering, setIsReordering] = useState(false);
 	const [reorderList, setReorderList] = useState<Route[]>([]);
-	const [pendingDeleteRoute, setPendingDeleteRoute] = useState<Route | null>(null);
+	const [pendingDeleteRoute, setPendingDeleteRoute] = useState<Route | null>(
+		null,
+	);
 	const reorderRoutesMutation = useReorderRoutes(wallId);
 	const adminDeleteRoute = useAdminDeleteRoute();
 

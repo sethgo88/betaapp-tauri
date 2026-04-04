@@ -10,6 +10,7 @@ import {
 import { useAuthStore } from "@/features/auth/auth.store";
 import { useGrades } from "@/features/grades/grades.queries";
 import { useRouteBodyStats } from "@/features/routes/routes.queries";
+import type { RouteBodyStat } from "@/features/routes/routes.schema";
 
 // ── Chart colours (hardcoded — recharts doesn't read CSS vars) ────────────────
 
@@ -54,7 +55,13 @@ function formatApeFactor(diffCm: number, imperial: boolean): string {
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type DataRow = { comboLabel: string; displayLabel: string; grade: string; count: number; isSpacer: false };
+type DataRow = {
+	comboLabel: string;
+	displayLabel: string;
+	grade: string;
+	count: number;
+	isSpacer: false;
+};
 type SpacerRow = { comboLabel: ""; displayLabel: ""; count: 0; isSpacer: true };
 type FlatRow = DataRow | SpacerRow;
 
@@ -66,7 +73,12 @@ interface Props {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export const RouteBodyChart = ({ routeId, routeType }: Props) => {
-	const { data: stats = [], isLoading, isError, error } = useRouteBodyStats(routeId);
+	const {
+		data: stats = [],
+		isLoading,
+		isError,
+		error,
+	} = useRouteBodyStats(routeId);
 	const { data: grades = [] } = useGrades(routeType);
 	const imperial = useAuthStore((s) => s.user?.default_unit !== "metric");
 
@@ -106,7 +118,8 @@ export const RouteBodyChart = ({ routeId, routeType }: Props) => {
 	}
 
 	const withBoth = stats.filter(
-		(s) => s.height_cm != null && s.ape_index_cm != null,
+		(s): s is RouteBodyStat & { ape_index_cm: number } =>
+			s.height_cm != null && s.ape_index_cm != null,
 	);
 	const totalClimbers = withBoth.reduce((sum, s) => sum + s.count, 0);
 
@@ -138,10 +151,10 @@ export const RouteBodyChart = ({ routeId, routeType }: Props) => {
 	for (const s of withBoth) {
 		const key = `${s.height_cm}|${s.ape_index_cm}`;
 		if (!comboMap.has(key)) {
-			const apeFactor = s.ape_index_cm!;
+			const apeFactor = s.ape_index_cm;
 			comboMap.set(key, {
 				height_cm: s.height_cm,
-				ape_index_cm: s.ape_index_cm!,
+				ape_index_cm: s.ape_index_cm,
 				label: `${formatHeight(s.height_cm, imperial)} ${formatApeFactor(apeFactor, imperial)}`,
 			});
 		}
@@ -159,7 +172,12 @@ export const RouteBodyChart = ({ routeId, routeType }: Props) => {
 
 	for (const [gi, grade] of uniqueGrades.entries()) {
 		if (gi > 0) {
-			flatData.push({ comboLabel: "", displayLabel: "", count: 0, isSpacer: true });
+			flatData.push({
+				comboLabel: "",
+				displayLabel: "",
+				count: 0,
+				isSpacer: true,
+			});
 			spacerCount++;
 		}
 		const gradeStats = withBoth.filter((s) => s.grade === grade);
@@ -206,7 +224,8 @@ export const RouteBodyChart = ({ routeId, routeType }: Props) => {
 		300,
 		realBars * BAR_WIDTH + spacerCount * SPACER_WIDTH + 60,
 	);
-	const categoryWidth = (chartWidth - Y_AXIS_LEFT - RIGHT_MARGIN) / flatData.length;
+	const categoryWidth =
+		(chartWidth - Y_AXIS_LEFT - RIGHT_MARGIN) / flatData.length;
 
 	return (
 		<div className="rounded-[var(--radius-lg)] bg-surface-card border border-card-border shadow-card p-4 flex flex-col gap-3">
@@ -233,10 +252,14 @@ export const RouteBodyChart = ({ routeId, routeType }: Props) => {
 							axisLine={false}
 							tickLine={false}
 						/>
-						<Bar dataKey="count" maxBarSize={BAR_WIDTH - 4} isAnimationActive={false}>
+						<Bar
+							dataKey="count"
+							maxBarSize={BAR_WIDTH - 4}
+							isAnimationActive={false}
+						>
 							{flatData.map((entry, i) => (
 								<Cell
-									key={i}
+									key={entry.isSpacer ? `spacer-${i}` : entry.comboLabel}
 									fill={
 										entry.isSpacer
 											? "transparent"
@@ -276,8 +299,7 @@ export const RouteBodyChart = ({ routeId, routeType }: Props) => {
 					<div style={{ position: "relative", height: 20 }}>
 						{gradeGroups.map(({ grade, startIdx, endIdx }) => {
 							const cx =
-								Y_AXIS_LEFT +
-								((startIdx + endIdx + 1) / 2) * categoryWidth;
+								Y_AXIS_LEFT + ((startIdx + endIdx + 1) / 2) * categoryWidth;
 							return (
 								<span
 									key={grade}

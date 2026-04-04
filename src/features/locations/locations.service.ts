@@ -272,7 +272,11 @@ export async function getLocationAncestors(
 			[id],
 		);
 		if (!rows[0]) throw new Error(`Sub-region ${id} not found`);
-		return { countryId: rows[0].country_id, regionId: rows[0].region_id, subRegionId: id };
+		return {
+			countryId: rows[0].country_id,
+			regionId: rows[0].region_id,
+			subRegionId: id,
+		};
 	}
 
 	if (kind === "crag") {
@@ -297,7 +301,12 @@ export async function getLocationAncestors(
 
 	// kind === "wall"
 	const rows = await db.select<
-		{ crag_id: string; sub_region_id: string; region_id: string; country_id: string }[]
+		{
+			crag_id: string;
+			sub_region_id: string;
+			region_id: string;
+			country_id: string;
+		}[]
 	>(
 		`SELECT w.crag_id, c.sub_region_id, sr.region_id, r.country_id
 		 FROM walls_cache w
@@ -342,7 +351,7 @@ export async function pullRegions(): Promise<void> {
 
 	const db = await getDb();
 	await db.execute("DELETE FROM regions_cache");
-	for (const row of data as Region[]) {
+	for (const row of data as unknown as Region[]) {
 		await db.execute(
 			`INSERT INTO regions_cache (id, country_id, name, sort_order, created_at)
        VALUES (?, ?, ?, ?, ?)`,
@@ -386,7 +395,7 @@ export async function downloadRegion(regionId: string): Promise<void> {
 		return;
 	}
 
-	for (const row of subRegions as SubRegion[]) {
+	for (const row of subRegions as unknown as SubRegion[]) {
 		await db.execute(
 			"INSERT INTO sub_regions_cache (id, region_id, name, description, sort_order, status, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
 			[
