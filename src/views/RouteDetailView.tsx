@@ -6,11 +6,13 @@ import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { Select } from "@/components/atoms/Select";
 import { Spinner } from "@/components/atoms/Spinner";
+import { TagPill } from "@/components/atoms/TagPill";
 import { AdminImageGallery } from "@/components/molecules/AdminImageGallery";
 import { ConfirmDeleteDialog } from "@/components/molecules/ConfirmDeleteDialog";
 import { EditableDescription } from "@/components/molecules/EditableDescription";
 import { LogClimbSheet } from "@/components/molecules/LogClimbSheet";
 import { RouteBodyChart } from "@/components/molecules/RouteBodyChart";
+import { TagSelect } from "@/components/molecules/TagSelect";
 import { TopoModal } from "@/components/molecules/TopoModal";
 import { RouteTopoViewer } from "@/components/molecules/TopoViewer";
 import { RouteTopoBuilder } from "@/components/organisms/TopoBuilder";
@@ -32,6 +34,8 @@ import {
 	useUpdateRouteFields,
 } from "@/features/routes/routes.queries";
 import { RouteLinkSubmitSchema } from "@/features/routes/routes.schema";
+import { useRouteTags, useSetRouteTags } from "@/features/tags/tags.queries";
+import type { Tag } from "@/features/tags/tags.schema";
 import {
 	useRouteTopo,
 	useWallTopo,
@@ -71,6 +75,9 @@ const RouteDetailView = () => {
 	const [showTopoEdit, setShowTopoEdit] = useState(false);
 
 	const updateRouteFields = useUpdateRouteFields();
+	const { data: routeTags = [] } = useRouteTags(routeId);
+	const setRouteTags = useSetRouteTags(routeId);
+	const [pendingTags, setPendingTags] = useState<Tag[]>([]);
 	const [editingMeta, setEditingMeta] = useState(false);
 	const [editName, setEditName] = useState("");
 	const [editRouteType, setEditRouteType] = useState<
@@ -84,6 +91,7 @@ const RouteDetailView = () => {
 		setEditName(route.name);
 		setEditRouteType(route.route_type);
 		setEditGrade(route.grade);
+		setPendingTags(routeTags);
 		setEditingMeta(true);
 	};
 
@@ -101,7 +109,12 @@ const RouteDetailView = () => {
 					description: route.description ?? undefined,
 				},
 			},
-			{ onSuccess: () => setEditingMeta(false) },
+			{
+				onSuccess: () => {
+					setRouteTags.mutate(pendingTags.map((t) => t.id));
+					setEditingMeta(false);
+				},
+			},
 		);
 	};
 
@@ -186,6 +199,7 @@ const RouteDetailView = () => {
 							</option>
 						))}
 					</Select>
+					<TagSelect value={pendingTags} onChange={setPendingTags} />
 					<div className="flex gap-2">
 						<Button
 							type="button"
@@ -226,6 +240,13 @@ const RouteDetailView = () => {
 							{route.route_type}
 						</span>
 					</div>
+					{routeTags.length > 0 && (
+						<div className="flex flex-wrap gap-1.5 mt-2">
+							{routeTags.map((tag) => (
+								<TagPill key={tag.id} name={tag.name} />
+							))}
+						</div>
+					)}
 				</div>
 			)}
 

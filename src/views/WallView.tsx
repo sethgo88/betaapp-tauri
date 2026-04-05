@@ -19,6 +19,7 @@ import { GripVertical, MapPin, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/atoms/Button";
 import { Spinner } from "@/components/atoms/Spinner";
+import { TagPill } from "@/components/atoms/TagPill";
 import { AdminImageGallery } from "@/components/molecules/AdminImageGallery";
 import { ConfirmDeleteDialog } from "@/components/molecules/ConfirmDeleteDialog";
 import {
@@ -27,6 +28,7 @@ import {
 } from "@/components/molecules/CoordinatePicker";
 import { EditableDescription } from "@/components/molecules/EditableDescription";
 import { RouteDataModal } from "@/components/molecules/RouteDataModal";
+import { TagSelect } from "@/components/molecules/TagSelect";
 import { TopoModal } from "@/components/molecules/TopoModal";
 import { WallTopoBuilder } from "@/components/organisms/TopoBuilder";
 import { useAuthStore } from "@/features/auth/auth.store";
@@ -50,6 +52,7 @@ import {
 	useRoutes,
 } from "@/features/routes/routes.queries";
 import type { Route } from "@/features/routes/routes.schema";
+import { useSetWallTags, useWallTags } from "@/features/tags/tags.queries";
 import { useWallTopo, useWallTopoLines } from "@/features/topos/topos.queries";
 
 // ── Sortable route card (reorder mode) ────────────────────────────────────────
@@ -142,6 +145,8 @@ const WallView = () => {
 	);
 	const reorderRoutesMutation = useReorderRoutes(wallId);
 	const adminDeleteRoute = useAdminDeleteRoute();
+	const { data: wallTags = [] } = useWallTags(wallId);
+	const setWallTags = useSetWallTags(wallId);
 
 	const sensors = useSensors(
 		useSensor(PointerSensor),
@@ -223,6 +228,21 @@ const WallView = () => {
 				<span className="text-xs text-text-secondary capitalize">
 					{wall.wall_type ?? "wall"}
 				</span>
+			)}
+
+			{isAdmin ? (
+				<TagSelect
+					value={wallTags}
+					onChange={(tags) => setWallTags.mutate(tags.map((t) => t.id))}
+				/>
+			) : (
+				wallTags.length > 0 && (
+					<div className="flex flex-wrap gap-1.5">
+						{wallTags.map((tag) => (
+							<TagPill key={tag.id} name={tag.name} />
+						))}
+					</div>
+				)
 			)}
 
 			<EditableDescription

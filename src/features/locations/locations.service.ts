@@ -500,6 +500,14 @@ export async function downloadRegion(regionId: string): Promise<void> {
 			if (rError) throw rError;
 
 			await db.execute(
+				`DELETE FROM route_tags_cache WHERE route_id IN (SELECT id FROM routes_cache WHERE wall_id IN (${wPlaceholders}))`,
+				wallIds,
+			);
+			await db.execute(
+				`DELETE FROM wall_tags_cache WHERE wall_id IN (${wPlaceholders})`,
+				wallIds,
+			);
+			await db.execute(
 				`DELETE FROM routes_cache WHERE wall_id IN (${wPlaceholders})`,
 				wallIds,
 			);
@@ -519,6 +527,46 @@ export async function downloadRegion(regionId: string): Promise<void> {
 							row.created_by,
 							row.created_at,
 						],
+					);
+				}
+			}
+
+			// 5. Pull route tags
+			const routeIds = (routes ?? []).map((r) => r.id);
+			if (routeIds.length > 0) {
+				const rTagPlaceholders = routeIds.map(() => "?").join(",");
+				const { data: routeTags, error: rtError } = await supabase
+					.from("route_tags")
+					.select("*")
+					.in("route_id", routeIds);
+				if (rtError) throw rtError;
+				await db.execute(
+					`DELETE FROM route_tags_cache WHERE route_id IN (${rTagPlaceholders})`,
+					routeIds,
+				);
+				for (const rt of routeTags ?? []) {
+					await db.execute(
+						"INSERT INTO route_tags_cache (id, route_id, tag_id) VALUES (?, ?, ?)",
+						[rt.id, rt.route_id, rt.tag_id],
+					);
+				}
+			}
+
+			// 6. Pull wall tags
+			if (wallIds.length > 0) {
+				const { data: wallTags, error: wtError } = await supabase
+					.from("wall_tags")
+					.select("*")
+					.in("wall_id", wallIds);
+				if (wtError) throw wtError;
+				await db.execute(
+					`DELETE FROM wall_tags_cache WHERE wall_id IN (${wPlaceholders})`,
+					wallIds,
+				);
+				for (const wt of wallTags ?? []) {
+					await db.execute(
+						"INSERT INTO wall_tags_cache (id, wall_id, tag_id) VALUES (?, ?, ?)",
+						[wt.id, wt.wall_id, wt.tag_id],
 					);
 				}
 			}

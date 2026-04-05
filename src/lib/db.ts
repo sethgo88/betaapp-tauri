@@ -574,7 +574,7 @@ const migrations: Migration[] = [
 		}
 	},
 
-	// v25: offline image upload queue (#165)
+	// v26: offline image upload queue (#165)
 	// local_data stores a base64 data URI for display before upload completes.
 	// upload_status tracks pending / uploaded / error; defaults to 'uploaded' so
 	// all existing rows are treated as already synced to storage.
@@ -591,6 +591,31 @@ const migrations: Migration[] = [
 				`ALTER TABLE climb_images ADD COLUMN upload_status TEXT NOT NULL DEFAULT 'uploaded'`,
 			);
 		}
+	},
+
+	// v27: tags_cache, route_tags_cache, wall_tags_cache (#204)
+	async (db) => {
+		await db.execute(`
+      CREATE TABLE IF NOT EXISTS tags_cache (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        sort_order INTEGER NOT NULL DEFAULT 0
+      )
+    `);
+		await db.execute(`
+      CREATE TABLE IF NOT EXISTS route_tags_cache (
+        id TEXT PRIMARY KEY,
+        route_id TEXT NOT NULL,
+        tag_id TEXT NOT NULL
+      )
+    `);
+		await db.execute(`
+      CREATE TABLE IF NOT EXISTS wall_tags_cache (
+        id TEXT PRIMARY KEY,
+        wall_id TEXT NOT NULL,
+        tag_id TEXT NOT NULL
+      )
+    `);
 	},
 ];
 
