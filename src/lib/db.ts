@@ -617,6 +617,22 @@ const migrations: Migration[] = [
       )
     `);
 	},
+
+	// v28: climb_links table — per-climb external links (#205)
+	async (db) => {
+		await db.execute(`
+      CREATE TABLE IF NOT EXISTS climb_links (
+        id         TEXT PRIMARY KEY,
+        climb_id   TEXT NOT NULL,
+        user_id    TEXT NOT NULL,
+        url        TEXT NOT NULL,
+        title      TEXT,
+        link_type  TEXT NOT NULL DEFAULT 'link',
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        deleted_at TEXT
+      )
+    `);
+	},
 ];
 
 export async function runMigrations(db: DbAdapter): Promise<void> {

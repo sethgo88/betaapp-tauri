@@ -16,17 +16,26 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { uuid } from "@tanstack/react-form";
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { ExternalLink, GripVertical, Plus, Settings } from "lucide-react";
+import { openUrl } from "@tauri-apps/plugin-opener";
+import {
+	ExternalLink,
+	GripVertical,
+	Plus,
+	Settings,
+	Trash2,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/atoms/Button";
 import { FeelSlider } from "@/components/atoms/FeelSlider";
 import { Input } from "@/components/atoms/Input";
 import { Spinner } from "@/components/atoms/Spinner";
 import { ToggleGroup } from "@/components/atoms/ToggleGroup";
+import { AddLinkModal } from "@/components/molecules/AddLinkModal";
 import { ClimbImageGallery } from "@/components/molecules/ClimbImageGallery";
 import { ConfirmDeleteDialog } from "@/components/molecules/ConfirmDeleteDialog";
 import { ImportBetaSheet } from "@/components/molecules/ImportBetaSheet";
 import { RoutePickerSheet } from "@/components/molecules/RoutePickerSheet";
+import { useAuthStore } from "@/features/auth/auth.store";
 import {
 	useAddBurn,
 	useBurns,
@@ -34,11 +43,13 @@ import {
 	useUpdateBurn,
 } from "@/features/burns/burns.queries";
 import {
+	useAddClimbLink,
 	useClimb,
+	useClimbLinks,
 	useDeleteClimb,
+	useDeleteClimbLink,
 	useLinkClimbToRoute,
 	usePatchClimbGrade,
-	usePatchClimbLink,
 	usePatchClimbStatus,
 	useUnlinkClimbFromRoute,
 	useUpdateClimbMoves,
@@ -657,7 +668,10 @@ const ClimbDetailView = () => {
 	const linkClimb = useLinkClimbToRoute();
 	const patchGrade = usePatchClimbGrade();
 	const patchStatus = usePatchClimbStatus();
-	const patchLink = usePatchClimbLink();
+	const { data: climbLinks = [] } = useClimbLinks(climbId);
+	const addClimbLink = useAddClimbLink(climbId);
+	const deleteClimbLink = useDeleteClimbLink(climbId);
+	const user = useAuthStore((s) => s.user);
 	const setSelectedClimbId = useClimbsStore((s) => s.setSelectedClimbId);
 
 	const { data: grades = [] } = useGrades(
@@ -674,8 +688,10 @@ const ClimbDetailView = () => {
 	const [gearMenuOpen, setGearMenuOpen] = useState(false);
 	const [gradePickerOpen, setGradePickerOpen] = useState(false);
 	const [routePickerOpen, setRoutePickerOpen] = useState(false);
-	const [linkEditing, setLinkEditing] = useState(false);
-	const [linkValue, setLinkValue] = useState("");
+	const [showAddLinkModal, setShowAddLinkModal] = useState(false);
+	const [pendingDeleteLinkId, setPendingDeleteLinkId] = useState<string | null>(
+		null,
+	);
 
 	const [burnsOpen, setBurnsOpen] = useState(false);
 	const [showAddBurn, setShowAddBurn] = useState(false);
@@ -703,11 +719,6 @@ const ClimbDetailView = () => {
 		}
 	}, [climb, betasInitialized]);
 
-	// Sync link value from climb
-	useEffect(() => {
-		if (climb) setLinkValue(climb.link ?? "");
-	}, [climb]);
-
 	if (isLoading) {
 		return (
 			<div className="flex justify-center pt-12">
@@ -732,11 +743,6 @@ const ClimbDetailView = () => {
 
 	const handleRouteSelect = (route: Route) => {
 		linkClimb.mutate({ climbId, routeId: route.id });
-	};
-
-	const handleLinkSave = () => {
-		patchLink.mutate({ id: climbId, link: linkValue || null });
-		setLinkEditing(false);
 	};
 
 	return (
@@ -1103,59 +1109,77 @@ const ClimbDetailView = () => {
 				)}
 			</div>
 
-			{/* Link section */}
-			{linkEditing ? (
-				<div className="flex gap-2">
-					<Input
-						type="text"
-						placeholder="https://…"
-						value={linkValue}
-						onChange={(e) => setLinkValue(e.target.value)}
-						className="flex-1"
-					/>
-					<Button size="small" onClick={handleLinkSave}>
-						Save
-					</Button>
-					<Button
-						size="small"
-						variant="outlined"
-						onClick={() => {
-							setLinkValue(climb.link ?? "");
-							setLinkEditing(false);
-						}}
-					>
-						Cancel
-					</Button>
-				</div>
-			) : climb.link ? (
-				<div className="flex items-center gap-2">
-					<a
-						href={climb.link}
-						target="_blank"
-						rel="noreferrer"
-						className="text-accent-primary text-sm underline flex-1 truncate"
-					>
-						{climb.link}
-					</a>
+			{/* Links section */}
+			<div className="flex flex-col gap-2">
+				<div className="flex items-center justify-between">
+					<h2 className="text-sm font-semibold text-text-secondary uppercase tracking-wide">
+						Links
+					</h2>
 					<button
 						type="button"
-						className="text-xs text-text-secondary shrink-0"
-						onClick={() => setLinkEditing(true)}
+						className="flex items-center gap-1 text-sm text-accent-primary"
+						onClick={() => setShowAddLinkModal(true)}
 					>
-						Edit
+						<Plus size={14} />
+						Add link
 					</button>
 				</div>
-			) : (
-				<button
-					type="button"
-					className="text-sm text-text-secondary self-start"
-					onClick={() => setLinkEditing(true)}
-				>
-					+ Add link
-				</button>
-			)}
+
+				{climbLinks.length > 0 && (
+					<ul className="flex flex-col gap-1">
+						{climbLinks.map((link) => (
+							<li
+								key={link.id}
+								className="flex items-center justify-between gap-2 py-2 border-b border-border-subtle"
+							>
+								<button
+									type="button"
+									className="flex items-center gap-2 text-sm text-accent-primary min-w-0"
+									onClick={() => openUrl(link.url)}
+								>
+									<ExternalLink size={14} className="shrink-0" />
+									<span className="truncate">{link.title ?? link.url}</span>
+								</button>
+								{link.user_id === user?.id && (
+									<button
+										type="button"
+										className="shrink-0 text-text-secondary"
+										onClick={() => setPendingDeleteLinkId(link.id)}
+										disabled={deleteClimbLink.isPending}
+									>
+										<Trash2 size={14} />
+									</button>
+								)}
+							</li>
+						))}
+					</ul>
+				)}
+			</div>
 
 			{/* Modals */}
+			<AddLinkModal
+				isOpen={showAddLinkModal}
+				isPending={addClimbLink.isPending}
+				onSave={(url, title) => {
+					addClimbLink.mutate(
+						{ url, title, userId: user?.id ?? "" },
+						{ onSuccess: () => setShowAddLinkModal(false) },
+					);
+				}}
+				onCancel={() => setShowAddLinkModal(false)}
+			/>
+
+			<ConfirmDeleteDialog
+				isOpen={pendingDeleteLinkId !== null}
+				title="Delete link"
+				message="Remove this link from the climb?"
+				onConfirm={() => {
+					if (pendingDeleteLinkId) deleteClimbLink.mutate(pendingDeleteLinkId);
+					setPendingDeleteLinkId(null);
+				}}
+				onCancel={() => setPendingDeleteLinkId(null)}
+			/>
+
 			<ConfirmDeleteDialog
 				isOpen={confirmDelete}
 				title="Delete climb"
