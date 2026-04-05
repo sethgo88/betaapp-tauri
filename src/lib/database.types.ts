@@ -61,6 +61,47 @@ export type Database = {
           },
         ]
       }
+      climb_links: {
+        Row: {
+          climb_id: string
+          created_at: string
+          deleted_at: string | null
+          id: string
+          link_type: string
+          title: string | null
+          url: string
+          user_id: string
+        }
+        Insert: {
+          climb_id: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          link_type?: string
+          title?: string | null
+          url: string
+          user_id: string
+        }
+        Update: {
+          climb_id?: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          link_type?: string
+          title?: string | null
+          url?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "climb_links_climb_id_fkey"
+            columns: ["climb_id"]
+            isOneToOne: false
+            referencedRelation: "climbs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       climb_image_pins: {
         Row: {
           climb_image_id: string

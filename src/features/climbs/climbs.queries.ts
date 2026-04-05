@@ -4,7 +4,10 @@ import { pushClimbs } from "@/features/sync/sync.service";
 import { useUiStore } from "@/stores/ui.store";
 import type { ClimbFormValues } from "./climbs.schema";
 import {
+	addClimbLink,
+	deleteClimbLink,
 	fetchClimb,
+	fetchClimbLinks,
 	fetchClimbs,
 	fetchUnlinkedClimbs,
 	insertClimb,
@@ -197,6 +200,44 @@ export function useDeleteClimb() {
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: [CLIMBS_KEY] });
 			silentPush(userId);
+		},
+	});
+}
+
+// ── Climb links ───────────────────────────────────────────────────────────────
+
+export function useClimbLinks(climbId: string) {
+	return useQuery({
+		queryKey: ["climb_links", climbId],
+		queryFn: () => fetchClimbLinks(climbId),
+		enabled: !!climbId,
+	});
+}
+
+export function useAddClimbLink(climbId: string) {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: ({
+			url,
+			title,
+			userId,
+		}: {
+			url: string;
+			title?: string;
+			userId: string;
+		}) => addClimbLink(climbId, userId, url, title),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: ["climb_links", climbId] });
+		},
+	});
+}
+
+export function useDeleteClimbLink(climbId: string) {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: (id: string) => deleteClimbLink(id),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: ["climb_links", climbId] });
 		},
 	});
 }

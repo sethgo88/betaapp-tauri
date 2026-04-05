@@ -1,5 +1,6 @@
 import { getDb } from "@/lib/db";
-import type { Climb, ClimbFormValues } from "./climbs.schema";
+import { supabase } from "@/lib/supabase";
+import type { Climb, ClimbFormValues, ClimbLink } from "./climbs.schema";
 import type { SortKey } from "./climbs.store";
 
 type LocationBreadcrumb = {
@@ -274,6 +275,50 @@ export async function softDeleteClimb(id: string): Promise<void> {
 		"UPDATE climbs SET deleted_at = datetime('now') WHERE id = ?",
 		[id],
 	);
+}
+
+// ── Climb links ───────────────────────────────────────────────────────────────
+
+export async function fetchClimbLinks(climbId: string): Promise<ClimbLink[]> {
+	const db = await getDb();
+	return db.select<ClimbLink[]>(
+		"SELECT * FROM climb_links WHERE climb_id = ? AND deleted_at IS NULL ORDER BY created_at ASC",
+		[climbId],
+	);
+}
+
+export async function addClimbLink(
+	climbId: string,
+	userId: string,
+	url: string,
+	title: string | undefined,
+): Promise<void> {
+	const id = crypto.randomUUID();
+	const { error } = await supabase.from("climb_links").insert({
+		id,
+		climb_id: climbId,
+		user_id: userId,
+		url,
+		title: title ?? null,
+		link_type: "link",
+	});
+	if (error) throw error;
+	const db = await getDb();
+	await db.execute(
+		`INSERT INTO climb_links (id, climb_id, user_id, url, title, link_type, created_at)
+     VALUES (?, ?, ?, ?, ?, 'link', datetime('now'))`,
+		[id, climbId, userId, url, title ?? null],
+	);
+}
+
+export async function deleteClimbLink(id: string): Promise<void> {
+	const { error } = await supabase
+		.from("climb_links")
+		.update({ deleted_at: new Date().toISOString() })
+		.eq("id", id);
+	if (error) throw error;
+	const db = await getDb();
+	await db.execute("DELETE FROM climb_links WHERE id = ?", [id]);
 }
 
 // Apply a climb received from Supabase Realtime or a pull.

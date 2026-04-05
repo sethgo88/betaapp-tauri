@@ -39,6 +39,7 @@ Versioned migration runner. Maintains a `schema_version` table (single row) and 
 | `sync_meta` | Single-row singleton; persists `last_synced_at` for delta sync |
 | `burns` | Individual attempt/send records per climb (#14) |
 | `route_links` | External video/image/beta links attached to routes (#13) |
+| `climb_links` | External links attached to climb log entries (#205) |
 | `route_images_cache` | Admin-managed route photos (read-only cache) (#11) |
 | `wall_images_cache` | Admin-managed wall photos (read-only cache) (#11) |
 | `climb_images` | User-uploaded photos per climb log entry (#12) |
@@ -76,6 +77,7 @@ Versioned migration runner. Maintains a `schema_version` table (single row) and 
 | v24 | Expand sport grades to full range 5.5–5.15a + project grades (#166) |
 | v26 | `local_data`, `upload_status` on `climb_images` for offline image upload queue (#165) |
 | v27 | `tags_cache`, `route_tags_cache`, `wall_tags_cache` tables (#204) |
+| v28 | `climb_links` table — per-climb external links (#205) |
 
 ### Rules
 - Always use `?` positional parameters — never string interpolation (SQL injection)

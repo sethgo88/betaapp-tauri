@@ -1,12 +1,13 @@
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { ExternalLink, Trash2 } from "lucide-react";
+import { ExternalLink, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { Select } from "@/components/atoms/Select";
 import { Spinner } from "@/components/atoms/Spinner";
 import { TagPill } from "@/components/atoms/TagPill";
+import { AddLinkModal } from "@/components/molecules/AddLinkModal";
 import { AdminImageGallery } from "@/components/molecules/AdminImageGallery";
 import { ConfirmDeleteDialog } from "@/components/molecules/ConfirmDeleteDialog";
 import { EditableDescription } from "@/components/molecules/EditableDescription";
@@ -33,7 +34,6 @@ import {
 	useUpdateRouteDescription,
 	useUpdateRouteFields,
 } from "@/features/routes/routes.queries";
-import { RouteLinkSubmitSchema } from "@/features/routes/routes.schema";
 import { useRouteTags, useSetRouteTags } from "@/features/tags/tags.queries";
 import type { Tag } from "@/features/tags/tags.schema";
 import {
@@ -119,38 +119,10 @@ const RouteDetailView = () => {
 	};
 
 	const [showLogSheet, setShowLogSheet] = useState(false);
-	const [linkUrl, setLinkUrl] = useState("");
-	const [linkTitle, setLinkTitle] = useState("");
-	const [linkError, setLinkError] = useState<string | null>(null);
+	const [showAddLinkModal, setShowAddLinkModal] = useState(false);
 
 	const userLinkCount = routeLinks.filter((l) => l.user_id === user?.id).length;
 	const atLinkLimit = userLinkCount >= 5;
-
-	const handleAddLink = () => {
-		if (atLinkLimit) return;
-		const result = RouteLinkSubmitSchema.safeParse({
-			url: linkUrl,
-			title: linkTitle || undefined,
-		});
-		if (!result.success) {
-			setLinkError(result.error.issues[0]?.message ?? "Invalid input");
-			return;
-		}
-		setLinkError(null);
-		addRouteLink.mutate(
-			{
-				url: result.data.url,
-				title: result.data.title,
-				userId: user?.id ?? "",
-			},
-			{
-				onSuccess: () => {
-					setLinkUrl("");
-					setLinkTitle("");
-				},
-			},
-		);
-	};
 
 	if (isLoading) {
 		return (
@@ -370,9 +342,21 @@ const RouteDetailView = () => {
 
 			{/* Links section */}
 			<div className="flex flex-col gap-2">
-				<h2 className="text-sm font-semibold text-text-secondary uppercase tracking-wide">
-					Links
-				</h2>
+				<div className="flex items-center justify-between">
+					<h2 className="text-sm font-semibold text-text-secondary uppercase tracking-wide">
+						Links
+					</h2>
+					{!atLinkLimit && (
+						<button
+							type="button"
+							className="flex items-center gap-1 text-sm text-accent-primary"
+							onClick={() => setShowAddLinkModal(true)}
+						>
+							<Plus size={14} />
+							Add link
+						</button>
+					)}
+				</div>
 
 				{routeLinks.length > 0 && (
 					<ul className="flex flex-col gap-1">
@@ -405,32 +389,10 @@ const RouteDetailView = () => {
 					</ul>
 				)}
 
-				{atLinkLimit ? (
+				{atLinkLimit && (
 					<p className="text-xs text-text-muted">
 						You've reached the limit of 5 links per route.
 					</p>
-				) : (
-					<div className="flex flex-col gap-2">
-						<Input
-							placeholder="https://..."
-							value={linkUrl}
-							onChange={(e) => setLinkUrl(e.target.value)}
-						/>
-						<Input
-							placeholder="Title (optional)"
-							value={linkTitle}
-							onChange={(e) => setLinkTitle(e.target.value)}
-						/>
-						{linkError && <p className="text-xs text-red-400">{linkError}</p>}
-						<Button
-							type="button"
-							variant="secondary"
-							onClick={handleAddLink}
-							disabled={addRouteLink.isPending || !linkUrl}
-						>
-							{addRouteLink.isPending ? "Adding..." : "Add link"}
-						</Button>
-					</div>
 				)}
 			</div>
 
@@ -465,6 +427,18 @@ const RouteDetailView = () => {
 					/>
 				</>
 			)}
+			<AddLinkModal
+				isOpen={showAddLinkModal}
+				isPending={addRouteLink.isPending}
+				onSave={(url, title) => {
+					addRouteLink.mutate(
+						{ url, title, userId: user?.id ?? "" },
+						{ onSuccess: () => setShowAddLinkModal(false) },
+					);
+				}}
+				onCancel={() => setShowAddLinkModal(false)}
+			/>
+
 			<ConfirmDeleteDialog
 				isOpen={pendingDeleteLinkId !== null}
 				title="Delete link"

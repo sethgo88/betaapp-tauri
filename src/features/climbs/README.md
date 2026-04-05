@@ -39,6 +39,18 @@ ClimbSchema = {
 
 ClimbFormSchema = ClimbSchema minus (id, route_id, created_at, updated_at, deleted_at)
 // route_id is passed separately to insertClimb/updateClimb, not part of the form
+
+ClimbLinkSchema = {
+  id: string
+  climb_id: string
+  user_id: string
+  url: string
+  title: string | null
+  link_type: string
+  created_at: string
+  deleted_at: string | null
+}
+// ClimbLink = z.infer<typeof ClimbLinkSchema>
 ```
 
 ### parseBetas(movesJson: string): Beta[]
@@ -98,7 +110,10 @@ CREATE TABLE IF NOT EXISTS climbs (
 | `linkExistingClimbToRoute(climbId, routeId)` | Sets `route_id` and backfills `country/area/sub_area/crag/wall` from the route's location hierarchy |
 | `patchClimbGrade(id, grade)` | Updates only `grade` |
 | `patchClimbStatus(id, sentStatus)` | Updates only `sent_status` |
-| `patchClimbLink(id, link)` | Updates only `link` (pass `null` to clear) |
+| `patchClimbLink(id, link)` | Updates only `link` (pass `null` to clear; legacy — UI now uses `climb_links` table) |
+| `fetchClimbLinks(climbId)` | All active links for a climb (soft-deleted excluded), ordered by `created_at ASC` |
+| `addClimbLink(climbId, userId, url, title?)` | Inserts to Supabase then SQLite; generates UUID locally |
+| `deleteClimbLink(id)` | Soft-deletes on Supabase (`deleted_at = now()`), hard-deletes from SQLite |
 | `softDeleteClimb(id)` | Sets `deleted_at = datetime('now')` |
 | `applyRemoteClimb(climb)` | `INSERT OR REPLACE` — preserves server `updated_at`; used by sync + Realtime |
 
@@ -117,7 +132,10 @@ CREATE TABLE IF NOT EXISTS climbs (
 | `useUpdateClimbMoves()` | Mutation — `{ id, moves }` — replaces moves JSON string + silent push |
 | `usePatchClimbGrade()` | Mutation — `{ id, grade }` — updates grade only + silent push |
 | `usePatchClimbStatus()` | Mutation — `{ id, sentStatus }` — updates sent_status only + silent push |
-| `usePatchClimbLink()` | Mutation — `{ id, link }` — updates link only + silent push |
+| `usePatchClimbLink()` | Mutation — `{ id, link }` — updates legacy `link` field + silent push (no longer used by UI) |
+| `useClimbLinks(climbId)` | Query — active links for a climb; queryKey `["climb_links", climbId]` |
+| `useAddClimbLink(climbId)` | Mutation — `{ url, title?, userId }` — adds a link; invalidates `climb_links` |
+| `useDeleteClimbLink(climbId)` | Mutation — `(id)` — removes a link; invalidates `climb_links` |
 | `useLinkClimbToRoute()` | Mutation — `{ climbId, routeId }` — links climb to a route |
 | `useUnlinkClimbFromRoute()` | Mutation — `(climbId)` — clears `route_id`; invalidates climbs + silent push |
 | `useUnlinkedClimbs()` | Query — climbs where `route_id IS NULL` for current user |

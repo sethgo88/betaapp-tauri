@@ -542,18 +542,6 @@ export const ClimbForm = ({
 					}
 				</form.Subscribe>
 
-				<form.Field name="link">
-					{(field) => (
-						<Input
-							type="text"
-							placeholder="Link (optional)"
-							value={field.state.value}
-							onBlur={field.handleBlur}
-							onChange={(e) => field.handleChange(e.target.value)}
-						/>
-					)}
-				</form.Field>
-
 				{onOpenRoutePicker && (
 					<div className="rounded-card bg-surface-card px-3 py-2.5">
 						{linkedRoute ? (

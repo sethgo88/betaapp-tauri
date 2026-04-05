@@ -110,3 +110,16 @@ export const ClimbFormSchema = z.object({
 });
 
 export type ClimbFormValues = z.infer<typeof ClimbFormSchema>;
+
+export const ClimbLinkSchema = z.object({
+	id: z.string(),
+	climb_id: z.string(),
+	user_id: z.string(),
+	url: z.string(),
+	title: z.string().nullable(),
+	link_type: z.string(),
+	created_at: z.string(),
+	deleted_at: z.string().nullable(),
+});
+
+export type ClimbLink = z.infer<typeof ClimbLinkSchema>;
