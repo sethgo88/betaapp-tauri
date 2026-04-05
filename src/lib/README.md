@@ -73,6 +73,9 @@ Versioned migration runner. Maintains a `schema_version` table (single row) and 
 | v21 | `feel` on `burns` (#93) |
 | v22 | `sent_date` on `climbs` — date the climb was sent (#100) |
 | v23 | `sort_order` on `routes_cache` — admin-defined display order (#148) |
+| v24 | Expand sport grades to full range 5.5–5.15a + project grades (#166) |
+| v26 | `local_data`, `upload_status` on `climb_images` for offline image upload queue (#165) |
+| v27 | `tags_cache`, `route_tags_cache`, `wall_tags_cache` tables (#204) |
 
 ### Rules
 - Always use `?` positional parameters — never string interpolation (SQL injection)

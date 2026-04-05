@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { Select } from "@/components/atoms/Select";
 import { CoordinatePicker } from "@/components/molecules/CoordinatePicker";
 import { GradeSelect } from "@/components/molecules/GradeSelect";
+import { TagSelect } from "@/components/molecules/TagSelect";
 import {
 	useAdminUpdateCragCoords,
 	usePendingLocations,
@@ -23,6 +24,8 @@ import {
 	type UnverifiedRoute,
 	type VerifiedRouteResult,
 } from "@/features/routes/routes.service";
+import { useRouteTags, useSetRouteTags } from "@/features/tags/tags.queries";
+import type { Tag } from "@/features/tags/tags.schema";
 import { formatDate } from "@/lib/date";
 import { useUiStore } from "@/stores/ui.store";
 
@@ -84,6 +87,28 @@ const EditRouteForm = ({
 	);
 	const [grade, setGrade] = useState(route.grade);
 	const [description, setDescription] = useState(route.description ?? "");
+	const { data: currentTags = [] } = useRouteTags(route.id);
+	const [pendingTags, setPendingTags] = useState<Tag[]>([]);
+	const initializedRef = useRef(false);
+	const setRouteTags = useSetRouteTags(route.id);
+
+	useEffect(() => {
+		if (!initializedRef.current && currentTags.length > 0) {
+			setPendingTags(currentTags);
+			initializedRef.current = true;
+		}
+	}, [currentTags]);
+
+	function handleSave() {
+		onSave({
+			name,
+			grade: grade || (routeType === "boulder" ? "v5" : "5.12a"),
+			route_type: routeType,
+			description: description || undefined,
+		});
+		setRouteTags.mutate(pendingTags.map((t) => t.id));
+	}
+
 	return (
 		<div className="flex flex-col gap-2 mt-3 pt-3 border-t border-border-default">
 			<Input
@@ -103,6 +128,7 @@ const EditRouteForm = ({
 				<option value="boulder">Boulder</option>
 			</Select>
 			<GradeSelect routeType={routeType} value={grade} onChange={setGrade} />
+			<TagSelect value={pendingTags} onChange={setPendingTags} />
 			<textarea
 				placeholder="Description (optional)"
 				value={description}
@@ -115,14 +141,7 @@ const EditRouteForm = ({
 					type="button"
 					variant="primary"
 					size="small"
-					onClick={() =>
-						onSave({
-							name,
-							grade: grade || (routeType === "boulder" ? "v5" : "5.12a"),
-							route_type: routeType,
-							description: description || undefined,
-						})
-					}
+					onClick={handleSave}
 				>
 					Save
 				</Button>

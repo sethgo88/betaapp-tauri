@@ -28,6 +28,7 @@ import {
 	uploadPendingImages,
 } from "@/features/sync/sync.service";
 import { useSyncStore } from "@/features/sync/sync.store";
+import { pullTags } from "@/features/tags/tags.service";
 import { supabase } from "@/lib/supabase";
 
 export function useSync(userId: string | undefined) {
@@ -61,6 +62,7 @@ export function useSync(userId: string | undefined) {
 			await pushClimbImagePins(userId, since);
 			await pullClimbImagePins(userId, since);
 			await pullGrades();
+			await pullTags();
 			await pullCountries();
 			await pullRegions();
 			await checkRegionStaleness().then(() => {
@@ -79,6 +81,7 @@ export function useSync(userId: string | undefined) {
 			queryClient.invalidateQueries({ queryKey: ["climb-images"] });
 			queryClient.invalidateQueries({ queryKey: ["climb-image-pins"] });
 			queryClient.invalidateQueries({ queryKey: ["grades"] });
+			queryClient.invalidateQueries({ queryKey: ["tags"] });
 			queryClient.invalidateQueries({ queryKey: ["countries"] });
 			queryClient.invalidateQueries({ queryKey: ["regions"] });
 			queryClient.invalidateQueries({ queryKey: ["route-images"] });

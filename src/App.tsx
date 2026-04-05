@@ -25,6 +25,7 @@ import {
 import { useAuthStore } from "@/features/auth/auth.store";
 import { backfillClimbLocations } from "@/features/climbs/climbs.service";
 import { seedGrades } from "@/features/grades/grades-seed";
+import { seedTags } from "@/features/tags/tags-seed";
 import { useSync } from "@/hooks/useSync";
 import { supabase } from "@/lib/supabase";
 import { router } from "@/router";
@@ -63,6 +64,7 @@ function Bootstrap() {
 		queryKey: ["bootstrap"],
 		queryFn: async () => {
 			await seedGrades();
+			await seedTags();
 			await backfillClimbLocations();
 
 			// Refresh user location in background (don't block startup)
