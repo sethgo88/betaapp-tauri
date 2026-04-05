@@ -471,6 +471,42 @@ export type Database = {
           },
         ]
       }
+      route_tags: {
+        Row: {
+          created_at: string
+          id: string
+          route_id: string
+          tag_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          route_id: string
+          tag_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          route_id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "route_tags_route_id_fkey"
+            columns: ["route_id"]
+            isOneToOne: false
+            referencedRelation: "routes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "route_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       route_topos: {
         Row: {
           color: string
@@ -595,6 +631,27 @@ export type Database = {
           },
         ]
       }
+      tags: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           role: string
@@ -683,6 +740,42 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "wall_images_wall_id_fkey"
+            columns: ["wall_id"]
+            isOneToOne: false
+            referencedRelation: "walls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wall_tags: {
+        Row: {
+          created_at: string
+          id: string
+          tag_id: string
+          wall_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          tag_id: string
+          wall_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          tag_id?: string
+          wall_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wall_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wall_tags_wall_id_fkey"
             columns: ["wall_id"]
             isOneToOne: false
             referencedRelation: "walls"
@@ -822,6 +915,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_route_body_stats: {
+        Args: { p_route_id: string }
+        Returns: {
+          ape_index_cm: number
+          count: number
+          grade: string
+          height_cm: number
+        }[]
+      }
       is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
