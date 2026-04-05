@@ -2,8 +2,8 @@
 -- Run this in the Supabase SQL editor before shipping this build.
 
 create table if not exists public.climb_links (
-  id         uuid primary key default gen_random_uuid(),
-  climb_id   uuid not null references public.climbs(id) on delete cascade,
+  id         text primary key default gen_random_uuid()::text,
+  climb_id   text not null references public.climbs(id) on delete cascade,
   user_id    uuid not null references auth.users(id),
   url        text not null,
   title      text,
