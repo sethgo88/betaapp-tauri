@@ -28,6 +28,7 @@ Router defined in `src/router.tsx` using `createMemoryHistory` (required for And
 | `/routes/add` | `AddEditRouteView` | required | Add a new route with location drill-down; admin creates verified, user creates pending |
 | `/routes/$routeId/edit` | `AddEditRouteView` | required | Edit an existing route including changing its wall |
 | `/stats` | `StatsView` | required | Personal climbing stats — grade distribution, sends per month, burns per send |
+| `/settings` | `SettingsView` | public | App settings; dev-only offline simulation toggle |
 | `/admin/locations` | `admin/LocationManagerView` | admin | Add/delete countries and regions in Supabase |
 | `/admin/verify` | `admin/VerificationView` | admin | Unified pending-submissions queue: routes and locations grouped by type with count badges; inline approve, edit, merge, reject |
 
@@ -110,6 +111,9 @@ Personal climbing analytics. Sport/Boulder discipline toggle at top. Three recha
 - **Burns per send** — average attempts per send at each grade (sent climbs only; requires burns data)
 
 Each panel shows a "Not enough data yet" empty state when the data array is empty. Powered by `useClimbStats(discipline)` → `climbs.stats.ts`.
+
+### SettingsView `/settings`
+Public (no auth guard). Currently contains only a dev-only section (hidden in production). The "Simulate offline startup" toggle sets/clears the `betaapp-debug-offline` flag in localStorage, which makes `Bootstrap` treat the app as offline on the next cold start — useful for testing the offline session-restore path without airplane mode.
 
 ### admin/LocationManagerView `/admin/locations`
 Admin only. Loads countries + regions. Inline forms to add/delete entries. Calls admin mutation functions from `locations.service`.

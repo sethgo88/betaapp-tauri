@@ -27,6 +27,7 @@ import { backfillClimbLocations } from "@/features/climbs/climbs.service";
 import { seedGrades } from "@/features/grades/grades-seed";
 import { seedTags } from "@/features/tags/tags-seed";
 import { useSync } from "@/hooks/useSync";
+import { DEBUG_OFFLINE_FLAG } from "@/views/SettingsView";
 import { supabase } from "@/lib/supabase";
 import { router } from "@/router";
 import { useUiStore } from "@/stores/ui.store";
@@ -70,8 +71,44 @@ function Bootstrap() {
 			// Refresh user location in background (don't block startup)
 			refreshUserLocation(setUserLocation);
 
-			// If device is definitely offline, skip all network calls and load cached local user.
-			if (!navigator.onLine) {
+			// Allow dev-only flag to simulate offline startup without airplane mode.
+			// The flag read is gated to DEV so it compiles out of release builds.
+			const isOnline =
+				navigator.onLine &&
+				!(
+					import.meta.env.DEV &&
+					localStorage.getItem(DEBUG_OFFLINE_FLAG)
+				);
+
+			// If device is offline, try to restore a cached session first.
+			// restoreSession() calls getSession() behind a timeout — if the stored access
+			// token is expired the client will attempt a network refresh, so we cap it at
+			// 3 s to avoid hanging cold startup on an offline device.
+			if (!isOnline) {
+				let offlineSession: Session | null = null;
+				try {
+					offlineSession = await restoreSession(3_000);
+				} catch (err) {
+					console.warn(
+						"[Bootstrap] offline session restore timed out or failed:",
+						err,
+					);
+				}
+				if (offlineSession) {
+					setSession(offlineSession);
+					const localUser = await fetchLocalUser();
+					if (!localUser) {
+						// Session exists but no local user row — treat as unauthenticated.
+						console.warn(
+							"[Bootstrap] session present but no local user row — clearing session",
+						);
+						setSession(null);
+						return null;
+					}
+					setUser(localUser);
+					return null;
+				}
+				// No valid cached session — show login screen; load local user if present
 				const localUser = await fetchLocalUser();
 				if (localUser) setUser(localUser);
 				return null;
@@ -114,7 +151,10 @@ function Bootstrap() {
 			data: { subscription },
 		} = supabase.auth.onAuthStateChange((event, session) => {
 			setSession(session);
-			if (!session) setUser(null);
+			// INITIAL_SESSION fires on startup when a persisted session is found.
+			// Skipping setUser(null) here avoids wiping a user that bootstrap already
+			// restored from the local cache before this subscriber fires.
+			if (!session && event !== "INITIAL_SESSION") setUser(null);
 			if (event === "PASSWORD_RECOVERY" && session) {
 				router.navigate({ to: "/reset-password" });
 			}

@@ -25,6 +25,7 @@ import ResetPasswordView from "@/views/ResetPasswordView";
 import RouteDetailView from "@/views/RouteDetailView";
 import RoutesView from "@/views/RoutesView";
 import SearchView from "@/views/SearchView";
+import SettingsView from "@/views/SettingsView";
 import StatsView from "@/views/StatsView";
 import SubmitRouteView from "@/views/SubmitRouteView";
 import SubRegionView from "@/views/SubRegionView";
@@ -194,6 +195,12 @@ const statsRoute = createRoute({
 	component: StatsView,
 });
 
+const settingsRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/settings",
+	component: SettingsView,
+});
+
 const adminLocationsRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/admin/locations",
@@ -229,6 +236,7 @@ const routeTree = rootRoute.addChildren([
 	statsRoute,
 	adminLocationsRoute,
 	adminVerificationRoute,
+	settingsRoute,
 ]);
 
 const memoryHistory = createMemoryHistory({ initialEntries: ["/"] });

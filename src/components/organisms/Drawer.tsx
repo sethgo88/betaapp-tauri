@@ -6,6 +6,7 @@ import {
 	MapPin,
 	Menu,
 	PlusCircle,
+	Settings,
 	X,
 } from "lucide-react";
 import { useAuthStore } from "@/features/auth/auth.store";
@@ -105,6 +106,15 @@ export const Drawer = ({ isOpen, onClose }: DrawerProps) => {
 					>
 						<CircleUser size={18} />
 						<span>Profile</span>
+					</button>
+
+					<button
+						type="button"
+						className="flex items-center gap-3 py-3 px-2 text-left rounded-lg hover:bg-surface-hover"
+						onClick={() => handleNav("/settings")}
+					>
+						<Settings size={18} />
+						<span>Settings</span>
 					</button>
 
 					{isAdmin && (
