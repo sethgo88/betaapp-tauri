@@ -30,6 +30,7 @@ Bottom tab bar (always visible):
 
 Drawer (slides in from right):
 - Routes — browse location hierarchy
+- Settings — app settings + dev tools
 - **Admin** section (role-gated):
   - Location Manager
   - Route Verification
@@ -48,6 +49,7 @@ Drawer (slides in from right):
 /routes/submit             → SubmitRouteView (requireAuth, search params: wallId, wallName)
 /regions/$regionId         → RegionView (sub-regions → crags, requireAuth)
 /crags/$cragId             → CragView (walls → routes + submit button, requireAuth)
+/settings                  → SettingsView (public)
 /admin/locations           → LocationManagerView (requireAdmin)
 /admin/locations/pending   → LocationVerificationView (requireAdmin)
 /admin/routes              → RouteVerificationView (requireAdmin)
@@ -148,6 +150,18 @@ upsertLocalUser(id, email, role) → local SQLite users table
 auth.store: setUser(), setSession()
       ↓
 navigate("/") → runSync() fires
+```
+
+### Offline Cold Start
+```
+App launch (offline):
+  navigator.onLine check → false (or betaapp-debug-offline flag set in DEV)
+  restoreSession(3s timeout) → reads localStorage token cache
+    if valid non-expired session → setSession + fetchLocalUser → setUser → proceed offline
+    if expired token → refresh attempt times out after 3s → falls through
+    if no session → falls through
+  No session → fetchLocalUser() → setUser (no setSession); login screen shown
+  When connectivity returns → useSync.runSync() auto-triggered
 ```
 
 ### Magic Link (deep link)

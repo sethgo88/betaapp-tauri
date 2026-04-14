@@ -82,7 +82,7 @@ Role is **not** read from `public.users.role` — always fetched from `user_role
 | `sendPasswordReset(email)` | `resetPasswordForEmail` — sends reset link; redirects via Supabase Edge Function → `betaapp://auth/callback` |
 | `updatePassword(newPassword)` | `updateUser({ password })` — call from ResetPasswordView after `PASSWORD_RECOVERY` event |
 | `sendMagicLink(email)` | `signInWithOtp` — sends magic link email; redirects via Supabase Edge Function → `betaapp://auth/callback` |
-| `restoreSession(timeoutMs?)` | `supabase.auth.getSession()` with a 5s timeout (default). Rejects on timeout so Bootstrap can fall back to local cache. Call on app launch. |
+| `restoreSession(timeoutMs?)` | `supabase.auth.getSession()` with a configurable timeout (default 5s; 3s in the offline branch). Rejects on timeout so Bootstrap can fall back to local cache. Called on app launch for both online and offline paths. |
 | `fetchLocalUser()` | Reads the last-cached user from local SQLite `users`. Used as the offline fallback in Bootstrap. Returns `null` if never logged in. |
 | `signOut()` | Clears Supabase session |
 | `updateUserProfile(userId, profile)` | Upserts to Supabase `profiles` (throws on error), then updates local SQLite; returns updated User |
@@ -120,11 +120,18 @@ App launch (online):
   fetchAndApplyProfile(id) → merge Supabase profile into local SQLite → setUser
   useSync fires (userId now defined)
 
-App launch (offline or timeout):
-  navigator.onLine check → false (or restoreSession times out)
-  fetchLocalUser() → load cached user from local SQLite → setUser (no setSession)
-  App renders with cached data; no sync attempted
+App launch (offline):
+  isOnline = navigator.onLine && !(DEV && betaapp-debug-offline flag)  → false
+  restoreSession(3s timeout) → reads localStorage token cache (no network for valid token)
+    if session returned → setSession + fetchLocalUser() → setUser; proceed offline
+    if expired token → Supabase attempts refresh; times out after 3s → falls through
+    if no session → falls through
+  No session path: fetchLocalUser() → setUser (no setSession); login screen shown
   When connectivity returns → window 'online' event fires → useSync.runSync() auto-triggered
+
+App launch (online but restoreSession times out):
+  restoreSession() [5s timeout] throws → fetchLocalUser() → setUser (no setSession)
+  App renders with cached data; no sync attempted
 
 Login (password):
   signIn(email, password) → setSession
