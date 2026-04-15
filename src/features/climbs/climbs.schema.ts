@@ -86,6 +86,7 @@ export const ClimbSchema = z.object({
 	link: z.string().optional(),
 	route_id: z.string().nullable().optional(),
 	sent_date: z.string().nullable().optional(),
+	rating: z.number().int().min(1).max(5).nullable().optional(),
 	created_at: z.string(),
 	updated_at: z.string(),
 	deleted_at: z.string().nullable().optional(),
@@ -107,6 +108,7 @@ export const ClimbFormSchema = z.object({
 	route_location: z.string().optional(),
 	link: z.string().optional(),
 	sent_date: z.string().nullable().optional(),
+	rating: z.number().int().min(1).max(5).nullable().optional(),
 });
 
 export type ClimbFormValues = z.infer<typeof ClimbFormSchema>;

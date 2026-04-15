@@ -19,6 +19,8 @@ RouteSchema = {
   created_by: string   // Supabase user UUID
   created_at: string
   sort_order: number   // admin-defined display order; default 0
+  avg_rating?: number | null  // v29; denormalised average of linked climbs' ratings (#212)
+  rating_count: number        // v30; count of rated climbs; default 0 (#212)
 }
 
 // Admin-only type — not stored in SQLite
@@ -78,7 +80,9 @@ CREATE TABLE IF NOT EXISTS routes_cache (
     status      TEXT NOT NULL DEFAULT 'verified',
     created_by  TEXT NOT NULL,
     created_at  TEXT NOT NULL DEFAULT (datetime('now')),
-    sort_order  INTEGER NOT NULL DEFAULT 0   -- v23; admin-defined display order
+    sort_order  INTEGER NOT NULL DEFAULT 0,   -- v23; admin-defined display order
+    avg_rating  REAL,                          -- v29; denormalised avg of linked climb ratings (#212)
+    rating_count INTEGER NOT NULL DEFAULT 0    -- v30; count of rated climbs (#212)
 );
 ```
 
@@ -92,6 +96,7 @@ Only populated when the user downloads a region (see [`locations/README.md`](../
 
 | Function | What it does |
 |---|---|
+| `refreshRouteAvgRating(routeId)` | Recomputes `avg_rating` (rounded to 1 decimal) and `rating_count` from local climbs (`WHERE route_id = ? AND rating IS NOT NULL AND deleted_at IS NULL`); writes both to `routes_cache`. Called by `climbs.service` after any rating change. |
 | `fetchRoute(id)` | Reads a single route from `routes_cache` by id; returns `null` if not found |
 | `fetchRoutes(wallId)` | Reads `routes_cache` for a wall, ordered by `sort_order ASC, name ASC` |
 | `reorderRoutes(orderedIds)` | Admin — updates `sort_order` for each route id in Supabase + local cache |

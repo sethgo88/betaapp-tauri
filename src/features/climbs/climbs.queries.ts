@@ -15,6 +15,7 @@ import {
 	linkExistingClimbToRoute,
 	patchClimbGrade,
 	patchClimbLink,
+	patchClimbRating,
 	patchClimbStatus,
 	softDeleteClimb,
 	unlinkClimbFromRoute,
@@ -88,6 +89,8 @@ export function useUpdateClimb() {
 		}) => updateClimb(id, data, routeId),
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: [CLIMBS_KEY] });
+			qc.invalidateQueries({ queryKey: ["route"] });
+			qc.invalidateQueries({ queryKey: ["routes"] });
 			silentPush(userId);
 		},
 	});
@@ -101,6 +104,8 @@ export function useLinkClimbToRoute() {
 			linkClimbToRoute(climbId, routeId),
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: [CLIMBS_KEY] });
+			qc.invalidateQueries({ queryKey: ["route"] });
+			qc.invalidateQueries({ queryKey: ["routes"] });
 			silentPush(userId);
 		},
 	});
@@ -113,6 +118,8 @@ export function useUnlinkClimbFromRoute() {
 		mutationFn: (climbId: string) => unlinkClimbFromRoute(climbId),
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: [CLIMBS_KEY] });
+			qc.invalidateQueries({ queryKey: ["route"] });
+			qc.invalidateQueries({ queryKey: ["routes"] });
 			silentPush(userId);
 		},
 	});
@@ -135,6 +142,8 @@ export function useLinkExistingClimbToRoute() {
 			linkExistingClimbToRoute(climbId, routeId),
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: [CLIMBS_KEY] });
+			qc.invalidateQueries({ queryKey: ["route"] });
+			qc.invalidateQueries({ queryKey: ["routes"] });
 			silentPush(userId);
 		},
 	});
@@ -179,6 +188,21 @@ export function usePatchClimbStatus() {
 	});
 }
 
+export function usePatchClimbRating() {
+	const qc = useQueryClient();
+	const userId = useAuthStore((s) => s.user?.id);
+	return useMutation({
+		mutationFn: ({ id, rating }: { id: string; rating: number | null }) =>
+			patchClimbRating(id, rating),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: [CLIMBS_KEY] });
+			qc.invalidateQueries({ queryKey: ["route"] });
+			qc.invalidateQueries({ queryKey: ["routes"] });
+			silentPush(userId);
+		},
+	});
+}
+
 export function usePatchClimbLink() {
 	const qc = useQueryClient();
 	const userId = useAuthStore((s) => s.user?.id);
@@ -199,6 +223,8 @@ export function useDeleteClimb() {
 		mutationFn: (id: string) => softDeleteClimb(id),
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: [CLIMBS_KEY] });
+			qc.invalidateQueries({ queryKey: ["route"] });
+			qc.invalidateQueries({ queryKey: ["routes"] });
 			silentPush(userId);
 		},
 	});

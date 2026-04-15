@@ -19,6 +19,7 @@ import { GripVertical, MapPin, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/atoms/Button";
 import { Spinner } from "@/components/atoms/Spinner";
+import { StarRating } from "@/components/atoms/StarRating";
 import { TagPill } from "@/components/atoms/TagPill";
 import { AdminImageGallery } from "@/components/molecules/AdminImageGallery";
 import { ConfirmDeleteDialog } from "@/components/molecules/ConfirmDeleteDialog";
@@ -27,7 +28,6 @@ import {
 	type PickerMarker,
 } from "@/components/molecules/CoordinatePicker";
 import { EditableDescription } from "@/components/molecules/EditableDescription";
-import { RouteDataModal } from "@/components/molecules/RouteDataModal";
 import { TagSelect } from "@/components/molecules/TagSelect";
 import { TopoModal } from "@/components/molecules/TopoModal";
 import { WallTopoBuilder } from "@/components/organisms/TopoBuilder";
@@ -92,6 +92,14 @@ const SortableRouteCard = ({ route }: { route: Route }) => {
 			<div className="flex-1 flex items-center justify-between gap-2">
 				<span className="font-medium">{route.name}</span>
 				<div className="flex items-center gap-2">
+					{route.avg_rating != null && (
+						<span className="flex items-center gap-1">
+							<StarRating value={Math.round(route.avg_rating)} readOnly size={14} />
+							<span className="text-xs text-text-tertiary">
+								{route.avg_rating.toFixed(1)} · {route.rating_count ?? 0}
+							</span>
+						</span>
+					)}
 					<span className="text-xs text-text-secondary">{route.grade}</span>
 					<span className="text-xs text-text-tertiary">{route.route_type}</span>
 				</div>
@@ -137,7 +145,6 @@ const WallView = () => {
 	const [showCoordEditor, setShowCoordEditor] = useState(false);
 	const [showTopoModal, setShowTopoModal] = useState(false);
 	const [showTopoEdit, setShowTopoEdit] = useState(false);
-	const [dataModalRouteId, setDataModalRouteId] = useState<string | null>(null);
 	const [isReordering, setIsReordering] = useState(false);
 	const [reorderList, setReorderList] = useState<Route[]>([]);
 	const [pendingDeleteRoute, setPendingDeleteRoute] = useState<Route | null>(
@@ -176,9 +183,6 @@ const WallView = () => {
 		setIsReordering(false);
 	}
 
-	const dataModalRoute = dataModalRouteId
-		? routes.find((r) => r.id === dataModalRouteId)
-		: null;
 	const { data: wallTopo = null } = useWallTopo(wallId);
 	const { data: wallTopoLines = [] } = useWallTopoLines(wallTopo?.id ?? null);
 
@@ -457,12 +461,12 @@ const WallView = () => {
 				routes.map((route) => (
 					<div
 						key={route.id}
-						className="rounded-lg bg-surface-card p-4 flex items-center gap-2"
+						className="rounded-lg bg-surface-card p-4 flex items-start gap-2"
 					>
 						<button
 							type="button"
 							disabled={route.status === "pending"}
-							className="flex-1 text-left flex items-center justify-between gap-2 disabled:opacity-60"
+							className="flex-1 text-left flex items-start justify-between gap-2 disabled:opacity-60"
 							onClick={() =>
 								navigate({
 									to: "/routes/$routeId",
@@ -470,25 +474,28 @@ const WallView = () => {
 								})
 							}
 						>
-							<span className="font-medium">{route.name}</span>
-							<div className="flex items-center gap-2">
-								<span className="text-xs text-text-secondary">
-									{route.grade}
-								</span>
-								<span className="text-xs text-text-tertiary">
-									{route.route_type}
-								</span>
-								{route.status === "pending" && (
-									<span className="text-xs text-accent-secondary">pending</span>
-								)}
+							<div className="flex flex-col gap-0.5">
+								<span className="font-medium">{route.name}</span>
+								<div className="flex items-center gap-1.5">
+									<span className="text-xs text-text-secondary">{route.grade}</span>
+									<span className="text-xs text-text-tertiary">{route.route_type}</span>
+									{route.status === "pending" && (
+										<span className="text-xs text-accent-secondary">pending</span>
+									)}
+								</div>
 							</div>
-						</button>
-						<button
-							type="button"
-							className="shrink-0 text-xs text-accent-primary font-semibold"
-							onClick={() => setDataModalRouteId(route.id)}
-						>
-							Data
+							{route.avg_rating != null && (
+								<span className="flex items-center gap-1 shrink-0">
+									<StarRating
+										value={Math.round(route.avg_rating)}
+										readOnly
+										size={14}
+									/>
+									<span className="text-xs text-text-tertiary">
+										{route.avg_rating.toFixed(1)} · {route.rating_count ?? 0}
+									</span>
+								</span>
+							)}
 						</button>
 						{isAdmin && route.status === "verified" && (
 							<button
@@ -517,16 +524,6 @@ const WallView = () => {
 			>
 				Submit a route
 			</Button>
-
-			{dataModalRoute && (
-				<RouteDataModal
-					isOpen={!!dataModalRouteId}
-					onClose={() => setDataModalRouteId(null)}
-					routeId={dataModalRoute.id}
-					routeName={dataModalRoute.name}
-					routeType={dataModalRoute.route_type}
-				/>
-			)}
 
 			<ConfirmDeleteDialog
 				isOpen={pendingDeleteRoute !== null}

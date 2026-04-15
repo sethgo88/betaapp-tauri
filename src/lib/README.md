@@ -78,6 +78,8 @@ Versioned migration runner. Maintains a `schema_version` table (single row) and 
 | v26 | `local_data`, `upload_status` on `climb_images` for offline image upload queue (#165) |
 | v27 | `tags_cache`, `route_tags_cache`, `wall_tags_cache` tables (#204) |
 | v28 | `climb_links` table — per-climb external links (#205) |
+| v29 | `rating` (INTEGER, nullable) on `climbs`; `avg_rating` (REAL, nullable) on `routes_cache` (#212) |
+| v30 | `rating_count` (INTEGER, default 0) on `routes_cache` (#212) |
 
 ### Rules
 - Always use `?` positional parameters — never string interpolation (SQL injection)

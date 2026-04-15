@@ -14,6 +14,8 @@ export const RouteSchema = z.object({
 	created_by: z.string(),
 	created_at: z.string(),
 	sort_order: z.number().int().default(0),
+	avg_rating: z.number().nullable().optional(),
+	rating_count: z.number().int().default(0),
 });
 
 export const RouteSubmitSchema = z.object({

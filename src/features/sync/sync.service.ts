@@ -90,8 +90,8 @@ export async function pullClimbs(
 			`INSERT OR REPLACE INTO climbs
        (id, user_id, name, route_type, grade, moves, sent_status, sent_date,
         country, area, sub_area, crag, wall, route_location, link, route_id,
-        created_at, updated_at, deleted_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        rating, created_at, updated_at, deleted_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			[
 				row.id,
 				row.user_id,
@@ -109,6 +109,7 @@ export async function pullClimbs(
 				row.route_location ?? null,
 				row.link ?? null,
 				row.route_id ?? null,
+				row.rating ?? null,
 				row.created_at,
 				row.updated_at,
 				row.deleted_at ?? null,

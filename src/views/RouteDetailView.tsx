@@ -6,6 +6,7 @@ import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { Select } from "@/components/atoms/Select";
 import { Spinner } from "@/components/atoms/Spinner";
+import { StarRating } from "@/components/atoms/StarRating";
 import { TagPill } from "@/components/atoms/TagPill";
 import { AddLinkModal } from "@/components/molecules/AddLinkModal";
 import { AdminImageGallery } from "@/components/molecules/AdminImageGallery";
@@ -217,6 +218,15 @@ const RouteDetailView = () => {
 							{routeTags.map((tag) => (
 								<TagPill key={tag.id} name={tag.name} />
 							))}
+						</div>
+					)}
+					{route.avg_rating != null && (
+						<div className="flex items-center gap-2 mt-2">
+							<StarRating value={Math.round(route.avg_rating)} readOnly />
+							<span className="text-xs text-text-secondary">
+								{route.avg_rating.toFixed(1)} · {route.rating_count ?? 0}{" "}
+								{(route.rating_count ?? 0) === 1 ? "vote" : "votes"}
+							</span>
 						</div>
 					)}
 				</div>

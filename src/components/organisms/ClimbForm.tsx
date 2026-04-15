@@ -21,6 +21,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { Select } from "@/components/atoms/Select";
+import { StarRating } from "@/components/atoms/StarRating";
 import { ToggleGroup } from "@/components/atoms/ToggleGroup";
 import { ConfirmDeleteDialog } from "@/components/molecules/ConfirmDeleteDialog";
 import { GradeSelect } from "@/components/molecules/GradeSelect";
@@ -390,6 +391,7 @@ export const ClimbForm = ({
 			route_location: defaultValues?.route_location ?? "",
 			link: defaultValues?.link ?? "",
 			sent_date: defaultValues?.sent_date ?? null,
+			rating: defaultValues?.rating ?? null,
 		},
 		onSubmit: async ({ value }) => {
 			const gradeValue =
@@ -534,6 +536,26 @@ export const ClimbForm = ({
 												field.handleChange(e.target.value || null)
 											}
 											max={new Date().toISOString().split("T")[0]}
+										/>
+									</div>
+								)}
+							</form.Field>
+						) : null
+					}
+				</form.Subscribe>
+
+				<form.Subscribe selector={(state) => state.values.sent_status}>
+					{(sentStatus) =>
+						(["sent", "redpoint", "flash", "onsight"] as const).includes(
+							sentStatus as "sent" | "redpoint" | "flash" | "onsight",
+						) ? (
+							<form.Field name="rating">
+								{(field) => (
+									<div className="flex flex-col gap-1">
+										<label className="text-xs text-text-secondary">Rating</label>
+										<StarRating
+											value={field.state.value}
+											onChange={(v) => field.handleChange(v)}
 										/>
 									</div>
 								)}

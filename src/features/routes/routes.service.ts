@@ -7,6 +7,21 @@ import type {
 	RouteSubmitValues,
 } from "./routes.schema";
 
+export async function refreshRouteAvgRating(routeId: string): Promise<void> {
+	const db = await getDb();
+	const rows = await db.select<{ avg: number | null; cnt: number }[]>(
+		"SELECT AVG(rating) as avg, COUNT(rating) as cnt FROM climbs WHERE route_id = ? AND rating IS NOT NULL AND deleted_at IS NULL",
+		[routeId],
+	);
+	const raw = rows[0]?.avg ?? null;
+	const avg = raw != null ? Math.round(raw * 10) / 10 : null;
+	const count = rows[0]?.cnt ?? 0;
+	await db.execute(
+		"UPDATE routes_cache SET avg_rating = ?, rating_count = ? WHERE id = ?",
+		[avg, count, routeId],
+	);
+}
+
 export async function fetchRoutes(wallId: string): Promise<Route[]> {
 	const db = await getDb();
 	return db.select<Route[]>(
