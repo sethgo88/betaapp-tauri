@@ -23,6 +23,7 @@ interface WallTopoModalProps extends BaseProps {
 	topo: WallTopo;
 	lines: WallTopoLine[];
 	routes: RouteInfo[];
+	onNavigateToRoute?: (routeId: string) => void;
 }
 
 interface WallSingleTopoModalProps extends BaseProps {
@@ -252,6 +253,7 @@ export const TopoModal = (props: TopoModalProps) => {
 					routes={props.routes}
 					selectedRouteId={wallSelectedRouteId}
 					onSelectRoute={setWallSelectedRouteId}
+					onNavigateToRoute={props.onNavigateToRoute}
 				/>
 			)}
 		</div>

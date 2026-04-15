@@ -1,3 +1,4 @@
+import { ExternalLink } from "lucide-react";
 import { useState } from "react";
 import type {
 	RouteTopo,
@@ -47,6 +48,9 @@ export const WallTopoViewer = ({
 	const [internalSelectedId, setInternalSelectedId] = useState<string | null>(
 		singleRouteId ?? null,
 	);
+	const [naturalAspectRatio, setNaturalAspectRatio] = useState<number | null>(
+		null,
+	);
 
 	const selectedRouteId =
 		controlledSelectedId !== undefined
@@ -66,18 +70,30 @@ export const WallTopoViewer = ({
 	return (
 		<div className="flex flex-col w-full h-full">
 			{/* Image + SVG overlay */}
-			<div className="relative w-full flex-1 min-h-0">
+			<div
+				className="relative w-full"
+				style={
+					naturalAspectRatio !== null
+						? { aspectRatio: naturalAspectRatio }
+						: undefined
+				}
+			>
 				<img
 					src={topo.image_url}
 					alt="Wall topo"
-					className="w-full h-full object-contain"
+					className="w-full"
 					draggable={false}
+					onLoad={(e) => {
+						const { naturalWidth, naturalHeight } = e.currentTarget;
+						if (naturalWidth > 0 && naturalHeight > 0) {
+							setNaturalAspectRatio(naturalWidth / naturalHeight);
+						}
+					}}
 				/>
-				{/* preserveAspectRatio="xMidYMid meet" matches object-contain so lines align with image */}
 				<svg
 					className="absolute inset-0 w-full h-full"
 					viewBox="0 0 100 100"
-					preserveAspectRatio="xMidYMid meet"
+					preserveAspectRatio="none"
 					aria-hidden="true"
 				>
 					{visibleLines.map((line) => {
@@ -141,6 +157,7 @@ interface WallTopoPanelProps {
 	routes: RouteInfo[];
 	selectedRouteId: string | null;
 	onSelectRoute: (id: string | null) => void;
+	onNavigateToRoute?: (routeId: string) => void;
 }
 
 export const WallTopoPanel = ({
@@ -148,6 +165,7 @@ export const WallTopoPanel = ({
 	routes,
 	selectedRouteId,
 	onSelectRoute,
+	onNavigateToRoute,
 }: WallTopoPanelProps) => {
 	return (
 		<div className="shrink-0 bg-surface-card rounded-b-lg overflow-hidden">
@@ -159,12 +177,14 @@ export const WallTopoPanel = ({
 					const route = routes.find((r) => r.id === line.route_id);
 					if (!route) return null;
 					const isActive = selectedRouteId === route.id;
+					// biome-ignore lint/a11y/useKeyWithClickEvents: touch-only mobile app
 					return (
-						<button
+						<div
 							key={line.id}
-							type="button"
+							role="button"
+							tabIndex={0}
 							onClick={() => onSelectRoute(isActive ? null : route.id)}
-							className="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-surface-page transition-colors"
+							className="w-full flex items-center gap-3 px-4 py-2 hover:bg-surface-page transition-colors cursor-pointer"
 						>
 							<span
 								className="shrink-0 w-3 h-3 rounded-full"
@@ -182,7 +202,20 @@ export const WallTopoPanel = ({
 								{routeTypeInitial(route.route_type)}
 							</span>
 							<span className="text-xs text-text-tertiary">{route.grade}</span>
-						</button>
+							{onNavigateToRoute && (
+								<button
+									type="button"
+									aria-label={`Go to ${route.name}`}
+									className="shrink-0 text-text-tertiary hover:text-text-primary"
+									onClick={(e) => {
+										e.stopPropagation();
+										onNavigateToRoute(route.id);
+									}}
+								>
+									<ExternalLink size={14} />
+								</button>
+							)}
+						</div>
 					);
 				})}
 			</div>
