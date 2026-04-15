@@ -29,6 +29,7 @@ import { Button } from "@/components/atoms/Button";
 import { FeelSlider } from "@/components/atoms/FeelSlider";
 import { Input } from "@/components/atoms/Input";
 import { Spinner } from "@/components/atoms/Spinner";
+import { StarRating } from "@/components/atoms/StarRating";
 import { ToggleGroup } from "@/components/atoms/ToggleGroup";
 import { AddLinkModal } from "@/components/molecules/AddLinkModal";
 import { ClimbImageGallery } from "@/components/molecules/ClimbImageGallery";
@@ -50,6 +51,7 @@ import {
 	useDeleteClimbLink,
 	useLinkClimbToRoute,
 	usePatchClimbGrade,
+	usePatchClimbRating,
 	usePatchClimbStatus,
 	useUnlinkClimbFromRoute,
 	useUpdateClimbMoves,
@@ -667,6 +669,7 @@ const ClimbDetailView = () => {
 	const unlinkClimb = useUnlinkClimbFromRoute();
 	const linkClimb = useLinkClimbToRoute();
 	const patchGrade = usePatchClimbGrade();
+	const patchRating = usePatchClimbRating();
 	const patchStatus = usePatchClimbStatus();
 	const { data: climbLinks = [] } = useClimbLinks(climbId);
 	const addClimbLink = useAddClimbLink(climbId);
@@ -913,6 +916,19 @@ const ClimbDetailView = () => {
 				}
 				onChange={(v) => patchStatus.mutate({ id: climbId, sentStatus: v })}
 			/>
+
+			{/* Star rating — only for sent climbs */}
+			{(["sent", "redpoint", "flash", "onsight"] as const).includes(
+				climb.sent_status as "sent" | "redpoint" | "flash" | "onsight",
+			) && (
+				<div className="flex items-center gap-3 px-1">
+					<span className="text-xs text-text-secondary">Rating</span>
+					<StarRating
+						value={climb.rating}
+						onChange={(v) => patchRating.mutate({ id: climbId, rating: v })}
+					/>
+				</div>
+			)}
 
 			{/* Betas */}
 			<BetaCarousel betas={betas} climbId={climbId} onBetasChange={setBetas} />

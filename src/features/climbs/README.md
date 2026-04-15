@@ -32,6 +32,7 @@ ClimbSchema = {
   link?: string
   route_id?: string      // optional link to routes_cache
   sent_date?: string | null  // YYYY-MM-DD; set when sent_status is 'sent'; cleared otherwise
+  rating?: number | null     // 1–5 stars; null = unrated (#212)
   created_at: string
   updated_at: string
   deleted_at?: string | null
@@ -39,6 +40,7 @@ ClimbSchema = {
 
 ClimbFormSchema = ClimbSchema minus (id, route_id, created_at, updated_at, deleted_at)
 // route_id is passed separately to insertClimb/updateClimb, not part of the form
+// rating is included — editable in the ClimbForm (EditClimbView) and as a quick-edit widget in ClimbDetailView
 
 ClimbLinkSchema = {
   id: string
@@ -85,6 +87,7 @@ CREATE TABLE IF NOT EXISTS climbs (
     link             TEXT,
     route_id         TEXT,
     sent_date        TEXT,
+    rating           INTEGER,   -- v29; 1–5 stars; null = unrated (#212)
     deleted_at       TEXT,
     created_at       TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at       TEXT NOT NULL DEFAULT (datetime('now'))
@@ -110,6 +113,7 @@ CREATE TABLE IF NOT EXISTS climbs (
 | `linkExistingClimbToRoute(climbId, routeId)` | Sets `route_id` and backfills `country/area/sub_area/crag/wall` from the route's location hierarchy |
 | `patchClimbGrade(id, grade)` | Updates only `grade` |
 | `patchClimbStatus(id, sentStatus)` | Updates only `sent_status` |
+| `patchClimbRating(id, rating)` | Updates only `rating` (pass `null` to clear); then calls `refreshRouteAvgRating` on the linked route if any |
 | `patchClimbLink(id, link)` | Updates only `link` (pass `null` to clear; legacy — UI now uses `climb_links` table) |
 | `fetchClimbLinks(climbId)` | All active links for a climb (soft-deleted excluded), ordered by `created_at ASC` |
 | `addClimbLink(climbId, userId, url, title?)` | Inserts to Supabase then SQLite; generates UUID locally |
@@ -131,6 +135,7 @@ CREATE TABLE IF NOT EXISTS climbs (
 | `useUpdateClimb()` | Mutation — `{ id, data, routeId? }` — updates + silent push |
 | `useUpdateClimbMoves()` | Mutation — `{ id, moves }` — replaces moves JSON string + silent push |
 | `usePatchClimbGrade()` | Mutation — `{ id, grade }` — updates grade only + silent push |
+| `usePatchClimbRating()` | Mutation — `{ id, rating }` — updates rating only + refreshes route avg_rating + silent push |
 | `usePatchClimbStatus()` | Mutation — `{ id, sentStatus }` — updates sent_status only + silent push |
 | `usePatchClimbLink()` | Mutation — `{ id, link }` — updates legacy `link` field + silent push (no longer used by UI) |
 | `useClimbLinks(climbId)` | Query — active links for a climb; queryKey `["climb_links", climbId]` |
@@ -210,6 +215,7 @@ public.climbs (
   grade text,  moves text,  sent_status text,
   country text,  area text,  sub_area text,  crag text,  wall text,  route_location text,  link text,
   route_id uuid references public.routes,  sent_date text,
+  rating integer,   -- nullable 1–5; add manually to Supabase table (#212)
   created_at timestamptz,  updated_at timestamptz,  deleted_at timestamptz
 )
 -- RLS: auth.uid() = user_id

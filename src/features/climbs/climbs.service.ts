@@ -1,5 +1,6 @@
 import { getDb } from "@/lib/db";
 import { supabase } from "@/lib/supabase";
+import { refreshRouteAvgRating } from "@/features/routes/routes.service";
 import type { Climb, ClimbFormValues, ClimbLink } from "./climbs.schema";
 import type { SortKey } from "./climbs.store";
 
@@ -129,8 +130,8 @@ export async function insertClimb(
 	}
 
 	await db.execute(
-		`INSERT INTO climbs (id, user_id, name, route_type, grade, moves, sent_status, country, area, sub_area, crag, wall, route_location, link, route_id, sent_date)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		`INSERT INTO climbs (id, user_id, name, route_type, grade, moves, sent_status, country, area, sub_area, crag, wall, route_location, link, route_id, sent_date, rating)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		[
 			id,
 			userId,
@@ -148,8 +149,12 @@ export async function insertClimb(
 			data.link ?? null,
 			routeId ?? null,
 			data.sent_date ?? null,
+			data.rating ?? null,
 		],
 	);
+	if (routeId && data.rating != null) {
+		await refreshRouteAvgRating(routeId);
+	}
 	return id;
 }
 
@@ -162,7 +167,7 @@ export async function updateClimb(
 	await db.execute(
 		`UPDATE climbs
      SET name = ?, route_type = ?, grade = ?, moves = ?, sent_status = ?,
-         country = ?, area = ?, sub_area = ?, crag = ?, wall = ?, route_location = ?, link = ?, route_id = ?, sent_date = ?
+         country = ?, area = ?, sub_area = ?, crag = ?, wall = ?, route_location = ?, link = ?, route_id = ?, sent_date = ?, rating = ?
      WHERE id = ? AND deleted_at IS NULL`,
 		[
 			data.name,
@@ -179,9 +184,13 @@ export async function updateClimb(
 			data.link ?? null,
 			routeId ?? null,
 			data.sent_date ?? null,
+			data.rating ?? null,
 			id,
 		],
 	);
+	if (routeId) {
+		await refreshRouteAvgRating(routeId);
+	}
 }
 
 export async function updateClimbMoves(
@@ -200,18 +209,33 @@ export async function linkClimbToRoute(
 	routeId: string,
 ): Promise<void> {
 	const db = await getDb();
+	const rows = await db.select<{ rating: number | null }[]>(
+		"SELECT rating FROM climbs WHERE id = ? AND deleted_at IS NULL",
+		[climbId],
+	);
 	await db.execute(
 		"UPDATE climbs SET route_id = ? WHERE id = ? AND deleted_at IS NULL",
 		[routeId, climbId],
 	);
+	if (rows[0]?.rating != null) {
+		await refreshRouteAvgRating(routeId);
+	}
 }
 
 export async function unlinkClimbFromRoute(climbId: string): Promise<void> {
 	const db = await getDb();
+	const rows = await db.select<{ route_id: string | null; rating: number | null }[]>(
+		"SELECT route_id, rating FROM climbs WHERE id = ? AND deleted_at IS NULL",
+		[climbId],
+	);
 	await db.execute(
 		"UPDATE climbs SET route_id = NULL WHERE id = ? AND deleted_at IS NULL",
 		[climbId],
 	);
+	const routeId = rows[0]?.route_id;
+	if (routeId && rows[0]?.rating != null) {
+		await refreshRouteAvgRating(routeId);
+	}
 }
 
 export async function fetchUnlinkedClimbs(userId: string): Promise<Climb[]> {
@@ -227,13 +251,22 @@ export async function linkExistingClimbToRoute(
 	routeId: string,
 ): Promise<void> {
 	const db = await getDb();
-	const loc = await fetchLocationForRoute(routeId);
+	const [loc, rows] = await Promise.all([
+		fetchLocationForRoute(routeId),
+		db.select<{ rating: number | null }[]>(
+			"SELECT rating FROM climbs WHERE id = ? AND deleted_at IS NULL",
+			[climbId],
+		),
+	]);
 	await db.execute(
 		`UPDATE climbs
      SET route_id = ?, country = ?, area = ?, sub_area = ?, crag = ?, wall = ?
      WHERE id = ? AND deleted_at IS NULL`,
 		[routeId, loc.country, loc.area, loc.sub_area, loc.crag, loc.wall, climbId],
 	);
+	if (rows[0]?.rating != null) {
+		await refreshRouteAvgRating(routeId);
+	}
 }
 
 export async function patchClimbGrade(
@@ -258,6 +291,26 @@ export async function patchClimbStatus(
 	);
 }
 
+export async function patchClimbRating(
+	id: string,
+	rating: number | null,
+): Promise<void> {
+	const db = await getDb();
+	await db.execute(
+		"UPDATE climbs SET rating = ? WHERE id = ? AND deleted_at IS NULL",
+		[rating, id],
+	);
+	// Refresh avg_rating on the linked route if any
+	const rows = await db.select<{ route_id: string | null }[]>(
+		"SELECT route_id FROM climbs WHERE id = ? AND deleted_at IS NULL",
+		[id],
+	);
+	const routeId = rows[0]?.route_id;
+	if (routeId) {
+		await refreshRouteAvgRating(routeId);
+	}
+}
+
 export async function patchClimbLink(
 	id: string,
 	link: string | null,
@@ -271,10 +324,18 @@ export async function patchClimbLink(
 
 export async function softDeleteClimb(id: string): Promise<void> {
 	const db = await getDb();
+	const rows = await db.select<{ route_id: string | null; rating: number | null }[]>(
+		"SELECT route_id, rating FROM climbs WHERE id = ? AND deleted_at IS NULL",
+		[id],
+	);
 	await db.execute(
 		"UPDATE climbs SET deleted_at = datetime('now') WHERE id = ?",
 		[id],
 	);
+	const routeId = rows[0]?.route_id;
+	if (routeId && rows[0]?.rating != null) {
+		await refreshRouteAvgRating(routeId);
+	}
 }
 
 // ── Climb links ───────────────────────────────────────────────────────────────
@@ -330,8 +391,8 @@ export async function applyRemoteClimb(climb: Climb): Promise<void> {
 		`INSERT OR REPLACE INTO climbs
      (id, user_id, name, route_type, grade, moves, sent_status,
       country, area, sub_area, crag, wall, route_location, link, route_id,
-      sent_date, created_at, updated_at, deleted_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      sent_date, rating, created_at, updated_at, deleted_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		[
 			climb.id,
 			climb.user_id,
@@ -349,6 +410,7 @@ export async function applyRemoteClimb(climb: Climb): Promise<void> {
 			climb.link ?? null,
 			climb.route_id ?? null,
 			climb.sent_date ?? null,
+			climb.rating ?? null,
 			climb.created_at,
 			climb.updated_at,
 			climb.deleted_at ?? null,

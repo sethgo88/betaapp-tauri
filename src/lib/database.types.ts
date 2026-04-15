@@ -196,6 +196,7 @@ export type Database = {
           link: string | null
           moves: string
           name: string
+          rating: number | null
           route_id: string | null
           route_location: string | null
           route_type: string
@@ -217,6 +218,7 @@ export type Database = {
           link?: string | null
           moves?: string
           name: string
+          rating?: number | null
           route_id?: string | null
           route_location?: string | null
           route_type?: string
@@ -238,6 +240,7 @@ export type Database = {
           link?: string | null
           moves?: string
           name?: string
+          rating?: number | null
           route_id?: string | null
           route_location?: string | null
           route_type?: string

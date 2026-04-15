@@ -161,6 +161,7 @@ const EditClimbView = () => {
 					sub_area: climb.sub_area,
 					route_location: climb.route_location,
 					link: climb.link,
+					rating: climb.rating,
 				}}
 				onSubmit={handleSubmit}
 			/>

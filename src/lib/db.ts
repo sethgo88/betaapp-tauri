@@ -633,6 +633,19 @@ const migrations: Migration[] = [
       )
     `);
 	},
+
+	// v29: rating on climbs + avg_rating on routes_cache (#212)
+	async (db) => {
+		await db.execute(`ALTER TABLE climbs ADD COLUMN rating INTEGER`);
+		await db.execute(`ALTER TABLE routes_cache ADD COLUMN avg_rating REAL`);
+	},
+
+	// v30: rating_count on routes_cache (#212)
+	async (db) => {
+		await db.execute(
+			`ALTER TABLE routes_cache ADD COLUMN rating_count INTEGER NOT NULL DEFAULT 0`,
+		);
+	},
 ];
 
 export async function runMigrations(db: DbAdapter): Promise<void> {
