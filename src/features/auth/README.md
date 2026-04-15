@@ -105,7 +105,7 @@ interface AuthStore {
 }
 ```
 
-`isAuthenticated` is derived from `session !== null`. Set both `user` and `session` after login.
+`isAuthenticated` is `true` when either `setSession(session)` is called with a non-null session (online login / successful token restore) **or** `setUser(user)` is called with a non-null user (offline local-cache fallback). Setting either to `null` clears `isAuthenticated`.
 
 ---
 
@@ -126,11 +126,12 @@ App launch (offline):
     if session returned → setSession + fetchLocalUser() → setUser; proceed offline
     if expired token → Supabase attempts refresh; times out after 3s → falls through
     if no session → falls through
-  No session path: fetchLocalUser() → setUser (no setSession); login screen shown
+  No session path: fetchLocalUser() → setUser (sets isAuthenticated=true if user exists)
+  onAuthStateChange INITIAL_SESSION + null → ignored (guarded); does not wipe auth state
   When connectivity returns → window 'online' event fires → useSync.runSync() auto-triggered
 
 App launch (online but restoreSession times out):
-  restoreSession() [5s timeout] throws → fetchLocalUser() → setUser (no setSession)
+  restoreSession() [5s timeout] throws → fetchLocalUser() → setUser (sets isAuthenticated=true if user exists)
   App renders with cached data; no sync attempted
 
 Login (password):

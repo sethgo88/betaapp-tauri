@@ -150,11 +150,12 @@ function Bootstrap() {
 		const {
 			data: { subscription },
 		} = supabase.auth.onAuthStateChange((event, session) => {
+			// INITIAL_SESSION fires on startup. If the token couldn't be refreshed
+			// (offline / expired), session is null — but bootstrap may have already
+			// restored auth from the local cache, so we must not wipe it here.
+			if (event === "INITIAL_SESSION" && !session) return;
 			setSession(session);
-			// INITIAL_SESSION fires on startup when a persisted session is found.
-			// Skipping setUser(null) here avoids wiping a user that bootstrap already
-			// restored from the local cache before this subscriber fires.
-			if (!session && event !== "INITIAL_SESSION") setUser(null);
+			if (!session) setUser(null);
 			if (event === "PASSWORD_RECOVERY" && session) {
 				router.navigate({ to: "/reset-password" });
 			}

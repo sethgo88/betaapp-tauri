@@ -58,7 +58,7 @@ const SettingsView = () => {
 	return (
 		<div className="flex flex-col gap-4">
 			<h1 className="font-display text-xl font-semibold">Settings</h1>
-			{import.meta.env.DEV && <DevOfflineToggle />}
+			<DevOfflineToggle />
 		</div>
 	);
 };
