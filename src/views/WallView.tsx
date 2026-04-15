@@ -367,6 +367,10 @@ const WallView = () => {
 							route_type: r.route_type,
 						}))}
 					onClose={() => setShowTopoModal(false)}
+					onNavigateToRoute={(routeId) => {
+						setShowTopoModal(false);
+						navigate({ to: "/routes/$routeId", params: { routeId } });
+					}}
 				/>
 			)}
 
