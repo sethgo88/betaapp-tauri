@@ -26,7 +26,7 @@ export function ConfirmDeleteDialog({
 			<div className="w-full max-w-sm rounded-xl bg-surface-raised p-5 flex flex-col gap-4 shadow-card">
 				<div>
 					<p className="font-semibold text-text-primary">{title}</p>
-					<p className="text-sm text-text-secondary mt-1">{message}</p>
+					<p className="text-sm text-text-primary/70 mt-1">{message}</p>
 				</div>
 				<div className="flex gap-2">
 					<Button variant="outlined" className="flex-1" onClick={onCancel}>

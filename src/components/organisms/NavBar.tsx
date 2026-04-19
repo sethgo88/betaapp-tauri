@@ -11,48 +11,47 @@ export const NavBar = ({ onMenuOpen }: NavBarProps) => {
 	const navigate = useNavigate();
 	const currentRoute = useCurrentRoute();
 
-	const iconClass = (path: string) =>
-		currentRoute === path ? "text-accent-primary" : "text-text-primary";
+	const iconWrap = (path: string) =>
+		currentRoute === path
+			? "inline-flex items-center justify-center bg-accent-secondary/75 rounded p-1.5"
+			: "inline-flex items-center justify-center";
 
 	return (
-		<div className="w-full flex justify-around bg-surface-nav border-t border-border-default fixed bottom-0 px-[3vw] text-text-primary h-[7vh] items-center">
+		<div className="w-full flex justify-around bg-cyan-800/80 shadow-xl fixed bottom-0 px-[3vw] text-white h-[7vh] items-center [box-shadow:0_-4px_12px_rgba(0,0,0,0.1)]">
 			<Button
 				variant="unstyled"
 				type="button"
-				className="w-full text-center"
+				className="w-full flex items-center justify-center"
 				onClick={() => navigate({ to: "/" })}
 			>
-				<Home className={`mx-auto ${iconClass("/")}`} size={22} />
+				<span className={iconWrap("/")}><Home className="text-white" size={22} /></span>
 			</Button>
 
 			<Button
 				variant="unstyled"
 				type="button"
-				className="w-full text-center"
+				className="w-full flex items-center justify-center"
 				onClick={() => navigate({ to: "/climbs/add" })}
 			>
-				<PlusSquare
-					className={`mx-auto ${iconClass("/climbs/add")}`}
-					size={22}
-				/>
+				<span className={iconWrap("/climbs/add")}><PlusSquare className="text-white" size={22} /></span>
 			</Button>
 
 			<Button
 				variant="unstyled"
 				type="button"
-				className="w-full text-center"
+				className="w-full flex items-center justify-center"
 				onClick={() => navigate({ to: "/search" })}
 			>
-				<Search className={`mx-auto ${iconClass("/search")}`} size={22} />
+				<span className={iconWrap("/search")}><Search className="text-white" size={22} /></span>
 			</Button>
 
 			<Button
 				variant="unstyled"
 				type="button"
-				className="w-full text-center"
+				className="w-full flex items-center justify-center"
 				onClick={onMenuOpen}
 			>
-				<Menu className="mx-auto" size={22} />
+				<span className="inline-flex items-center justify-center"><Menu className="text-white" size={22} /></span>
 			</Button>
 		</div>
 	);

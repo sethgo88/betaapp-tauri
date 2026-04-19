@@ -79,7 +79,7 @@ const SortableMoveRow = ({
 			{/* Drag handle — long press to activate */}
 			<button
 				type="button"
-				className="flex-shrink-0 p-1 text-text-tertiary touch-none cursor-grab active:cursor-grabbing"
+				className="flex-shrink-0 p-1 text-text-on-light touch-none cursor-grab active:cursor-grabbing"
 				aria-label="Drag to reorder"
 				{...attributes}
 				{...listeners}
@@ -446,9 +446,6 @@ export const ClimbForm = ({
 
 				<div className="flex gap-2">
 					<div className="flex flex-col gap-1 flex-1">
-						<label htmlFor="route_type" className="text-xs text-text-secondary">
-							Type
-						</label>
 						<form.Field name="route_type">
 							{(field) => (
 								<Select
@@ -473,9 +470,6 @@ export const ClimbForm = ({
 						</form.Field>
 					</div>
 					<div className="flex flex-col gap-1 flex-1">
-						<label htmlFor="grade" className="text-xs text-text-secondary">
-							Personal grade
-						</label>
 						<form.Field name="grade">
 							{(field) => (
 								<GradeSelect
@@ -524,7 +518,7 @@ export const ClimbForm = ({
 									<div className="flex flex-col gap-1">
 										<label
 											htmlFor="sent_date"
-											className="text-xs text-text-secondary"
+											className="text-xs text-white"
 										>
 											Sent date
 										</label>
@@ -552,7 +546,7 @@ export const ClimbForm = ({
 							<form.Field name="rating">
 								{(field) => (
 									<div className="flex flex-col gap-1">
-										<label className="text-xs text-text-secondary">Rating</label>
+										<label className="text-xs text-white">Rating</label>
 										<StarRating
 											value={field.state.value}
 											onChange={(v) => field.handleChange(v)}
@@ -565,14 +559,14 @@ export const ClimbForm = ({
 				</form.Subscribe>
 
 				{onOpenRoutePicker && (
-					<div className="rounded-card bg-surface-card px-3 py-2.5">
+					<div className="rounded-[var(--radius-md)] bg-surface-card px-3 py-2.5 border border-border-input">
 						{linkedRoute ? (
 							<div className="flex items-center justify-between gap-2">
 								<div className="min-w-0">
 									<p className="text-sm font-medium text-text-primary truncate">
 										{linkedRoute.name}
 									</p>
-									<p className="text-xs text-text-secondary">
+									<p className="text-xs text-text-on-light">
 										{linkedRoute.grade}
 									</p>
 								</div>
@@ -587,7 +581,7 @@ export const ClimbForm = ({
 									<button
 										type="button"
 										onClick={() => onUnlinkRoute?.()}
-										className="text-xs text-text-muted"
+										className="text-xs text-text-on-light/60"
 									>
 										Unlink
 									</button>
@@ -597,7 +591,7 @@ export const ClimbForm = ({
 							<button
 								type="button"
 								onClick={onOpenRoutePicker}
-								className="text-sm text-text-secondary w-full text-left"
+								className="text-sm text-text-on-light w-full text-left"
 							>
 								+ Link to route
 							</button>
@@ -641,7 +635,7 @@ export const ClimbForm = ({
 					<div className="flex items-center gap-2 px-1 min-h-[28px]">
 						{galleryMode ? (
 							<>
-								<span className="flex-1 text-sm font-medium text-text-secondary">
+								<span className="flex-1 text-sm font-medium text-text-on-light">
 									All betas
 								</span>
 								<button
@@ -692,7 +686,7 @@ export const ClimbForm = ({
 									role="button"
 									tabIndex={0}
 									className={cn(
-										"snap-center shrink-0 w-40 rounded-md p-3 flex flex-col gap-1 bg-surface-input cursor-pointer",
+										"snap-center shrink-0 w-40 rounded-md p-3 flex flex-col gap-1 bg-surface-input text-text-on-light cursor-pointer",
 										activeBetaId === beta.id && "ring-1 ring-accent-primary",
 									)}
 									onClick={() => {
@@ -714,7 +708,7 @@ export const ClimbForm = ({
 										{betas.length > 1 && (
 											<button
 												type="button"
-												className="text-text-muted shrink-0"
+												className="text-text-on-light/60 shrink-0"
 												onClick={(e) => {
 													e.stopPropagation();
 													setPendingDeleteBetaId(beta.id);
@@ -724,12 +718,12 @@ export const ClimbForm = ({
 											</button>
 										)}
 									</div>
-									<p className="text-xs text-text-secondary">
+									<p className="text-xs text-text-on-light">
 										{beta.moves.length} move
 										{beta.moves.length !== 1 ? "s" : ""}
 									</p>
 									{beta.moves.slice(0, 2).map((m, i) => (
-										<p key={m.id} className="text-xs text-text-muted truncate">
+										<p key={m.id} className="text-xs text-text-on-light/60 truncate">
 											{i + 1}. {m.text || "…"}
 										</p>
 									))}
@@ -740,7 +734,7 @@ export const ClimbForm = ({
 						/* Normal mode: save status + DnD moves */
 						<>
 							{climbId && saveStatus !== "idle" && (
-								<p className="text-xs text-text-secondary px-1">
+								<p className="text-xs text-text-on-light px-1">
 									{saveStatus === "saving" ? "Saving…" : "Saved"}
 								</p>
 							)}

@@ -32,7 +32,7 @@ export const Select = (props: SelectProps) => {
 					strokeWidth="2.5"
 					strokeLinecap="round"
 					strokeLinejoin="round"
-					className="absolute right-0 pointer-events-none text-text-tertiary shrink-0"
+					className="absolute right-0 pointer-events-none text-text-on-light shrink-0"
 					aria-hidden="true"
 				>
 					<path d="m6 9 6 6 6-6" />
@@ -44,12 +44,12 @@ export const Select = (props: SelectProps) => {
 	return (
 		<div
 			className={cn(
-				"rounded-[var(--radius-md)] bg-surface-input p-2.5 font-medium w-full text-text-primary",
+				"rounded-[var(--radius-md)] bg-surface-input p-2.5 font-medium w-full text-text-on-light border border-border-input",
 				className,
 			)}
 		>
 			<select
-				className={cn("outline-0 w-full bg-surface-input", selectClassName)}
+				className={cn("outline-0 w-full bg-surface-input text-text-on-light", selectClassName)}
 				{...rest}
 			/>
 		</div>

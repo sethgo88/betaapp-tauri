@@ -1,7 +1,5 @@
 import { create } from "zustand";
 
-export type Theme = "dark" | "light";
-
 export type Toast = {
 	id: string;
 	message: string;
@@ -11,8 +9,6 @@ export type Toast = {
 export type UserLocation = { lat: number; lng: number };
 
 interface UiStore {
-	theme: Theme;
-	setTheme: (theme: Theme) => void;
 	toasts: Toast[];
 	addToast: (toast: Omit<Toast, "id">) => void;
 	removeToast: (id: string) => void;
@@ -25,8 +21,8 @@ interface UiStore {
 	setDefaultStatusFilters: (filters: Set<string>) => void;
 }
 
-const storedTheme =
-	(localStorage.getItem("betaapp-theme") as Theme | null) ?? "dark";
+// Always light mode
+document.documentElement.classList.add("light");
 
 const storedDefaultStatusFilters: Set<string> = (() => {
 	try {
@@ -54,16 +50,6 @@ const storedLocation: UserLocation | null = (() => {
 })();
 
 export const useUiStore = create<UiStore>((set) => ({
-	theme: storedTheme,
-	setTheme: (theme) => {
-		localStorage.setItem("betaapp-theme", theme);
-		if (theme === "light") {
-			document.documentElement.classList.add("light");
-		} else {
-			document.documentElement.classList.remove("light");
-		}
-		set({ theme });
-	},
 	toasts: [],
 	addToast: (toast) =>
 		set((s) => ({

@@ -51,14 +51,14 @@ export function LogClimbSheet({ isOpen, onClose, route }: Props) {
 					onClick={handleNewLog}
 				>
 					<p className="font-semibold text-text-primary">New log</p>
-					<p className="text-sm text-text-secondary mt-0.5">
+					<p className="text-sm text-text-on-light mt-0.5">
 						Create a new climb entry for this route
 					</p>
 				</button>
 
 				{/* Link existing log option */}
 				<div className="flex flex-col gap-2">
-					<p className="text-sm font-semibold text-text-secondary uppercase tracking-wide">
+					<p className="text-sm font-semibold text-text-primary/70 uppercase tracking-wide">
 						Link existing log
 					</p>
 
@@ -69,7 +69,7 @@ export function LogClimbSheet({ isOpen, onClose, route }: Props) {
 					)}
 
 					{!isLoading && unlinkedClimbs.length === 0 && (
-						<p className="text-sm text-text-secondary">
+						<p className="text-sm text-text-primary/70">
 							No unlinked climbs to attach.
 						</p>
 					)}
@@ -88,11 +88,11 @@ export function LogClimbSheet({ isOpen, onClose, route }: Props) {
 											<p className="font-medium text-text-primary">
 												{climb.name}
 											</p>
-											<p className="text-sm text-text-secondary capitalize">
+											<p className="text-sm text-text-on-light capitalize">
 												{climb.grade} · {climb.route_type}
 											</p>
 										</div>
-										<span className="text-xs text-text-secondary capitalize">
+										<span className="text-xs text-text-on-light capitalize">
 											{climb.sent_status}
 										</span>
 									</button>

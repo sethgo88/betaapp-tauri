@@ -29,7 +29,7 @@ export function Sheet({
 				<button
 					type="button"
 					onClick={onClose}
-					className="text-text-secondary p-1 -ml-1"
+					className="text-text-primary/70 p-1 -ml-1"
 					aria-label="Close"
 				>
 					<X size={20} />

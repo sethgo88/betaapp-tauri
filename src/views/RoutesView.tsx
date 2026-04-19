@@ -27,7 +27,7 @@ const RegionList = ({
 
 	if (regions.length === 0) {
 		return (
-			<p className="text-sm text-text-tertiary px-2 py-1">No regions yet</p>
+			<p className="text-sm text-text-on-light px-2 py-1">No regions yet</p>
 		);
 	}
 
@@ -45,7 +45,7 @@ const RegionList = ({
 					>
 						<button
 							type="button"
-							className={`text-sm text-left flex-1 ${isDownloaded ? "text-text-primary" : "text-text-secondary"}`}
+							className={`text-sm text-left flex-1 ${isDownloaded ? "text-text-primary" : "text-text-on-light/60"}`}
 							onClick={() =>
 								isDownloaded &&
 								navigate({
@@ -100,10 +100,10 @@ const RoutesView = () => {
 
 	return (
 		<div className="flex flex-col gap-3">
-			<h1 className="text-lg font-display font-semibold">Route Manager</h1>
+			<h1 className="text-lg font-display font-semibold text-white">Route Manager</h1>
 
 			{countries.length === 0 && (
-				<p className="text-text-secondary text-sm">
+				<p className="text-white text-sm">
 					No locations available yet.
 				</p>
 			)}
@@ -112,7 +112,7 @@ const RoutesView = () => {
 				<div key={country.id} className="rounded-lg bg-surface-card p-4">
 					<div className="flex items-center justify-between">
 						<span className="font-medium">{country.name}</span>
-						<span className="text-text-secondary text-sm">{country.code}</span>
+						<span className="text-text-on-light text-sm">{country.code}</span>
 					</div>
 					<RegionList
 						countryId={country.id}

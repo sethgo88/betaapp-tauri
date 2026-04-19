@@ -42,7 +42,7 @@ export function ImagePickerGrid({
 				type="button"
 				onClick={onUpload}
 				disabled={isUploading}
-				className="flex items-center justify-center gap-2 rounded-[var(--radius-md)] border-2 border-dashed border-border-default p-6 text-text-tertiary disabled:opacity-50"
+				className="flex items-center justify-center gap-2 rounded-[var(--radius-md)] border-2 border-dashed border-white/50 p-6 text-white/70 disabled:opacity-50"
 			>
 				{isUploading ? <Spinner /> : <span>+ Upload Image</span>}
 			</button>

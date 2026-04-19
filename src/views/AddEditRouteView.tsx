@@ -207,7 +207,7 @@ const AddEditRouteView = ({ routeId }: AddEditRouteViewProps) => {
 
 	return (
 		<div className="flex flex-col gap-4">
-			<h1 className="text-lg font-display font-semibold">{title}</h1>
+			<h1 className="text-lg font-display font-semibold text-white">{title}</h1>
 
 			{/* Location — tappable summary opens full-screen sheet */}
 			<button
@@ -216,12 +216,12 @@ const AddEditRouteView = ({ routeId }: AddEditRouteViewProps) => {
 				className="rounded-lg bg-surface-card p-4 flex items-center justify-between text-left w-full"
 			>
 				<div className="flex flex-col gap-0.5">
-					<span className="text-xs text-text-secondary">Location</span>
+					<span className="text-xs text-text-on-light">Location</span>
 					<span
 						className={
 							selection.wallId
 								? "text-sm text-text-primary"
-								: "text-sm text-text-tertiary"
+								: "text-sm text-text-on-light/50"
 						}
 					>
 						{selection.wallId
@@ -239,7 +239,7 @@ const AddEditRouteView = ({ routeId }: AddEditRouteViewProps) => {
 					strokeWidth="2"
 					strokeLinecap="round"
 					strokeLinejoin="round"
-					className="text-text-tertiary shrink-0"
+					className="text-text-on-light shrink-0"
 					aria-hidden="true"
 				>
 					<path d="m9 18 6-6-6-6" />
@@ -305,7 +305,7 @@ const AddEditRouteView = ({ routeId }: AddEditRouteViewProps) => {
 					value={description}
 					onChange={(e) => setDescription(e.target.value)}
 					rows={3}
-					className="rounded-[var(--radius-lg)] bg-surface-input p-2.5 font-medium outline-0 w-full border border-border-input focus:border-accent-primary transition-colors resize-none text-text-primary"
+					className="rounded-[var(--radius-lg)] bg-surface-input p-2.5 font-medium outline-0 w-full border border-border-input focus:border-accent-primary transition-colors resize-none text-text-on-light"
 				/>
 
 				<Button

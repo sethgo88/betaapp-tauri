@@ -117,7 +117,7 @@ const SortableMoveRow = ({
 		<div ref={setNodeRef} style={style} className="flex items-start gap-1">
 			<button
 				type="button"
-				className="flex-shrink-0 p-1 text-text-tertiary touch-none cursor-grab active:cursor-grabbing"
+				className="flex-shrink-0 p-1 text-text-on-light touch-none cursor-grab active:cursor-grabbing"
 				aria-label="Drag to reorder"
 				{...attributes}
 				{...listeners}
@@ -308,7 +308,7 @@ const BetaEditSheet = ({
 					placeholder="Beta title"
 				/>
 				{saveStatus !== "idle" && (
-					<span className="text-xs text-text-secondary shrink-0">
+					<span className="text-xs text-text-on-light shrink-0">
 						{saveStatus === "saving" ? "Saving…" : "Saved"}
 					</span>
 				)}
@@ -478,7 +478,7 @@ const BetaCarousel = ({ betas, climbId, onBetasChange }: BetaCarouselProps) => {
 				className="flex items-center justify-between w-full px-3 pt-3 pb-2"
 				onClick={() => setBetasOpen(!betasOpen)}
 			>
-				<span className="text-sm font-medium text-text-secondary">
+				<span className="text-sm font-medium text-text-on-light">
 					Beta{betas.length > 1 ? ` (${betas.length})` : ""}
 				</span>
 				<div className="flex items-center gap-2">
@@ -486,7 +486,7 @@ const BetaCarousel = ({ betas, climbId, onBetasChange }: BetaCarouselProps) => {
 						<div className="relative">
 							<button
 								type="button"
-								className="p-1 text-text-secondary"
+								className="p-1 text-text-on-light"
 								onClick={(e) => {
 									e.stopPropagation();
 									setSectionGearOpen(!sectionGearOpen);
@@ -523,7 +523,7 @@ const BetaCarousel = ({ betas, climbId, onBetasChange }: BetaCarouselProps) => {
 					)}
 					<span
 						className={cn(
-							"transition-transform inline-block text-text-secondary",
+							"transition-transform inline-block text-text-on-light",
 							betasOpen && "rotate-180",
 						)}
 					>
@@ -612,7 +612,7 @@ const BetaCarousel = ({ betas, climbId, onBetasChange }: BetaCarouselProps) => {
 											))}
 										</ul>
 									) : (
-										<p className="text-sm text-text-secondary">
+										<p className="text-sm text-text-on-light">
 											No moves logged yet.
 										</p>
 									)}
@@ -731,9 +731,7 @@ const ClimbDetailView = () => {
 	}
 
 	if (!climb) {
-		return (
-			<p className="text-text-secondary text-center pt-12">Climb not found.</p>
-		);
+		return <p className="text-white text-center pt-12">Climb not found.</p>;
 	}
 
 	const location = buildLocationString([
@@ -766,18 +764,17 @@ const ClimbDetailView = () => {
 								})
 							}
 						>
-							<h1 className="text-2xl font-display font-bold">{climb.name}</h1>
-							<ExternalLink
-								size={16}
-								className="text-text-secondary shrink-0 mt-1"
-							/>
+							<h1 className="text-2xl font-display font-bold text-white">
+								{climb.name}
+							</h1>
+							<ExternalLink size={16} className="text-white shrink-0 mt-1" />
 						</button>
 					) : (
-						<h1 className="text-2xl font-display font-bold">{climb.name}</h1>
+						<h1 className="text-2xl font-display font-bold text-white">
+							{climb.name}
+						</h1>
 					)}
-					{location && (
-						<p className="text-sm text-text-secondary">{location}</p>
-					)}
+					{location && <p className="text-sm text-white">{location}</p>}
 				</div>
 
 				{/* Grade + gear icon */}
@@ -789,8 +786,8 @@ const ClimbDetailView = () => {
 							className="flex items-baseline gap-1.5 group"
 							onClick={() => setGradePickerOpen(!gradePickerOpen)}
 						>
-							<span className="text-xs text-text-secondary">Personal</span>
-							<span className="text-lg font-display font-semibold underline decoration-dotted">
+							<span className="text-xs text-white">Personal</span>
+							<span className="text-lg font-display font-semibold underline decoration-dotted text-white">
 								{climb.grade}
 							</span>
 						</button>
@@ -820,22 +817,20 @@ const ClimbDetailView = () => {
 
 						{linkedRoute && (
 							<div className="flex items-baseline gap-1.5">
-								<span className="text-xs text-text-secondary">Official</span>
-								<span className="text-lg font-display font-semibold">
+								<span className="text-xs text-white">Official</span>
+								<span className="text-lg font-display font-semibold text-white">
 									{linkedRoute.grade}
 								</span>
 							</div>
 						)}
-						<p className="text-xs text-text-secondary capitalize">
-							{climb.route_type}
-						</p>
+						<p className="text-xs text-white capitalize">{climb.route_type}</p>
 					</div>
 
 					{/* Gear icon menu */}
 					<div className="relative">
 						<button
 							type="button"
-							className="p-1 text-text-secondary mt-0.5"
+							className="p-1 text-white mt-0.5"
 							onClick={() => {
 								setGearMenuOpen(!gearMenuOpen);
 								setGradePickerOpen(false);
@@ -922,7 +917,7 @@ const ClimbDetailView = () => {
 				climb.sent_status as "sent" | "redpoint" | "flash" | "onsight",
 			) && (
 				<div className="flex items-center gap-3 px-1">
-					<span className="text-xs text-text-secondary">Rating</span>
+					<span className="text-xs text-white">Rating</span>
 					<StarRating
 						value={climb.rating}
 						onChange={(v) => patchRating.mutate({ id: climbId, rating: v })}
@@ -937,7 +932,7 @@ const ClimbDetailView = () => {
 			<div className="rounded-md bg-surface-card">
 				<button
 					type="button"
-					className="flex items-center justify-between w-full p-3 text-sm text-text-secondary"
+					className="flex items-center justify-between w-full p-3 text-sm text-text-on-light"
 					onClick={() => setBurnsOpen(!burnsOpen)}
 				>
 					<span>Burns ({burns?.length ?? 0})</span>
@@ -1066,7 +1061,7 @@ const ClimbDetailView = () => {
 														</p>
 													)}
 													{burn.notes && (
-														<p className="text-sm text-text-secondary">
+														<p className="text-sm text-text-on-light">
 															{burn.notes}
 														</p>
 													)}
@@ -1074,7 +1069,7 @@ const ClimbDetailView = () => {
 												<div className="relative">
 													<button
 														type="button"
-														className="p-1 text-text-secondary"
+														className="p-1 text-text-on-light"
 														onClick={() =>
 															setOpenBurnMenuId(
 																openBurnMenuId === burn.id ? null : burn.id,
@@ -1117,9 +1112,7 @@ const ClimbDetailView = () => {
 								))}
 							</ul>
 						) : (
-							<p className="text-sm text-text-secondary">
-								No burns logged yet.
-							</p>
+							<p className="text-sm text-text-on-light">No burns logged yet.</p>
 						)}
 					</div>
 				)}
@@ -1128,12 +1121,12 @@ const ClimbDetailView = () => {
 			{/* Links section */}
 			<div className="flex flex-col gap-2">
 				<div className="flex items-center justify-between">
-					<h2 className="text-sm font-semibold text-text-secondary uppercase tracking-wide">
+					<h2 className="text-sm font-semibold text-white uppercase tracking-wide">
 						Links
 					</h2>
 					<button
 						type="button"
-						className="flex items-center gap-1 text-sm text-accent-primary"
+						className="flex items-center gap-1 text-sm text-text-light-on-dark-secondary hover:text-text-on-dark"
 						onClick={() => setShowAddLinkModal(true)}
 					>
 						<Plus size={14} />
@@ -1150,7 +1143,7 @@ const ClimbDetailView = () => {
 							>
 								<button
 									type="button"
-									className="flex items-center gap-2 text-sm text-accent-primary min-w-0"
+									className="flex items-center gap-2 text-sm text-text-text-light-on-dark-secondary hover:text-text-on-dark min-w-0"
 									onClick={() => openUrl(link.url)}
 								>
 									<ExternalLink size={14} className="shrink-0" />
@@ -1159,7 +1152,7 @@ const ClimbDetailView = () => {
 								{link.user_id === user?.id && (
 									<button
 										type="button"
-										className="shrink-0 text-text-secondary"
+										className="shrink-0 text-white"
 										onClick={() => setPendingDeleteLinkId(link.id)}
 										disabled={deleteClimbLink.isPending}
 									>

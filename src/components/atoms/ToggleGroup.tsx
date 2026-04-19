@@ -22,7 +22,7 @@ export const ToggleGroup = ({ options, value, onChange }: ToggleGroupProps) => {
 						"flex-1 rounded-[var(--radius-md)] px-3 py-2 text-sm font-semibold transition-colors",
 						value === option.value
 							? "bg-accent-primary text-white"
-							: "text-text-secondary",
+							: "text-text-on-light",
 					)}
 					onClick={() => onChange(option.value)}
 				>

@@ -64,7 +64,7 @@ export const ImportBetaSheet = ({
 					onChange={(v) => setImportMode(v as "text" | "csv")}
 				/>
 				<textarea
-					className="w-full min-h-48 rounded-[var(--radius-md)] bg-surface-input p-3 text-sm outline-none resize-none"
+					className="w-full min-h-48 rounded-[var(--radius-md)] bg-surface-input p-3 text-sm outline-none resize-none text-text-on-light"
 					placeholder={
 						importMode === "csv"
 							? "move1, move2, move3..."

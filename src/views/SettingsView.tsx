@@ -19,13 +19,13 @@ const DevOfflineToggle = () => {
 
 	return (
 		<div className="rounded-lg bg-surface-card p-4 flex flex-col gap-3">
-			<p className="text-xs text-text-secondary uppercase tracking-wide">
+			<p className="text-xs text-text-on-light uppercase tracking-wide">
 				Developer
 			</p>
 			<div className="flex items-center justify-between">
 				<div>
 					<p className="text-sm font-medium">Simulate offline startup</p>
-					<p className="text-xs text-text-secondary mt-0.5">
+					<p className="text-xs text-text-on-light mt-0.5">
 						Treats the app as offline on next cold start. Restart to apply.
 					</p>
 				</div>
@@ -57,7 +57,7 @@ const DevOfflineToggle = () => {
 const SettingsView = () => {
 	return (
 		<div className="flex flex-col gap-4">
-			<h1 className="font-display text-xl font-semibold">Settings</h1>
+			<h1 className="font-display text-xl font-semibold text-white">Settings</h1>
 			<DevOfflineToggle />
 		</div>
 	);

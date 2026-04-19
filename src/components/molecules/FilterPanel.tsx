@@ -91,7 +91,7 @@ export const FilterPanel = ({ climbs }: FilterPanelProps) => {
 		<div className="relative" ref={wrapperRef}>
 			<button
 				type="button"
-				className="flex items-center gap-1.5 text-sm text-text-secondary"
+				className="flex items-center gap-1.5 text-sm text-white"
 				onClick={() => setFiltersOpen(!filtersOpen)}
 			>
 				<span>Filter / Sort</span>
@@ -107,7 +107,7 @@ export const FilterPanel = ({ climbs }: FilterPanelProps) => {
 			{filtersOpen && (
 				<div className="absolute top-full left-0 mt-1 z-10 w-64 flex flex-col gap-3 rounded-[var(--radius-lg)] bg-surface-card border border-card-border p-3 shadow-card">
 					<div>
-						<p className="text-xs text-text-secondary uppercase tracking-wide mb-1">
+						<p className="text-xs text-text-on-light uppercase tracking-wide mb-1">
 							Status
 						</p>
 						<div className="flex flex-wrap gap-x-4 gap-y-1">
@@ -132,7 +132,7 @@ export const FilterPanel = ({ climbs }: FilterPanelProps) => {
 						</div>
 					</div>
 					<div>
-						<p className="text-xs text-text-secondary uppercase tracking-wide mb-1">
+						<p className="text-xs text-text-on-light uppercase tracking-wide mb-1">
 							Type
 						</p>
 						<div className="flex flex-wrap gap-x-4 gap-y-1">
@@ -151,7 +151,7 @@ export const FilterPanel = ({ climbs }: FilterPanelProps) => {
 						</div>
 					</div>
 					<div>
-						<p className="text-xs text-text-secondary uppercase tracking-wide mb-1">
+						<p className="text-xs text-text-on-light uppercase tracking-wide mb-1">
 							Sort
 						</p>
 						<div className="flex flex-col gap-1">

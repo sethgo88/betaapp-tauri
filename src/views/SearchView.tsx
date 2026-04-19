@@ -65,18 +65,18 @@ const SearchView = () => {
 			</div>
 
 			{query.length < 2 && (
-				<p className="text-text-tertiary text-sm text-center pt-8">
+				<p className="text-white/70 text-sm text-center pt-8">
 					Type at least 2 characters to search
 				</p>
 			)}
 
 			{query.length >= 2 && showLocations && (
 				<div>
-					<p className="text-xs text-text-secondary uppercase tracking-wide mb-2">
+					<p className="text-xs text-white uppercase tracking-wide mb-2">
 						Locations
 					</p>
 					{locations.length === 0 ? (
-						<p className="text-text-tertiary text-sm">No matching locations</p>
+						<p className="text-white/70 text-sm">No matching locations</p>
 					) : (
 						<div className="flex flex-col gap-1">
 							{locations.map((loc) => (
@@ -87,7 +87,7 @@ const SearchView = () => {
 									onClick={() => navigateToLocation(loc.id, loc.kind)}
 								>
 									<span className="text-sm">{loc.name}</span>
-									<span className="text-xs text-text-tertiary">
+									<span className="text-xs text-text-on-light">
 										{kindLabel(loc.kind)}
 									</span>
 								</button>
@@ -99,11 +99,11 @@ const SearchView = () => {
 
 			{query.length >= 2 && showRoutes && (
 				<div>
-					<p className="text-xs text-text-secondary uppercase tracking-wide mb-2">
+					<p className="text-xs text-white uppercase tracking-wide mb-2">
 						Routes
 					</p>
 					{routes.length === 0 ? (
-						<p className="text-text-tertiary text-sm">No matching routes</p>
+						<p className="text-white/70 text-sm">No matching routes</p>
 					) : (
 						<div className="flex flex-col gap-1">
 							{routes.map((route) => (
@@ -120,10 +120,10 @@ const SearchView = () => {
 								>
 									<span className="text-sm">{route.name}</span>
 									<div className="flex items-center gap-2">
-										<span className="text-xs text-text-secondary">
+										<span className="text-xs text-text-on-light">
 											{route.grade}
 										</span>
-										<span className="text-xs text-text-tertiary">
+										<span className="text-xs text-text-on-light">
 											{route.route_type}
 										</span>
 									</div>

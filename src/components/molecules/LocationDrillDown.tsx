@@ -101,7 +101,7 @@ function InlineAdd({
 					if (e.key === "Escape") onCancel();
 				}}
 				disabled={isPending}
-				className="flex-1 text-sm bg-transparent outline-0 text-text-primary placeholder:text-text-tertiary border-b border-border-input pb-0.5"
+				className="flex-1 text-sm bg-transparent outline-0 text-text-primary placeholder:text-text-on-light/50 border-b border-border-input pb-0.5"
 			/>
 			<button
 				type="button"
@@ -115,7 +115,7 @@ function InlineAdd({
 				type="button"
 				onClick={onCancel}
 				disabled={isPending}
-				className="text-text-tertiary text-sm"
+				className="text-text-on-light/60 text-sm"
 			>
 				✗
 			</button>
@@ -299,7 +299,7 @@ export function LocationDrillDown({
 								</div>
 							)}
 							{!isSearchFetching && searchResults.length === 0 && (
-								<p className="text-sm text-text-muted px-3 py-3">No results</p>
+								<p className="text-sm text-text-on-light/60 px-3 py-3">No results</p>
 							)}
 							{searchResults.map((result) => (
 								<button
@@ -312,11 +312,11 @@ export function LocationDrillDown({
 										<span className="text-sm text-text-primary truncate">
 											{result.name}
 										</span>
-										<span className="text-xs text-text-muted truncate">
+										<span className="text-xs text-text-on-light/60 truncate">
 											{result.parent_name}
 										</span>
 									</div>
-									<span className="text-xs text-text-muted shrink-0">
+									<span className="text-xs text-text-on-light/60 shrink-0">
 										{kindLabel(result.kind)}
 									</span>
 								</button>

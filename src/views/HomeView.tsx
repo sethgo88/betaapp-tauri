@@ -53,7 +53,7 @@ const HomeView = () => {
 
 	return (
 		<div className="flex flex-col gap-3">
-			<div className="sticky top-0 z-10 bg-surface-page -mx-4 px-4 -mt-4 pt-[env(safe-area-inset-top)] pb-2 flex flex-col gap-2">
+			<div className="sticky top-0 z-10 bg-cyan-800/80 shadow-xl -mx-4 px-4 -mt-4 pt-[env(safe-area-inset-top)] pb-2 flex flex-col gap-2">
 				<Input
 					placeholder="Search climbs…"
 					value={searchText}
@@ -75,7 +75,7 @@ const HomeView = () => {
 					/>
 				))}
 				{filtered.length === 0 && (
-					<p className="text-text-secondary text-center pt-12">
+					<p className="text-white text-center pt-12">
 						{climbs.length === 0
 							? "No climbs yet. Add your first!"
 							: "No matching climbs."}

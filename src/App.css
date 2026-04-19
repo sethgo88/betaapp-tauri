@@ -50,6 +50,46 @@
 	src: url("/fonts/source-sans-3-700.woff2") format("woff2");
 }
 
+@font-face {
+	font-family: "Playfair Display";
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url("/fonts/playfair-display-400.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: "DM Serif Display";
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url("/fonts/dm-serif-display-400.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: "Cormorant Garamond";
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url("/fonts/cormorant-garamond-400.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: "Fraunces";
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url("/fonts/fraunces-400.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: "Libre Baskerville";
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url("/fonts/libre-baskerville-400.woff2") format("woff2");
+}
+
 /* ── Theme tokens ─────────────────────────────────────────────────────────── */
 
 @theme {
@@ -58,6 +98,7 @@
 	--color-surface-card: var(--surface-card);
 	--color-surface-raised: var(--surface-raised);
 	--color-surface-nav: var(--surface-nav);
+	--color-surface-stone: var(--surface-stone);
 	--color-surface-input: var(--surface-input);
 	--color-surface-hover: var(--surface-hover);
 	--color-surface-active: var(--surface-active);
@@ -66,11 +107,17 @@
 	--color-text-primary: var(--text-primary);
 	--color-text-secondary: var(--text-secondary);
 	--color-text-tertiary: var(--text-tertiary);
+	--color-text-on-dark: var(--text-on-dark);
+	--color-text-on-light: var(--text-on-light);
+	--color-text-light-on-dark-secondary: var(--text-light-on-dark-secondary);
 
 	/* Status & badges */
 	--color-status-default: var(--status-default);
 	--color-status-sent: var(--status-sent);
 	--color-status-todo: var(--status-todo);
+	--color-sent: var(--sent);
+	--color-project: var(--project);
+	--color-todo: var(--todo);
 	--color-badge-sent-bg: var(--badge-sent-bg);
 	--color-badge-sent-text: var(--badge-sent-text);
 	--color-badge-todo-bg: var(--badge-todo-bg);
@@ -82,6 +129,8 @@
 
 	/* Typography */
 	--font-display: "Lora", Georgia, serif;
+	--font-playfair: "Playfair Display", Georgia, serif;
+	--font-fraunces: "Fraunces", serif;
 	--font-body: "Source Sans 3", system-ui, sans-serif;
 
 	/* Preset: radius */
@@ -106,22 +155,29 @@
 	--surface-card: #2a2420;
 	--surface-raised: #4a3f34;
 	--surface-nav: #1e1a16;
-	--surface-input: #2a2420;
+	--surface-stone: oklch(93% 0.012 215);
+	--surface-input: var(--surface-stone);
 	--surface-hover: #3b3228;
 	--surface-active: #4a3f34;
 	--border-default: #4a3f34;
 	--border-input: #1e1a16;
 	--text-primary: #f5f0eb;
-	--text-secondary: #b5a99b;
+	--text-secondary: #ffffff;
 	--text-tertiary: #8a7e72;
+	--text-on-dark: #ffffff;
+	--text-on-light: #1a1a1a;
+	--text-light-on-dark-secondary: rgb(255 255 255 / 0.7);
 	--status-default: rgba(30, 26, 22, 0.3);
 	--status-sent: rgba(6, 78, 59, 0.2);
 	--status-todo: rgba(120, 53, 15, 0.2);
-	--badge-sent-bg: #064e3b;
-	--badge-sent-text: #6ee7b7;
+	--sent: #3e6d40;
+	--project: #b8482a;
+	--todo: #1f72a6;
+	--badge-sent-bg: #134e4a;
+	--badge-sent-text: #5eead4;
 	--badge-todo-bg: #78350f;
 	--badge-todo-text: #fcd34d;
-	--accent-primary: #059669;
+	--accent-primary: #0d9488;
 	--accent-secondary: #d97706;
 	--preset-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.3);
 	--preset-shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.4);
@@ -136,22 +192,29 @@
 	--surface-card: #ffffff;
 	--surface-raised: #f5efe8;
 	--surface-nav: #f5efe8;
-	--surface-input: #f5efe8;
+	--surface-stone: oklch(97% 0.008 215);
+	--surface-input: var(--surface-stone);
 	--surface-hover: #f0e9e0;
 	--surface-active: #e0d6ca;
 	--border-default: #e0d6ca;
 	--border-input: #d4c9bc;
 	--text-primary: #2a2420;
-	--text-secondary: #78716c;
+	--text-secondary: #ffffff;
 	--text-tertiary: #a8a29e;
+	--text-on-dark: #ffffff;
+	--text-on-light: #1a1a1a;
+	--text-light-on-dark-secondary: rgb(255 255 255 / 0.7);
 	--status-default: #f5efe8;
 	--status-sent: #ecfdf5;
 	--status-todo: #fffbeb;
-	--badge-sent-bg: #d1fae5;
-	--badge-sent-text: #065f46;
+	--sent: #3e6d40;
+	--project: #b8482a;
+	--todo: #1f72a6;
+	--badge-sent-bg: #ccfbf1;
+	--badge-sent-text: #0f766e;
 	--badge-todo-bg: #fef3c7;
 	--badge-todo-text: #92400e;
-	--accent-primary: #059669;
+	--accent-primary: #0d9488;
 	--accent-secondary: #d97706;
 	--preset-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08);
 	--preset-shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.1);

@@ -126,7 +126,7 @@ const ImageActionSheet = ({
 					<div className="flex flex-col gap-1 p-3">
 						{/* Sort row */}
 						<div className="flex items-center justify-between px-2 py-3 border-b border-border-default">
-							<span className="text-sm text-text-secondary">
+							<span className="text-sm text-text-on-light">
 								Photo {index + 1} of {total}
 							</span>
 							<div className="flex items-center gap-4">
@@ -134,7 +134,7 @@ const ImageActionSheet = ({
 									type="button"
 									onClick={onMoveLeft}
 									disabled={index === 0 || isReordering}
-									className="text-text-secondary disabled:opacity-30"
+									className="text-text-on-light disabled:opacity-30"
 									aria-label="Move left"
 								>
 									<ChevronLeft size={20} />
@@ -143,7 +143,7 @@ const ImageActionSheet = ({
 									type="button"
 									onClick={onMoveRight}
 									disabled={index === total - 1 || isReordering}
-									className="text-text-secondary disabled:opacity-30"
+									className="text-text-on-light disabled:opacity-30"
 									aria-label="Move right"
 								>
 									<ChevronRight size={20} />
@@ -228,7 +228,7 @@ export const ClimbImageGallery = ({ climbId }: ClimbImageGalleryProps) => {
 
 	return (
 		<div className="flex flex-col gap-2">
-			<span className="text-sm text-text-secondary">
+			<span className="text-sm text-white">
 				Photos ({imageCount} / {USER_IMAGE_CAP})
 			</span>
 
@@ -284,7 +284,7 @@ export const ClimbImageGallery = ({ climbId }: ClimbImageGalleryProps) => {
 						onClick={() => inputRef.current?.click()}
 						disabled={addImage.isPending}
 						aria-label="Add photo"
-						className="rounded-[var(--radius-md)] border-2 border-dashed border-border-default flex items-center justify-center text-text-tertiary disabled:opacity-40"
+						className="rounded-[var(--radius-md)] border-2 border-dashed border-white/50 flex items-center justify-center text-white disabled:opacity-40"
 						style={{ width: THUMB_SIZE, height: THUMB_SIZE }}
 					>
 						<ImagePlus size={24} />
@@ -311,7 +311,7 @@ export const ClimbImageGallery = ({ climbId }: ClimbImageGalleryProps) => {
 					type="button"
 					onClick={() => setShowVideoCapturer(true)}
 					disabled={addImage.isPending}
-					className="flex items-center gap-1.5 text-xs text-text-tertiary disabled:opacity-40 self-start"
+					className="flex items-center gap-1.5 text-xs text-white disabled:opacity-40 self-start"
 				>
 					<Film size={13} />
 					Capture from video

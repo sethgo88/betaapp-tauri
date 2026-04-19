@@ -99,7 +99,7 @@ const RegionView = () => {
 			)}
 
 			{subRegions.length === 0 && !showSubRegionForm && (
-				<p className="text-text-secondary text-sm">
+				<p className="text-white text-sm">
 					No areas in this region yet.
 				</p>
 			)}
@@ -129,7 +129,7 @@ const RegionView = () => {
 						<button
 							type="button"
 							aria-label="Delete sub-area"
-							className="shrink-0 text-text-tertiary hover:text-red-400"
+							className="shrink-0 text-text-on-light/60 hover:text-red-400"
 							onClick={() => setPendingDeleteSubRegion(sr)}
 						>
 							<Trash2 size={15} />
@@ -149,7 +149,7 @@ const RegionView = () => {
 				<button
 					type="button"
 					onClick={() => setShowSubRegionForm(true)}
-					className="text-sm text-text-secondary hover:text-text-primary text-left"
+					className="text-sm text-text-light-on-dark-secondary hover:text-text-on-dark text-left"
 				>
 					+ Add sub-area
 				</button>

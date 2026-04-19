@@ -41,7 +41,7 @@ export function RoutePickerSheet({ isOpen, onClose, onSelect }: Props) {
 				)}
 
 				{wallId && !isLoading && verifiedRoutes.length === 0 && (
-					<p className="text-sm text-text-secondary">
+					<p className="text-sm text-text-primary/70">
 						No verified routes on this wall.
 					</p>
 				)}
@@ -59,10 +59,10 @@ export function RoutePickerSheet({ isOpen, onClose, onSelect }: Props) {
 									{route.name}
 								</span>
 								<div className="flex items-center gap-2">
-									<span className="text-sm text-text-secondary">
+									<span className="text-sm text-text-on-light">
 										{route.grade}
 									</span>
-									<span className="text-xs text-text-muted capitalize">
+									<span className="text-xs text-text-on-light/60 capitalize">
 										{route.route_type}
 									</span>
 								</div>
