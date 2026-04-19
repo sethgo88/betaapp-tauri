@@ -80,6 +80,7 @@ Versioned migration runner. Maintains a `schema_version` table (single row) and 
 | v28 | `climb_links` table — per-climb external links (#205) |
 | v29 | `rating` (INTEGER, nullable) on `climbs`; `avg_rating` (REAL, nullable) on `routes_cache` (#212) |
 | v30 | `rating_count` (INTEGER, default 0) on `routes_cache` (#212) |
+| v31 | `sun_data` (TEXT, nullable) on `walls_cache` and `routes_cache` (#220) |
 
 ### Rules
 - Always use `?` positional parameters — never string interpolation (SQL injection)
@@ -185,6 +186,32 @@ formatDate(someIsoTimestamp)           // e.g. '05-03-25'
 ```
 
 Use this function for **every** date shown to the user — never call `toLocaleDateString()` or render a raw date string directly.
+
+---
+
+## sun.ts — sun/shade types and helpers
+
+```ts
+import { summarizeSunData, getEffectiveSunData } from '@/lib/sun'
+import type { SunData, SunExposure, Aspect, Month } from '@/lib/sun'
+```
+
+Types for wall and route sun exposure data, stored as JSON in the `sun_data` TEXT column.
+
+| Type | Values |
+|---|---|
+| `SunExposure` | `"full-sun"` \| `"partial-shade"` \| `"full-shade"` |
+| `Aspect` | `"N"` \| `"NE"` \| `"E"` \| `"SE"` \| `"S"` \| `"SW"` \| `"W"` \| `"NW"` |
+| `Month` | `1`–`12` (January = 1) |
+| `SunData` | `{ aspect?: Aspect; monthly?: { month: Month; exposure: SunExposure }[]; notes?: string }` |
+
+### `summarizeSunData(data: SunData): string`
+
+Returns a human-readable summary string (e.g. `"Faces SE · Full sun"`). Joins aspect, dominant monthly exposure, and notes with ` · `.
+
+### `getEffectiveSunData(route, wall): SunData | null`
+
+Returns `route.sun_data` if present, else `wall.sun_data`, else `null`. Both arguments only need a `{ sun_data?: SunData | null }` shape — no full `Route`/`Wall` type required.
 
 ---
 

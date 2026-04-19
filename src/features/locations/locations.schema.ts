@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { SubmissionStatus } from "@/features/routes/routes.schema";
+import type { SunData } from "@/lib/sun";
 
 export const WallType = z.enum(["wall", "boulder"]);
 export type WallType = z.infer<typeof WallType>;
@@ -69,6 +70,7 @@ export const WallSchema = z.object({
 	trad_count: z.number().default(0),
 	boulder_count: z.number().default(0),
 	route_count: z.number().default(0),
+	sun_data: z.custom<SunData | null>().optional(),
 });
 
 export type Country = z.infer<typeof CountrySchema>;

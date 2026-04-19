@@ -1,5 +1,6 @@
 import { getDb } from "@/lib/db";
 import { supabase } from "@/lib/supabase";
+import type { SunData } from "@/lib/sun";
 import type {
 	Route,
 	RouteBodyStat,
@@ -442,4 +443,25 @@ export async function applyRemoteRouteLink(link: RouteLink): Promise<void> {
 			link.deleted_at ?? null,
 		],
 	);
+}
+
+// ── Sun data ─────────────────────────────────────────────────────────────────
+
+export async function updateRouteSunData(
+	routeId: string,
+	data: SunData | null,
+): Promise<void> {
+	const serialized = data !== null ? JSON.stringify(data) : null;
+	// biome-ignore lint/suspicious/noExplicitAny: sun_data not yet in generated Supabase types
+	const { error } = await (supabase as any)
+		.from("routes")
+		.update({ sun_data: serialized })
+		.eq("id", routeId);
+	if (error) throw error;
+
+	const db = await getDb();
+	await db.execute("UPDATE routes_cache SET sun_data = ? WHERE id = ?", [
+		serialized,
+		routeId,
+	]);
 }

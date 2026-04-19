@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { SunData } from "@/lib/sun";
 
 export const SubmissionStatus = z.enum(["pending", "verified", "rejected"]);
 export type SubmissionStatus = z.infer<typeof SubmissionStatus>;
@@ -16,6 +17,7 @@ export const RouteSchema = z.object({
 	sort_order: z.number().int().default(0),
 	avg_rating: z.number().nullable().optional(),
 	rating_count: z.number().int().default(0),
+	sun_data: z.custom<SunData | null>().optional(),
 });
 
 export const RouteSubmitSchema = z.object({

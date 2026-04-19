@@ -646,6 +646,12 @@ const migrations: Migration[] = [
 			`ALTER TABLE routes_cache ADD COLUMN rating_count INTEGER NOT NULL DEFAULT 0`,
 		);
 	},
+
+	// v31: sun_data on walls_cache and routes_cache (#220)
+	async (db) => {
+		await db.execute(`ALTER TABLE walls_cache ADD COLUMN sun_data TEXT`);
+		await db.execute(`ALTER TABLE routes_cache ADD COLUMN sun_data TEXT`);
+	},
 ];
 
 export async function runMigrations(db: DbAdapter): Promise<void> {
