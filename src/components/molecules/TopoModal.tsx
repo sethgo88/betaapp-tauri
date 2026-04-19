@@ -191,7 +191,7 @@ export const TopoModal = (props: TopoModalProps) => {
 	};
 
 	return (
-		<div className="fixed inset-0 z-50 bg-black flex flex-col">
+		<div className="fixed inset-0 z-50 bg-cyan-900 flex flex-col">
 			{/* Header */}
 			<div
 				className="shrink-0 flex items-center px-4 py-3"

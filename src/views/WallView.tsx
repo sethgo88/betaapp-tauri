@@ -82,7 +82,7 @@ const SortableRouteCard = ({ route }: { route: Route }) => {
 		>
 			<button
 				type="button"
-				className="shrink-0 text-text-tertiary touch-none cursor-grab active:cursor-grabbing"
+				className="shrink-0 text-text-on-light touch-none cursor-grab active:cursor-grabbing"
 				aria-label="Drag to reorder"
 				{...attributes}
 				{...listeners}
@@ -95,13 +95,13 @@ const SortableRouteCard = ({ route }: { route: Route }) => {
 					{route.avg_rating != null && (
 						<span className="flex items-center gap-1">
 							<StarRating value={Math.round(route.avg_rating)} readOnly size={14} />
-							<span className="text-xs text-text-tertiary">
+							<span className="text-xs text-text-on-light">
 								{route.avg_rating.toFixed(1)} · {route.rating_count ?? 0}
 							</span>
 						</span>
 					)}
-					<span className="text-xs text-text-secondary">{route.grade}</span>
-					<span className="text-xs text-text-tertiary">{route.route_type}</span>
+					<span className="text-xs text-text-on-light">{route.grade}</span>
+					<span className="text-xs text-text-on-light">{route.route_type}</span>
 				</div>
 			</div>
 		</div>
@@ -112,13 +112,13 @@ const ViewOnMap = ({ lat, lng }: { lat: number; lng: number }) => {
 	const navigate = useNavigate();
 	return (
 		<div className="flex items-center gap-3">
-			<p className="text-xs text-text-secondary">
+			<p className="text-xs text-white">
 				{lat.toFixed(5)}, {lng.toFixed(5)}
 			</p>
 			<button
 				type="button"
 				onClick={() => navigate({ to: "/map", search: { lat, lng, zoom: 15 } })}
-				className="flex items-center gap-1 text-xs text-accent-primary font-semibold"
+				className="flex items-center gap-1 text-xs text-text-light-on-dark-secondary hover:text-text-on-dark font-semibold"
 			>
 				<MapPin size={12} />
 				View on map
@@ -210,12 +210,12 @@ const WallView = () => {
 	}
 
 	if (!wall) {
-		return <p className="text-text-secondary text-center pt-12">Not found</p>;
+		return <p className="text-white text-center pt-12">Not found</p>;
 	}
 
 	return (
 		<div className="flex flex-col gap-3">
-			<h1 className="text-xl font-display font-bold">{wall.name}</h1>
+			<h1 className="text-xl font-display font-bold text-white">{wall.name}</h1>
 
 			{isAdmin ? (
 				<select
@@ -223,13 +223,13 @@ const WallView = () => {
 					onChange={(e) =>
 						updateWallType.mutate({ id: wallId, wallType: e.target.value })
 					}
-					className="self-start text-xs bg-surface-page text-text-secondary rounded-[var(--radius-sm)] px-2 py-1 border border-border-default"
+					className="self-start text-xs bg-surface-stone text-text-on-light rounded-[var(--radius-sm)] px-2 py-1 border border-border-default"
 				>
 					<option value="wall">Wall</option>
 					<option value="boulder">Boulder</option>
 				</select>
 			) : (
-				<span className="text-xs text-text-secondary capitalize">
+				<span className="text-xs text-white capitalize">
 					{wall.wall_type ?? "wall"}
 				</span>
 			)}
@@ -262,7 +262,7 @@ const WallView = () => {
 			/>
 
 			<div className="flex flex-col gap-1">
-				<p className="text-xs text-text-tertiary uppercase tracking-wide">
+				<p className="text-xs text-white uppercase tracking-wide">
 					Approach
 				</p>
 				<EditableDescription
@@ -291,7 +291,7 @@ const WallView = () => {
 			{/* Topo section */}
 			{wallTopo && (
 				<div className="flex flex-col gap-1">
-					<p className="text-xs text-text-tertiary">Topo</p>
+					<p className="text-xs text-white">Topo</p>
 					<button
 						type="button"
 						onClick={() => setShowTopoModal(true)}
@@ -341,7 +341,7 @@ const WallView = () => {
 				<button
 					type="button"
 					onClick={() => setShowTopoEdit(true)}
-					className="text-sm text-accent-primary text-left"
+					className="text-sm text-text-light-on-dark-secondary hover:text-text-on-dark text-left"
 				>
 					{wallTopo ? "Edit topo" : "+ Add topo"}
 				</button>
@@ -387,7 +387,7 @@ const WallView = () => {
 					<button
 						type="button"
 						onClick={() => setShowCoordEditor(true)}
-						className="text-sm text-text-secondary hover:text-text-primary text-left"
+						className="text-sm text-text-light-on-dark-secondary hover:text-text-on-dark text-left"
 					>
 						{wall.lat != null ? "Edit coordinates" : "+ Add coordinates"}
 					</button>
@@ -416,7 +416,7 @@ const WallView = () => {
 			)}
 
 			{routes.length === 0 && (
-				<p className="text-text-secondary text-sm">
+				<p className="text-white text-sm">
 					No routes on this wall yet.
 				</p>
 			)}
@@ -428,7 +428,7 @@ const WallView = () => {
 						type="button"
 						onClick={handleSaveOrder}
 						disabled={reorderRoutesMutation.isPending}
-						className="text-sm text-accent-primary font-semibold text-left"
+						className="text-sm text-text-light-on-dark-secondary hover:text-text-on-dark font-semibold text-left"
 					>
 						{reorderRoutesMutation.isPending ? "Saving…" : "Done"}
 					</button>
@@ -436,7 +436,7 @@ const WallView = () => {
 					<button
 						type="button"
 						onClick={handleStartReorder}
-						className="text-sm text-accent-primary text-left"
+						className="text-sm text-text-light-on-dark-secondary hover:text-text-on-dark text-left"
 					>
 						Edit order
 					</button>
@@ -477,8 +477,8 @@ const WallView = () => {
 							<div className="flex flex-col gap-0.5">
 								<span className="font-medium">{route.name}</span>
 								<div className="flex items-center gap-1.5">
-									<span className="text-xs text-text-secondary">{route.grade}</span>
-									<span className="text-xs text-text-tertiary">{route.route_type}</span>
+									<span className="text-xs text-text-on-light">{route.grade}</span>
+									<span className="text-xs text-text-on-light">{route.route_type}</span>
 									{route.status === "pending" && (
 										<span className="text-xs text-accent-secondary">pending</span>
 									)}
@@ -491,7 +491,7 @@ const WallView = () => {
 										readOnly
 										size={14}
 									/>
-									<span className="text-xs text-text-tertiary">
+									<span className="text-xs text-text-on-light">
 										{route.avg_rating.toFixed(1)} · {route.rating_count ?? 0}
 									</span>
 								</span>
@@ -501,7 +501,7 @@ const WallView = () => {
 							<button
 								type="button"
 								aria-label="Delete route"
-								className="shrink-0 text-text-tertiary hover:text-red-400"
+								className="shrink-0 text-text-on-light/60 hover:text-red-400"
 								onClick={() => setPendingDeleteRoute(route)}
 							>
 								<Trash2 size={15} />

@@ -147,37 +147,49 @@ The app uses a **design preset** infrastructure for visual styling. The current 
 **Source Sans 3** (sans-serif) — body font for text, labels, buttons, form fields. Self-hosted woff2 in `public/fonts/`.
 
 Usage:
-- `font-display` — Lora (headings, climb/route names, grades)
+- `font-display` — Lora (headings, climb/route names, grades) — primary display font
 - `font-body` — Source Sans 3 (set on `body`, used by default)
+- `font-playfair` — Playfair Display (available for secondary display use)
+- `font-fraunces` — Fraunces (available for secondary display use)
 
 ### Semantic color tokens
 
-Colors are defined as CSS custom properties in `src/App.css` and registered via Tailwind v4's `@theme` directive. Dark mode is the default; light mode activates when `:root` has the `.light` class.
+Colors are defined as CSS custom properties in `src/App.css` and registered via Tailwind v4's `@theme` directive. The app is light-mode only — `.light` is always applied to `:root` at startup.
 
 **Never use raw stone-* classes for surfaces, text, or borders.** Use the semantic tokens:
 
-| Token class | Dark hex | Light hex |
+| Token class | Light hex | Notes |
 |---|---|---|
-| `bg-surface-page` | `#3b3228` | `#faf6f1` |
-| `bg-surface-card` | `#2a2420` | `#ffffff` |
-| `bg-surface-nav` | `#1e1a16` | `#f5efe8` |
-| `bg-surface-input` | `#2a2420` | `#f5efe8` |
-| `bg-surface-hover` | `#3b3228` | `#f0e9e0` |
-| `bg-surface-active` | `#4a3f34` | `#e0d6ca` |
-| `border-border-default` | `#4a3f34` | `#e0d6ca` |
-| `border-border-input` | `#1e1a16` | `#d4c9bc` |
-| `text-text-primary` | `#f5f0eb` | `#2a2420` |
-| `text-text-secondary` | `#b5a99b` | `#78716c` |
-| `text-text-tertiary` | `#8a7e72` | `#a8a29e` |
+| `bg-surface-page` | `#faf6f1` | Page background |
+| `bg-surface-card` | `#ffffff` | Card background |
+| `bg-surface-nav` | `#f5efe8` | Nav bar background |
+| `bg-surface-stone` | `oklch(97% 0.008 215)` | Cool-tinted inset surface, used for inputs |
+| `bg-surface-hover` | `#f0e9e0` | Hover state |
+| `bg-surface-active` | `#e0d6ca` | Pressed/active state |
+| `border-border-default` | `#e0d6ca` | Default border |
+| `border-border-input` | `#d4c9bc` | Input border |
+| `text-text-primary` | `#2a2420` | Main text |
+| `text-text-secondary` | `#ffffff` | White — for text on dark/colored backgrounds |
+| `text-text-tertiary` | `#a8a29e` | Muted/secondary labels |
+| `text-text-on-dark` | `#ffffff` | White text on teal or dark surfaces (e.g. filled buttons) |
+| `text-text-on-light` | `#1a1a1a` | Near-black, explicit contrast on light surfaces |
 
 ### Accent tokens
 
 | Token class | Value | Usage |
 |---|---|---|
-| `bg-accent-primary` / `text-accent-primary` | `#059669` (emerald-600) | Primary actions, active nav, checkboxes |
+| `bg-accent-primary` / `text-accent-primary` | `#0d9488` (teal-600) | Primary actions, active nav, checkboxes |
 | `bg-accent-secondary` / `text-accent-secondary` | `#d97706` (amber-600) | Secondary buttons, secondary actions |
 
-Status and badge tokens (`status-default`, `status-sent`, `status-todo`, `badge-sent-bg`, etc.) are also available — see `App.css` for the full list.
+### Status color tokens
+
+| Token class | Value | Usage |
+|---|---|---|
+| `text-sent` | `#3e6d40` | Sent status label color |
+| `text-project` | `#b8482a` | Project status label color |
+| `text-todo` | `#1f72a6` | Todo status label color |
+
+Badge tokens (`badge-sent-bg`, `badge-sent-text`, `badge-todo-bg`, `badge-todo-text`) and status surface tokens (`status-default`, `status-sent`, `status-todo`) are also available — see `App.css` for the full list.
 
 ### Preset tokens
 
@@ -205,11 +217,11 @@ Follow these rules when creating or modifying any component:
 - Borders → use `border-border-*` or `border-card-border` tokens
 - Primary actions (buttons, active states, checkboxes) → use `accent-primary` token
 - Secondary actions → use `accent-secondary` token
-- Never use raw `emerald-*`, `zinc-*`, or `stone-*` for buttons, accents, or surfaces
+- Never use raw `teal-*`, `emerald-*`, `zinc-*`, or `stone-*` for buttons, accents, or surfaces
 
 **Exceptions** — raw Tailwind colors are OK for:
-- Status indicators: `border-l-emerald-500` (success), `border-l-red-500` (error), `border-l-amber-500` (warning)
-- Spinner border: `border-t-emerald-500`
+- Status indicators: `border-l-teal-500` (success), `border-l-red-500` (error), `border-l-amber-500` (warning)
+- Spinner border: `border-t-teal-500`
 - Destructive actions: `bg-red-800` (reject buttons)
 - Overlay backdrops: `bg-black/60`
 

@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>BetaApp — HomeView</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Reset ──────────────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    button { background: none; border: none; cursor: pointer; font: inherit; color: inherit; }
+    input { font: inherit; }
+
+    /* ── Tokens (dark / warm earth) ─────────────────────────────────────────── */
+    :root {
+      --surface-page:    #3b3228;
+      --surface-card:    #2a2420;
+      --surface-raised:  #4a3f34;
+      --surface-nav:     #1e1a16;
+      --surface-input:   #2a2420;
+      --surface-hover:   #3b3228;
+      --border-default:  #4a3f34;
+      --border-input:    #1e1a16;
+      --text-primary:    #f5f0eb;
+      --text-secondary:  #b5a99b;
+      --text-tertiary:   #8a7e72;
+      --status-default:  rgba(30, 26, 22, 0.30);
+      --status-sent:     rgba(6, 78, 59, 0.20);
+      --status-todo:     rgba(120, 53, 15, 0.20);
+      --badge-sent-bg:   #064e3b;
+      --badge-sent-text: #6ee7b7;
+      --badge-todo-bg:   #78350f;
+      --badge-todo-text: #fcd34d;
+      --accent-primary:  #059669;
+      --accent-secondary:#d97706;
+      --shadow-card:     0 1px 3px rgba(0,0,0,0.30);
+      --shadow-elevated: 0 4px 12px rgba(0,0,0,0.40);
+      --radius-sm: 0.25rem;
+      --radius-md: 0.5rem;
+      --radius-lg: 0.75rem;
+      --font-display: 'Lora', Georgia, serif;
+      --font-body:    'Source Sans 3', system-ui, sans-serif;
+    }
+
+    /* ── Base ───────────────────────────────────────────────────────────────── */
+    html, body {
+      height: 100%;
+      background: #1a1512; /* outer shell */
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    /* Phone shell */
+    .phone {
+      width: 390px;
+      min-height: 100vh;
+      background: var(--surface-page);
+      font-family: var(--font-body);
+      color: var(--text-primary);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Main scroll area ───────────────────────────────────────────────────── */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 16px calc(7vh + 1.5rem);
+    }
+
+    /* ── Sticky header ──────────────────────────────────────────────────────── */
+    .sticky-header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--surface-page);
+      margin: -16px -16px 0;
+      padding: 16px 16px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    /* ── Search input ───────────────────────────────────────────────────────── */
+    .search-input {
+      width: 100%;
+      border-radius: var(--radius-lg);
+      background: var(--surface-input);
+      padding: 10px 12px;
+      font-weight: 600;
+      border: 1px solid var(--border-input);
+      color: var(--text-primary);
+      outline: none;
+      transition: border-color 0.15s;
+      font-size: 15px;
+    }
+    .search-input::placeholder { color: var(--text-tertiary); font-weight: 400; }
+    .search-input:focus { border-color: var(--accent-primary); }
+
+    /* ── Filter row ─────────────────────────────────────────────────────────── */
+    .filter-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+    .filter-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent-primary);
+    }
+    .filter-chevron {
+      width: 16px; height: 16px;
+      transition: transform 0.2s;
+    }
+    .filter-chevron.open { transform: rotate(180deg); }
+
+    /* Filter dropdown */
+    .filter-dropdown {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      z-index: 20;
+      width: 256px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      border-radius: var(--radius-lg);
+      background: var(--surface-card);
+      border: 1px solid var(--border-default);
+      padding: 12px;
+      box-shadow: var(--shadow-elevated);
+    }
+    .filter-section-label {
+      font-size: 11px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 4px;
+    }
+    .filter-checkbox-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 16px;
+    }
+    .filter-checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .filter-checkbox-label input { accent-color: var(--accent-primary); width: 14px; height: 14px; }
+
+    /* ── Climb list ─────────────────────────────────────────────────────────── */
+    .climb-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    /* ── Climb card ─────────────────────────────────────────────────────────── */
+    .climb-card {
+      position: relative;
+      display: flex;
+      overflow: hidden;
+      border-radius: var(--radius-md);
+      padding: 14px;
+      box-shadow: var(--shadow-card);
+      border: 1px solid var(--border-default);
+      cursor: pointer;
+      gap: 16px;
+      background: var(--status-default);
+      transition: background 0.15s;
+      text-align: left;
+      width: 100%;
+    }
+    .climb-card:active { filter: brightness(1.08); }
+    .climb-card.sent  { background: var(--status-sent); }
+    .climb-card.todo  { background: var(--status-todo); }
+
+    .climb-card-inner {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      justify-content: space-between;
+      gap: 4px;
+    }
+    .climb-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      line-height: 1;
+      width: 100%;
+    }
+    .climb-name {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 15px;
+    }
+    .climb-grade {
+      font-family: var(--font-display);
+      font-size: 14px;
+      flex-shrink: 0;
+      margin-left: 8px;
+    }
+    .climb-location {
+      font-size: 12px;
+      color: rgba(245, 240, 235, 0.70);
+    }
+
+    /* ── NavBar ─────────────────────────────────────────────────────────────── */
+    .navbar {
+      position: fixed;
+      bottom: 0;
+      width: 390px;
+      display: flex;
+      justify-content: space-around;
+      background: var(--surface-nav);
+      border-top: 1px solid var(--border-default);
+      height: 7vh;
+      min-height: 52px;
+      align-items: center;
+      padding: 0 12px;
+    }
+    .nav-btn {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+      color: var(--text-primary);
+    }
+    .nav-btn.active { color: var(--accent-primary); }
+    .nav-btn svg { display: block; }
+
+    /* ── Empty state ─────────────────────────────────────────────────────────── */
+    .empty-state {
+      text-align: center;
+      padding-top: 48px;
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="phone">
+
+    <div class="main">
+      <!-- Sticky header -->
+      <div class="sticky-header">
+        <input
+          class="search-input"
+          type="search"
+          placeholder="Search climbs…"
+          id="search"
+          oninput="filterClimbs()"
+        />
+        <div style="position:relative">
+          <button class="filter-row" onclick="toggleFilter()">
+            <span>Filter / Sort</span>
+            <span class="filter-dot" id="filterDot" style="display:none"></span>
+            <svg class="filter-chevron" id="filterChevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+          <div class="filter-dropdown" id="filterDropdown" style="display:none">
+            <div>
+              <p class="filter-section-label">Status</p>
+              <div class="filter-checkbox-row">
+                <label class="filter-checkbox-label"><input type="checkbox" checked onchange="filterClimbs()" data-status="sent" /> Sent (4)</label>
+                <label class="filter-checkbox-label"><input type="checkbox" checked onchange="filterClimbs()" data-status="project" /> Project (3)</label>
+                <label class="filter-checkbox-label"><input type="checkbox" checked onchange="filterClimbs()" data-status="todo" /> Todo (2)</label>
+              </div>
+            </div>
+            <div>
+              <p class="filter-section-label">Type</p>
+              <div class="filter-checkbox-row">
+                <label class="filter-checkbox-label"><input type="checkbox" checked onchange="filterClimbs()" data-type="sport" /> Sport (5)</label>
+                <label class="filter-checkbox-label"><input type="checkbox" checked onchange="filterClimbs()" data-type="boulder" /> Boulder (4)</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Climb list -->
+      <ul class="climb-list" id="climbList"></ul>
+      <p class="empty-state" id="emptyState" style="display:none">No matching climbs.</p>
+    </div>
+
+    <!-- NavBar -->
+    <nav class="navbar">
+      <!-- Home -->
+      <button class="nav-btn active" aria-label="Home">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+      </button>
+      <!-- Add -->
+      <button class="nav-btn" aria-label="Add climb">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
+        </svg>
+      </button>
+      <!-- Search -->
+      <button class="nav-btn" aria-label="Search">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+      </button>
+      <!-- Menu -->
+      <button class="nav-btn" aria-label="Menu">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+    </nav>
+
+  </div>
+
+  <script>
+    const CLIMBS = [
+      { name: "Midnight Lightning",  grade: "V8",   status: "sent",    type: "boulder", location: "Yosemite · Camp 4" },
+      { name: "Action Directe",      grade: "5.14d", status: "project", type: "sport",   location: "Frankenjura · Waldkopf" },
+      { name: "The Nose Speed",      grade: "5.14a", status: "sent",    type: "sport",   location: "Yosemite · El Capitan" },
+      { name: "Sharma Roof",         grade: "V11",  status: "todo",    type: "boulder", location: "Bishop · Buttermilks" },
+      { name: "Realization",         grade: "5.15a", status: "project", type: "sport",   location: "Ceüse · Berlin Wall" },
+      { name: "The Mandala",         grade: "V12",  status: "sent",    type: "boulder", location: "Bishop · Buttermilks" },
+      { name: "Dreamtime",           grade: "V15",  status: "todo",    type: "boulder", location: "Cresciano" },
+      { name: "Just Do It",          grade: "5.14c", status: "sent",    type: "sport",   location: "Smith Rock · Churning" },
+      { name: "Hubble",              grade: "5.14d", status: "project", type: "sport",   location: "Raven Tor · Peak District" },
+    ];
+
+    function renderCard(climb) {
+      const li = document.createElement('li');
+      li.className = `climb-card ${climb.status === 'sent' ? 'sent' : climb.status === 'todo' ? 'todo' : ''}`;
+      li.innerHTML = `
+        <div class="climb-card-inner">
+          <div class="climb-card-top">
+            <span class="climb-name">${climb.name}</span>
+            <span class="climb-grade">${climb.grade}</span>
+          </div>
+          <div class="climb-location">${climb.location}</div>
+        </div>
+      `;
+      return li;
+    }
+
+    function filterClimbs() {
+      const query = document.getElementById('search').value.toLowerCase();
+      const activeStatuses = new Set([...document.querySelectorAll('input[data-status]')].filter(c => c.checked).map(c => c.dataset.status));
+      const activeTypes    = new Set([...document.querySelectorAll('input[data-type]')].filter(c => c.checked).map(c => c.dataset.type));
+
+      const list  = document.getElementById('climbList');
+      const empty = document.getElementById('emptyState');
+      list.innerHTML = '';
+
+      const filtered = CLIMBS.filter(c => {
+        if (!activeStatuses.has(c.status)) return false;
+        if (!activeTypes.has(c.type)) return false;
+        if (query && !(c.name + c.grade + c.location).toLowerCase().includes(query)) return false;
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        empty.style.display = 'block';
+      } else {
+        empty.style.display = 'none';
+        filtered.forEach(c => list.appendChild(renderCard(c)));
+      }
+    }
+
+    function toggleFilter() {
+      const dd = document.getElementById('filterDropdown');
+      const chevron = document.getElementById('filterChevron');
+      const open = dd.style.display === 'none';
+      dd.style.display = open ? 'flex' : 'none';
+      chevron.classList.toggle('open', open);
+    }
+
+    // Close filter on outside click
+    document.addEventListener('click', e => {
+      const dd = document.getElementById('filterDropdown');
+      if (!e.target.closest('.filter-row') && !e.target.closest('.filter-dropdown')) {
+        dd.style.display = 'none';
+        document.getElementById('filterChevron').classList.remove('open');
+      }
+    });
+
+    filterClimbs();
+  </script>
+</body>
+</html>

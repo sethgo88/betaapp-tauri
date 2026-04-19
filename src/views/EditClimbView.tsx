@@ -43,7 +43,7 @@ const LinkRouteSection = ({ climbId }: { climbId: string }) => {
 
 	return (
 		<div className="rounded-lg bg-surface-card p-4 flex flex-col gap-3">
-			<p className="text-sm font-medium text-text-secondary">Link to a route</p>
+			<p className="text-sm font-medium text-text-on-light">Link to a route</p>
 			<div className="flex gap-2">
 				<input
 					type="text"
@@ -75,10 +75,10 @@ const LinkRouteSection = ({ climbId }: { climbId: string }) => {
 							<div>
 								<p className="text-sm">{r.name}</p>
 								{r.walls && (
-									<p className="text-xs text-text-secondary">{r.walls.name}</p>
+									<p className="text-xs text-text-on-light">{r.walls.name}</p>
 								)}
 							</div>
-							<span className="text-xs text-text-secondary ml-2">
+							<span className="text-xs text-text-on-light ml-2">
 								{r.grade}
 							</span>
 						</button>
@@ -87,7 +87,7 @@ const LinkRouteSection = ({ climbId }: { climbId: string }) => {
 			)}
 
 			{results.length === 0 && query && !searching && (
-				<p className="text-xs text-text-tertiary">
+				<p className="text-xs text-text-on-light/60">
 					No results. Try another name.
 				</p>
 			)}
@@ -137,7 +137,7 @@ const EditClimbView = () => {
 
 	if (!climb) {
 		return (
-			<p className="text-text-secondary text-center pt-12">Climb not found.</p>
+			<p className="text-white text-center pt-12">Climb not found.</p>
 		);
 	}
 

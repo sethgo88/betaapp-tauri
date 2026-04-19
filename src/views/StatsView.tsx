@@ -16,7 +16,7 @@ import type { Discipline } from "@/features/climbs/climbs.stats";
 
 // ── Chart colours (hardcoded — recharts doesn't read CSS vars) ────────────────
 
-const COLOR_SENT = "#059669";
+const COLOR_SENT = "#0d9488"; // matches --accent-primary token
 const COLOR_PROJECT = "#d97706";
 const COLOR_TODO = "#8a7e72";
 const AXIS_COLOR = "#b5a99b";
@@ -46,11 +46,11 @@ const ChartCard = ({
 	empty?: boolean;
 }) => (
 	<div className="rounded-lg bg-surface-card p-4 flex flex-col gap-3">
-		<p className="text-sm font-semibold text-text-secondary uppercase tracking-wide">
+		<p className="text-sm font-semibold text-text-on-light uppercase tracking-wide">
 			{title}
 		</p>
 		{empty ? (
-			<p className="text-text-tertiary text-sm text-center py-4">
+			<p className="text-text-on-light/60 text-sm text-center py-4">
 				Not enough data yet.
 			</p>
 		) : (

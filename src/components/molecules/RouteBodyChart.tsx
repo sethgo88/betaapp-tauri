@@ -17,7 +17,7 @@ import type { RouteBodyStat } from "@/features/routes/routes.schema";
 const AXIS_COLOR = "#b5a99b";
 const GRID_COLOR = "#4a3f34";
 const GRADE_COLORS = [
-	"#059669",
+	"#0d9488", // matches --accent-primary token
 	"#0891b2",
 	"#7c3aed",
 	"#d97706",
@@ -85,7 +85,7 @@ export const RouteBodyChart = ({ routeId, routeType }: Props) => {
 	const gradeOrder = new Map(grades.map((g) => [g.grade, g.sort_order]));
 
 	const title = (
-		<p className="text-sm font-semibold text-text-secondary uppercase tracking-wide">
+		<p className="text-sm font-semibold text-text-on-light uppercase tracking-wide">
 			Body dimensions vs grade
 		</p>
 	);
@@ -105,7 +105,7 @@ export const RouteBodyChart = ({ routeId, routeType }: Props) => {
 		return (
 			<div className="rounded-[var(--radius-lg)] bg-surface-card border border-card-border shadow-card p-4 flex flex-col gap-3">
 				{title}
-				<p className="text-text-tertiary text-sm text-center py-4">
+				<p className="text-text-on-light/60 text-sm text-center py-4">
 					Failed to load data.
 				</p>
 				<p className="text-red-400 text-xs text-center font-mono break-all">
@@ -127,7 +127,7 @@ export const RouteBodyChart = ({ routeId, routeType }: Props) => {
 		return (
 			<div className="rounded-[var(--radius-lg)] bg-surface-card border border-card-border shadow-card p-4 flex flex-col gap-3">
 				{title}
-				<p className="text-text-tertiary text-sm text-center py-4">
+				<p className="text-text-on-light/60 text-sm text-center py-4">
 					Not enough data yet.
 				</p>
 			</div>

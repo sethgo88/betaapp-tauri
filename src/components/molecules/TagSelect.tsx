@@ -73,7 +73,7 @@ export function TagSelect({ value, onChange }: TagSelectProps) {
 					}}
 					onFocus={() => setOpen(true)}
 					placeholder="Search tags…"
-					className="w-full text-sm rounded-[var(--radius-sm)] px-3 py-1.5 bg-surface-input border border-border-input text-text-primary placeholder:text-text-tertiary outline-none"
+					className="w-full text-sm rounded-[var(--radius-sm)] px-3 py-1.5 bg-surface-input border border-border-input text-text-on-light placeholder:text-text-on-light/50 outline-none"
 				/>
 				{open && filtered.length > 0 && (
 					<ul className="absolute z-10 mt-1 w-full rounded-[var(--radius-sm)] border border-border-default bg-surface-card max-h-48 overflow-y-auto">

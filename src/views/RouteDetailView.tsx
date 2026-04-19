@@ -135,7 +135,7 @@ const RouteDetailView = () => {
 
 	if (!route) {
 		return (
-			<p className="text-text-secondary text-center pt-12">Route not found</p>
+			<p className="text-white text-center pt-12">Route not found</p>
 		);
 	}
 
@@ -196,20 +196,20 @@ const RouteDetailView = () => {
 			) : (
 				<div>
 					<div className="flex items-start justify-between gap-2">
-						<h1 className="text-xl font-display font-bold">{route.name}</h1>
+						<h1 className="text-xl font-display font-bold text-white">{route.name}</h1>
 						{isAdmin && (
 							<button
 								type="button"
 								onClick={handleOpenMetaEdit}
-								className="text-xs text-accent-primary shrink-0 mt-1"
+								className="text-xs text-text-light-on-dark-secondary hover:text-text-on-dark shrink-0 mt-1"
 							>
 								Edit
 							</button>
 						)}
 					</div>
 					<div className="flex items-center gap-2 mt-1">
-						<span className="text-text-secondary">{route.grade}</span>
-						<span className="text-xs px-2 py-0.5 rounded-full bg-surface-page text-text-secondary">
+						<span className="text-white">{route.grade}</span>
+						<span className="text-xs px-2 py-0.5 rounded-full bg-surface-page text-text-primary">
 							{route.route_type}
 						</span>
 					</div>
@@ -223,7 +223,7 @@ const RouteDetailView = () => {
 					{route.avg_rating != null && (
 						<div className="flex items-center gap-2 mt-2">
 							<StarRating value={Math.round(route.avg_rating)} readOnly />
-							<span className="text-xs text-text-secondary">
+							<span className="text-xs text-white">
 								{route.avg_rating.toFixed(1)} · {route.rating_count ?? 0}{" "}
 								{(route.rating_count ?? 0) === 1 ? "vote" : "votes"}
 							</span>
@@ -254,7 +254,7 @@ const RouteDetailView = () => {
 			{/* Topo section */}
 			{(routeTopo || showWallTopoFallback) && (
 				<div className="flex flex-col gap-1">
-					<p className="text-xs text-text-tertiary">Topo</p>
+					<p className="text-xs text-white">Topo</p>
 					<button
 						type="button"
 						onClick={() => setShowTopoModal(true)}
@@ -303,7 +303,7 @@ const RouteDetailView = () => {
 				<button
 					type="button"
 					onClick={() => setShowTopoEdit(true)}
-					className="text-sm text-accent-primary text-left"
+					className="text-sm text-text-light-on-dark-secondary hover:text-text-on-dark text-left"
 				>
 					{routeTopo ? "Edit topo" : "+ Add route topo"}
 				</button>
@@ -353,13 +353,13 @@ const RouteDetailView = () => {
 			{/* Links section */}
 			<div className="flex flex-col gap-2">
 				<div className="flex items-center justify-between">
-					<h2 className="text-sm font-semibold text-text-secondary uppercase tracking-wide">
+					<h2 className="text-sm font-semibold text-white uppercase tracking-wide">
 						Links
 					</h2>
 					{!atLinkLimit && (
 						<button
 							type="button"
-							className="flex items-center gap-1 text-sm text-accent-primary"
+							className="flex items-center gap-1 text-sm text-text-light-on-dark-secondary hover:text-text-on-dark"
 							onClick={() => setShowAddLinkModal(true)}
 						>
 							<Plus size={14} />
@@ -377,7 +377,7 @@ const RouteDetailView = () => {
 							>
 								<button
 									type="button"
-									className="flex items-center gap-2 text-sm text-accent-primary min-w-0"
+									className="flex items-center gap-2 text-sm text-text-light-on-dark-secondary hover:text-text-on-dark min-w-0"
 									onClick={() => openUrl(link.url)}
 								>
 									<ExternalLink size={14} className="shrink-0" />
@@ -387,7 +387,7 @@ const RouteDetailView = () => {
 								{(isAdmin || link.user_id === user?.id) && (
 									<button
 										type="button"
-										className="shrink-0 text-text-secondary"
+										className="shrink-0 text-white"
 										onClick={() => setPendingDeleteLinkId(link.id)}
 										disabled={deleteRouteLink.isPending}
 									>
@@ -400,7 +400,7 @@ const RouteDetailView = () => {
 				)}
 
 				{atLinkLimit && (
-					<p className="text-xs text-text-muted">
+					<p className="text-xs text-white/70">
 						You've reached the limit of 5 links per route.
 					</p>
 				)}

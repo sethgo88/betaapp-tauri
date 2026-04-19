@@ -31,7 +31,7 @@ export function SiblingDropdown({ siblings, onSelect }: SiblingDropdownProps) {
 		<div ref={ref} className="relative">
 			<button
 				type="button"
-				className="flex items-center gap-1 text-text-primary text-sm font-medium"
+				className="flex items-center gap-1 text-text-on-dark text-sm font-medium"
 				onClick={() => setOpen(!open)}
 			>
 				{current?.label ?? "Select"}
@@ -58,7 +58,7 @@ export function SiblingDropdown({ siblings, onSelect }: SiblingDropdownProps) {
 						>
 							<span className="truncate">{s.label}</span>
 							{s.sublabel && (
-								<span className="text-text-tertiary text-xs shrink-0">
+								<span className="text-text-on-light text-xs shrink-0">
 									{s.sublabel}
 								</span>
 							)}

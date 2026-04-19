@@ -49,7 +49,7 @@ const InlineAddForm = ({
 					className={`px-3 py-1.5 text-sm font-semibold ${
 						wallType === "wall"
 							? "bg-accent-primary text-white"
-							: "bg-surface-card text-text-secondary"
+							: "bg-surface-card text-text-on-light"
 					}`}
 					onClick={() => setWallType("wall")}
 				>
@@ -60,7 +60,7 @@ const InlineAddForm = ({
 					className={`px-3 py-1.5 text-sm font-semibold ${
 						wallType === "boulder"
 							? "bg-accent-primary text-white"
-							: "bg-surface-card text-text-secondary"
+							: "bg-surface-card text-text-on-light"
 					}`}
 					onClick={() => setWallType("boulder")}
 				>
@@ -103,13 +103,13 @@ const ViewOnMap = ({ lat, lng }: { lat: number; lng: number }) => {
 	const navigate = useNavigate();
 	return (
 		<div className="flex items-center gap-3">
-			<p className="text-xs text-text-secondary">
+			<p className="text-xs text-white">
 				{lat.toFixed(5)}, {lng.toFixed(5)}
 			</p>
 			<button
 				type="button"
 				onClick={() => navigate({ to: "/map", search: { lat, lng, zoom: 14 } })}
-				className="flex items-center gap-1 text-xs text-accent-primary font-semibold"
+				className="flex items-center gap-1 text-xs text-text-light-on-dark-secondary hover:text-text-on-dark font-semibold"
 			>
 				<MapPin size={12} />
 				View on map
@@ -236,7 +236,7 @@ const CragView = () => {
 		<div className="flex flex-col gap-3">
 			{crag && (
 				<>
-					<h1 className="text-xl font-display font-bold">{crag.name}</h1>
+					<h1 className="text-xl font-display font-bold text-white">{crag.name}</h1>
 					<EditableDescription
 						description={crag.description}
 						isAdmin={isAdmin}
@@ -250,7 +250,7 @@ const CragView = () => {
 					/>
 
 					<div className="flex flex-col gap-1">
-						<p className="text-xs text-text-tertiary uppercase tracking-wide">
+						<p className="text-xs text-white uppercase tracking-wide">
 							Approach
 						</p>
 						<EditableDescription
@@ -277,7 +277,7 @@ const CragView = () => {
 							<button
 								type="button"
 								onClick={() => setShowCoordEditor(true)}
-								className="text-sm text-text-secondary hover:text-text-primary text-left"
+								className="text-sm text-text-light-on-dark-secondary hover:text-text-on-dark text-left"
 							>
 								{crag.lat != null ? "Edit coordinates" : "+ Add coordinates"}
 							</button>
@@ -304,7 +304,7 @@ const CragView = () => {
 			)}
 
 			{walls.length === 0 && !showWallForm && (
-				<p className="text-text-secondary text-sm">
+				<p className="text-white text-sm">
 					No walls in this crag yet.
 				</p>
 			)}
@@ -369,7 +369,7 @@ const CragView = () => {
 								<div className="flex items-center gap-2">
 									<span>{wall.name}</span>
 									{wall.wall_type === "boulder" && (
-										<span className="text-xs text-text-tertiary">Boulder</span>
+										<span className="text-xs text-text-on-light">Boulder</span>
 									)}
 								</div>
 							</button>
@@ -381,7 +381,7 @@ const CragView = () => {
 									<>
 										<button
 											type="button"
-											className="text-xs text-text-secondary hover:text-text-primary"
+											className="text-xs text-text-on-light hover:text-text-primary"
 											onClick={() => {
 												setRenamingWallId(wall.id);
 												setRenameValue(wall.name);
@@ -393,7 +393,7 @@ const CragView = () => {
 										</button>
 										<button
 											type="button"
-											className="text-xs text-text-secondary hover:text-text-primary"
+											className="text-xs text-text-on-light hover:text-text-primary"
 											onClick={() =>
 												setMovingWallId(
 													movingWallId === wall.id ? null : wall.id,
@@ -441,7 +441,7 @@ const CragView = () => {
 				<button
 					type="button"
 					onClick={() => setShowWallForm(true)}
-					className="text-sm text-text-secondary hover:text-text-primary text-left"
+					className="text-sm text-text-light-on-dark-secondary hover:text-text-on-dark text-left"
 				>
 					+ Add wall
 				</button>

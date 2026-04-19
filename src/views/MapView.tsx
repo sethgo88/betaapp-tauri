@@ -210,7 +210,7 @@ const ZoomToButton = ({ lat, lng }: { lat: number; lng: number }) => {
 	return (
 		<button
 			type="button"
-			className="text-xs text-text-secondary"
+			className="text-xs text-text-on-light"
 			onClick={() => map.setView([lat, lng], 15)}
 		>
 			Zoom to crag
@@ -233,7 +233,7 @@ const TileErrorBanner = () => {
 
 	if (!tileError) return null;
 	return (
-		<div className="absolute top-3 left-3 z-[1000] bg-surface-card/90 px-3 py-1.5 rounded-[var(--radius-md)] text-xs text-text-secondary pointer-events-none">
+		<div className="absolute top-3 left-3 z-[1000] bg-surface-card/90 px-3 py-1.5 rounded-[var(--radius-md)] text-xs text-text-on-light pointer-events-none">
 			Map tiles unavailable — check your connection
 		</div>
 	);
@@ -250,7 +250,7 @@ const FilterCheck = ({
 	checked: boolean;
 	onChange: (v: boolean) => void;
 }) => (
-	<label className="flex items-center gap-1.5 text-sm text-text-secondary">
+	<label className="flex items-center gap-1.5 text-sm text-text-primary">
 		<input
 			type="checkbox"
 			checked={checked}
@@ -300,7 +300,7 @@ const PersonalPinModal = ({
 						{pin.name}
 					</span>
 					<button type="button" onClick={onClose} className="ml-2 shrink-0">
-						<X size={18} className="text-text-secondary" />
+						<X size={18} className="text-text-on-light" />
 					</button>
 				</div>
 
@@ -312,7 +312,7 @@ const PersonalPinModal = ({
 						</div>
 					)}
 					{!isLoading && filtered.length === 0 && (
-						<p className="text-sm text-text-secondary py-4 text-center">
+						<p className="text-sm text-text-on-light py-4 text-center">
 							No climbs match the active filters.
 						</p>
 					)}
@@ -334,7 +334,7 @@ const PersonalPinModal = ({
 									{climb.name}
 								</span>
 								<div className="flex items-center gap-2 shrink-0">
-									<span className="text-xs text-text-secondary">
+									<span className="text-xs text-text-on-light">
 										{climb.grade}
 									</span>
 									<span
@@ -345,7 +345,7 @@ const PersonalPinModal = ({
 											climb.sent_status === "project" &&
 												"bg-accent-primary/20 text-accent-primary",
 											climb.sent_status === "todo" &&
-												"bg-text-secondary/20 text-text-secondary",
+												"bg-todo/20 text-todo",
 										)}
 									>
 										{climb.sent_status.charAt(0).toUpperCase() +
@@ -540,7 +540,7 @@ const MapView = () => {
 						className={`px-3 py-1.5 text-sm font-semibold ${
 							mode === "discovery"
 								? "bg-accent-primary text-white"
-								: "bg-surface-card text-text-secondary"
+								: "bg-surface-card text-text-on-light"
 						}`}
 						onClick={() => setMode("discovery")}
 					>
@@ -551,7 +551,7 @@ const MapView = () => {
 						className={`px-3 py-1.5 text-sm font-semibold ${
 							mode === "personal"
 								? "bg-accent-primary text-white"
-								: "bg-surface-card text-text-secondary"
+								: "bg-surface-card text-text-on-light"
 						}`}
 						onClick={() => setMode("personal")}
 					>
@@ -634,7 +634,7 @@ const MapView = () => {
 							<Marker
 								key={crag.id}
 								position={[crag.lat, crag.lng]}
-								icon={countIcon(filteredCount(crag), "#059669")}
+								icon={countIcon(filteredCount(crag), "#0d9488")}
 							>
 								<Popup>
 									<div className="flex flex-col gap-1">
@@ -741,7 +741,7 @@ const MapView = () => {
 					((mode === "discovery" && filteredDiscoveryCrags.length === 0) ||
 						(mode === "personal" && filteredPersonal.length === 0)) && (
 						<div className="absolute inset-0 flex items-center justify-center z-[1000] pointer-events-none">
-							<p className="text-text-secondary text-sm bg-surface-card/90 px-4 py-2 rounded-[var(--radius-md)]">
+							<p className="text-text-on-light text-sm bg-surface-card/90 px-4 py-2 rounded-[var(--radius-md)]">
 								{mode === "discovery"
 									? "No downloaded crags with coordinates yet."
 									: "No crags with logged climbs found."}

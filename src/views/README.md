@@ -61,7 +61,7 @@ Loads `useClimb(climbId)`, `useBurns(climbId)`, and `useGrades(routeType)`. No s
 - **Link**: inline add/edit/display; calls `usePatchClimbLink` on save.
 
 ### ProfileView `/profile`
-Public (no auth guard). Shows login form when unauthenticated (`signIn` / `signUp` / `forgot password`). Shows user info + logout when authenticated. Settings panel includes a Dark/Light theme toggle (persisted to localStorage via `ui.store`).
+Public (no auth guard). Shows login form when unauthenticated (`signIn` / `signUp` / `forgot password`). Shows user info + logout when authenticated. Settings panel includes unit preference and home screen default status filters.
 
 ### ResetPasswordView `/reset-password`
 Public (no auth guard). Shown after user taps a password reset link from email. The `PASSWORD_RECOVERY` auth event in `App.tsx` navigates here automatically. Calls `updatePassword()` on submit, then redirects to `/profile`.

@@ -71,11 +71,11 @@ export const EditableDescription = ({
 	return (
 		<div className="flex items-start gap-2">
 			{description ? (
-				<p className="text-sm text-text-secondary whitespace-pre-wrap">
+				<p className="text-sm text-white whitespace-pre-wrap">
 					{description}
 				</p>
 			) : (
-				<p className="text-sm text-text-tertiary italic">{emptyText}</p>
+				<p className="text-sm text-white/50 italic">{emptyText}</p>
 			)}
 			{isAdmin && (
 				<button
@@ -84,7 +84,7 @@ export const EditableDescription = ({
 						setDraft(description ?? "");
 						setEditing(true);
 					}}
-					className="text-text-secondary hover:text-text-primary shrink-0 mt-0.5"
+					className="text-white/70 hover:text-white shrink-0 mt-0.5"
 				>
 					<Pencil size={14} />
 				</button>

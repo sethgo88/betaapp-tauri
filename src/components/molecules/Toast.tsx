@@ -3,7 +3,7 @@ import { cn } from "@/lib/cn";
 import { type Toast as ToastType, useUiStore } from "@/stores/ui.store";
 
 const borderColor: Record<ToastType["type"], string> = {
-	success: "border-l-emerald-500",
+	success: "border-l-accent-primary",
 	error: "border-l-red-500",
 	warning: "border-l-amber-500",
 };

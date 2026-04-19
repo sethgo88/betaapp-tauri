@@ -19,7 +19,7 @@ export const SyncStatus = () => {
 		<button
 			type="button"
 			onClick={() => triggerSync?.()}
-			className="ml-1 text-text-secondary active:opacity-60"
+			className="ml-1 text-text-on-light active:opacity-60"
 			aria-label="Retry sync"
 		>
 			<RefreshCw size={12} />
@@ -27,12 +27,12 @@ export const SyncStatus = () => {
 	);
 
 	if (status === "syncing") {
-		return <Loader2 size={12} className="animate-spin text-text-secondary" />;
+		return <Loader2 size={12} className="animate-spin text-text-on-light" />;
 	}
 	if (status === "offline") {
 		return (
 			<span className="flex items-center">
-				<WifiOff size={12} className="text-text-muted" />
+				<WifiOff size={12} className="text-text-on-light" />
 				{retryButton}
 			</span>
 		);

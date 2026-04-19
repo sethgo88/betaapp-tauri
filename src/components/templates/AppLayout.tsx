@@ -22,7 +22,20 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
 	const hasSiblings = topBar.siblings.length > 1;
 
 	return (
-		<div className="bg-surface-page min-h-screen min-w-screen max-w-screen text-text-primary pt-[env(safe-area-inset-top)]">
+		<div className="relative min-h-screen min-w-screen max-w-screen text-text-primary pt-[env(safe-area-inset-top)]">
+			{/* Blurred background image */}
+			<div className="fixed w-full h-full bg-cyan-700/70 grayscale-50  inset-0 -z-9 scale -110"></div>
+			<div
+				className="fixed inset-0 -z-10 scale-110"
+				style={{
+					backgroundImage: "url('/bg-mountains.png')",
+					backgroundSize: "cover",
+					backgroundPosition: "center",
+					filter: "blur(6px) brightness(1.5)",
+				}}
+			/>
+			{/* Dark overlay for readability */}
+			<div className="fixed inset-0 -z-10 bg-black/40" />
 			<div className="relative">
 				<div className="fixed top-[2vh] left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 pointer-events-none items-center">
 					{toasts.map((toast) => (
@@ -34,7 +47,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
 						<div className="flex items-center justify-between mb-3 -ml-1">
 							<button
 								type="button"
-								className="flex items-center gap-1 text-text-secondary text-sm shrink-0"
+								className="flex items-center gap-1 text-white text-sm shrink-0"
 								onClick={topBar.goBack}
 							>
 								<ChevronLeft size={16} />

@@ -41,7 +41,7 @@ const ResetPasswordView = () => {
 		<div className="flex flex-col gap-4">
 			<div className="rounded-lg bg-surface-card p-4">
 				<p className="font-semibold mb-1">Reset password</p>
-				<p className="text-sm text-text-secondary">
+				<p className="text-sm text-text-on-light">
 					Choose a new password (at least {PASSWORD_MIN_LENGTH} characters).
 				</p>
 			</div>

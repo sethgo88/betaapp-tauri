@@ -168,7 +168,7 @@ export const WallTopoPanel = ({
 	onNavigateToRoute,
 }: WallTopoPanelProps) => {
 	return (
-		<div className="shrink-0 bg-surface-card rounded-b-lg overflow-hidden">
+		<div className="shrink-0 bg-cyan-900 rounded-b-lg overflow-hidden">
 			<div
 				className="overflow-y-auto"
 				style={{ maxHeight: "40vh", scrollbarWidth: "none" }}
@@ -184,7 +184,7 @@ export const WallTopoPanel = ({
 							role="button"
 							tabIndex={0}
 							onClick={() => onSelectRoute(isActive ? null : route.id)}
-							className="w-full flex items-center gap-3 px-4 py-2 hover:bg-surface-page transition-colors cursor-pointer"
+							className="w-full flex items-center gap-3 px-4 py-2 hover:bg-white/10 transition-colors cursor-pointer"
 						>
 							<span
 								className="shrink-0 w-3 h-3 rounded-full"
@@ -194,19 +194,19 @@ export const WallTopoPanel = ({
 								}}
 							/>
 							<span
-								className={`flex-1 text-sm ${isActive ? "font-semibold text-text-primary" : "text-text-secondary"}`}
+								className={`flex-1 text-sm ${isActive ? "font-semibold text-white" : "text-white/70"}`}
 							>
 								{route.name}
 							</span>
-							<span className="text-xs text-text-tertiary font-medium uppercase">
+							<span className="text-xs text-white/50 font-medium uppercase">
 								{routeTypeInitial(route.route_type)}
 							</span>
-							<span className="text-xs text-text-tertiary">{route.grade}</span>
+							<span className="text-xs text-white/50">{route.grade}</span>
 							{onNavigateToRoute && (
 								<button
 									type="button"
 									aria-label={`Go to ${route.name}`}
-									className="shrink-0 text-text-tertiary hover:text-text-primary"
+									className="shrink-0 text-white/50 hover:text-white"
 									onClick={(e) => {
 										e.stopPropagation();
 										onNavigateToRoute(route.id);

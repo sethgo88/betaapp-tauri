@@ -25,7 +25,6 @@ import { useAuthStore } from "@/features/auth/auth.store";
 import { useGrades } from "@/features/grades/grades.queries";
 import { useSyncStore } from "@/features/sync/sync.store";
 import { cmToFtIn, cmToIn, ftInToCm, inToCm } from "@/lib/units";
-import type { Theme } from "@/stores/ui.store";
 import { useUiStore } from "@/stores/ui.store";
 
 // ── Password policy — change this to update requirements everywhere ───────────
@@ -45,7 +44,7 @@ const SyncStatusWell = () => {
 
 	return (
 		<div className="rounded-lg bg-surface-card p-4 flex flex-col gap-2">
-			<p className="text-xs text-text-secondary uppercase tracking-wide">
+			<p className="text-xs text-text-on-light uppercase tracking-wide">
 				Sync Status
 			</p>
 			<div className="flex items-center gap-2">
@@ -89,7 +88,7 @@ const MagicLinkForm = ({
 		<div className="flex flex-col gap-4">
 			<div className="rounded-lg bg-surface-card p-4">
 				<p className="font-semibold mb-1">Magic link</p>
-				<p className="text-sm text-text-secondary">
+				<p className="text-sm text-text-on-light">
 					We'll send a sign-in link to your email.
 				</p>
 			</div>
@@ -128,7 +127,7 @@ const MagicLinkForm = ({
 
 			<button
 				type="button"
-				className="text-sm text-text-secondary text-center"
+				className="text-sm text-white text-center"
 				onClick={onBack}
 			>
 				Back to sign in
@@ -162,7 +161,7 @@ const ForgotPasswordForm = ({
 		<div className="flex flex-col gap-4">
 			<div className="rounded-lg bg-surface-card p-4">
 				<p className="font-semibold mb-1">Forgot password</p>
-				<p className="text-sm text-text-secondary">
+				<p className="text-sm text-text-on-light">
 					Enter your email and we'll send a reset link.
 				</p>
 			</div>
@@ -201,7 +200,7 @@ const ForgotPasswordForm = ({
 
 			<button
 				type="button"
-				className="text-sm text-text-secondary text-center"
+				className="text-sm text-white text-center"
 				onClick={onBack}
 			>
 				Back to sign in
@@ -222,8 +221,6 @@ const AuthenticatedProfile = ({
 	) => void;
 }) => {
 	const addToast = useUiStore((s) => s.addToast);
-	const theme = useUiStore((s) => s.theme);
-	const setTheme = useUiStore((s) => s.setTheme);
 	const defaultStatusFilters = useUiStore((s) => s.defaultStatusFilters);
 	const setDefaultStatusFilters = useUiStore((s) => s.setDefaultStatusFilters);
 
@@ -348,7 +345,7 @@ const AuthenticatedProfile = ({
 		<div className="flex flex-col gap-4">
 			{/* Account */}
 			<div className="rounded-lg bg-surface-card p-4 flex flex-col gap-2">
-				<p className="text-xs text-text-secondary uppercase tracking-wide">
+				<p className="text-xs text-text-on-light uppercase tracking-wide">
 					Account
 				</p>
 				<p className="font-semibold">
@@ -367,7 +364,7 @@ const AuthenticatedProfile = ({
 
 			{/* Settings */}
 			<div className="rounded-lg bg-surface-card p-4 flex flex-col gap-3">
-				<p className="text-xs text-text-secondary uppercase tracking-wide">
+				<p className="text-xs text-text-on-light uppercase tracking-wide">
 					Settings
 				</p>
 				<div>
@@ -379,17 +376,6 @@ const AuthenticatedProfile = ({
 						]}
 						value={defaultUnit}
 						onChange={(v) => handleUnitToggle(v as UnitPreference)}
-					/>
-				</div>
-				<div>
-					<p className="text-sm mb-1">Theme</p>
-					<ToggleGroup
-						options={[
-							{ value: "dark", label: "Dark" },
-							{ value: "light", label: "Light" },
-						]}
-						value={theme}
-						onChange={(v) => setTheme(v as Theme)}
 					/>
 				</div>
 				<div>
@@ -415,7 +401,7 @@ const AuthenticatedProfile = ({
 
 			{/* Profile */}
 			<div className="rounded-lg bg-surface-card p-4 flex flex-col gap-3">
-				<p className="text-xs text-text-secondary uppercase tracking-wide">
+				<p className="text-xs text-text-on-light uppercase tracking-wide">
 					Profile
 				</p>
 				<Input
@@ -424,7 +410,7 @@ const AuthenticatedProfile = ({
 					onChange={(e) => setDisplayName(e.target.value)}
 				/>
 				<div>
-					<p className="text-xs text-text-secondary mb-1">Height</p>
+					<p className="text-xs text-text-on-light mb-1">Height</p>
 					{defaultUnit === "imperial" ? (
 						<div className="flex gap-2">
 							<Input
@@ -450,7 +436,7 @@ const AuthenticatedProfile = ({
 					)}
 				</div>
 				<div>
-					<p className="text-xs text-text-secondary mb-1">Ape index</p>
+					<p className="text-xs text-text-on-light mb-1">Ape index</p>
 					<Input
 						type="number"
 						placeholder={defaultUnit === "imperial" ? "in" : "cm"}
@@ -460,7 +446,7 @@ const AuthenticatedProfile = ({
 				</div>
 				<div className="flex gap-2">
 					<div className="flex-1">
-						<p className="text-xs text-text-secondary mb-1">
+						<p className="text-xs text-text-on-light mb-1">
 							Max redpoint (sport)
 						</p>
 						<Select
@@ -476,7 +462,7 @@ const AuthenticatedProfile = ({
 						</Select>
 					</div>
 					<div className="flex-1">
-						<p className="text-xs text-text-secondary mb-1">
+						<p className="text-xs text-text-on-light mb-1">
 							Max redpoint (boulder)
 						</p>
 						<Select
@@ -586,7 +572,7 @@ const ProfileView = () => {
 			<div className="flex flex-col gap-4">
 				<div className="rounded-lg bg-surface-card p-4">
 					<p className="font-semibold mb-1">Create account</p>
-					<p className="text-sm text-text-secondary">
+					<p className="text-sm text-text-on-light">
 						Password must be at least {PASSWORD_MIN_LENGTH} characters.
 					</p>
 				</div>
@@ -659,7 +645,7 @@ const ProfileView = () => {
 
 				<button
 					type="button"
-					className="text-sm text-text-secondary text-center"
+					className="text-sm text-white text-center"
 					onClick={() => setMode("signin")}
 				>
 					Already have an account? Sign in
@@ -680,14 +666,14 @@ const ProfileView = () => {
 				<div className="flex flex-col gap-4">
 					<div className="rounded-lg bg-surface-card p-4 flex flex-col gap-2">
 						<p className="font-semibold">Check your email</p>
-						<p className="text-sm text-text-secondary">
+						<p className="text-sm text-text-on-light">
 							A password reset link has been sent. Tap it to open the app and
 							set a new password.
 						</p>
 					</div>
 					<button
 						type="button"
-						className="text-sm text-text-secondary text-center"
+						className="text-sm text-white text-center"
 						onClick={() => setMode("signin")}
 					>
 						Back to sign in
@@ -716,14 +702,14 @@ const ProfileView = () => {
 				<div className="flex flex-col gap-4">
 					<div className="rounded-lg bg-surface-card p-4 flex flex-col gap-2">
 						<p className="font-semibold">Check your email</p>
-						<p className="text-sm text-text-secondary">
+						<p className="text-sm text-text-on-light">
 							A sign-in link has been sent. Tap it to open the app and sign in
 							automatically.
 						</p>
 					</div>
 					<button
 						type="button"
-						className="text-sm text-text-secondary text-center"
+						className="text-sm text-white text-center"
 						onClick={() => setMode("signin")}
 					>
 						Back to sign in
@@ -804,7 +790,7 @@ const ProfileView = () => {
 
 			<button
 				type="button"
-				className="text-sm text-text-secondary text-center"
+				className="text-sm text-white text-center"
 				onClick={() => {
 					setMode("forgot");
 					setResetSent(false);
@@ -815,7 +801,7 @@ const ProfileView = () => {
 
 			<button
 				type="button"
-				className="text-sm text-text-secondary text-center"
+				className="text-sm text-white text-center"
 				onClick={() => setMode("signup")}
 			>
 				No account? Create one
@@ -823,7 +809,7 @@ const ProfileView = () => {
 
 			<button
 				type="button"
-				className="text-sm text-text-secondary text-center"
+				className="text-sm text-white text-center"
 				onClick={() => {
 					setMode("magic");
 					setMagicSent(false);

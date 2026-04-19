@@ -143,12 +143,12 @@ const SubRegionView = () => {
 	}
 
 	if (!subRegion) {
-		return <p className="text-text-secondary text-center pt-12">Not found</p>;
+		return <p className="text-white text-center pt-12">Not found</p>;
 	}
 
 	return (
 		<div className="flex flex-col gap-3">
-			<h1 className="text-xl font-display font-bold">{subRegion.name}</h1>
+			<h1 className="text-xl font-display font-bold text-white">{subRegion.name}</h1>
 
 			<EditableDescription
 				description={subRegion.description}
@@ -163,7 +163,7 @@ const SubRegionView = () => {
 			/>
 
 			{crags.length === 0 && (
-				<p className="text-text-secondary text-sm">
+				<p className="text-white text-sm">
 					No crags in this area yet.
 				</p>
 			)}
@@ -235,7 +235,7 @@ const SubRegionView = () => {
 									<>
 										<button
 											type="button"
-											className="text-xs text-text-secondary hover:text-text-primary"
+											className="text-xs text-text-on-light hover:text-text-primary"
 											onClick={() => {
 												setRenamingCragId(crag.id);
 												setRenameValue(crag.name);
@@ -247,7 +247,7 @@ const SubRegionView = () => {
 										</button>
 										<button
 											type="button"
-											className="text-xs text-text-secondary hover:text-text-primary"
+											className="text-xs text-text-on-light hover:text-text-primary"
 											onClick={() =>
 												setMovingCragId(
 													movingCragId === crag.id ? null : crag.id,
@@ -298,7 +298,7 @@ const SubRegionView = () => {
 						/>
 					</div>
 					{cragCoords ? (
-						<p className="text-xs text-text-secondary">
+						<p className="text-xs text-white">
 							Location: {cragCoords.lat.toFixed(5)}, {cragCoords.lng.toFixed(5)}
 						</p>
 					) : null}
@@ -343,7 +343,7 @@ const SubRegionView = () => {
 				<button
 					type="button"
 					onClick={() => setShowCragForm(true)}
-					className="text-sm text-text-secondary hover:text-text-primary text-left"
+					className="text-sm text-text-light-on-dark-secondary hover:text-text-on-dark text-left"
 				>
 					+ Add crag
 				</button>

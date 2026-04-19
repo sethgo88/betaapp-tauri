@@ -670,19 +670,19 @@ export const WallTopoBuilder = ({
 
 		if (onClose) {
 			return (
-				<div className="fixed inset-0 z-40 bg-surface-page flex flex-col">
+				<div className="fixed inset-0 z-40 bg-cyan-900 flex flex-col">
 					<div
-						className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-border-subtle"
+						className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-white/20"
 						style={{ paddingTop: "calc(env(safe-area-inset-top) + 0.75rem)" }}
 					>
 						<button
 							type="button"
 							onClick={onClose}
-							className="flex items-center justify-center w-8 h-8 rounded-full bg-surface-raised text-text-primary"
+							className="flex items-center justify-center w-8 h-8 rounded-full bg-white/10 text-white"
 						>
 							<X size={18} />
 						</button>
-						<h2 className="font-display font-semibold text-text-primary">
+						<h2 className="font-display font-semibold text-white">
 							Edit Topo
 						</h2>
 						<div className="w-8" />
@@ -708,7 +708,7 @@ export const WallTopoBuilder = ({
 			<div className="flex flex-col gap-1">
 				<label
 					htmlFor="drawing-for-select"
-					className="text-xs text-text-tertiary"
+					className="text-xs text-white/50"
 				>
 					Drawing for:
 				</label>
@@ -716,7 +716,7 @@ export const WallTopoBuilder = ({
 					id="drawing-for-select"
 					value={selectedRouteId}
 					onChange={(e) => handleRouteSwitch(e.target.value)}
-					className="text-sm bg-surface-page text-text-primary rounded-[var(--radius-sm)] px-2 py-1 border border-border-default"
+					className="text-sm bg-surface-stone text-text-on-light rounded-[var(--radius-sm)] px-2 py-1 border border-border-input"
 				>
 					{routes.map((r) => (
 						<option key={r.id} value={r.id}>
@@ -731,7 +731,7 @@ export const WallTopoBuilder = ({
 					))}
 				</select>
 				{existingLineForRoute && draftPoints.length === 0 && (
-					<div className="flex items-center justify-between text-xs text-text-tertiary">
+					<div className="flex items-center justify-between text-xs text-white/50">
 						<span>Line saved — tap to redraw</span>
 						<button
 							type="button"
@@ -744,7 +744,7 @@ export const WallTopoBuilder = ({
 				)}
 			</div>
 			<div className="flex items-center gap-2">
-				<span className="text-xs text-text-tertiary shrink-0">Color</span>
+				<span className="text-xs text-white/50 shrink-0">Color</span>
 				<ColorPicker
 					value={activeColor}
 					onChange={(c) =>
@@ -762,7 +762,7 @@ export const WallTopoBuilder = ({
 				type="button"
 				onClick={handleUndo}
 				disabled={historyRef.current.length === 0 && draftPoints.length === 0}
-				className="flex-1 py-2 text-sm rounded-[var(--radius-md)] border border-border-default text-text-secondary disabled:opacity-40"
+				className="flex-1 py-2 text-sm rounded-[var(--radius-md)] border border-white/30 text-white disabled:opacity-40"
 			>
 				Undo
 			</button>
@@ -773,7 +773,7 @@ export const WallTopoBuilder = ({
 					setDraftPoints([]);
 				}}
 				disabled={draftPoints.length === 0}
-				className="flex-1 py-2 text-sm rounded-[var(--radius-md)] border border-border-default text-text-secondary disabled:opacity-40"
+				className="flex-1 py-2 text-sm rounded-[var(--radius-md)] border border-white/30 text-white disabled:opacity-40"
 			>
 				Clear
 			</button>
@@ -819,27 +819,27 @@ export const WallTopoBuilder = ({
 
 	if (onClose) {
 		return (
-			<div className="fixed inset-0 z-40 bg-surface-page flex flex-col">
+			<div className="fixed inset-0 z-40 bg-cyan-900 flex flex-col">
 				{/* Header */}
 				<div
-					className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-border-subtle"
+					className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-white/20"
 					style={{ paddingTop: "calc(env(safe-area-inset-top) + 0.75rem)" }}
 				>
 					<button
 						type="button"
 						onClick={onClose}
-						className="flex items-center justify-center w-8 h-8 rounded-full bg-surface-raised text-text-primary"
+						className="flex items-center justify-center w-8 h-8 rounded-full bg-white/10 text-white"
 					>
 						<X size={18} />
 					</button>
-					<h2 className="font-display font-semibold text-text-primary">
+					<h2 className="font-display font-semibold text-white">
 						Edit Topo
 					</h2>
 					<div className="flex gap-3 items-center">
 						<button
 							type="button"
 							onClick={() => setShowImagePicker(true)}
-							className="text-xs text-accent-primary py-1"
+							className="text-xs text-text-light-on-dark-secondary hover:text-text-on-dark py-1"
 						>
 							Change
 						</button>
@@ -896,7 +896,7 @@ export const WallTopoBuilder = ({
 								return (
 									<span
 										key={line.id}
-										className="flex items-center gap-1 text-xs text-text-secondary"
+										className="flex items-center gap-1 text-xs text-white/70"
 									>
 										<span
 											className="inline-block w-2.5 h-2.5 rounded-full"
@@ -912,7 +912,7 @@ export const WallTopoBuilder = ({
 
 				{/* Footer — always visible */}
 				<div
-					className="shrink-0 flex gap-2 px-4 pt-3 border-t border-border-subtle"
+					className="shrink-0 flex gap-2 px-4 pt-3 border-t border-white/20"
 					style={{
 						paddingBottom: "calc(env(safe-area-inset-bottom) + 1rem)",
 					}}
@@ -994,7 +994,7 @@ export const WallTopoBuilder = ({
 						return (
 							<span
 								key={line.id}
-								className="flex items-center gap-1 text-xs text-text-secondary"
+								className="flex items-center gap-1 text-xs text-white/70"
 							>
 								<span
 									className="inline-block w-2.5 h-2.5 rounded-full"
@@ -1160,19 +1160,19 @@ export const RouteTopoBuilder = ({
 
 		if (onClose) {
 			return (
-				<div className="fixed inset-0 z-40 bg-surface-page flex flex-col">
+				<div className="fixed inset-0 z-40 bg-cyan-900 flex flex-col">
 					<div
-						className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-border-subtle"
+						className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-white/20"
 						style={{ paddingTop: "calc(env(safe-area-inset-top) + 0.75rem)" }}
 					>
 						<button
 							type="button"
 							onClick={onClose}
-							className="flex items-center justify-center w-8 h-8 rounded-full bg-surface-raised text-text-primary"
+							className="flex items-center justify-center w-8 h-8 rounded-full bg-white/10 text-white"
 						>
 							<X size={18} />
 						</button>
-						<h2 className="font-display font-semibold text-text-primary">
+						<h2 className="font-display font-semibold text-white">
 							Edit Topo
 						</h2>
 						<div className="w-8" />
@@ -1196,27 +1196,27 @@ export const RouteTopoBuilder = ({
 
 	if (onClose) {
 		return (
-			<div className="fixed inset-0 z-40 bg-surface-page flex flex-col">
+			<div className="fixed inset-0 z-40 bg-cyan-900 flex flex-col">
 				{/* Header */}
 				<div
-					className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-border-subtle"
+					className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-white/20"
 					style={{ paddingTop: "calc(env(safe-area-inset-top) + 0.75rem)" }}
 				>
 					<button
 						type="button"
 						onClick={onClose}
-						className="flex items-center justify-center w-8 h-8 rounded-full bg-surface-raised text-text-primary"
+						className="flex items-center justify-center w-8 h-8 rounded-full bg-white/10 text-white"
 					>
 						<X size={18} />
 					</button>
-					<h2 className="font-display font-semibold text-text-primary">
+					<h2 className="font-display font-semibold text-white">
 						Edit Topo
 					</h2>
 					<div className="flex gap-3 items-center">
 						<button
 							type="button"
 							onClick={() => setShowImagePicker(true)}
-							className="text-xs text-accent-primary py-1"
+							className="text-xs text-text-light-on-dark-secondary hover:text-text-on-dark py-1"
 						>
 							Change
 						</button>
@@ -1261,14 +1261,14 @@ export const RouteTopoBuilder = ({
 				<div className="flex-1 overflow-y-auto">{drawingCanvas}</div>
 
 				{/* Color picker */}
-				<div className="shrink-0 flex items-center gap-3 px-4 py-3 border-t border-border-subtle bg-surface-raised">
-					<span className="text-xs text-text-tertiary shrink-0">Color</span>
+				<div className="shrink-0 flex items-center gap-3 px-4 py-3 border-t border-white/20 bg-cyan-800/50">
+					<span className="text-xs text-white/50 shrink-0">Color</span>
 					<ColorPicker value={color} onChange={setSelectedColor} />
 				</div>
 
 				{/* Footer — always visible */}
 				<div
-					className="shrink-0 flex gap-2 px-4 pt-3 border-t border-border-subtle"
+					className="shrink-0 flex gap-2 px-4 pt-3 border-t border-white/20"
 					style={{
 						paddingBottom: "calc(env(safe-area-inset-bottom) + 1rem)",
 					}}
@@ -1277,7 +1277,7 @@ export const RouteTopoBuilder = ({
 						type="button"
 						onClick={handleUndo}
 						disabled={historyRef.current.length === 0}
-						className="flex-1 py-2 text-sm rounded-[var(--radius-md)] border border-border-default text-text-secondary disabled:opacity-40"
+						className="flex-1 py-2 text-sm rounded-[var(--radius-md)] border border-white/30 text-white disabled:opacity-40"
 					>
 						Undo
 					</button>
@@ -1288,7 +1288,7 @@ export const RouteTopoBuilder = ({
 							setDraftPoints([]);
 						}}
 						disabled={draftPoints.length === 0}
-						className="flex-1 py-2 text-sm rounded-[var(--radius-md)] border border-border-default text-text-secondary disabled:opacity-40"
+						className="flex-1 py-2 text-sm rounded-[var(--radius-md)] border border-white/30 text-white disabled:opacity-40"
 					>
 						Clear
 					</button>
@@ -1368,7 +1368,7 @@ export const RouteTopoBuilder = ({
 						type="button"
 						onClick={handleUndo}
 						disabled={historyRef.current.length === 0}
-						className="flex-1 py-2 text-sm rounded-[var(--radius-md)] border border-border-default text-text-secondary disabled:opacity-40"
+						className="flex-1 py-2 text-sm rounded-[var(--radius-md)] border border-white/30 text-white disabled:opacity-40"
 					>
 						Undo
 					</button>
@@ -1378,7 +1378,7 @@ export const RouteTopoBuilder = ({
 							historyRef.current = [];
 							setDraftPoints([]);
 						}}
-						className="flex-1 py-2 text-sm rounded-[var(--radius-md)] border border-border-default text-text-secondary"
+						className="flex-1 py-2 text-sm rounded-[var(--radius-md)] border border-white/30 text-white"
 					>
 						Clear
 					</button>
