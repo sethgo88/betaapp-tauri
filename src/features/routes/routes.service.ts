@@ -23,12 +23,22 @@ export async function refreshRouteAvgRating(routeId: string): Promise<void> {
 	);
 }
 
+function parseSunData<T extends { sun_data?: unknown }>(row: T): T {
+	if (typeof row.sun_data !== "string" || !row.sun_data) return row;
+	try {
+		return { ...row, sun_data: JSON.parse(row.sun_data) };
+	} catch {
+		return { ...row, sun_data: null };
+	}
+}
+
 export async function fetchRoutes(wallId: string): Promise<Route[]> {
 	const db = await getDb();
-	return db.select<Route[]>(
+	const rows = await db.select<Route[]>(
 		"SELECT * FROM routes_cache WHERE wall_id = ? ORDER BY sort_order ASC, name ASC",
 		[wallId],
 	);
+	return rows.map(parseSunData);
 }
 
 export async function reorderRoutes(orderedIds: string[]): Promise<void> {
@@ -53,7 +63,7 @@ export async function fetchRoute(id: string): Promise<Route | null> {
 		"SELECT * FROM routes_cache WHERE id = ?",
 		[id],
 	);
-	return rows[0] ?? null;
+	return rows[0] ? parseSunData(rows[0]) : null;
 }
 
 export async function addRoute(
@@ -455,7 +465,7 @@ export async function updateRouteSunData(
 	// biome-ignore lint/suspicious/noExplicitAny: sun_data not yet in generated Supabase types
 	const { error } = await (supabase as any)
 		.from("routes")
-		.update({ sun_data: serialized })
+		.update({ sun_data: data })
 		.eq("id", routeId);
 	if (error) throw error;
 

@@ -47,13 +47,23 @@ export async function fetchCrags(subRegionId: string): Promise<Crag[]> {
 	);
 }
 
+function parseSunData<T extends { sun_data?: unknown }>(row: T): T {
+	if (typeof row.sun_data !== "string" || !row.sun_data) return row;
+	try {
+		return { ...row, sun_data: JSON.parse(row.sun_data) };
+	} catch {
+		return { ...row, sun_data: null };
+	}
+}
+
 export async function fetchWalls(cragId: string): Promise<Wall[]> {
 	const db = await getDb();
-	return db.select<Wall[]>(
+	const rows = await db.select<Wall[]>(
 		`SELECT w.*, (SELECT COUNT(*) FROM routes_cache r WHERE r.wall_id = w.id) AS route_count
 		 FROM walls_cache w WHERE w.crag_id = ? ORDER BY w.sort_order ASC`,
 		[cragId],
 	);
+	return rows.map(parseSunData);
 }
 
 // ── Single-entity fetches ────────────────────────────────────────────────────
@@ -91,7 +101,7 @@ export async function fetchWall(id: string): Promise<Wall | null> {
 		"SELECT * FROM walls_cache WHERE id = ?",
 		[id],
 	);
-	return rows[0] ?? null;
+	return rows[0] ? parseSunData(rows[0]) : null;
 }
 
 // ── Admin description update ─────────────────────────────────────────────────
@@ -468,7 +478,7 @@ export async function downloadRegion(regionId: string): Promise<void> {
 		if (walls && walls.length > 0) {
 			for (const row of walls as unknown as Wall[]) {
 				await db.execute(
-					"INSERT INTO walls_cache (id, crag_id, name, description, approach, sort_order, status, created_by, created_at, lat, lng, wall_type, sport_count, trad_count, boulder_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+					"INSERT INTO walls_cache (id, crag_id, name, description, approach, sort_order, status, created_by, created_at, lat, lng, wall_type, sport_count, trad_count, boulder_count, sun_data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 					[
 						row.id,
 						row.crag_id,
@@ -485,6 +495,7 @@ export async function downloadRegion(regionId: string): Promise<void> {
 						row.sport_count ?? 0,
 						row.trad_count ?? 0,
 						row.boulder_count ?? 0,
+						row.sun_data != null ? JSON.stringify(row.sun_data) : null,
 					],
 				);
 			}
@@ -516,7 +527,7 @@ export async function downloadRegion(regionId: string): Promise<void> {
 			if (routes && routes.length > 0) {
 				for (const row of routes) {
 					await db.execute(
-						"INSERT INTO routes_cache (id, wall_id, name, grade, route_type, description, status, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+						"INSERT INTO routes_cache (id, wall_id, name, grade, route_type, description, status, created_by, created_at, sun_data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 						[
 							row.id,
 							row.wall_id,
@@ -527,6 +538,7 @@ export async function downloadRegion(regionId: string): Promise<void> {
 							"verified",
 							row.created_by,
 							row.created_at,
+							row.sun_data != null ? JSON.stringify(row.sun_data) : null,
 						],
 					);
 				}
@@ -1238,7 +1250,7 @@ export async function updateWallSunData(
 	const serialized = JSON.stringify(data);
 	// biome-ignore lint/suspicious/noExplicitAny: sun_data not yet in generated Supabase types
 	const { error } = await (supabase.from("walls") as any)
-		.update({ sun_data: serialized })
+		.update({ sun_data: data })
 		.eq("id", wallId);
 	if (error) throw error;
 

@@ -184,7 +184,9 @@ public.sub_regions (id, region_id, name, sort_order, created_at)
 public.crags       (id, sub_region_id, name, description, approach, sort_order, created_at, lat, lng, sport_count, trad_count, boulder_count)
 public.walls       (id, crag_id, name, description, approach, sort_order, created_at, lat, lng, wall_type, sport_count, trad_count, boulder_count, sun_data)
 -- RLS: authenticated users SELECT only; service role writes
+-- sun_data: readable by all authenticated; writable by admin/service role only (#224)
 -- crags and walls have optional lat/lng REAL columns for map coordinates
 -- wall_type: 'wall' | 'boulder' — physical feature type
 -- sport/trad/boulder counts maintained by Supabase trigger on route verification (see docs/migrations/025_wall_type_counts.sql)
+-- downloadRegion() pulls sun_data from both walls and routes via SELECT * (#224)
 ```
