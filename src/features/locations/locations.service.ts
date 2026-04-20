@@ -47,13 +47,25 @@ export async function fetchCrags(subRegionId: string): Promise<Crag[]> {
 	);
 }
 
+function parseSunData<T extends { sun_data?: unknown }>(row: T): T {
+	if (typeof row.sun_data === "string" && row.sun_data) {
+		try {
+			row.sun_data = JSON.parse(row.sun_data);
+		} catch {
+			row.sun_data = null;
+		}
+	}
+	return row;
+}
+
 export async function fetchWalls(cragId: string): Promise<Wall[]> {
 	const db = await getDb();
-	return db.select<Wall[]>(
+	const rows = await db.select<Wall[]>(
 		`SELECT w.*, (SELECT COUNT(*) FROM routes_cache r WHERE r.wall_id = w.id) AS route_count
 		 FROM walls_cache w WHERE w.crag_id = ? ORDER BY w.sort_order ASC`,
 		[cragId],
 	);
+	return rows.map(parseSunData);
 }
 
 // ── Single-entity fetches ────────────────────────────────────────────────────
@@ -91,7 +103,7 @@ export async function fetchWall(id: string): Promise<Wall | null> {
 		"SELECT * FROM walls_cache WHERE id = ?",
 		[id],
 	);
-	return rows[0] ?? null;
+	return rows[0] ? parseSunData(rows[0]) : null;
 }
 
 // ── Admin description update ─────────────────────────────────────────────────
