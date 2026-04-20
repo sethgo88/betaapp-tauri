@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/atoms/Button";
+import { CompassPicker } from "@/components/atoms/CompassPicker";
 import { ToggleGroup } from "@/components/atoms/ToggleGroup";
 import { Sheet } from "@/components/molecules/Sheet";
 import { cn } from "@/lib/cn";
@@ -8,11 +9,19 @@ import type { Aspect, Month, SunData, SunExposure } from "@/lib/sun";
 // ── Constants ────────────────────────────────────────────────────────────────
 
 const MONTH_NAMES = [
-	"Jan", "Feb", "Mar", "Apr", "May", "Jun",
-	"Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+	"Jan",
+	"Feb",
+	"Mar",
+	"Apr",
+	"May",
+	"Jun",
+	"Jul",
+	"Aug",
+	"Sep",
+	"Oct",
+	"Nov",
+	"Dec",
 ];
-
-const ASPECTS: Aspect[] = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
 
 const SEASONS = [
 	{ name: "Winter", months: [12, 1, 2] as Month[] },
@@ -21,9 +30,12 @@ const SEASONS = [
 	{ name: "Fall", months: [9, 10, 11] as Month[] },
 ] as const;
 
-// Cycle order: null → full-sun → partial-shade → full-shade → null (light to dark)
+// Cycle order: null → full-sun → partial-shade → full-shade → null
 const EXPOSURE_CYCLE: (SunExposure | null)[] = [
-	null, "full-sun", "partial-shade", "full-shade",
+	null,
+	"full-sun",
+	"partial-shade",
+	"full-shade",
 ];
 
 const EXPOSURE_LABELS: Record<SunExposure, string> = {
@@ -32,20 +44,22 @@ const EXPOSURE_LABELS: Record<SunExposure, string> = {
 	"partial-shade": "Partial",
 };
 
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+type MonthEntry = { am: SunExposure | null; pm: SunExposure | null };
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function exposureClasses(exposure: SunExposure | null | undefined): string {
 	switch (exposure) {
 		case "full-sun":
-			// amber accent — warm = sunny
 			return "bg-accent-secondary text-text-on-dark";
 		case "full-shade":
-			// teal accent — cool = shade
-			return "bg-accent-primary text-text-on-dark";
+			return "bg-white/25 text-white";
 		case "partial-shade":
-			return "bg-surface-stone text-text-secondary";
+			return "bg-white/15 text-white";
 		default:
-			return "bg-surface-stone text-text-tertiary";
+			return "bg-white/10 text-white/40";
 	}
 }
 
@@ -63,19 +77,21 @@ function dominantExposure(
 	);
 	if (!entries.length) return null;
 	const counts: Partial<Record<SunExposure, number>> = {};
-	for (const { exposure } of entries) {
-		counts[exposure] = (counts[exposure] ?? 0) + 1;
+	for (const { am, pm } of entries) {
+		if (am) counts[am] = (counts[am] ?? 0) + 1;
+		if (pm) counts[pm] = (counts[pm] ?? 0) + 1;
 	}
-	return (Object.entries(counts) as [SunExposure, number][]).sort(
+	const sorted = (Object.entries(counts) as [SunExposure, number][]).sort(
 		(a, b) => b[1] - a[1] || a[0].localeCompare(b[0]),
-	)[0][0];
+	);
+	return sorted[0]?.[0] ?? null;
 }
 
-function buildMonthMap(monthly: SunData["monthly"]): Map<Month, SunExposure | null> {
-	const map = new Map<Month, SunExposure | null>();
-	for (let i = 1; i <= 12; i++) map.set(i as Month, null);
-	for (const { month, exposure } of monthly ?? []) {
-		map.set(month, exposure);
+function buildMonthMap(monthly: SunData["monthly"]): Map<Month, MonthEntry> {
+	const map = new Map<Month, MonthEntry>();
+	for (let i = 1; i <= 12; i++) map.set(i as Month, { am: null, pm: null });
+	for (const { month, am, pm } of monthly ?? []) {
+		map.set(month, { am: am ?? null, pm: pm ?? null });
 	}
 	return map;
 }
@@ -97,57 +113,78 @@ export function SunShadeSheet({
 	isOpen,
 	data,
 	isEditing,
-	showAspect,
+	showAspect = true,
 	onSave,
 	onClose,
 }: SunShadeSheetProps) {
 	const [tab, setTab] = useState<"month" | "season">("month");
 
-	// Edit state — undefined means "nothing selected yet" for apply-all
 	const [editAspect, setEditAspect] = useState<Aspect | undefined>(
 		data?.aspect,
 	);
-	const [editMonths, setEditMonths] = useState<Map<Month, SunExposure | null>>(
-		() => buildMonthMap(data?.monthly),
+	const [editMonths, setEditMonths] = useState<Map<Month, MonthEntry>>(() =>
+		buildMonthMap(data?.monthly),
 	);
-	const [applyAll, setApplyAll] = useState<SunExposure | null | undefined>(
-		undefined,
-	);
+	// undefined = nothing selected yet; null = "clear"
+	const [applyAllAm, setApplyAllAm] = useState<SunExposure | null>("full-sun");
+	const [applyAllPm, setApplyAllPm] = useState<SunExposure | null>("full-sun");
 
-	// Reset edit state when sheet opens or editing starts
 	useEffect(() => {
 		if (isOpen && isEditing) {
 			setEditAspect(data?.aspect);
 			setEditMonths(buildMonthMap(data?.monthly));
-			setApplyAll(undefined);
+			setApplyAllAm("full-sun");
+			setApplyAllPm("full-sun");
 			setTab("month");
 		}
 	}, [isOpen, isEditing, data]);
 
-	function cycleExposure(month: Month) {
+	function cycleAm(month: Month) {
 		setEditMonths((prev) => {
-			const current = prev.get(month) ?? null;
-			const idx = EXPOSURE_CYCLE.indexOf(current);
-			const next = EXPOSURE_CYCLE[(idx + 1) % EXPOSURE_CYCLE.length];
+			const current = prev.get(month)!;
+			const idx = EXPOSURE_CYCLE.indexOf(current.am);
 			const map = new Map(prev);
-			map.set(month, next);
+			map.set(month, {
+				...current,
+				am: EXPOSURE_CYCLE[(idx + 1) % EXPOSURE_CYCLE.length],
+			});
+			return map;
+		});
+	}
+
+	function cyclePm(month: Month) {
+		setEditMonths((prev) => {
+			const current = prev.get(month)!;
+			const idx = EXPOSURE_CYCLE.indexOf(current.pm);
+			const map = new Map(prev);
+			map.set(month, {
+				...current,
+				pm: EXPOSURE_CYCLE[(idx + 1) % EXPOSURE_CYCLE.length],
+			});
 			return map;
 		});
 	}
 
 	function handleApplyAll() {
-		if (applyAll === undefined) return;
 		setEditMonths((prev) => {
 			const map = new Map(prev);
-			for (let i = 1; i <= 12; i++) map.set(i as Month, applyAll);
+			for (let i = 1; i <= 12; i++) {
+				map.set(i as Month, { am: applyAllAm, pm: applyAllPm });
+			}
 			return map;
 		});
 	}
 
 	function handleSave() {
 		const monthly = Array.from(editMonths.entries())
-			.filter((entry): entry is [Month, SunExposure] => entry[1] !== null)
-			.map(([month, exposure]) => ({ month, exposure }));
+			.filter(([, { am, pm }]) => am !== null || pm !== null)
+			.map(([month, { am, pm }]) => ({
+				month,
+				...(am ? { am } : {}),
+				...(pm ? { pm } : {}),
+			}));
+
+		if (!editAspect && !monthly.length) return;
 
 		onSave?.({
 			...(editAspect ? { aspect: editAspect } : {}),
@@ -164,16 +201,25 @@ export function SunShadeSheet({
 	) : undefined;
 
 	return (
-		<Sheet isOpen={isOpen} onClose={onClose} title={title} action={action}>
+		<Sheet
+			isOpen={isOpen}
+			onClose={onClose}
+			title={title}
+			action={action}
+			variant="primary"
+		>
 			{isEditing ? (
 				<EditContent
 					showAspect={showAspect}
 					editAspect={editAspect}
 					setEditAspect={setEditAspect}
 					editMonths={editMonths}
-					cycleExposure={cycleExposure}
-					applyAll={applyAll}
-					setApplyAll={setApplyAll}
+					cycleAm={cycleAm}
+					cyclePm={cyclePm}
+					applyAllAm={applyAllAm}
+					setApplyAllAm={setApplyAllAm}
+					applyAllPm={applyAllPm}
+					setApplyAllPm={setApplyAllPm}
 					handleApplyAll={handleApplyAll}
 				/>
 			) : (
@@ -203,7 +249,7 @@ function ViewContent({
 }) {
 	if (!data) {
 		return (
-			<p className="text-text-tertiary text-sm text-center py-8">
+			<p className="text-white/60 text-sm text-center py-8">
 				No exposure data recorded.
 			</p>
 		);
@@ -213,8 +259,8 @@ function ViewContent({
 		<div className="flex flex-col gap-4">
 			{showAspect && data.aspect && (
 				<div className="flex items-center gap-2">
-					<span className="text-sm text-text-secondary font-body">Aspect</span>
-					<span className="bg-accent-primary text-text-on-dark rounded px-2 py-0.5 text-sm font-semibold font-body">
+					<span className="text-sm text-white font-body">Aspect</span>
+					<span className="bg-white text-accent-primary rounded px-2 py-0.5 text-sm font-semibold font-body">
 						{data.aspect}
 					</span>
 				</div>
@@ -229,6 +275,7 @@ function ViewContent({
 				onChange={(v) => {
 					if (v === "month" || v === "season") setTab(v);
 				}}
+				variant="on-primary"
 			/>
 
 			{tab === "month" ? (
@@ -244,27 +291,50 @@ function MonthTable({ monthly }: { monthly: SunData["monthly"] }) {
 	const map = buildMonthMap(monthly);
 
 	return (
-		<div className="rounded-card border border-border-default overflow-hidden">
+		<div className="rounded-card border border-white/20 overflow-hidden">
+			{/* Header */}
+			<div className="flex items-center px-4 py-1.5 border-b border-white/20">
+				<span className="w-8" />
+				<div className="flex ml-auto gap-1.5">
+					<span className="text-xs text-white/50 font-body min-w-[52px] text-center">
+						AM
+					</span>
+					<span className="text-xs text-white/50 font-body min-w-[52px] text-center">
+						PM
+					</span>
+				</div>
+			</div>
+
 			{MONTH_NAMES.map((name, i) => {
 				const month = (i + 1) as Month;
-				const exposure = map.get(month) ?? null;
+				const { am, pm } = map.get(month)!;
 				return (
 					<div
 						key={month}
 						className={cn(
-							"flex items-center justify-between px-4 py-2.5 text-sm font-body",
-							i !== 0 && "border-t border-border-default",
+							"flex items-center px-4 py-2 text-sm font-body gap-2",
+							i !== 0 && "border-t border-white/20",
 						)}
 					>
-						<span className="text-text-secondary w-8">{name}</span>
-						<span
-							className={cn(
-								"rounded px-2 py-0.5 text-xs font-semibold",
-								exposureClasses(exposure),
-							)}
-						>
-							{exposureLabel(exposure)}
-						</span>
+						<span className="text-white w-8 shrink-0">{name}</span>
+						<div className="flex ml-auto gap-1.5">
+							<span
+								className={cn(
+									"rounded px-2 py-0.5 text-xs font-semibold min-w-[52px] text-center",
+									exposureClasses(am),
+								)}
+							>
+								{exposureLabel(am)}
+							</span>
+							<span
+								className={cn(
+									"rounded px-2 py-0.5 text-xs font-semibold min-w-[52px] text-center",
+									exposureClasses(pm),
+								)}
+							>
+								{exposureLabel(pm)}
+							</span>
+						</div>
 					</div>
 				);
 			})}
@@ -280,9 +350,9 @@ function SeasonCards({ monthly }: { monthly: SunData["monthly"] }) {
 				return (
 					<div
 						key={name}
-						className="rounded-card border border-border-default p-3 flex flex-col gap-1"
+						className="rounded-card border border-white/20 p-3 flex flex-col gap-1"
 					>
-						<span className="text-xs text-text-tertiary font-body">{name}</span>
+						<span className="text-xs text-white/60 font-body">{name}</span>
 						<span
 							className={cn(
 								"rounded px-2 py-0.5 text-sm font-semibold font-body self-start",
@@ -300,128 +370,167 @@ function SeasonCards({ monthly }: { monthly: SunData["monthly"] }) {
 
 // ── Edit mode ────────────────────────────────────────────────────────────────
 
+function ExposureRow({
+	label,
+	selected,
+	onSelect,
+}: {
+	label: string;
+	selected: SunExposure | null;
+	onSelect: (e: SunExposure | null) => void;
+}) {
+	return (
+		<div className="flex flex-col gap-1.5">
+			<span className="text-xs text-white/60 font-body">{label}</span>
+			<div className="flex items-center gap-2 flex-wrap">
+				{(
+					[
+						"full-sun",
+						"partial-shade",
+						"full-shade",
+						null,
+					] as (SunExposure | null)[]
+				).map((e) => (
+					<button
+						key={String(e)}
+						type="button"
+						aria-pressed={selected === e}
+						onClick={() => {
+							if (selected !== e) onSelect(e);
+						}}
+						className={cn(
+							"rounded px-3 py-1.5 text-xs font-semibold border transition-colors",
+							selected === e
+								? "border-white ring-1 ring-white"
+								: "border-white/25",
+							exposureClasses(e),
+						)}
+					>
+						{e ? EXPOSURE_LABELS[e] : "Clear"}
+					</button>
+				))}
+			</div>
+		</div>
+	);
+}
+
 function EditContent({
 	showAspect,
 	editAspect,
 	setEditAspect,
 	editMonths,
-	cycleExposure,
-	applyAll,
-	setApplyAll,
+	cycleAm,
+	cyclePm,
+	applyAllAm,
+	setApplyAllAm,
+	applyAllPm,
+	setApplyAllPm,
 	handleApplyAll,
 }: {
 	showAspect: boolean;
 	editAspect: Aspect | undefined;
 	setEditAspect: (a: Aspect | undefined) => void;
-	editMonths: Map<Month, SunExposure | null>;
-	cycleExposure: (m: Month) => void;
-	applyAll: SunExposure | null | undefined;
-	setApplyAll: (e: SunExposure | null | undefined) => void;
+	editMonths: Map<Month, MonthEntry>;
+	cycleAm: (m: Month) => void;
+	cyclePm: (m: Month) => void;
+	applyAllAm: SunExposure | null;
+	setApplyAllAm: (e: SunExposure | null) => void;
+	applyAllPm: SunExposure | null;
+	setApplyAllPm: (e: SunExposure | null) => void;
 	handleApplyAll: () => void;
 }) {
 	return (
 		<div className="flex flex-col gap-5">
 			{showAspect && (
 				<div className="flex flex-col gap-2">
-					<span className="text-sm font-semibold text-text-primary font-body">
+					<span className="text-sm font-semibold text-white font-body">
 						Aspect
 					</span>
-					<div className="grid grid-cols-4 gap-1.5">
-						{ASPECTS.map((a) => (
-							<button
-								key={a}
-								type="button"
-								aria-pressed={editAspect === a}
-								onClick={() => setEditAspect(editAspect === a ? undefined : a)}
-								className={cn(
-									"rounded py-2 text-sm font-semibold font-body transition-colors",
-									editAspect === a
-										? "bg-accent-primary text-text-on-dark"
-										: "bg-surface-stone text-text-secondary",
-								)}
-							>
-								{a}
-							</button>
-						))}
-					</div>
+					<CompassPicker value={editAspect} onChange={setEditAspect} />
 				</div>
 			)}
 
 			<div className="flex flex-col gap-1">
-				<span className="text-sm font-semibold text-text-primary font-body mb-1">
+				<span className="text-sm font-semibold text-white font-body mb-1">
 					Monthly exposure{" "}
-					<span className="text-xs font-normal text-text-tertiary">
+					<span className="text-xs font-normal text-white/60">
 						(tap to cycle)
 					</span>
 				</span>
 
-				<div className="rounded-card border border-border-default overflow-hidden">
+				<div className="rounded-card border border-white/20 overflow-hidden">
+					{/* Column headers */}
+					<div className="flex items-center px-4 py-1.5 border-b border-white/20">
+						<span className="w-8 shrink-0" />
+						<div className="flex ml-auto gap-1.5">
+							<span className="text-xs text-white/50 font-body min-w-[52px] text-center">
+								AM
+							</span>
+							<span className="text-xs text-white/50 font-body min-w-[52px] text-center">
+								PM
+							</span>
+						</div>
+					</div>
+
 					{MONTH_NAMES.map((name, i) => {
 						const month = (i + 1) as Month;
-						const exposure = editMonths.get(month) ?? null;
+						const { am, pm } = editMonths.get(month)!;
 						return (
 							<div
 								key={month}
 								className={cn(
-									"flex items-center justify-between px-4 py-2 text-sm font-body",
-									i !== 0 && "border-t border-border-default",
+									"flex items-center px-4 py-2 text-sm font-body gap-2",
+									i !== 0 && "border-t border-white/20",
 								)}
 							>
-								<span className="text-text-secondary w-8">{name}</span>
-								<button
-									type="button"
-									aria-label={`${name} exposure: ${exposure ? EXPOSURE_LABELS[exposure] : "not set"}, tap to cycle`}
-									onClick={() => cycleExposure(month)}
-									className={cn(
-										"rounded px-3 py-1 text-xs font-semibold transition-colors min-w-[72px] text-center",
-										exposureClasses(exposure),
-									)}
-								>
-									{exposureLabel(exposure)}
-								</button>
+								<span className="text-white w-8 shrink-0">{name}</span>
+								<div className="flex ml-auto gap-1.5">
+									<button
+										type="button"
+										aria-label={`${name} AM: ${exposureLabel(am)}, tap to cycle`}
+										onClick={() => cycleAm(month)}
+										className={cn(
+											"rounded px-2 py-1 text-xs font-semibold transition-colors min-w-[52px] text-center",
+											exposureClasses(am),
+										)}
+									>
+										{exposureLabel(am)}
+									</button>
+									<button
+										type="button"
+										aria-label={`${name} PM: ${exposureLabel(pm)}, tap to cycle`}
+										onClick={() => cyclePm(month)}
+										className={cn(
+											"rounded px-2 py-1 text-xs font-semibold transition-colors min-w-[52px] text-center",
+											exposureClasses(pm),
+										)}
+									>
+										{exposureLabel(pm)}
+									</button>
+								</div>
 							</div>
 						);
 					})}
 				</div>
 			</div>
 
-			<div className="flex flex-col gap-2 pb-2">
-				<span className="text-sm font-semibold text-text-primary font-body">
+			<div className="flex flex-col gap-3 pb-2">
+				<span className="text-sm font-semibold text-white font-body">
 					Apply to all months
 				</span>
-				<div className="flex items-center gap-2 flex-wrap">
-					{(
-						[
-							"full-sun",
-							"partial-shade",
-							"full-shade",
-							null,
-						] as (SunExposure | null)[]
-					).map((e) => (
-						<button
-							key={String(e)}
-							type="button"
-							aria-pressed={applyAll === e}
-							onClick={() => setApplyAll(applyAll === e ? undefined : e)}
-							className={cn(
-								"rounded px-3 py-1.5 text-xs font-semibold border transition-colors",
-								applyAll === e
-									? "border-accent-primary ring-1 ring-accent-primary"
-									: "border-border-default",
-								exposureClasses(e),
-							)}
-						>
-							{e ? EXPOSURE_LABELS[e] : "Clear"}
-						</button>
-					))}
-					<Button
-						size="small"
-						disabled={applyAll === undefined}
-						onClick={handleApplyAll}
-					>
-						Apply
-					</Button>
-				</div>
+				<ExposureRow
+					label="AM"
+					selected={applyAllAm}
+					onSelect={setApplyAllAm}
+				/>
+				<ExposureRow
+					label="PM"
+					selected={applyAllPm}
+					onSelect={setApplyAllPm}
+				/>
+				<Button size="small" onClick={handleApplyAll} className="self-start">
+					Apply
+				</Button>
 			</div>
 		</div>
 	);

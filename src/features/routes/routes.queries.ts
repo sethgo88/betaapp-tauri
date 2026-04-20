@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/features/auth/auth.store";
+import type { SunData } from "@/lib/sun";
 import type { RouteSubmitValues } from "./routes.schema";
 import {
 	addRoute,
@@ -19,6 +20,7 @@ import {
 	searchLocalRoutes,
 	updateRouteDescription,
 	updateRouteFields,
+	updateRouteSunData,
 	verifyRoute,
 } from "./routes.service";
 
@@ -259,6 +261,18 @@ export function useDeleteRouteLink(routeId: string) {
 		mutationFn: (id: string) => deleteRouteLink(id),
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: ["route_links", routeId] });
+		},
+	});
+}
+
+// ── Sun/shade ─────────────────────────────────────────────────────────────────
+
+export function useUpdateRouteSunData(routeId: string) {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: (data: SunData | null) => updateRouteSunData(routeId, data),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: ["route", routeId] });
 		},
 	});
 }

@@ -169,6 +169,7 @@ useAllWallsWithCoords()     // map Discovery mode — walls with lat/lng
 useAdminUpdateCragCoords()  // admin mutation — { id, lat, lng }
 useAdminUpdateWallType()    // admin mutation — { id, wallType }
 useAdminUpdateWallCoords()  // admin mutation — { id, lat, lng, cragId }
+useUpdateWallSunData(wallId) // admin mutation — SunData; invalidates wall
 ```
 
 ---

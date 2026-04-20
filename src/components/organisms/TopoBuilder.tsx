@@ -670,7 +670,7 @@ export const WallTopoBuilder = ({
 
 		if (onClose) {
 			return (
-				<div className="fixed inset-0 z-40 bg-cyan-900 flex flex-col">
+				<div className="fixed inset-0 z-40 bg-sheet-bg flex flex-col">
 					<div
 						className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-white/20"
 						style={{ paddingTop: "calc(env(safe-area-inset-top) + 0.75rem)" }}
@@ -819,7 +819,7 @@ export const WallTopoBuilder = ({
 
 	if (onClose) {
 		return (
-			<div className="fixed inset-0 z-40 bg-cyan-900 flex flex-col">
+			<div className="fixed inset-0 z-40 bg-sheet-bg flex flex-col">
 				{/* Header */}
 				<div
 					className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-white/20"
@@ -1160,7 +1160,7 @@ export const RouteTopoBuilder = ({
 
 		if (onClose) {
 			return (
-				<div className="fixed inset-0 z-40 bg-cyan-900 flex flex-col">
+				<div className="fixed inset-0 z-40 bg-sheet-bg flex flex-col">
 					<div
 						className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-white/20"
 						style={{ paddingTop: "calc(env(safe-area-inset-top) + 0.75rem)" }}
@@ -1196,7 +1196,7 @@ export const RouteTopoBuilder = ({
 
 	if (onClose) {
 		return (
-			<div className="fixed inset-0 z-40 bg-cyan-900 flex flex-col">
+			<div className="fixed inset-0 z-40 bg-sheet-bg flex flex-col">
 				{/* Header */}
 				<div
 					className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-white/20"

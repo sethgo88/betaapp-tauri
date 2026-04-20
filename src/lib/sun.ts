@@ -4,7 +4,11 @@ export type Month = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
 
 export type SunData = {
 	aspect?: Aspect;
-	monthly?: { month: Month; exposure: SunExposure }[];
+	/**
+	 * Per-month exposure. `am` and `pm` are independent — if only one is set,
+	 * the unset half inherits that value (i.e. it applies all day).
+	 */
+	monthly?: { month: Month; am?: SunExposure; pm?: SunExposure }[];
 	notes?: string;
 };
 
@@ -19,13 +23,14 @@ export function summarizeSunData(data: SunData): string {
 	if (data.aspect) parts.push(`Faces ${data.aspect}`);
 	if (data.monthly?.length) {
 		const counts: Partial<Record<SunExposure, number>> = {};
-		for (const { exposure } of data.monthly) {
-			counts[exposure] = (counts[exposure] ?? 0) + 1;
+		for (const { am, pm } of data.monthly) {
+			if (am) counts[am] = (counts[am] ?? 0) + 1;
+			if (pm) counts[pm] = (counts[pm] ?? 0) + 1;
 		}
 		const dominant = (Object.entries(counts) as [SunExposure, number][]).sort(
 			(a, b) => b[1] - a[1],
-		)[0][0];
-		parts.push(EXPOSURE_LABELS[dominant]);
+		)[0]?.[0];
+		if (dominant) parts.push(EXPOSURE_LABELS[dominant]);
 	}
 	if (data.notes) parts.push(data.notes);
 	return parts.join(" · ");

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/features/auth/auth.store";
+import type { SunData } from "@/lib/sun";
 import type {
 	CragSubmitValues,
 	SubRegionSubmitValues,
@@ -46,6 +47,7 @@ import {
 	submitWall,
 	updateLocationApproach,
 	updateLocationDescription,
+	updateWallSunData,
 	verifyLocation,
 } from "./locations.service";
 
@@ -559,5 +561,17 @@ export function useStaleRegionIds() {
 		queryFn: checkRegionStaleness,
 		// Don't auto-refetch — staleness is checked explicitly on app launch
 		staleTime: Number.POSITIVE_INFINITY,
+	});
+}
+
+// ── Sun/shade ─────────────────────────────────────────────────────────────────
+
+export function useUpdateWallSunData(wallId: string) {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: (data: SunData) => updateWallSunData(wallId, data),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: ["wall", wallId] });
+		},
 	});
 }
