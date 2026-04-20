@@ -468,7 +468,7 @@ export async function downloadRegion(regionId: string): Promise<void> {
 		if (walls && walls.length > 0) {
 			for (const row of walls as unknown as Wall[]) {
 				await db.execute(
-					"INSERT INTO walls_cache (id, crag_id, name, description, approach, sort_order, status, created_by, created_at, lat, lng, wall_type, sport_count, trad_count, boulder_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+					"INSERT INTO walls_cache (id, crag_id, name, description, approach, sort_order, status, created_by, created_at, lat, lng, wall_type, sport_count, trad_count, boulder_count, sun_data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 					[
 						row.id,
 						row.crag_id,
@@ -485,6 +485,7 @@ export async function downloadRegion(regionId: string): Promise<void> {
 						row.sport_count ?? 0,
 						row.trad_count ?? 0,
 						row.boulder_count ?? 0,
+						row.sun_data != null ? JSON.stringify(row.sun_data) : null,
 					],
 				);
 			}
@@ -516,7 +517,7 @@ export async function downloadRegion(regionId: string): Promise<void> {
 			if (routes && routes.length > 0) {
 				for (const row of routes) {
 					await db.execute(
-						"INSERT INTO routes_cache (id, wall_id, name, grade, route_type, description, status, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+						"INSERT INTO routes_cache (id, wall_id, name, grade, route_type, description, status, created_by, created_at, sun_data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 						[
 							row.id,
 							row.wall_id,
@@ -527,6 +528,7 @@ export async function downloadRegion(regionId: string): Promise<void> {
 							"verified",
 							row.created_by,
 							row.created_at,
+							row.sun_data != null ? JSON.stringify(row.sun_data) : null,
 						],
 					);
 				}

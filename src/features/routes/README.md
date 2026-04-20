@@ -200,11 +200,14 @@ For each route, admin can:
 public.routes (
   id uuid pk,  wall_id uuid references walls,  name text,
   route_type text,  grade text,  description text,
-  verified boolean default false,
+  status text default 'pending',
   created_by uuid references auth.users,
-  created_at timestamptz,  deleted_at timestamptz
+  created_at timestamptz,  deleted_at timestamptz,
+  sort_order integer default 0,
+  sun_data jsonb          -- v224; null = inherit from wall
 )
 -- RLS: status = 'verified' visible to all authenticated users
 --       status = 'pending'/'rejected' visible to created_by only
+-- sun_data: readable by all authenticated; writable by admin/service role only
 -- INSERT: auth.uid() = created_by
 ```
