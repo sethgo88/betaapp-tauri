@@ -168,7 +168,7 @@ export const WallTopoPanel = ({
 	onNavigateToRoute,
 }: WallTopoPanelProps) => {
 	return (
-		<div className="shrink-0 bg-cyan-900 rounded-b-lg overflow-hidden">
+		<div className="shrink-0 bg-sheet-bg rounded-b-lg overflow-hidden">
 			<div
 				className="overflow-y-auto"
 				style={{ maxHeight: "40vh", scrollbarWidth: "none" }}

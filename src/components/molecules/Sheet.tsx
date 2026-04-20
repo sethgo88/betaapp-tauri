@@ -7,6 +7,8 @@ interface SheetProps {
 	children: React.ReactNode;
 	/** Optional action rendered in the header right side (e.g. a confirm button). */
 	action?: React.ReactNode;
+	/** "primary" renders with accent-primary (teal) background and white text. */
+	variant?: "primary";
 }
 
 /**
@@ -19,22 +21,25 @@ export function Sheet({
 	title,
 	children,
 	action,
+	variant,
 }: SheetProps) {
 	if (!isOpen) return null;
 
+	const isPrimary = variant === "primary";
+
 	return (
-		<div className="fixed inset-0 z-50 flex flex-col bg-surface-page pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+		<div className={`fixed inset-0 z-50 flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] ${isPrimary ? "bg-sheet-bg" : "bg-surface-page"}`}>
 			{/* Header */}
-			<div className="flex items-center justify-between px-4 py-3 border-b border-border-default shrink-0">
+			<div className={`flex items-center justify-between px-4 py-3 border-b shrink-0 ${isPrimary ? "border-white/20" : "border-border-default"}`}>
 				<button
 					type="button"
 					onClick={onClose}
-					className="text-text-primary/70 p-1 -ml-1"
+					className={`p-1 -ml-1 ${isPrimary ? "text-white/70" : "text-text-primary/70"}`}
 					aria-label="Close"
 				>
 					<X size={20} />
 				</button>
-				<span className="text-sm font-semibold text-text-primary">{title}</span>
+				<span className={`text-sm font-semibold ${isPrimary ? "text-white" : "text-text-primary"}`}>{title}</span>
 				<div className="min-w-[28px] flex justify-end">{action ?? null}</div>
 			</div>
 

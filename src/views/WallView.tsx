@@ -28,6 +28,8 @@ import {
 	type PickerMarker,
 } from "@/components/molecules/CoordinatePicker";
 import { EditableDescription } from "@/components/molecules/EditableDescription";
+import { SunShadeSheet } from "@/components/molecules/SunShadeSheet";
+import { SunShadeSummary } from "@/components/molecules/SunShadeSummary";
 import { TagSelect } from "@/components/molecules/TagSelect";
 import { TopoModal } from "@/components/molecules/TopoModal";
 import { WallTopoBuilder } from "@/components/organisms/TopoBuilder";
@@ -38,6 +40,7 @@ import {
 	useCrag,
 	useUpdateLocationApproach,
 	useUpdateLocationDescription,
+	useUpdateWallSunData,
 	useWall,
 	useWalls,
 } from "@/features/locations/locations.queries";
@@ -94,7 +97,11 @@ const SortableRouteCard = ({ route }: { route: Route }) => {
 				<div className="flex items-center gap-2">
 					{route.avg_rating != null && (
 						<span className="flex items-center gap-1">
-							<StarRating value={Math.round(route.avg_rating)} readOnly size={14} />
+							<StarRating
+								value={Math.round(route.avg_rating)}
+								readOnly
+								size={14}
+							/>
 							<span className="text-xs text-text-on-light">
 								{route.avg_rating.toFixed(1)} · {route.rating_count ?? 0}
 							</span>
@@ -150,7 +157,9 @@ const WallView = () => {
 	const [pendingDeleteRoute, setPendingDeleteRoute] = useState<Route | null>(
 		null,
 	);
+	const [sunSheetOpen, setSunSheetOpen] = useState(false);
 	const reorderRoutesMutation = useReorderRoutes(wallId);
+	const updateWallSunData = useUpdateWallSunData(wallId);
 	const adminDeleteRoute = useAdminDeleteRoute();
 	const { data: wallTags = [] } = useWallTags(wallId);
 	const setWallTags = useSetWallTags(wallId);
@@ -249,6 +258,11 @@ const WallView = () => {
 				)
 			)}
 
+			<SunShadeSummary
+				data={wall.sun_data ?? null}
+				onClick={() => setSunSheetOpen(true)}
+			/>
+
 			<EditableDescription
 				description={wall.description}
 				isAdmin={isAdmin}
@@ -262,9 +276,7 @@ const WallView = () => {
 			/>
 
 			<div className="flex flex-col gap-1">
-				<p className="text-xs text-white uppercase tracking-wide">
-					Approach
-				</p>
+				<p className="text-xs text-white uppercase tracking-wide">Approach</p>
 				<EditableDescription
 					description={wall.approach}
 					isAdmin={isAdmin}
@@ -416,9 +428,7 @@ const WallView = () => {
 			)}
 
 			{routes.length === 0 && (
-				<p className="text-white text-sm">
-					No routes on this wall yet.
-				</p>
+				<p className="text-white text-sm">No routes on this wall yet.</p>
 			)}
 
 			{isAdmin &&
@@ -477,10 +487,16 @@ const WallView = () => {
 							<div className="flex flex-col gap-0.5">
 								<span className="font-medium">{route.name}</span>
 								<div className="flex items-center gap-1.5">
-									<span className="text-xs text-text-on-light">{route.grade}</span>
-									<span className="text-xs text-text-on-light">{route.route_type}</span>
+									<span className="text-xs text-text-on-light">
+										{route.grade}
+									</span>
+									<span className="text-xs text-text-on-light">
+										{route.route_type}
+									</span>
 									{route.status === "pending" && (
-										<span className="text-xs text-accent-secondary">pending</span>
+										<span className="text-xs text-accent-secondary">
+											pending
+										</span>
 									)}
 								</div>
 							</div>
@@ -524,6 +540,18 @@ const WallView = () => {
 			>
 				Submit a route
 			</Button>
+
+			<SunShadeSheet
+				isOpen={sunSheetOpen}
+				data={wall.sun_data ?? null}
+				isEditing={isAdmin ?? false}
+				onSave={(data) => {
+					updateWallSunData.mutate(data, {
+						onSuccess: () => setSunSheetOpen(false),
+					});
+				}}
+				onClose={() => setSunSheetOpen(false)}
+			/>
 
 			<ConfirmDeleteDialog
 				isOpen={pendingDeleteRoute !== null}

@@ -14,6 +14,8 @@ import { ConfirmDeleteDialog } from "@/components/molecules/ConfirmDeleteDialog"
 import { EditableDescription } from "@/components/molecules/EditableDescription";
 import { LogClimbSheet } from "@/components/molecules/LogClimbSheet";
 import { RouteBodyChart } from "@/components/molecules/RouteBodyChart";
+import { SunShadeSheet } from "@/components/molecules/SunShadeSheet";
+import { SunShadeSummary } from "@/components/molecules/SunShadeSummary";
 import { TagSelect } from "@/components/molecules/TagSelect";
 import { TopoModal } from "@/components/molecules/TopoModal";
 import { RouteTopoViewer } from "@/components/molecules/TopoViewer";
@@ -21,6 +23,7 @@ import { RouteTopoBuilder } from "@/components/organisms/TopoBuilder";
 import { useAuthStore } from "@/features/auth/auth.store";
 import { useClimbs } from "@/features/climbs/climbs.queries";
 import { useGrades } from "@/features/grades/grades.queries";
+import { useWall } from "@/features/locations/locations.queries";
 import {
 	useAddRouteImage,
 	useDeleteRouteImage,
@@ -34,6 +37,7 @@ import {
 	useRouteLinks,
 	useUpdateRouteDescription,
 	useUpdateRouteFields,
+	useUpdateRouteSunData,
 } from "@/features/routes/routes.queries";
 import { useRouteTags, useSetRouteTags } from "@/features/tags/tags.queries";
 import type { Tag } from "@/features/tags/tags.schema";
@@ -42,6 +46,7 @@ import {
 	useWallTopo,
 	useWallTopoLines,
 } from "@/features/topos/topos.queries";
+import { getEffectiveSunData } from "@/lib/sun";
 
 const RouteDetailView = () => {
 	const { routeId } = useParams({ from: "/routes/$routeId" });
@@ -121,6 +126,11 @@ const RouteDetailView = () => {
 
 	const [showLogSheet, setShowLogSheet] = useState(false);
 	const [showAddLinkModal, setShowAddLinkModal] = useState(false);
+	const [sunSheetOpen, setSunSheetOpen] = useState(false);
+
+	// Sun/shade
+	const { data: wall } = useWall(route?.wall_id ?? null);
+	const updateRouteSunData = useUpdateRouteSunData(routeId);
 
 	const userLinkCount = routeLinks.filter((l) => l.user_id === user?.id).length;
 	const atLinkLimit = userLinkCount >= 5;
@@ -134,10 +144,10 @@ const RouteDetailView = () => {
 	}
 
 	if (!route) {
-		return (
-			<p className="text-white text-center pt-12">Route not found</p>
-		);
+		return <p className="text-white text-center pt-12">Route not found</p>;
 	}
+
+	const effectiveSunData = getEffectiveSunData(route, wall ?? {});
 
 	return (
 		<div className="flex flex-col gap-4">
@@ -196,7 +206,9 @@ const RouteDetailView = () => {
 			) : (
 				<div>
 					<div className="flex items-start justify-between gap-2">
-						<h1 className="text-xl font-display font-bold text-white">{route.name}</h1>
+						<h1 className="text-xl font-display font-bold text-white">
+							{route.name}
+						</h1>
 						{isAdmin && (
 							<button
 								type="button"
@@ -229,6 +241,12 @@ const RouteDetailView = () => {
 							</span>
 						</div>
 					)}
+					<div className="mt-2">
+						<SunShadeSummary
+							data={effectiveSunData}
+							onClick={() => setSunSheetOpen(true)}
+						/>
+					</div>
 				</div>
 			)}
 
@@ -447,6 +465,18 @@ const RouteDetailView = () => {
 					);
 				}}
 				onCancel={() => setShowAddLinkModal(false)}
+			/>
+
+			<SunShadeSheet
+				isOpen={sunSheetOpen}
+				data={route.sun_data ?? null}
+				isEditing={isAdmin ?? false}
+				onSave={(data) => {
+					updateRouteSunData.mutate(data, {
+						onSuccess: () => setSunSheetOpen(false),
+					});
+				}}
+				onClose={() => setSunSheetOpen(false)}
 			/>
 
 			<ConfirmDeleteDialog

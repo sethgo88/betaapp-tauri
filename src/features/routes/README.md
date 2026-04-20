@@ -157,6 +157,7 @@ useAddRouteLink(routeId)   // mutation — { url, title?, userId }
 useDeleteRouteLink(routeId) // mutation — id
 useReorderRoutes(wallId)   // admin mutation — orderedIds: string[]; invalidates routes for wall
 useAdminDeleteRoute()      // admin mutation — { id, wallId }; unlinks climbs then deletes route
+useUpdateRouteSunData(routeId) // admin mutation — SunData | null; null clears override; invalidates route
 ```
 
 ---

@@ -127,6 +127,9 @@
 	--color-accent-primary: var(--accent-primary);
 	--color-accent-secondary: var(--accent-secondary);
 
+	/* Overlay / sheet / modal background */
+	--color-sheet-bg: var(--sheet-bg);
+
 	/* Typography */
 	--font-display: "Lora", Georgia, serif;
 	--font-playfair: "Playfair Display", Georgia, serif;
@@ -179,6 +182,7 @@
 	--badge-todo-text: #fcd34d;
 	--accent-primary: #0d9488;
 	--accent-secondary: #d97706;
+	--sheet-bg: #164e63;
 	--preset-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.3);
 	--preset-shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.4);
 	--preset-shadow-toast: 0 4px 16px rgba(0, 0, 0, 0.5);
@@ -216,6 +220,7 @@
 	--badge-todo-text: #92400e;
 	--accent-primary: #0d9488;
 	--accent-secondary: #d97706;
+	--sheet-bg: #164e63;
 	--preset-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08);
 	--preset-shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.1);
 	--preset-shadow-toast: 0 4px 16px rgba(0, 0, 0, 0.12);

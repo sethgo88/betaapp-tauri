@@ -34,3 +34,4 @@ src-tauri/gen/android/keystore.properties
 .claude/
 src-tauri/gen/android/upload-keystore.jks
 src-tauri/gen/android/betaapp.keystore
+*.stackdump
