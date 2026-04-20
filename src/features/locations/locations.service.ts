@@ -1,5 +1,6 @@
 import { getDb } from "@/lib/db";
 import { supabase } from "@/lib/supabase";
+import type { SunData } from "@/lib/sun";
 import type {
 	Country,
 	Crag,
@@ -1225,5 +1226,25 @@ export async function adminUpdateWallType(
 	await db.execute("UPDATE walls_cache SET wall_type = ? WHERE id = ?", [
 		wallType,
 		id,
+	]);
+}
+
+// ── Sun data ─────────────────────────────────────────────────────────────────
+
+export async function updateWallSunData(
+	wallId: string,
+	data: SunData,
+): Promise<void> {
+	const serialized = JSON.stringify(data);
+	// biome-ignore lint/suspicious/noExplicitAny: sun_data not yet in generated Supabase types
+	const { error } = await (supabase.from("walls") as any)
+		.update({ sun_data: serialized })
+		.eq("id", wallId);
+	if (error) throw error;
+
+	const db = await getDb();
+	await db.execute("UPDATE walls_cache SET sun_data = ? WHERE id = ?", [
+		serialized,
+		wallId,
 	]);
 }

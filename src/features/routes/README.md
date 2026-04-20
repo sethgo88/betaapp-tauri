@@ -21,6 +21,7 @@ RouteSchema = {
   sort_order: number   // admin-defined display order; default 0
   avg_rating?: number | null  // v29; denormalised average of linked climbs' ratings (#212)
   rating_count: number        // v30; count of rated climbs; default 0 (#212)
+  sun_data?: SunData | null   // v31; JSON sun/aspect data overriding wall-level sun_data (#220)
 }
 
 // Admin-only type — not stored in SQLite
@@ -82,7 +83,8 @@ CREATE TABLE IF NOT EXISTS routes_cache (
     created_at  TEXT NOT NULL DEFAULT (datetime('now')),
     sort_order  INTEGER NOT NULL DEFAULT 0,   -- v23; admin-defined display order
     avg_rating  REAL,                          -- v29; denormalised avg of linked climb ratings (#212)
-    rating_count INTEGER NOT NULL DEFAULT 0    -- v30; count of rated climbs (#212)
+    rating_count INTEGER NOT NULL DEFAULT 0,   -- v30; count of rated climbs (#212)
+    sun_data    TEXT                           -- v31; JSON-encoded SunData (#220)
 );
 ```
 
@@ -104,6 +106,7 @@ Only populated when the user downloads a region (see [`locations/README.md`](../
 | `searchVerifiedRoutes(query)` | Full-text search against Supabase `routes` (verified only, limit 10) |
 | `searchLocalRoutes(query)` | LIKE search on local `routes_cache` by name or grade (verified only, limit 30) |
 | `updateRouteDescription(id, description)` | Updates description in Supabase + local cache |
+| `updateRouteSunData(routeId, data)` | Sets route-level sun_data (JSON-serialised `SunData`, or `null` to clear) in Supabase + local cache |
 
 ### Route body stats
 
