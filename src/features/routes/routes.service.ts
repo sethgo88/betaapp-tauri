@@ -24,14 +24,12 @@ export async function refreshRouteAvgRating(routeId: string): Promise<void> {
 }
 
 function parseSunData<T extends { sun_data?: unknown }>(row: T): T {
-	if (typeof row.sun_data === "string" && row.sun_data) {
-		try {
-			row.sun_data = JSON.parse(row.sun_data);
-		} catch {
-			row.sun_data = null;
-		}
+	if (typeof row.sun_data !== "string" || !row.sun_data) return row;
+	try {
+		return { ...row, sun_data: JSON.parse(row.sun_data) };
+	} catch {
+		return { ...row, sun_data: null };
 	}
-	return row;
 }
 
 export async function fetchRoutes(wallId: string): Promise<Route[]> {
@@ -467,7 +465,7 @@ export async function updateRouteSunData(
 	// biome-ignore lint/suspicious/noExplicitAny: sun_data not yet in generated Supabase types
 	const { error } = await (supabase as any)
 		.from("routes")
-		.update({ sun_data: serialized })
+		.update({ sun_data: data })
 		.eq("id", routeId);
 	if (error) throw error;
 

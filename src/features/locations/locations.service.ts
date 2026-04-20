@@ -48,14 +48,12 @@ export async function fetchCrags(subRegionId: string): Promise<Crag[]> {
 }
 
 function parseSunData<T extends { sun_data?: unknown }>(row: T): T {
-	if (typeof row.sun_data === "string" && row.sun_data) {
-		try {
-			row.sun_data = JSON.parse(row.sun_data);
-		} catch {
-			row.sun_data = null;
-		}
+	if (typeof row.sun_data !== "string" || !row.sun_data) return row;
+	try {
+		return { ...row, sun_data: JSON.parse(row.sun_data) };
+	} catch {
+		return { ...row, sun_data: null };
 	}
-	return row;
 }
 
 export async function fetchWalls(cragId: string): Promise<Wall[]> {
@@ -1252,7 +1250,7 @@ export async function updateWallSunData(
 	const serialized = JSON.stringify(data);
 	// biome-ignore lint/suspicious/noExplicitAny: sun_data not yet in generated Supabase types
 	const { error } = await (supabase.from("walls") as any)
-		.update({ sun_data: serialized })
+		.update({ sun_data: data })
 		.eq("id", wallId);
 	if (error) throw error;
 
