@@ -1,6 +1,6 @@
+import { refreshRouteAvgRating } from "@/features/routes/routes.service";
 import { getDb } from "@/lib/db";
 import { supabase } from "@/lib/supabase";
-import { refreshRouteAvgRating } from "@/features/routes/routes.service";
 import type { Climb, ClimbFormValues, ClimbLink } from "./climbs.schema";
 import type { SortKey } from "./climbs.store";
 
@@ -224,10 +224,11 @@ export async function linkClimbToRoute(
 
 export async function unlinkClimbFromRoute(climbId: string): Promise<void> {
 	const db = await getDb();
-	const rows = await db.select<{ route_id: string | null; rating: number | null }[]>(
-		"SELECT route_id, rating FROM climbs WHERE id = ? AND deleted_at IS NULL",
-		[climbId],
-	);
+	const rows = await db.select<
+		{ route_id: string | null; rating: number | null }[]
+	>("SELECT route_id, rating FROM climbs WHERE id = ? AND deleted_at IS NULL", [
+		climbId,
+	]);
 	await db.execute(
 		"UPDATE climbs SET route_id = NULL WHERE id = ? AND deleted_at IS NULL",
 		[climbId],
@@ -322,12 +323,24 @@ export async function patchClimbLink(
 	);
 }
 
+export async function setClimbOfflineAvailable(
+	climbId: string,
+	available: boolean,
+): Promise<void> {
+	const db = await getDb();
+	await db.execute("UPDATE climbs SET offline_available = ? WHERE id = ?", [
+		available ? 1 : 0,
+		climbId,
+	]);
+}
+
 export async function softDeleteClimb(id: string): Promise<void> {
 	const db = await getDb();
-	const rows = await db.select<{ route_id: string | null; rating: number | null }[]>(
-		"SELECT route_id, rating FROM climbs WHERE id = ? AND deleted_at IS NULL",
-		[id],
-	);
+	const rows = await db.select<
+		{ route_id: string | null; rating: number | null }[]
+	>("SELECT route_id, rating FROM climbs WHERE id = ? AND deleted_at IS NULL", [
+		id,
+	]);
 	await db.execute(
 		"UPDATE climbs SET deleted_at = datetime('now') WHERE id = ?",
 		[id],

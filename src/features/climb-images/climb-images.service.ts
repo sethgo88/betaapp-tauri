@@ -1,5 +1,9 @@
 import { getDb } from "@/lib/db";
-import { base64ToBlob, uploadBlobToStorage } from "@/lib/image-utils";
+import {
+	base64ToBlob,
+	blobToBase64,
+	uploadBlobToStorage,
+} from "@/lib/image-utils";
 import { supabase } from "@/lib/supabase";
 import type {
 	ClimbImage,
@@ -35,10 +39,11 @@ export async function fetchClimbImages(
 	return Promise.all(
 		rows.map(async (row) => {
 			const upload_status = row.upload_status ?? "uploaded";
-			const signed_url =
-				upload_status === "uploaded"
+			const signed_url = row.local_data
+				? row.local_data
+				: upload_status === "uploaded"
 					? await signUrl(row.image_url)
-					: (row.local_data ?? "");
+					: "";
 			return { ...row, upload_status, signed_url };
 		}),
 	);
@@ -136,6 +141,52 @@ export async function reorderClimbImages(ids: string[]): Promise<void> {
 			i,
 			ids[i],
 		]);
+	}
+}
+
+export async function cacheImagesForOfflineClimb(
+	climbId: string,
+): Promise<void> {
+	const db = await getDb();
+	const rows = await db.select<ClimbImage[]>(
+		`SELECT * FROM climb_images
+     WHERE climb_id = ? AND upload_status = 'uploaded'
+       AND local_data IS NULL AND deleted_at IS NULL`,
+		[climbId],
+	);
+	for (const row of rows) {
+		try {
+			const url = await signUrl(row.image_url);
+			const res = await fetch(url);
+			const blob = await res.blob();
+			const data = await blobToBase64(blob);
+			await db.execute("UPDATE climb_images SET local_data = ? WHERE id = ?", [
+				data,
+				row.id,
+			]);
+		} catch {
+			// Non-fatal: skip this image, retry next time
+		}
+	}
+}
+
+export async function clearClimbImageCache(climbId: string): Promise<void> {
+	const db = await getDb();
+	await db.execute(
+		"UPDATE climb_images SET local_data = NULL WHERE climb_id = ? AND upload_status = 'uploaded'",
+		[climbId],
+	);
+}
+
+export async function cacheNewOfflineImages(userId: string): Promise<void> {
+	const db = await getDb();
+	const climbs = await db.select<{ id: string }[]>(
+		`SELECT id FROM climbs
+     WHERE user_id = ? AND offline_available = 1 AND deleted_at IS NULL`,
+		[userId],
+	);
+	for (const { id } of climbs) {
+		await cacheImagesForOfflineClimb(id);
 	}
 }
 

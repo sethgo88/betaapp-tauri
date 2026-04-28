@@ -652,6 +652,13 @@ const migrations: Migration[] = [
 		await db.execute(`ALTER TABLE walls_cache ADD COLUMN sun_data TEXT`);
 		await db.execute(`ALTER TABLE routes_cache ADD COLUMN sun_data TEXT`);
 	},
+
+	// v32: offline_available flag on climbs (#231)
+	async (db) => {
+		await db.execute(
+			`ALTER TABLE climbs ADD COLUMN offline_available INTEGER NOT NULL DEFAULT 0`,
+		);
+	},
 ];
 
 export async function runMigrations(db: DbAdapter): Promise<void> {

@@ -90,6 +90,7 @@ export const ClimbSchema = z.object({
 	created_at: z.string(),
 	updated_at: z.string(),
 	deleted_at: z.string().nullable().optional(),
+	offline_available: z.number().int().default(0),
 });
 
 export type Climb = z.infer<typeof ClimbSchema>;

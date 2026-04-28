@@ -16,7 +16,7 @@ CREATE TABLE climb_images (
   user_id       TEXT NOT NULL,
   image_url     TEXT NOT NULL,      -- storage path, e.g. "{userId}/{climbId}/{imageId}.jpg"
   sort_order    INTEGER NOT NULL DEFAULT 0,
-  local_data    TEXT,               -- base64 data URI; set while upload is pending, cleared after
+  local_data    TEXT,               -- base64 data URI; present while upload is pending OR when climb is marked offline_available
   upload_status TEXT NOT NULL DEFAULT 'uploaded',  -- 'pending' | 'uploaded' | 'error'
   created_at    TEXT NOT NULL DEFAULT (datetime('now')),
   deleted_at    TEXT                -- soft delete
@@ -60,7 +60,7 @@ CREATE TABLE climb_image_pins (
 
 | Function | Description |
 |---|---|
-| `fetchClimbImages(climbId)` | Returns images ordered by `sort_order`; signed URL for uploaded, base64 data URI for pending |
+| `fetchClimbImages(climbId)` | Returns images ordered by `sort_order`; prefers `local_data` (base64) when present, otherwise generates a signed URL for uploaded images |
 | `getUserImageCount(userId)` | Count of non-deleted images across all climb logs (for 100-cap enforcement) |
 | `insertClimbImage(climbId, userId, storagePath, sortOrder, localData?, uploadStatus?)` | Inserts a new row; defaults to `upload_status='uploaded'` |
 | `markImageUploaded(id)` | Sets `upload_status='uploaded'` after a successful upload |
@@ -68,6 +68,9 @@ CREATE TABLE climb_image_pins (
 | `softDeleteClimbImage(id)` | Sets `deleted_at` |
 | `reorderClimbImages(ids[])` | Updates `sort_order` for each id in the given order |
 | `applyRemoteClimbImage(image)` | `INSERT OR REPLACE` — always sets `upload_status='uploaded'` — used by sync pull |
+| `cacheImagesForOfflineClimb(climbId)` | Downloads bytes for all uploaded images with no `local_data` and stores them as base64 |
+| `clearClimbImageCache(climbId)` | Clears `local_data` for all uploaded images (called when offline mode is turned off) |
+| `cacheNewOfflineImages(userId)` | Calls `cacheImagesForOfflineClimb` for every climb with `offline_available=1`; called after each sync |
 | `fetchClimbImagePins(climbImageId)` | Returns pins ordered by `sort_order` |
 | `insertClimbImagePin(climbImageId, pinType, xPct, yPct, sortOrder, pointerDir?)` | Inserts a new pin; defaults `pointer_dir` to `'bottom'` |
 | `updateClimbImagePin(id, patch)` | Partial update of `x_pct`, `y_pct`, `description`, and/or `pointer_dir` |
@@ -89,6 +92,7 @@ CREATE TABLE climb_image_pins (
 | `useAddPin(climbImageId)` | Mutation; inserts pin at given x_pct/y_pct with optional `pointerDir` (default `'bottom'`) |
 | `useUpdatePin(climbImageId)` | Mutation; partial patch (position, description, or pointer_dir) |
 | `useDeletePin(climbImageId)` | Mutation; hard deletes pin |
+| `useSetClimbOfflineAvailable(climbId)` | Mutation; `(enable: boolean)` — when enabling: sets flag + downloads image bytes; when disabling: clears cache + clears flag |
 
 ---
 
@@ -97,7 +101,8 @@ CREATE TABLE climb_image_pins (
 - **Bucket:** `climb-images` (private)
 - **Path pattern:** `{userId}/{climbId}/{imageId}.jpg`
 - **Upload flow:** compress → `blobToBase64` → insert row with `upload_status='pending'` → upload if online → `markImageUploaded`
-- **Offline fallback:** `local_data` base64 URI serves as thumbnail src until upload completes
+- **Offline fallback:** `local_data` base64 URI is used when present — either pending upload or cached for offline access
+- **Per-climb offline caching:** when `climbs.offline_available=1`, all image bytes are stored as base64 in `local_data`; `cacheNewOfflineImages` is called after each sync to auto-cache new images
 - **Retry:** `uploadPendingImages(userId)` runs at the start of each sync cycle (via `useSync`) to flush the queue
 - **Display:** `createSignedUrl(path, 3600)` — 1hr expiry; query staleTime is 50min to ensure refresh before expiry
 

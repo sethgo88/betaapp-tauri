@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/features/auth/auth.store";
+import { setClimbOfflineAvailable } from "@/features/climbs/climbs.service";
 import {
 	blobToBase64,
 	resizeAndCompress,
@@ -9,6 +10,8 @@ import { supabase } from "@/lib/supabase";
 import { useUiStore } from "@/stores/ui.store";
 import type { PinType, PointerDir } from "./climb-images.schema";
 import {
+	cacheImagesForOfflineClimb,
+	clearClimbImageCache,
 	deleteClimbImagePin,
 	fetchClimbImagePins,
 	fetchClimbImages,
@@ -228,6 +231,36 @@ export function useDeletePin(climbImageId: string) {
 			qc.invalidateQueries({
 				queryKey: [CLIMB_IMAGE_PINS_KEY, climbImageId],
 			});
+		},
+	});
+}
+
+// ── Offline availability ──────────────────────────────────────────────────────
+
+export function useSetClimbOfflineAvailable(climbId: string) {
+	const qc = useQueryClient();
+	const addToast = useUiStore((s) => s.addToast);
+
+	return useMutation({
+		mutationFn: async (enable: boolean) => {
+			if (enable) {
+				await setClimbOfflineAvailable(climbId, true);
+				await cacheImagesForOfflineClimb(climbId);
+			} else {
+				await clearClimbImageCache(climbId);
+				await setClimbOfflineAvailable(climbId, false);
+			}
+		},
+		onSuccess: (_data, enable) => {
+			qc.invalidateQueries({ queryKey: ["climbs", climbId] });
+			qc.invalidateQueries({ queryKey: [CLIMB_IMAGES_KEY, climbId] });
+			addToast({
+				message: enable ? "Saved for offline" : "Offline copy removed",
+				type: "success",
+			});
+		},
+		onError: () => {
+			addToast({ message: "Failed to update offline status", type: "error" });
 		},
 	});
 }
