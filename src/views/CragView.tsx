@@ -236,7 +236,9 @@ const CragView = () => {
 		<div className="flex flex-col gap-3">
 			{crag && (
 				<>
-					<h1 className="text-xl font-display font-bold text-white">{crag.name}</h1>
+					<h1 className="text-xl font-display font-bold text-white">
+						{crag.name}
+					</h1>
 					<EditableDescription
 						description={crag.description}
 						isAdmin={isAdmin}
@@ -304,9 +306,7 @@ const CragView = () => {
 			)}
 
 			{walls.length === 0 && !showWallForm && (
-				<p className="text-white text-sm">
-					No walls in this crag yet.
-				</p>
+				<p className="text-white text-sm">No walls in this crag yet.</p>
 			)}
 
 			{walls.map((wall) => (

@@ -299,7 +299,9 @@ export function LocationDrillDown({
 								</div>
 							)}
 							{!isSearchFetching && searchResults.length === 0 && (
-								<p className="text-sm text-text-on-light/60 px-3 py-3">No results</p>
+								<p className="text-sm text-text-on-light/60 px-3 py-3">
+									No results
+								</p>
 							)}
 							{searchResults.map((result) => (
 								<button

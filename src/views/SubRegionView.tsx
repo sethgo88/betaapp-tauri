@@ -148,7 +148,9 @@ const SubRegionView = () => {
 
 	return (
 		<div className="flex flex-col gap-3">
-			<h1 className="text-xl font-display font-bold text-white">{subRegion.name}</h1>
+			<h1 className="text-xl font-display font-bold text-white">
+				{subRegion.name}
+			</h1>
 
 			<EditableDescription
 				description={subRegion.description}
@@ -163,9 +165,7 @@ const SubRegionView = () => {
 			/>
 
 			{crags.length === 0 && (
-				<p className="text-white text-sm">
-					No crags in this area yet.
-				</p>
+				<p className="text-white text-sm">No crags in this area yet.</p>
 			)}
 
 			{crags.map((crag) => (

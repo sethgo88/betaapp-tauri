@@ -375,10 +375,11 @@
         empty.style.display = 'block';
       } else {
         empty.style.display = 'none';
-        filtered.forEach(c => list.appendChild(renderCard(c)));
+        filtered.forEach(c => { list.appendChild(renderCard(c)); });
       }
     }
 
+    // biome-ignore lint/correctness/noUnusedVariables: called from onclick attribute
     function toggleFilter() {
       const dd = document.getElementById('filterDropdown');
       const chevron = document.getElementById('filterChevron');

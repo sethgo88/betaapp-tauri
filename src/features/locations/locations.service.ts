@@ -1,6 +1,6 @@
 import { getDb } from "@/lib/db";
-import { supabase } from "@/lib/supabase";
 import type { SunData } from "@/lib/sun";
+import { supabase } from "@/lib/supabase";
 import type {
 	Country,
 	Crag,

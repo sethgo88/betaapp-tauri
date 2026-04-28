@@ -78,9 +78,7 @@ const LinkRouteSection = ({ climbId }: { climbId: string }) => {
 									<p className="text-xs text-text-on-light">{r.walls.name}</p>
 								)}
 							</div>
-							<span className="text-xs text-text-on-light ml-2">
-								{r.grade}
-							</span>
+							<span className="text-xs text-text-on-light ml-2">{r.grade}</span>
 						</button>
 					))}
 				</div>
@@ -136,9 +134,7 @@ const EditClimbView = () => {
 	}
 
 	if (!climb) {
-		return (
-			<p className="text-white text-center pt-12">Climb not found.</p>
-		);
+		return <p className="text-white text-center pt-12">Climb not found.</p>;
 	}
 
 	return (

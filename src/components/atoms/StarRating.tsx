@@ -7,14 +7,9 @@ interface StarRatingProps {
 	size?: number;
 }
 
-const StarIcon = ({
-	filled,
-	size,
-}: {
-	filled: boolean;
-	size: number;
-}) => (
+const StarIcon = ({ filled, size }: { filled: boolean; size: number }) => (
 	<svg
+		aria-hidden="true"
 		width={size}
 		height={size}
 		viewBox="0 0 24 24"

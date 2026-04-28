@@ -71,9 +71,7 @@ export const EditableDescription = ({
 	return (
 		<div className="flex items-start gap-2">
 			{description ? (
-				<p className="text-sm text-white whitespace-pre-wrap">
-					{description}
-				</p>
+				<p className="text-sm text-white whitespace-pre-wrap">{description}</p>
 			) : (
 				<p className="text-sm text-white/50 italic">{emptyText}</p>
 			)}

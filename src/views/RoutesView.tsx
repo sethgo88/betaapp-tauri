@@ -100,12 +100,12 @@ const RoutesView = () => {
 
 	return (
 		<div className="flex flex-col gap-3">
-			<h1 className="text-lg font-display font-semibold text-white">Route Manager</h1>
+			<h1 className="text-lg font-display font-semibold text-white">
+				Route Manager
+			</h1>
 
 			{countries.length === 0 && (
-				<p className="text-white text-sm">
-					No locations available yet.
-				</p>
+				<p className="text-white text-sm">No locations available yet.</p>
 			)}
 
 			{countries.map((country) => (

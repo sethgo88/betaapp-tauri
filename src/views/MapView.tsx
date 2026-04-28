@@ -344,8 +344,7 @@ const PersonalPinModal = ({
 												"bg-accent-success/20 text-accent-success",
 											climb.sent_status === "project" &&
 												"bg-accent-primary/20 text-accent-primary",
-											climb.sent_status === "todo" &&
-												"bg-todo/20 text-todo",
+											climb.sent_status === "todo" && "bg-todo/20 text-todo",
 										)}
 									>
 										{climb.sent_status.charAt(0).toUpperCase() +

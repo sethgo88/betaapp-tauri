@@ -57,7 +57,9 @@ const DevOfflineToggle = () => {
 const SettingsView = () => {
 	return (
 		<div className="flex flex-col gap-4">
-			<h1 className="font-display text-xl font-semibold text-white">Settings</h1>
+			<h1 className="font-display text-xl font-semibold text-white">
+				Settings
+			</h1>
 			<DevOfflineToggle />
 		</div>
 	);
