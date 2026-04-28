@@ -2,6 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect } from "react";
 import type { Burn } from "@/features/burns/burns.schema";
 import { applyRemoteBurn } from "@/features/burns/burns.service";
+import { cacheNewOfflineImages } from "@/features/climb-images/climb-images.service";
 import type { Climb } from "@/features/climbs/climbs.schema";
 import { applyRemoteClimb } from "@/features/climbs/climbs.service";
 import { pullGrades } from "@/features/grades/grades.service";
@@ -59,6 +60,7 @@ export function useSync(userId: string | undefined) {
 			await uploadPendingImages(userId);
 			await pushClimbImages(userId, since);
 			await pullClimbImages(userId, since);
+			await cacheNewOfflineImages(userId);
 			await pushClimbImagePins(userId, since);
 			await pullClimbImagePins(userId, since);
 			await pullGrades();

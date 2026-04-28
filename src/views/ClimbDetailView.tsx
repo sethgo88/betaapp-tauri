@@ -43,6 +43,7 @@ import {
 	useDeleteBurn,
 	useUpdateBurn,
 } from "@/features/burns/burns.queries";
+import { useSetClimbOfflineAvailable } from "@/features/climb-images/climb-images.queries";
 import {
 	useAddClimbLink,
 	useClimb,
@@ -693,6 +694,7 @@ const ClimbDetailView = () => {
 	const deleteClimb = useDeleteClimb();
 	const unlinkClimb = useUnlinkClimbFromRoute();
 	const linkClimb = useLinkClimbToRoute();
+	const setOfflineAvailable = useSetClimbOfflineAvailable(climbId);
 	const patchGrade = usePatchClimbGrade();
 	const patchRating = usePatchClimbRating();
 	const patchStatus = usePatchClimbStatus();
@@ -800,6 +802,11 @@ const ClimbDetailView = () => {
 						</h1>
 					)}
 					{location && <p className="text-sm text-white">{location}</p>}
+					{!!climb.offline_available && (
+						<span className="inline-flex items-center gap-1 text-xs text-accent-primary font-medium mt-0.5">
+							✓ Downloaded
+						</span>
+					)}
 				</div>
 
 				{/* Grade + gear icon */}
@@ -889,6 +896,20 @@ const ClimbDetailView = () => {
 										Link to route
 									</button>
 								)}
+								<button
+									type="button"
+									className="w-full text-left px-4 py-2.5 text-sm hover:bg-surface-hover flex items-center gap-2"
+									disabled={setOfflineAvailable.isPending}
+									onClick={() => {
+										setOfflineAvailable.mutate(!climb.offline_available);
+										setGearMenuOpen(false);
+									}}
+								>
+									{setOfflineAvailable.isPending && <Spinner size="sm" />}
+									{climb.offline_available
+										? "Remove offline copy"
+										: "Save for offline"}
+								</button>
 								<button
 									type="button"
 									className="w-full text-left px-4 py-2.5 text-sm text-destructive hover:bg-surface-hover"

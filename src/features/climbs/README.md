@@ -36,6 +36,7 @@ ClimbSchema = {
   created_at: string
   updated_at: string
   deleted_at?: string | null
+  offline_available: number  // 0 | 1 — 1 when images are cached locally for offline access (#231)
 }
 
 ClimbFormSchema = ClimbSchema minus (id, route_id, created_at, updated_at, deleted_at)
@@ -87,7 +88,8 @@ CREATE TABLE IF NOT EXISTS climbs (
     link             TEXT,
     route_id         TEXT,
     sent_date        TEXT,
-    rating           INTEGER,   -- v29; 1–5 stars; null = unrated (#212)
+    rating           INTEGER,              -- v29; 1–5 stars; null = unrated (#212)
+    offline_available INTEGER NOT NULL DEFAULT 0,  -- v32; 1 when images cached locally (#231)
     deleted_at       TEXT,
     created_at       TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at       TEXT NOT NULL DEFAULT (datetime('now'))
@@ -115,6 +117,7 @@ CREATE TABLE IF NOT EXISTS climbs (
 | `patchClimbStatus(id, sentStatus)` | Updates only `sent_status` |
 | `patchClimbRating(id, rating)` | Updates only `rating` (pass `null` to clear); then calls `refreshRouteAvgRating` on the linked route if any |
 | `patchClimbLink(id, link)` | Updates only `link` (pass `null` to clear; legacy — UI now uses `climb_links` table) |
+| `setClimbOfflineAvailable(climbId, available)` | Sets `offline_available` to 1 (`true`) or 0 (`false`) |
 | `fetchClimbLinks(climbId)` | All active links for a climb (soft-deleted excluded), ordered by `created_at ASC` |
 | `addClimbLink(climbId, userId, url, title?)` | Inserts to Supabase then SQLite; generates UUID locally |
 | `deleteClimbLink(id)` | Soft-deletes on Supabase (`deleted_at = now()`), hard-deletes from SQLite |
