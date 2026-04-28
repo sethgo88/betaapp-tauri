@@ -447,6 +447,21 @@ const BetaCarousel = ({ betas, climbId, onBetasChange }: BetaCarouselProps) => {
 		setSectionGearOpen(false);
 	};
 
+	const handleCopyBeta = () => {
+		const source = betas[activeIndex];
+		if (!source) return;
+		const copied: Beta = {
+			id: uuid(),
+			title: `${source.title} copy`,
+			moves: source.moves.map((m) => ({ id: uuid(), text: m.text })),
+		};
+		const updated = [...betas, copied];
+		onBetasChange(updated);
+		updateMoves.mutate({ id: climbId, moves: JSON.stringify(updated) });
+		setActiveIndex(betas.length);
+		setSectionGearOpen(false);
+	};
+
 	const handleDeleteBeta = (betaId: string) => {
 		if (betas.length <= 1) return;
 		const updated = betas.filter((b) => b.id !== betaId);
@@ -505,6 +520,16 @@ const BetaCarousel = ({ betas, climbId, onBetasChange }: BetaCarouselProps) => {
 										}}
 									>
 										Add Beta
+									</button>
+									<button
+										type="button"
+										className="w-full text-left px-4 py-2.5 text-sm hover:bg-surface-hover"
+										onClick={(e) => {
+											e.stopPropagation();
+											handleCopyBeta();
+										}}
+									>
+										Copy
 									</button>
 									<button
 										type="button"
