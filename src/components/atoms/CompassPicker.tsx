@@ -51,7 +51,12 @@ interface CompassPickerProps {
 export function CompassPicker({ value, onChange }: CompassPickerProps) {
 	return (
 		<div className="w-full max-w-[220px] mx-auto select-none">
-			<svg viewBox="0 0 200 200" className="w-full h-auto">
+			<svg
+				viewBox="0 0 200 200"
+				className="w-full h-auto"
+				role="img"
+				aria-label="Compass direction picker"
+			>
 				{/* Outer border */}
 				<circle
 					cx={CX}
@@ -74,6 +79,7 @@ export function CompassPicker({ value, onChange }: CompassPickerProps) {
 				{SEGMENTS.map(({ dir, path, labelX, labelY }) => {
 					const selected = value === dir;
 					return (
+						// biome-ignore lint/a11y/useSemanticElements: SVG g element cannot use HTML button
 						<g
 							key={dir}
 							role="button"

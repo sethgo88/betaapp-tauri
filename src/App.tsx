@@ -27,10 +27,10 @@ import { backfillClimbLocations } from "@/features/climbs/climbs.service";
 import { seedGrades } from "@/features/grades/grades-seed";
 import { seedTags } from "@/features/tags/tags-seed";
 import { useSync } from "@/hooks/useSync";
-import { DEBUG_OFFLINE_FLAG } from "@/views/SettingsView";
 import { supabase } from "@/lib/supabase";
 import { router } from "@/router";
 import { useUiStore } from "@/stores/ui.store";
+import { DEBUG_OFFLINE_FLAG } from "@/views/SettingsView";
 
 const queryClient = new QueryClient();
 
@@ -75,10 +75,7 @@ function Bootstrap() {
 			// The flag read is gated to DEV so it compiles out of release builds.
 			const isOnline =
 				navigator.onLine &&
-				!(
-					import.meta.env.DEV &&
-					localStorage.getItem(DEBUG_OFFLINE_FLAG)
-				);
+				!(import.meta.env.DEV && localStorage.getItem(DEBUG_OFFLINE_FLAG));
 
 			// If device is offline, try to restore a cached session first.
 			// restoreSession() calls getSession() behind a timeout — if the stored access

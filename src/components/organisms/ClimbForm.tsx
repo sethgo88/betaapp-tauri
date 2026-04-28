@@ -516,10 +516,7 @@ export const ClimbForm = ({
 							<form.Field name="sent_date">
 								{(field) => (
 									<div className="flex flex-col gap-1">
-										<label
-											htmlFor="sent_date"
-											className="text-xs text-white"
-										>
+										<label htmlFor="sent_date" className="text-xs text-white">
 											Sent date
 										</label>
 										<Input
@@ -546,7 +543,7 @@ export const ClimbForm = ({
 							<form.Field name="rating">
 								{(field) => (
 									<div className="flex flex-col gap-1">
-										<label className="text-xs text-white">Rating</label>
+										<span className="text-xs text-white">Rating</span>
 										<StarRating
 											value={field.state.value}
 											onChange={(v) => field.handleChange(v)}
@@ -723,7 +720,10 @@ export const ClimbForm = ({
 										{beta.moves.length !== 1 ? "s" : ""}
 									</p>
 									{beta.moves.slice(0, 2).map((m, i) => (
-										<p key={m.id} className="text-xs text-text-on-light/60 truncate">
+										<p
+											key={m.id}
+											className="text-xs text-text-on-light/60 truncate"
+										>
 											{i + 1}. {m.text || "…"}
 										</p>
 									))}

@@ -682,9 +682,7 @@ export const WallTopoBuilder = ({
 						>
 							<X size={18} />
 						</button>
-						<h2 className="font-display font-semibold text-white">
-							Edit Topo
-						</h2>
+						<h2 className="font-display font-semibold text-white">Edit Topo</h2>
 						<div className="w-8" />
 					</div>
 					<div className="flex-1 flex items-center justify-center px-4">
@@ -706,10 +704,7 @@ export const WallTopoBuilder = ({
 	const routeControls = routes.length > 0 && (
 		<div className="flex flex-col gap-2">
 			<div className="flex flex-col gap-1">
-				<label
-					htmlFor="drawing-for-select"
-					className="text-xs text-white/50"
-				>
+				<label htmlFor="drawing-for-select" className="text-xs text-white/50">
 					Drawing for:
 				</label>
 				<select
@@ -832,9 +827,7 @@ export const WallTopoBuilder = ({
 					>
 						<X size={18} />
 					</button>
-					<h2 className="font-display font-semibold text-white">
-						Edit Topo
-					</h2>
+					<h2 className="font-display font-semibold text-white">Edit Topo</h2>
 					<div className="flex gap-3 items-center">
 						<button
 							type="button"
@@ -1172,9 +1165,7 @@ export const RouteTopoBuilder = ({
 						>
 							<X size={18} />
 						</button>
-						<h2 className="font-display font-semibold text-white">
-							Edit Topo
-						</h2>
+						<h2 className="font-display font-semibold text-white">Edit Topo</h2>
 						<div className="w-8" />
 					</div>
 					<div className="flex-1 flex items-center justify-center px-4">
@@ -1209,9 +1200,7 @@ export const RouteTopoBuilder = ({
 					>
 						<X size={18} />
 					</button>
-					<h2 className="font-display font-semibold text-white">
-						Edit Topo
-					</h2>
+					<h2 className="font-display font-semibold text-white">Edit Topo</h2>
 					<div className="flex gap-3 items-center">
 						<button
 							type="button"

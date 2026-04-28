@@ -28,9 +28,13 @@ export function Sheet({
 	const isPrimary = variant === "primary";
 
 	return (
-		<div className={`fixed inset-0 z-50 flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] ${isPrimary ? "bg-sheet-bg" : "bg-surface-page"}`}>
+		<div
+			className={`fixed inset-0 z-50 flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] ${isPrimary ? "bg-sheet-bg" : "bg-surface-page"}`}
+		>
 			{/* Header */}
-			<div className={`flex items-center justify-between px-4 py-3 border-b shrink-0 ${isPrimary ? "border-white/20" : "border-border-default"}`}>
+			<div
+				className={`flex items-center justify-between px-4 py-3 border-b shrink-0 ${isPrimary ? "border-white/20" : "border-border-default"}`}
+			>
 				<button
 					type="button"
 					onClick={onClose}
@@ -39,7 +43,11 @@ export function Sheet({
 				>
 					<X size={20} />
 				</button>
-				<span className={`text-sm font-semibold ${isPrimary ? "text-white" : "text-text-primary"}`}>{title}</span>
+				<span
+					className={`text-sm font-semibold ${isPrimary ? "text-white" : "text-text-primary"}`}
+				>
+					{title}
+				</span>
 				<div className="min-w-[28px] flex justify-end">{action ?? null}</div>
 			</div>
 

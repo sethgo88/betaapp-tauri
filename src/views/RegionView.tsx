@@ -99,9 +99,7 @@ const RegionView = () => {
 			)}
 
 			{subRegions.length === 0 && !showSubRegionForm && (
-				<p className="text-white text-sm">
-					No areas in this region yet.
-				</p>
+				<p className="text-white text-sm">No areas in this region yet.</p>
 			)}
 
 			{subRegions.map((sr) => (

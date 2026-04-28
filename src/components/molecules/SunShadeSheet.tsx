@@ -102,7 +102,7 @@ interface SunShadeSheetProps {
 	isOpen: boolean;
 	data: SunData | null;
 	isEditing: boolean;
-	showAspect: boolean;
+	showAspect?: boolean;
 	onSave?: (data: SunData) => void;
 	onClose: () => void;
 }
@@ -141,7 +141,8 @@ export function SunShadeSheet({
 
 	function cycleAm(month: Month) {
 		setEditMonths((prev) => {
-			const current = prev.get(month)!;
+			const current = prev.get(month);
+			if (!current) return prev;
 			const idx = EXPOSURE_CYCLE.indexOf(current.am);
 			const map = new Map(prev);
 			map.set(month, {
@@ -154,7 +155,8 @@ export function SunShadeSheet({
 
 	function cyclePm(month: Month) {
 		setEditMonths((prev) => {
-			const current = prev.get(month)!;
+			const current = prev.get(month);
+			if (!current) return prev;
 			const idx = EXPOSURE_CYCLE.indexOf(current.pm);
 			const map = new Map(prev);
 			map.set(month, {
@@ -307,7 +309,9 @@ function MonthTable({ monthly }: { monthly: SunData["monthly"] }) {
 
 			{MONTH_NAMES.map((name, i) => {
 				const month = (i + 1) as Month;
-				const { am, pm } = map.get(month)!;
+				const entry = map.get(month);
+				if (!entry) return null;
+				const { am, pm } = entry;
 				return (
 					<div
 						key={month}
@@ -474,7 +478,9 @@ function EditContent({
 
 					{MONTH_NAMES.map((name, i) => {
 						const month = (i + 1) as Month;
-						const { am, pm } = editMonths.get(month)!;
+						const entry = editMonths.get(month);
+						if (!entry) return null;
+						const { am, pm } = entry;
 						return (
 							<div
 								key={month}

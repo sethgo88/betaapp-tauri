@@ -24,7 +24,9 @@ export const NavBar = ({ onMenuOpen }: NavBarProps) => {
 				className="w-full flex items-center justify-center"
 				onClick={() => navigate({ to: "/" })}
 			>
-				<span className={iconWrap("/")}><Home className="text-white" size={22} /></span>
+				<span className={iconWrap("/")}>
+					<Home className="text-white" size={22} />
+				</span>
 			</Button>
 
 			<Button
@@ -33,7 +35,9 @@ export const NavBar = ({ onMenuOpen }: NavBarProps) => {
 				className="w-full flex items-center justify-center"
 				onClick={() => navigate({ to: "/climbs/add" })}
 			>
-				<span className={iconWrap("/climbs/add")}><PlusSquare className="text-white" size={22} /></span>
+				<span className={iconWrap("/climbs/add")}>
+					<PlusSquare className="text-white" size={22} />
+				</span>
 			</Button>
 
 			<Button
@@ -42,7 +46,9 @@ export const NavBar = ({ onMenuOpen }: NavBarProps) => {
 				className="w-full flex items-center justify-center"
 				onClick={() => navigate({ to: "/search" })}
 			>
-				<span className={iconWrap("/search")}><Search className="text-white" size={22} /></span>
+				<span className={iconWrap("/search")}>
+					<Search className="text-white" size={22} />
+				</span>
 			</Button>
 
 			<Button
@@ -51,7 +57,9 @@ export const NavBar = ({ onMenuOpen }: NavBarProps) => {
 				className="w-full flex items-center justify-center"
 				onClick={onMenuOpen}
 			>
-				<span className="inline-flex items-center justify-center"><Menu className="text-white" size={22} /></span>
+				<span className="inline-flex items-center justify-center">
+					<Menu className="text-white" size={22} />
+				</span>
 			</Button>
 		</div>
 	);

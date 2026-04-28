@@ -42,11 +42,7 @@ export const Drawer = ({ isOpen, onClose }: DrawerProps) => {
 						<Menu size={18} />
 						<span className="font-semibold">Menu</span>
 					</div>
-					<button
-						type="button"
-						onClick={onClose}
-						className="text-white/70"
-					>
+					<button type="button" onClick={onClose} className="text-white/70">
 						<X size={20} />
 					</button>
 				</div>

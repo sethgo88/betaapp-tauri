@@ -177,12 +177,10 @@ export const WallTopoPanel = ({
 					const route = routes.find((r) => r.id === line.route_id);
 					if (!route) return null;
 					const isActive = selectedRouteId === route.id;
-					// biome-ignore lint/a11y/useKeyWithClickEvents: touch-only mobile app
 					return (
-						<div
+						<button
+							type="button"
 							key={line.id}
-							role="button"
-							tabIndex={0}
 							onClick={() => onSelectRoute(isActive ? null : route.id)}
 							className="w-full flex items-center gap-3 px-4 py-2 hover:bg-white/10 transition-colors cursor-pointer"
 						>
@@ -215,7 +213,7 @@ export const WallTopoPanel = ({
 									<ExternalLink size={14} />
 								</button>
 							)}
-						</div>
+						</button>
 					);
 				})}
 			</div>

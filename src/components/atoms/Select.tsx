@@ -49,7 +49,10 @@ export const Select = (props: SelectProps) => {
 			)}
 		>
 			<select
-				className={cn("outline-0 w-full bg-surface-input text-text-on-light", selectClassName)}
+				className={cn(
+					"outline-0 w-full bg-surface-input text-text-on-light",
+					selectClassName,
+				)}
 				{...rest}
 			/>
 		</div>

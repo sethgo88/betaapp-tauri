@@ -45,10 +45,12 @@ export function SunShadeSummary({ data, onClick }: SunShadeSummaryProps) {
 					{effectiveAm && (
 						<>
 							<ExposureIcon exposure={effectiveAm} />
-							{showBoth && (
+							{showBoth && effectivePm && (
 								<>
-									<span className="text-text-tertiary text-xs leading-none">/</span>
-									<ExposureIcon exposure={effectivePm!} />
+									<span className="text-text-tertiary text-xs leading-none">
+										/
+									</span>
+									<ExposureIcon exposure={effectivePm} />
 								</>
 							)}
 						</>
