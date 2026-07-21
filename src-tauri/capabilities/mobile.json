@@ -1,0 +1,13 @@
+{
+	"$schema": "../gen/schemas/mobile-schema.json",
+	"identifier": "mobile",
+	"description": "Mobile-only capabilities (geolocation)",
+	"platforms": ["android", "iOS"],
+	"windows": ["main"],
+	"permissions": [
+		"geolocation:allow-check-permissions",
+		"geolocation:allow-request-permissions",
+		"geolocation:allow-get-current-position",
+		"geolocation:allow-watch-position"
+	]
+}

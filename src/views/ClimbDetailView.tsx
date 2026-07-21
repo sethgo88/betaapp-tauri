@@ -16,7 +16,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { uuid } from "@tanstack/react-form";
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { openUrl } from "@tauri-apps/plugin-opener";
+import { openExternalUrl } from "@/lib/platform/opener";
 import {
 	ExternalLink,
 	GripVertical,
@@ -1190,7 +1190,7 @@ const ClimbDetailView = () => {
 								<button
 									type="button"
 									className="flex items-center gap-2 text-sm text-text-text-light-on-dark-secondary hover:text-text-on-dark min-w-0"
-									onClick={() => openUrl(link.url)}
+									onClick={() => openExternalUrl(link.url)}
 								>
 									<ExternalLink size={14} className="shrink-0" />
 									<span className="truncate">{link.title ?? link.url}</span>

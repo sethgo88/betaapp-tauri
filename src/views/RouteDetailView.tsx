@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { openUrl } from "@tauri-apps/plugin-opener";
+import { openExternalUrl } from "@/lib/platform/opener";
 import { ExternalLink, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/atoms/Button";
@@ -396,7 +396,7 @@ const RouteDetailView = () => {
 								<button
 									type="button"
 									className="flex items-center gap-2 text-sm text-text-light-on-dark-secondary hover:text-text-on-dark min-w-0"
-									onClick={() => openUrl(link.url)}
+									onClick={() => openExternalUrl(link.url)}
 								>
 									<ExternalLink size={14} className="shrink-0" />
 									<span className="truncate">{link.title ?? link.url}</span>

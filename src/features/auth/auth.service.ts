@@ -294,6 +294,41 @@ export async function initDeepLinkHandler(
 	return unlisten;
 }
 
+// ── Web-only user bootstrap (no local SQLite) ────────────────────────────────
+
+/**
+ * On web, build a User object directly from Supabase data without touching
+ * local SQLite. Used in the web bootstrap path in App.tsx.
+ */
+export async function fetchProfileForWeb(
+	userId: string,
+	email: string,
+	role: "user" | "admin",
+): Promise<import("./auth.schema").User> {
+	const { data } = await supabase
+		.from("profiles")
+		.select(
+			"id, display_name, height_cm, ape_index, hardest_sport, hardest_boulder, default_unit",
+		)
+		.eq("id", userId)
+		.single();
+
+	const now = new Date().toISOString();
+	return {
+		id: userId,
+		email,
+		role,
+		display_name: data?.display_name ?? null,
+		height_cm: data?.height_cm ?? null,
+		ape_index_cm: data?.ape_index ?? null,
+		max_redpoint_sport: data?.hardest_sport ?? null,
+		max_redpoint_boulder: data?.hardest_boulder ?? null,
+		default_unit: (data?.default_unit as "imperial" | "metric") ?? "imperial",
+		created_at: now,
+		updated_at: now,
+	};
+}
+
 // ── Supabase user profile ────────────────────────────────────────────────────
 
 export async function fetchOrCreateSupabaseUser(
