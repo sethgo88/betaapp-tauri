@@ -4,6 +4,8 @@
 
 **Ownership:** Countries and Regions are admin-only. Sub-Regions, Crags, and Walls are user-submitted and admin-verified (same `status` model as Routes).
 
+**Platform paths:** Service functions branch on `isTauri()`. Tauri (Android) reads from the local SQLite cache tables; region download populates these. Web (browser) queries Supabase directly — no download step; all location data is always available. Sync/pull/download functions are no-ops on web.
+
 ---
 
 ## Hierarchy

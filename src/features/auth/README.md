@@ -109,6 +109,16 @@ interface AuthStore {
 
 ---
 
+## Platform paths
+
+All service functions support two execution paths:
+- **Tauri (Android):** reads/writes local SQLite `users` table; syncs with Supabase `profiles`
+- **Web (browser):** no local SQLite; builds `User` object directly from `supabase.auth.getUser()` + `profiles` + `user_roles`. `upsertLocalUser` delegates to `fetchProfileForWeb`. `fetchAndApplyProfile` skips the SQLite merge step.
+
+`restoreSession` uses `getSession()` — valid only at cold start (reads persisted localStorage tokens). All other auth checks use `getUser()`.
+
+---
+
 ## Session lifecycle
 
 ```
@@ -165,6 +175,19 @@ Logout:
   signOut() → setSession(null) → setUser(null)
   Realtime channel unsubscribed (useSync cleanup)
   Local data retained (local-first)
+```
+
+```
+App launch — web browser:
+  restoreSession() → getSession() reads localStorage tokens
+  if session → setSession; supabase.auth.getUser() → fetchOrCreateSupabaseUser → fetchProfileForWeb → setUser
+  if no session → user lands on /profile (login screen)
+
+Login (web):
+  signIn(email, password) → setSession
+  fetchOrCreateSupabaseUser(id) → get role
+  upsertLocalUser → fetchProfileForWeb (no SQLite write)
+  fetchAndApplyProfile → fetchProfileForWeb → setUser
 ```
 
 ---

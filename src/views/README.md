@@ -17,7 +17,7 @@ Router defined in `src/router.tsx` using `createMemoryHistory` (required for And
 | `/reset-password` | `ResetPasswordView` | public | Set new password after tapping reset link from email |
 | `/map` | `MapView` | required | Interactive map with Discovery (all downloaded crags) and Personal (crags with user's climbs) modes |
 | `/search` | `SearchView` | required | Real-time search across downloaded locations and routes |
-| `/routes` | `RoutesView` | required | Route Manager — browse countries → regions; download regions |
+| `/routes` | `RoutesView` | required | Route Manager — browse countries → regions; download regions (Android only — web shows all regions as always-available) |
 | `/regions/$regionId` | `RegionView` | required | Sub-regions for a region; tap navigates to SubRegionView |
 | `/sub-regions/$subRegionId` | `SubRegionView` | required | Crags list with admin-editable description |
 | `/crags/$cragId` | `CragView` | required | Walls list with admin-editable description; tap navigates to WallView |

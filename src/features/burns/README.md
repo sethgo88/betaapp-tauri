@@ -2,6 +2,8 @@
 
 Per-user timestamped notes on a climb representing a single attempt or session. Burns live inline on `ClimbDetailView` — no dedicated route.
 
+**Platform paths:** Service functions branch on `isTauri()`. Tauri (Android) reads/writes local SQLite. Web (browser) calls Supabase directly.
+
 ---
 
 ## Schema (`burns.schema.ts`)

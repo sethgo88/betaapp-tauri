@@ -1,3 +1,4 @@
+import { isTauri } from "@tauri-apps/api/core";
 import { refreshRouteAvgRating } from "@/features/routes/routes.service";
 import { getDb } from "@/lib/db";
 import { supabase } from "@/lib/supabase";
@@ -15,6 +16,87 @@ type LocationBreadcrumb = {
 async function fetchLocationForRoute(
 	routeId: string,
 ): Promise<LocationBreadcrumb> {
+	if (!isTauri()) {
+		// Sequential Supabase lookups traversing the location hierarchy
+		const { data: route } = await supabase
+			.from("routes")
+			.select("wall_id")
+			.eq("id", routeId)
+			.single();
+		if (!route)
+			return {
+				country: null,
+				area: null,
+				sub_area: null,
+				crag: null,
+				wall: null,
+			};
+		const { data: wall } = await supabase
+			.from("walls")
+			.select("name, crag_id")
+			.eq("id", route.wall_id)
+			.single();
+		if (!wall)
+			return {
+				country: null,
+				area: null,
+				sub_area: null,
+				crag: null,
+				wall: null,
+			};
+		const { data: crag } = await supabase
+			.from("crags")
+			.select("name, sub_region_id")
+			.eq("id", wall.crag_id)
+			.single();
+		if (!crag)
+			return {
+				country: null,
+				area: null,
+				sub_area: null,
+				crag: wall.name,
+				wall: null,
+			};
+		const { data: subRegion } = await supabase
+			.from("sub_regions")
+			.select("name, region_id")
+			.eq("id", crag.sub_region_id)
+			.single();
+		if (!subRegion)
+			return {
+				country: null,
+				area: null,
+				sub_area: crag.name,
+				crag: null,
+				wall: wall.name,
+			};
+		const { data: region } = await supabase
+			.from("regions")
+			.select("name, country_id")
+			.eq("id", subRegion.region_id)
+			.single();
+		if (!region)
+			return {
+				country: null,
+				area: subRegion.name,
+				sub_area: crag.name,
+				crag: null,
+				wall: wall.name,
+			};
+		const { data: country } = await supabase
+			.from("countries")
+			.select("name")
+			.eq("id", region.country_id)
+			.single();
+		return {
+			country: country?.name ?? null,
+			area: region.name,
+			sub_area: subRegion.name,
+			crag: crag.name,
+			wall: wall.name,
+		};
+	}
+
 	const db = await getDb();
 	const rows = await db.select<LocationBreadcrumb[]>(
 		`SELECT
@@ -64,6 +146,36 @@ export async function fetchClimbs(
 	userId: string,
 	sortKey: SortKey = "name_asc",
 ): Promise<Climb[]> {
+	if (!isTauri()) {
+		const { data, error } = await supabase
+			.from("climbs")
+			.select("*")
+			.eq("user_id", userId)
+			.is("deleted_at", null);
+		if (error) throw error;
+		const climbs = (data as Climb[]) ?? [];
+		// Apply grade sort in JS — requires grades table lookup, sort by name otherwise
+		if (sortKey === "grade_asc" || sortKey === "grade_desc") {
+			return climbs.sort((a, b) =>
+				sortKey === "grade_asc"
+					? a.grade.localeCompare(b.grade)
+					: b.grade.localeCompare(a.grade),
+			);
+		}
+		if (sortKey === "name_asc")
+			return climbs.sort((a, b) =>
+				a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
+			);
+		if (sortKey === "name_desc")
+			return climbs.sort((a, b) =>
+				b.name.localeCompare(a.name, undefined, { sensitivity: "base" }),
+			);
+		if (sortKey === "date_asc")
+			return climbs.sort((a, b) => a.created_at.localeCompare(b.created_at));
+		// date_desc
+		return climbs.sort((a, b) => b.created_at.localeCompare(a.created_at));
+	}
+
 	const db = await getDb();
 	const orderBy = buildOrderBy(sortKey);
 	const needsGradeJoin = sortKey === "grade_asc" || sortKey === "grade_desc";
@@ -83,6 +195,16 @@ export async function fetchClimbs(
 }
 
 export async function fetchClimb(id: string): Promise<Climb | null> {
+	if (!isTauri()) {
+		const { data, error } = await supabase
+			.from("climbs")
+			.select("*")
+			.eq("id", id)
+			.is("deleted_at", null)
+			.single();
+		if (error && error.code !== "PGRST116") throw error;
+		return (data as Climb) ?? null;
+	}
 	const db = await getDb();
 	const rows = await db.select<Climb[]>(
 		"SELECT * FROM climbs WHERE id = ? AND deleted_at IS NULL",
@@ -92,6 +214,7 @@ export async function fetchClimb(id: string): Promise<Climb | null> {
 }
 
 export async function backfillClimbLocations(): Promise<void> {
+	if (!isTauri()) return;
 	const db = await getDb();
 	const rows = await db.select<{ id: string; route_id: string }[]>(
 		"SELECT id, route_id FROM climbs WHERE route_id IS NOT NULL AND (country IS NULL OR country = '') AND deleted_at IS NULL",
@@ -111,7 +234,6 @@ export async function insertClimb(
 	data: ClimbFormValues,
 	routeId?: string,
 ): Promise<string> {
-	const db = await getDb();
 	const id = crypto.randomUUID();
 
 	let country = data.country ?? null;
@@ -129,6 +251,31 @@ export async function insertClimb(
 		if (loc.wall) wall = loc.wall;
 	}
 
+	if (!isTauri()) {
+		const { error } = await supabase.from("climbs").insert({
+			id,
+			user_id: userId,
+			name: data.name,
+			route_type: data.route_type,
+			grade: data.grade,
+			moves: data.moves,
+			sent_status: data.sent_status,
+			country,
+			area,
+			sub_area,
+			crag,
+			wall,
+			route_location: data.route_location ?? null,
+			link: data.link ?? null,
+			route_id: routeId ?? null,
+			sent_date: data.sent_date ?? null,
+			rating: data.rating ?? null,
+		});
+		if (error) throw error;
+		return id;
+	}
+
+	const db = await getDb();
 	await db.execute(
 		`INSERT INTO climbs (id, user_id, name, route_type, grade, moves, sent_status, country, area, sub_area, crag, wall, route_location, link, route_id, sent_date, rating)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -163,6 +310,32 @@ export async function updateClimb(
 	data: ClimbFormValues,
 	routeId?: string | null,
 ): Promise<void> {
+	if (!isTauri()) {
+		const { error } = await supabase
+			.from("climbs")
+			.update({
+				name: data.name,
+				route_type: data.route_type,
+				grade: data.grade,
+				moves: data.moves,
+				sent_status: data.sent_status,
+				country: data.country ?? null,
+				area: data.area ?? null,
+				sub_area: data.sub_area ?? null,
+				crag: data.crag ?? null,
+				wall: data.wall ?? null,
+				route_location: data.route_location ?? null,
+				link: data.link ?? null,
+				route_id: routeId ?? null,
+				sent_date: data.sent_date ?? null,
+				rating: data.rating ?? null,
+			})
+			.eq("id", id)
+			.is("deleted_at", null);
+		if (error) throw error;
+		return;
+	}
+
 	const db = await getDb();
 	await db.execute(
 		`UPDATE climbs
@@ -197,6 +370,15 @@ export async function updateClimbMoves(
 	id: string,
 	moves: string,
 ): Promise<void> {
+	if (!isTauri()) {
+		const { error } = await supabase
+			.from("climbs")
+			.update({ moves })
+			.eq("id", id)
+			.is("deleted_at", null);
+		if (error) throw error;
+		return;
+	}
 	const db = await getDb();
 	await db.execute(
 		"UPDATE climbs SET moves = ? WHERE id = ? AND deleted_at IS NULL",
@@ -208,6 +390,15 @@ export async function linkClimbToRoute(
 	climbId: string,
 	routeId: string,
 ): Promise<void> {
+	if (!isTauri()) {
+		const { error } = await supabase
+			.from("climbs")
+			.update({ route_id: routeId })
+			.eq("id", climbId)
+			.is("deleted_at", null);
+		if (error) throw error;
+		return;
+	}
 	const db = await getDb();
 	const rows = await db.select<{ rating: number | null }[]>(
 		"SELECT rating FROM climbs WHERE id = ? AND deleted_at IS NULL",
@@ -223,6 +414,15 @@ export async function linkClimbToRoute(
 }
 
 export async function unlinkClimbFromRoute(climbId: string): Promise<void> {
+	if (!isTauri()) {
+		const { error } = await supabase
+			.from("climbs")
+			.update({ route_id: null })
+			.eq("id", climbId)
+			.is("deleted_at", null);
+		if (error) throw error;
+		return;
+	}
 	const db = await getDb();
 	const rows = await db.select<
 		{ route_id: string | null; rating: number | null }[]
@@ -240,6 +440,17 @@ export async function unlinkClimbFromRoute(climbId: string): Promise<void> {
 }
 
 export async function fetchUnlinkedClimbs(userId: string): Promise<Climb[]> {
+	if (!isTauri()) {
+		const { data, error } = await supabase
+			.from("climbs")
+			.select("*")
+			.eq("user_id", userId)
+			.is("route_id", null)
+			.is("deleted_at", null)
+			.order("name");
+		if (error) throw error;
+		return (data as Climb[]) ?? [];
+	}
 	const db = await getDb();
 	return db.select<Climb[]>(
 		"SELECT * FROM climbs WHERE user_id = ? AND route_id IS NULL AND deleted_at IS NULL ORDER BY name COLLATE NOCASE ASC",
@@ -251,6 +462,23 @@ export async function linkExistingClimbToRoute(
 	climbId: string,
 	routeId: string,
 ): Promise<void> {
+	if (!isTauri()) {
+		const loc = await fetchLocationForRoute(routeId);
+		const { error } = await supabase
+			.from("climbs")
+			.update({
+				route_id: routeId,
+				country: loc.country,
+				area: loc.area,
+				sub_area: loc.sub_area,
+				crag: loc.crag,
+				wall: loc.wall,
+			})
+			.eq("id", climbId)
+			.is("deleted_at", null);
+		if (error) throw error;
+		return;
+	}
 	const db = await getDb();
 	const [loc, rows] = await Promise.all([
 		fetchLocationForRoute(routeId),
@@ -274,6 +502,15 @@ export async function patchClimbGrade(
 	id: string,
 	grade: string,
 ): Promise<void> {
+	if (!isTauri()) {
+		const { error } = await supabase
+			.from("climbs")
+			.update({ grade })
+			.eq("id", id)
+			.is("deleted_at", null);
+		if (error) throw error;
+		return;
+	}
 	const db = await getDb();
 	await db.execute(
 		"UPDATE climbs SET grade = ? WHERE id = ? AND deleted_at IS NULL",
@@ -285,6 +522,15 @@ export async function patchClimbStatus(
 	id: string,
 	sentStatus: string,
 ): Promise<void> {
+	if (!isTauri()) {
+		const { error } = await supabase
+			.from("climbs")
+			.update({ sent_status: sentStatus })
+			.eq("id", id)
+			.is("deleted_at", null);
+		if (error) throw error;
+		return;
+	}
 	const db = await getDb();
 	await db.execute(
 		"UPDATE climbs SET sent_status = ? WHERE id = ? AND deleted_at IS NULL",
@@ -296,6 +542,15 @@ export async function patchClimbRating(
 	id: string,
 	rating: number | null,
 ): Promise<void> {
+	if (!isTauri()) {
+		const { error } = await supabase
+			.from("climbs")
+			.update({ rating })
+			.eq("id", id)
+			.is("deleted_at", null);
+		if (error) throw error;
+		return;
+	}
 	const db = await getDb();
 	await db.execute(
 		"UPDATE climbs SET rating = ? WHERE id = ? AND deleted_at IS NULL",
@@ -316,6 +571,15 @@ export async function patchClimbLink(
 	id: string,
 	link: string | null,
 ): Promise<void> {
+	if (!isTauri()) {
+		const { error } = await supabase
+			.from("climbs")
+			.update({ link })
+			.eq("id", id)
+			.is("deleted_at", null);
+		if (error) throw error;
+		return;
+	}
 	const db = await getDb();
 	await db.execute(
 		"UPDATE climbs SET link = ? WHERE id = ? AND deleted_at IS NULL",
@@ -327,6 +591,7 @@ export async function setClimbOfflineAvailable(
 	climbId: string,
 	available: boolean,
 ): Promise<void> {
+	if (!isTauri()) return;
 	const db = await getDb();
 	await db.execute("UPDATE climbs SET offline_available = ? WHERE id = ?", [
 		available ? 1 : 0,
@@ -335,6 +600,14 @@ export async function setClimbOfflineAvailable(
 }
 
 export async function softDeleteClimb(id: string): Promise<void> {
+	if (!isTauri()) {
+		const { error } = await supabase
+			.from("climbs")
+			.update({ deleted_at: new Date().toISOString() })
+			.eq("id", id);
+		if (error) throw error;
+		return;
+	}
 	const db = await getDb();
 	const rows = await db.select<
 		{ route_id: string | null; rating: number | null }[]
@@ -354,6 +627,16 @@ export async function softDeleteClimb(id: string): Promise<void> {
 // ── Climb links ───────────────────────────────────────────────────────────────
 
 export async function fetchClimbLinks(climbId: string): Promise<ClimbLink[]> {
+	if (!isTauri()) {
+		const { data, error } = await supabase
+			.from("climb_links")
+			.select("*")
+			.eq("climb_id", climbId)
+			.is("deleted_at", null)
+			.order("created_at");
+		if (error) throw error;
+		return (data as ClimbLink[]) ?? [];
+	}
 	const db = await getDb();
 	return db.select<ClimbLink[]>(
 		"SELECT * FROM climb_links WHERE climb_id = ? AND deleted_at IS NULL ORDER BY created_at ASC",
@@ -377,6 +660,7 @@ export async function addClimbLink(
 		link_type: "link",
 	});
 	if (error) throw error;
+	if (!isTauri()) return;
 	const db = await getDb();
 	await db.execute(
 		`INSERT INTO climb_links (id, climb_id, user_id, url, title, link_type, created_at)
@@ -391,6 +675,7 @@ export async function deleteClimbLink(id: string): Promise<void> {
 		.update({ deleted_at: new Date().toISOString() })
 		.eq("id", id);
 	if (error) throw error;
+	if (!isTauri()) return;
 	const db = await getDb();
 	await db.execute("DELETE FROM climb_links WHERE id = ?", [id]);
 }
@@ -399,6 +684,7 @@ export async function deleteClimbLink(id: string): Promise<void> {
 // Uses INSERT OR REPLACE to bypass the updated_at trigger so the
 // server timestamp is preserved exactly.
 export async function applyRemoteClimb(climb: Climb): Promise<void> {
+	if (!isTauri()) return;
 	const db = await getDb();
 	await db.execute(
 		`INSERT OR REPLACE INTO climbs

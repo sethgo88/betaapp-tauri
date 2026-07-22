@@ -1,4 +1,5 @@
 import type { Session } from "@supabase/supabase-js";
+import { isTauri } from "@tauri-apps/api/core";
 import { getDb } from "@/lib/db";
 import { supabase } from "@/lib/supabase";
 import type { UnitPreference, User } from "./auth.schema";
@@ -34,6 +35,9 @@ export async function signUp(
 
 // ── Session restore ──────────────────────────────────────────────────────────
 
+// NOTE: getSession() reads from persisted localStorage tokens — valid only at
+// cold start/app launch. Do not call this function after the app is running;
+// use supabase.auth.getUser() for live auth checks instead.
 export async function restoreSession(
 	timeoutMs = 5_000,
 ): Promise<Session | null> {
@@ -52,6 +56,20 @@ export async function restoreSession(
 }
 
 export async function fetchLocalUser(): Promise<User | null> {
+	if (!isTauri()) {
+		// On web there is no local users table, so we can't replicate the
+		// deleted_at IS NULL filter. Supabase auth.getUser() returning non-null
+		// is the equivalent — the account exists and is authenticated.
+		const {
+			data: { user: authUser },
+		} = await supabase.auth.getUser();
+		if (!authUser) return null;
+		const role = await fetchOrCreateSupabaseUser(
+			authUser.id,
+			authUser.email ?? "",
+		);
+		return fetchProfileForWeb(authUser.id, authUser.email ?? "", role);
+	}
 	const db = await getDb();
 	const rows = await db.select<User[]>(
 		"SELECT * FROM users WHERE deleted_at IS NULL LIMIT 1",
@@ -72,6 +90,9 @@ export async function upsertLocalUser(
 	email: string,
 	role: "user" | "admin",
 ): Promise<User> {
+	if (!isTauri()) {
+		return fetchProfileForWeb(id, email, role);
+	}
 	const db = await getDb();
 
 	// If a local user exists with a different ID (pre-auth UUID), migrate their climbs
@@ -111,6 +132,13 @@ export interface UserProfileUpdate {
 }
 
 export async function fetchAndApplyProfile(userId: string): Promise<User> {
+	if (!isTauri()) {
+		const {
+			data: { user: authUser },
+		} = await supabase.auth.getUser();
+		const role = await fetchOrCreateSupabaseUser(userId, authUser?.email ?? "");
+		return fetchProfileForWeb(userId, authUser?.email ?? "", role);
+	}
 	const db = await getDb();
 
 	const { data, error } = await supabase
@@ -155,7 +183,6 @@ export async function updateUserProfile(
 	userId: string,
 	profile: UserProfileUpdate,
 ): Promise<User> {
-	// Push to Supabase profiles first — throw on error so caller can show feedback
 	const { error } = await supabase.from("profiles").upsert({
 		id: userId,
 		display_name: profile.display_name,
@@ -166,6 +193,14 @@ export async function updateUserProfile(
 		default_unit: profile.default_unit,
 	});
 	if (error) throw new Error(error.message);
+
+	if (!isTauri()) {
+		const {
+			data: { user: authUser },
+		} = await supabase.auth.getUser();
+		const role = await fetchOrCreateSupabaseUser(userId, authUser?.email ?? "");
+		return fetchProfileForWeb(userId, authUser?.email ?? "", role);
+	}
 
 	const db = await getDb();
 	await db.execute(
@@ -323,7 +358,7 @@ export async function fetchProfileForWeb(
 		ape_index_cm: data?.ape_index ?? null,
 		max_redpoint_sport: data?.hardest_sport ?? null,
 		max_redpoint_boulder: data?.hardest_boulder ?? null,
-		default_unit: (data?.default_unit as "imperial" | "metric") ?? "imperial",
+		default_unit: data?.default_unit === "metric" ? "metric" : "imperial",
 		created_at: now,
 		updated_at: now,
 	};
