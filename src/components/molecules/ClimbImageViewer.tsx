@@ -535,6 +535,7 @@ export const ClimbImageViewer = ({ image, onClose }: ClimbImageViewerProps) => {
 
 					{/* biome-ignore lint/a11y/useKeyWithClickEvents: touch surface */}
 					{/* biome-ignore lint/a11y/noStaticElementInteractions: touch surface */}
+					{/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: touch surface, opens edit popover */}
 					<div
 						className="flex-1 min-w-0"
 						onClick={() => editMode && setPopoverPinId(activePin.id)}

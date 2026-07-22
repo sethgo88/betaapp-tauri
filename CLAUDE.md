@@ -109,6 +109,7 @@ src/
 | Sync or auth flow change | `src/features/sync/README.md` or `src/features/auth/README.md` + `docs/architecture.md` |
 | Tauri command / capability / deep link | `docs/android.md` + `docs/architecture.md` |
 | Dev environment setup | `docs/setup.md` |
+| Accessibility/WCAG-affecting change | `docs/accessibility.md` |
 
 ## Task Management
 

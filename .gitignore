@@ -31,7 +31,10 @@ src-tauri/gen/android/build/
 src-tauri/gen/android/.gradle/
 src-tauri/gen/android/app/.cxx/
 src-tauri/gen/android/keystore.properties
-.claude/
+.claude/*
+!.claude/skills
+!.claude/hooks
+!.claude/settings.json
 src-tauri/gen/android/upload-keystore.jks
 src-tauri/gen/android/betaapp.keystore
 *.stackdump

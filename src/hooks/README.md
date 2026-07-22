@@ -98,6 +98,28 @@ const topBar = useTopBar()
 
 ---
 
+## useDialogA11y
+
+**File:** `useDialogA11y.ts`
+**Call from:** Any modal/sheet/drawer component — `Sheet`, `ConfirmDeleteDialog`, `AddLinkModal`, `Drawer`, `TopoModal`.
+
+```ts
+import { useDialogA11y } from '@/hooks/useDialogA11y'
+
+const containerRef = useDialogA11y(isOpen, onClose)
+// <div ref={containerRef} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1}>
+```
+
+**What it does:**
+- Traps Tab/Shift+Tab focus inside the dialog while open (WCAG 2.1.2/2.4.3)
+- Focuses the first focusable element on open, restores focus to the trigger element on close
+- Escape key calls `onClose`
+- Registers `onClose` as `useUiStore`'s `backHandlerOverride` while open, so the Android hardware back button closes the dialog instead of navigating the router — clears the override on close/unmount
+
+**Caller responsibilities:** attach the returned ref to the dialog's outer container with `tabIndex={-1}` (fallback focus target when there are no focusable children), and add `role="dialog"` + `aria-modal="true"` + `aria-labelledby`/`aria-label` yourself — the hook only handles behavior, not markup.
+
+---
+
 ## Planned hooks
 
 | Hook | Purpose |

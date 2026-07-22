@@ -1,10 +1,11 @@
 import { X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import type {
 	RouteTopo,
 	WallTopo,
 	WallTopoLine,
 } from "@/features/topos/topos.schema";
+import { useDialogA11y } from "@/hooks/useDialogA11y";
 import { RouteTopoViewer, WallTopoPanel, WallTopoViewer } from "./TopoViewer";
 
 interface RouteInfo {
@@ -61,6 +62,7 @@ export const TopoModal = (props: TopoModalProps) => {
 	const lastPinchMid = useRef<{ x: number; y: number } | null>(null);
 	const lastPanTouch = useRef<{ x: number; y: number } | null>(null);
 	const lastTap = useRef<number>(0);
+	const dialogRef = useDialogA11y(true, onClose);
 
 	const clamp = (v: number, lo: number, hi: number) =>
 		Math.min(hi, Math.max(lo, v));
@@ -92,15 +94,6 @@ export const TopoModal = (props: TopoModalProps) => {
 		xfRef.current = next;
 		setXf(next);
 	};
-
-	// Close on Android back (Escape key)
-	useEffect(() => {
-		const handler = (e: KeyboardEvent) => {
-			if (e.key === "Escape") onClose();
-		};
-		window.addEventListener("keydown", handler);
-		return () => window.removeEventListener("keydown", handler);
-	}, [onClose]);
 
 	const handleTouchStart = (e: React.TouchEvent) => {
 		if (e.touches.length === 2) {
@@ -191,7 +184,14 @@ export const TopoModal = (props: TopoModalProps) => {
 	};
 
 	return (
-		<div className="fixed inset-0 z-50 bg-sheet-bg flex flex-col">
+		<div
+			ref={dialogRef}
+			role="dialog"
+			aria-modal="true"
+			aria-label="Topo viewer"
+			tabIndex={-1}
+			className="fixed inset-0 z-50 bg-sheet-bg flex flex-col"
+		>
 			{/* Header */}
 			<div
 				className="shrink-0 flex items-center px-4 py-3"

@@ -18,6 +18,8 @@ export const Toast = ({ id, message, type }: ToastType) => {
 
 	return (
 		<div
+			role={type === "error" ? "alert" : "status"}
+			aria-live={type === "error" ? "assertive" : "polite"}
 			className={cn(
 				"bg-surface-card text-text-primary border-l-4 shadow-toast rounded-[var(--radius-xl)] border border-card-border p-2.5 whitespace-nowrap",
 				borderColor[type],
