@@ -1,4 +1,6 @@
 import { X } from "lucide-react";
+import { useId } from "react";
+import { useDialogA11y } from "@/hooks/useDialogA11y";
 
 interface SheetProps {
 	isOpen: boolean;
@@ -23,12 +25,20 @@ export function Sheet({
 	action,
 	variant,
 }: SheetProps) {
+	const titleId = useId();
+	const containerRef = useDialogA11y(isOpen, onClose);
+
 	if (!isOpen) return null;
 
 	const isPrimary = variant === "primary";
 
 	return (
 		<div
+			ref={containerRef}
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby={titleId}
+			tabIndex={-1}
 			className={`fixed inset-0 z-50 flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] ${isPrimary ? "bg-sheet-bg" : "bg-surface-page"}`}
 		>
 			{/* Header */}
@@ -44,6 +54,7 @@ export function Sheet({
 					<X size={20} />
 				</button>
 				<span
+					id={titleId}
 					className={`text-sm font-semibold ${isPrimary ? "text-white" : "text-text-primary"}`}
 				>
 					{title}

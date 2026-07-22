@@ -113,6 +113,7 @@ const MagicLinkForm = ({
 					{(field) => (
 						<Input
 							type="email"
+							autoComplete="email"
 							placeholder="your@email.com"
 							value={field.state.value}
 							onBlur={field.handleBlur}
@@ -186,6 +187,7 @@ const ForgotPasswordForm = ({
 					{(field) => (
 						<Input
 							type="email"
+							autoComplete="email"
 							placeholder="your@email.com"
 							value={field.state.value}
 							onBlur={field.handleBlur}
@@ -597,6 +599,7 @@ const ProfileView = () => {
 						{(field) => (
 							<Input
 								type="email"
+								autoComplete="email"
 								placeholder="your@email.com"
 								value={field.state.value}
 								onBlur={field.handleBlur}
@@ -618,6 +621,7 @@ const ProfileView = () => {
 						{(field) => (
 							<Input
 								type="password"
+								autoComplete="new-password"
 								placeholder="Password"
 								value={field.state.value}
 								onBlur={field.handleBlur}
@@ -631,6 +635,7 @@ const ProfileView = () => {
 						{(field) => (
 							<Input
 								type="password"
+								autoComplete="new-password"
 								placeholder="Confirm password"
 								value={field.state.value}
 								onBlur={field.handleBlur}
@@ -755,6 +760,7 @@ const ProfileView = () => {
 					{(field) => (
 						<Input
 							type="email"
+							autoComplete="email"
 							placeholder="your@email.com"
 							value={field.state.value}
 							onBlur={field.handleBlur}
@@ -776,6 +782,7 @@ const ProfileView = () => {
 					{(field) => (
 						<Input
 							type="password"
+							autoComplete="current-password"
 							placeholder="Password"
 							value={field.state.value}
 							onBlur={field.handleBlur}

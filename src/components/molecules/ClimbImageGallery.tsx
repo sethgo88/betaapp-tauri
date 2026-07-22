@@ -65,6 +65,7 @@ const ImageActionSheet = ({
 
 	return (
 		<>
+			{/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: backdrop tap-to-close, role=dialog carries the semantics */}
 			<div
 				className="fixed inset-0 z-40 flex items-end justify-center bg-black/50"
 				onClick={onClose}
@@ -74,6 +75,7 @@ const ImageActionSheet = ({
 			>
 				{/* biome-ignore lint/a11y/noStaticElementInteractions: sheet stops backdrop tap from closing */}
 				{/* biome-ignore lint/a11y/useKeyWithClickEvents: touch surface, not a focusable control */}
+				{/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: stops backdrop click from bubbling, not itself interactive */}
 				<div
 					className="bg-surface-card rounded-t-2xl w-full flex flex-col overflow-hidden"
 					style={{ paddingBottom: "env(safe-area-inset-bottom)" }}

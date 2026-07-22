@@ -66,6 +66,7 @@ const ResetPasswordView = () => {
 					{(field) => (
 						<Input
 							type="password"
+							autoComplete="new-password"
 							placeholder="New password"
 							value={field.state.value}
 							onBlur={field.handleBlur}
@@ -79,6 +80,7 @@ const ResetPasswordView = () => {
 					{(field) => (
 						<Input
 							type="password"
+							autoComplete="new-password"
 							placeholder="Confirm new password"
 							value={field.state.value}
 							onBlur={field.handleBlur}

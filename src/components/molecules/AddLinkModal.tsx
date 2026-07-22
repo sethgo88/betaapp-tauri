@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { RouteLinkSubmitSchema } from "@/features/routes/routes.schema";
+import { useDialogA11y } from "@/hooks/useDialogA11y";
 
 interface AddLinkModalProps {
 	isOpen: boolean;
@@ -19,6 +20,8 @@ export function AddLinkModal({
 	const [url, setUrl] = useState("");
 	const [title, setTitle] = useState("");
 	const [error, setError] = useState<string | null>(null);
+	const titleId = useId();
+	const containerRef = useDialogA11y(isOpen, onCancel);
 
 	useEffect(() => {
 		if (isOpen) {
@@ -44,9 +47,18 @@ export function AddLinkModal({
 	}
 
 	return (
-		<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+		<div
+			ref={containerRef}
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby={titleId}
+			tabIndex={-1}
+			className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
+		>
 			<div className="w-full max-w-sm rounded-xl bg-surface-raised p-5 flex flex-col gap-4 shadow-card">
-				<p className="font-semibold text-text-primary">Add link</p>
+				<p id={titleId} className="font-semibold text-text-primary">
+					Add link
+				</p>
 				<div className="flex flex-col gap-2">
 					<Input
 						type="url"

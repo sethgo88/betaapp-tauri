@@ -402,6 +402,7 @@ const DrawingCanvas = ({
 			style={{ touchAction: "none", userSelect: "none" }}
 		>
 			{/* biome-ignore lint/a11y/noStaticElementInteractions: custom drawing canvas */}
+			{/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: custom drawing canvas, pointer handlers drive the drawing tool */}
 			<div
 				ref={containerRef}
 				className="relative w-full"

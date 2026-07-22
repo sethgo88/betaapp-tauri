@@ -9,7 +9,9 @@ import {
 	Settings,
 	X,
 } from "lucide-react";
+import { useId } from "react";
 import { useAuthStore } from "@/features/auth/auth.store";
+import { useDialogA11y } from "@/hooks/useDialogA11y";
 
 interface DrawerProps {
 	isOpen: boolean;
@@ -20,6 +22,8 @@ export const Drawer = ({ isOpen, onClose }: DrawerProps) => {
 	const navigate = useNavigate();
 	const user = useAuthStore((s) => s.user);
 	const isAdmin = user?.role === "admin";
+	const titleId = useId();
+	const containerRef = useDialogA11y(isOpen, onClose);
 
 	const handleNav = (to: string) => {
 		onClose();
@@ -36,11 +40,20 @@ export const Drawer = ({ isOpen, onClose }: DrawerProps) => {
 				className="fixed inset-0 bg-black/60 z-[2000] w-full cursor-default"
 				onClick={onClose}
 			/>
-			<div className="fixed top-0 right-0 bottom-0 w-64 bg-cyan-800/80 border-l border-white/20 z-[2001] flex flex-col pt-[env(safe-area-inset-top)] shadow-xl text-white">
+			<div
+				ref={containerRef}
+				role="dialog"
+				aria-modal="true"
+				aria-labelledby={titleId}
+				tabIndex={-1}
+				className="fixed top-0 right-0 bottom-0 w-64 bg-cyan-800/80 border-l border-white/20 z-[2001] flex flex-col pt-[env(safe-area-inset-top)] shadow-xl text-white"
+			>
 				<div className="flex items-center justify-between p-4 border-b border-white/20">
 					<div className="flex items-center gap-2">
 						<Menu size={18} />
-						<span className="font-semibold">Menu</span>
+						<span id={titleId} className="font-semibold">
+							Menu
+						</span>
 					</div>
 					<button type="button" onClick={onClose} className="text-white/70">
 						<X size={20} />

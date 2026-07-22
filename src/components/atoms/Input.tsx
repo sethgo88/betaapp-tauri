@@ -11,6 +11,7 @@ export const Input = (props: InputProps) => {
 	const { className, errorState, ...rest } = props;
 	return (
 		<input
+			aria-invalid={errorState || undefined}
 			className={cn(
 				"rounded-[var(--radius-lg)] bg-surface-input p-2.5 font-medium outline-0 w-full border border-border-input text-text-on-light focus:border-accent-primary transition-colors",
 				errorState && "border-red-500 placeholder:text-red-400",

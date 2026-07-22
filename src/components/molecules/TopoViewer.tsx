@@ -78,6 +78,7 @@ export const WallTopoViewer = ({
 						: undefined
 				}
 			>
+				{/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: onLoad measures natural image size, not a user interaction */}
 				<img
 					src={topo.image_url}
 					alt="Wall topo"
