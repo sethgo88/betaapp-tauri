@@ -151,8 +151,8 @@ boundaries (SC 1.4.11).
 | `text-text-tertiary` (was `#a8a29e`, now `#6b6460`) on `bg-surface-page` | 5.40:1 | Pass | Pass |
 | `text-text-tertiary` on `bg-surface-card` | 5.81:1 | Pass | Pass |
 | `text-text-tertiary` on `bg-surface-hover` | 4.82:1 (worst case) | Pass | Pass |
-| **White text on `bg-accent-primary` (teal-600, `#0d9488`)** | **3.74:1** | **Fail** | **Pass** |
-| **White text on `bg-accent-secondary` (amber-600, `#d97706`)** | **3.19:1** | **Fail** | **Pass** |
+| White text on `bg-accent-primary` (was teal-600 `#0d9488`, now `#0c847a`) | 4.57:1 | Pass | Pass |
+| White text on `bg-accent-secondary` (was amber-600 `#d97706`, now `#b26105`) | 4.56:1 | Pass | Pass |
 | `text-sent` (`#3e6d40`) on `bg-surface-page` | 5.63:1 | Pass | Pass |
 | `text-project` (`#b8482a`) on `bg-surface-page` | 4.88:1 | Pass | Pass |
 | `text-todo` (`#1f72a6`) on `bg-surface-page` | 4.86:1 | Pass | Pass |
@@ -163,11 +163,7 @@ boundaries (SC 1.4.11).
 - `text-text-tertiary` darkened from `#a8a29e` to `#6b6460` (same warm-gray hue, same lightness family) — passes 4.5:1+ against every background it's used on. Applied to the active `.light` theme in `src/App.css`; the currently-unused dark theme block has the same underlying issue and should get the equivalent fix if/when a dark preset ships.
 - `border-border-input` darkened from `#d4c9bc` to `#9d8366` — passes 3:1 against form-input backgrounds (SC 1.4.11 applies to it as a UI-component boundary). `border-border-default` was left unchanged — it's used for decorative dividers/card borders, not boundaries needed to identify a UI component, so 1.4.11 doesn't apply to it the same way.
 
-**Still open — needs a design decision, not just a recompute:**
-- White button text on `bg-accent-primary`/`bg-accent-secondary` fails AA for normal text (3.74:1 / 3.19:1, need 4.5:1). Checked against `Button.tsx`: sizes are `text-sm`/`text-base`/`text-lg` (14/16/18px) at `font-semibold` (600 weight) — none of these clear the WCAG "large text" bar (18pt/24px regular, or 14pt/18.66px **bold**/700), so the 3:1 exemption doesn't apply and this is a confirmed failure, not just a maybe. Two ways to fix it, both with real design impact:
-  1. Darken `--accent-primary`/`--accent-secondary` themselves (e.g. to `#0c847a`/`#b26105`, which reach ~4.56:1) — changes the brand's primary/secondary color everywhere they're used (buttons, active nav, checkboxes, badges), not just on button backgrounds.
-  2. Bump button text to `font-bold` and ensure size ≥18.66px — no color change, but changes button typography app-wide.
-  Left for a human call in issue #245 rather than silently recoloring the brand palette.
+- `accent-primary`/`accent-secondary` darkened from `#0d9488`/`#d97706` to `#0c847a`/`#b26105` (same hue, same family) — white button text now reaches 4.56:1+. `Button.tsx`'s text sizes (14/16/18px at `font-semibold`) never clear the WCAG "large text" exemption (18.66px bold minimum), so a typography-only fix wasn't viable here — only a color change reliably passes AA.
 
 ## Reference
 
