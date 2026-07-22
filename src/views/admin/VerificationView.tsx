@@ -286,9 +286,7 @@ const RouteRow = ({ route }: { route: UnverifiedRoute }) => {
 		);
 	};
 
-	const submitterLabel = route.submitter
-		? (route.submitter.display_name ?? route.submitter.email)
-		: null;
+	const submitterLabel = route.submitter?.display_name ?? null;
 
 	return (
 		<div className="rounded-lg bg-surface-card p-4 flex flex-col gap-1">
@@ -308,11 +306,6 @@ const RouteRow = ({ route }: { route: UnverifiedRoute }) => {
 				<p className="text-xs text-text-secondary">
 					Submitted by{" "}
 					<span className="text-text-primary">{submitterLabel}</span>
-					{route.submitter?.display_name && (
-						<span className="text-text-tertiary ml-1">
-							({route.submitter.email})
-						</span>
-					)}
 				</p>
 			)}
 

@@ -2,6 +2,8 @@
 
 Grade reference data. Seeded locally on first install, overwritten by Supabase on sync.
 
+**Platform paths:** `fetchGrades` queries Supabase directly on web; reads `grades_cache` SQLite on Tauri. `pullGrades` is a no-op on web.
+
 ---
 
 ## Schema

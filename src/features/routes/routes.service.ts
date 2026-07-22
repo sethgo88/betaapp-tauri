@@ -1,3 +1,4 @@
+import { isTauri } from "@tauri-apps/api/core";
 import { getDb } from "@/lib/db";
 import type { SunData } from "@/lib/sun";
 import { supabase } from "@/lib/supabase";
@@ -9,6 +10,7 @@ import type {
 } from "./routes.schema";
 
 export async function refreshRouteAvgRating(routeId: string): Promise<void> {
+	if (!isTauri()) return; // avg_rating on routes is admin-managed in Supabase
 	const db = await getDb();
 	const rows = await db.select<{ avg: number | null; cnt: number }[]>(
 		"SELECT AVG(rating) as avg, COUNT(rating) as cnt FROM climbs WHERE route_id = ? AND rating IS NOT NULL AND deleted_at IS NULL",
@@ -33,16 +35,28 @@ function parseSunData<T extends { sun_data?: unknown }>(row: T): T {
 }
 
 export async function fetchRoutes(wallId: string): Promise<Route[]> {
+	if (!isTauri()) {
+		const { data, error } = await supabase
+			.from("routes")
+			.select("*")
+			.eq("wall_id", wallId)
+			.eq("status", "verified")
+			.is("deleted_at", null)
+			.order("sort_order")
+			.order("name");
+		if (error) throw error;
+		return (data ?? []).map(parseSunData) as Route[];
+	}
 	const db = await getDb();
 	const rows = await db.select<Route[]>(
-		"SELECT * FROM routes_cache WHERE wall_id = ? ORDER BY sort_order ASC, name ASC",
+		"SELECT * FROM routes_cache WHERE wall_id = ? AND deleted_at IS NULL ORDER BY sort_order ASC, name ASC",
 		[wallId],
 	);
 	return rows.map(parseSunData);
 }
 
 export async function reorderRoutes(orderedIds: string[]): Promise<void> {
-	const db = await getDb();
+	const db = isTauri() ? await getDb() : null;
 	for (let i = 0; i < orderedIds.length; i++) {
 		// biome-ignore lint/suspicious/noExplicitAny: sort_order not yet in generated types
 		const { error } = await (supabase as any)
@@ -50,6 +64,7 @@ export async function reorderRoutes(orderedIds: string[]): Promise<void> {
 			.update({ sort_order: i })
 			.eq("id", orderedIds[i]);
 		if (error) throw error;
+		if (!db) continue;
 		await db.execute("UPDATE routes_cache SET sort_order = ? WHERE id = ?", [
 			i,
 			orderedIds[i],
@@ -58,9 +73,19 @@ export async function reorderRoutes(orderedIds: string[]): Promise<void> {
 }
 
 export async function fetchRoute(id: string): Promise<Route | null> {
+	if (!isTauri()) {
+		const { data, error } = await supabase
+			.from("routes")
+			.select("*")
+			.eq("id", id)
+			.is("deleted_at", null)
+			.single();
+		if (error && error.code !== "PGRST116") throw error;
+		return data ? (parseSunData(data) as Route) : null;
+	}
 	const db = await getDb();
 	const rows = await db.select<Route[]>(
-		"SELECT * FROM routes_cache WHERE id = ?",
+		"SELECT * FROM routes_cache WHERE id = ? AND deleted_at IS NULL",
 		[id],
 	);
 	return rows[0] ? parseSunData(rows[0]) : null;
@@ -85,6 +110,7 @@ export async function addRoute(
 		created_by: userId,
 	});
 	if (error) throw error;
+	if (!isTauri()) return id;
 
 	const db = await getDb();
 	await db.execute(
@@ -126,6 +152,7 @@ export async function editRoute(
 		})
 		.eq("id", id);
 	if (error) throw error;
+	if (!isTauri()) return;
 
 	const db = await getDb();
 	await db.execute(
@@ -142,10 +169,23 @@ export async function editRoute(
 }
 
 export async function searchLocalRoutes(query: string): Promise<Route[]> {
+	if (!isTauri()) {
+		const like = `%${query}%`;
+		const { data, error } = await supabase
+			.from("routes")
+			.select("*")
+			.eq("status", "verified")
+			.is("deleted_at", null)
+			.or(`name.ilike.${like},grade.ilike.${like}`)
+			.order("name")
+			.limit(30);
+		if (error) throw error;
+		return (data ?? []) as Route[];
+	}
 	const db = await getDb();
 	const like = `%${query}%`;
 	return db.select<Route[]>(
-		"SELECT * FROM routes_cache WHERE (name LIKE ? OR grade LIKE ?) AND status = 'verified' ORDER BY name ASC LIMIT 30",
+		"SELECT * FROM routes_cache WHERE (name LIKE ? OR grade LIKE ?) AND status = 'verified' AND deleted_at IS NULL ORDER BY name ASC LIMIT 30",
 		[like, like],
 	);
 }
@@ -159,6 +199,8 @@ export async function updateRouteDescription(
 		.update({ description })
 		.eq("id", id);
 	if (error) throw error;
+	if (!isTauri()) return;
+
 	const db = await getDb();
 	await db.execute("UPDATE routes_cache SET description = ? WHERE id = ?", [
 		description,
@@ -193,7 +235,6 @@ export type UnverifiedRoute = {
 		};
 	} | null;
 	submitter?: {
-		email: string;
 		display_name: string | null;
 	};
 };
@@ -213,6 +254,7 @@ export async function fetchUnverifiedRoutes(): Promise<UnverifiedRoute[]> {
 			"id, wall_id, name, grade, route_type, description, status, created_by, created_at, walls(name, crags(name, sub_regions(name, regions(id, name, countries(name)))))",
 		)
 		.eq("status", "pending")
+		.is("deleted_at", null)
 		.order("created_at", { ascending: false });
 	if (error) throw error;
 
@@ -220,18 +262,17 @@ export async function fetchUnverifiedRoutes(): Promise<UnverifiedRoute[]> {
 
 	const userIds = [...new Set(routes.map((r) => r.created_by))];
 	if (userIds.length > 0) {
-		const { data: users } = await supabase
-			.from("users")
-			.select("id, email, display_name")
+		const { data: profiles } = await supabase
+			.from("profiles")
+			.select("id, display_name")
 			.in("id", userIds);
-		if (users) {
-			const userMap = new Map(users.map((u) => [u.id, u]));
+		if (profiles) {
+			const profileMap = new Map(profiles.map((p) => [p.id, p]));
 			for (const route of routes) {
-				const user = userMap.get(route.created_by);
-				if (user) {
+				const profile = profileMap.get(route.created_by);
+				if (profile) {
 					route.submitter = {
-						email: user.email,
-						display_name: user.display_name,
+						display_name: profile.display_name,
 					};
 				}
 			}
@@ -259,6 +300,8 @@ export async function verifyRoute(id: string): Promise<void> {
 		.update({ status: "verified" })
 		.eq("id", id);
 	if (error) throw error;
+	if (!isTauri()) return;
+
 	const db = await getDb();
 	await db.execute("UPDATE routes_cache SET status = 'verified' WHERE id = ?", [
 		id,
@@ -271,6 +314,8 @@ export async function rejectRoute(id: string): Promise<void> {
 		.update({ status: "rejected" })
 		.eq("id", id);
 	if (error) throw error;
+	if (!isTauri()) return;
+
 	const db = await getDb();
 	await db.execute("UPDATE routes_cache SET status = 'rejected' WHERE id = ?", [
 		id,
@@ -296,6 +341,8 @@ export async function updateRouteFields(
 		})
 		.eq("id", id);
 	if (error) throw error;
+	if (!isTauri()) return;
+
 	const db = await getDb();
 	await db.execute(
 		"UPDATE routes_cache SET name = ?, grade = ?, route_type = ?, description = ? WHERE id = ?",
@@ -313,37 +360,45 @@ export async function mergeRoute(
 	unverifiedId: string,
 	targetId: string,
 ): Promise<void> {
-	const db = await getDb();
-	// Reassign climbs referencing the unverified route to the target route
 	const { error: climbError } = await supabase
 		.from("climbs")
 		.update({ route_id: targetId })
 		.eq("route_id", unverifiedId);
 	if (climbError) throw climbError;
-	await db.execute("UPDATE climbs SET route_id = ? WHERE route_id = ?", [
-		targetId,
-		unverifiedId,
-	]);
-	// Delete the unverified route
+
 	const { error } = await supabase
 		.from("routes")
 		.delete()
 		.eq("id", unverifiedId);
 	if (error) throw error;
+
+	if (!isTauri()) return;
+
+	const db = await getDb();
+	await db.execute("UPDATE climbs SET route_id = ? WHERE route_id = ?", [
+		targetId,
+		unverifiedId,
+	]);
 	await db.execute("DELETE FROM routes_cache WHERE id = ?", [unverifiedId]);
 }
 
 export async function adminDeleteRoute(id: string): Promise<void> {
-	const db = await getDb();
-	// Unlink any climbs that reference this route
-	await db.execute("UPDATE climbs SET route_id = NULL WHERE route_id = ?", [
-		id,
-	]);
+	const { error: unlinkError } = await supabase
+		.from("climbs")
+		.update({ route_id: null })
+		.eq("route_id", id);
+	if (unlinkError) throw unlinkError;
+
 	const { error } = await supabase
 		.from("routes")
 		.update({ deleted_at: new Date().toISOString() })
 		.eq("id", id);
 	if (error) throw error;
+
+	if (!isTauri()) return;
+
+	const db = await getDb();
+	await db.execute("UPDATE climbs SET route_id = NULL WHERE route_id = ?", [id]);
 	await db.execute("DELETE FROM routes_cache WHERE id = ?", [id]);
 }
 
@@ -354,6 +409,7 @@ export async function searchVerifiedRoutes(
 		.from("routes")
 		.select("id, name, grade, route_type, walls(name)")
 		.eq("status", "verified")
+		.is("deleted_at", null)
 		.ilike("name", `%${query}%`)
 		.limit(10);
 	if (error) throw error;
@@ -361,19 +417,6 @@ export async function searchVerifiedRoutes(
 }
 
 // ── Route body stats ──────────────────────────────────────────────────────────
-
-// Requires Supabase RPC:
-//
-// CREATE OR REPLACE FUNCTION public.get_route_body_stats(p_route_id uuid)
-// RETURNS TABLE (height_cm integer, ape_index_cm integer, grade text, count bigint)
-// LANGUAGE sql SECURITY DEFINER STABLE AS $$
-//   SELECT u.height_cm, u.ape_index_cm, c.grade, COUNT(*) AS count
-//   FROM climbs c JOIN users u ON u.id = c.user_id
-//   WHERE c.route_id = p_route_id
-//     AND c.sent_status IN ('sent', 'redpoint', 'flash', 'onsight')
-//     AND c.deleted_at IS NULL AND u.height_cm IS NOT NULL
-//   GROUP BY u.height_cm, u.ape_index_cm, c.grade;
-// $$;
 
 export async function fetchRouteBodyStats(
 	routeId: string,
@@ -389,6 +432,16 @@ export async function fetchRouteBodyStats(
 // ── Route links ───────────────────────────────────────────────────────────────
 
 export async function fetchRouteLinks(routeId: string): Promise<RouteLink[]> {
+	if (!isTauri()) {
+		const { data, error } = await supabase
+			.from("route_links")
+			.select("*")
+			.eq("route_id", routeId)
+			.is("deleted_at", null)
+			.order("created_at");
+		if (error) throw error;
+		return (data as RouteLink[]) ?? [];
+	}
 	const db = await getDb();
 	return db.select<RouteLink[]>(
 		"SELECT * FROM route_links WHERE route_id = ? AND deleted_at IS NULL ORDER BY created_at ASC",
@@ -412,6 +465,7 @@ export async function addRouteLink(
 		link_type: "link",
 	});
 	if (error) throw error;
+	if (!isTauri()) return;
 
 	const db = await getDb();
 	await db.execute(
@@ -427,12 +481,14 @@ export async function deleteRouteLink(id: string): Promise<void> {
 		.update({ deleted_at: new Date().toISOString() })
 		.eq("id", id);
 	if (error) throw error;
+	if (!isTauri()) return;
 
 	const db = await getDb();
 	await db.execute("DELETE FROM route_links WHERE id = ?", [id]);
 }
 
 export async function applyRemoteRouteLink(link: RouteLink): Promise<void> {
+	if (!isTauri()) return;
 	const db = await getDb();
 	if (link.deleted_at) {
 		await db.execute("DELETE FROM route_links WHERE id = ?", [link.id]);
@@ -468,6 +524,7 @@ export async function updateRouteSunData(
 		.update({ sun_data: data })
 		.eq("id", routeId);
 	if (error) throw error;
+	if (!isTauri()) return;
 
 	const db = await getDb();
 	await db.execute("UPDATE routes_cache SET sun_data = ? WHERE id = ?", [

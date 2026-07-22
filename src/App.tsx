@@ -6,11 +6,8 @@ import {
 	useQuery,
 } from "@tanstack/react-query";
 import { RouterProvider } from "@tanstack/react-router";
-import {
-	checkPermissions,
-	getCurrentPosition,
-	requestPermissions,
-} from "@tauri-apps/plugin-geolocation";
+import { isTauri } from "@tauri-apps/api/core";
+import { getCurrentLocation } from "@/lib/platform/geolocation";
 import { useEffect } from "react";
 import { Spinner } from "@/components/atoms/Spinner";
 import {
@@ -18,6 +15,7 @@ import {
 	fetchAndApplyProfile,
 	fetchLocalUser,
 	fetchOrCreateSupabaseUser,
+	fetchProfileForWeb,
 	initDeepLinkHandler,
 	restoreSession,
 	upsertLocalUser,
@@ -38,19 +36,8 @@ async function refreshUserLocation(
 	setUserLocation: (loc: { lat: number; lng: number }) => void,
 ) {
 	try {
-		let perms = await checkPermissions();
-		if (
-			perms.location === "prompt" ||
-			perms.location === "prompt-with-rationale"
-		) {
-			perms = await requestPermissions(["location"]);
-		}
-		if (perms.location !== "granted") return;
-		const pos = await getCurrentPosition();
-		setUserLocation({
-			lat: pos.coords.latitude,
-			lng: pos.coords.longitude,
-		});
+		const loc = await getCurrentLocation();
+		if (loc) setUserLocation(loc);
 	} catch {
 		// Location unavailable — keep using cached value
 	}
@@ -64,12 +51,38 @@ function Bootstrap() {
 	const { isLoading } = useQuery({
 		queryKey: ["bootstrap"],
 		queryFn: async () => {
+			// Refresh user location in background (don't block startup)
+			refreshUserLocation(setUserLocation);
+
+			// ── Web path ────────────────────────────────────────────────────────
+			if (!isTauri()) {
+				let session: Session | null = null;
+				try {
+					session = await restoreSession();
+				} catch (err) {
+					console.warn("[Bootstrap/web] session restore failed:", err);
+					return null;
+				}
+				if (session) {
+					setSession(session);
+					const role = await fetchOrCreateSupabaseUser(
+						session.user.id,
+						session.user.email ?? "",
+					);
+					const user = await fetchProfileForWeb(
+						session.user.id,
+						session.user.email ?? "",
+						role,
+					);
+					setUser(user);
+				}
+				return null;
+			}
+
+			// ── Tauri path (Android / desktop) ──────────────────────────────────
 			await seedGrades();
 			await seedTags();
 			await backfillClimbLocations();
-
-			// Refresh user location in background (don't block startup)
-			refreshUserLocation(setUserLocation);
 
 			// Allow dev-only flag to simulate offline startup without airplane mode.
 			// The flag read is gated to DEV so it compiles out of release builds.
@@ -146,22 +159,43 @@ function Bootstrap() {
 	useEffect(() => {
 		const {
 			data: { subscription },
-		} = supabase.auth.onAuthStateChange((event, session) => {
+		} = supabase.auth.onAuthStateChange(async (event, session) => {
 			// INITIAL_SESSION fires on startup. If the token couldn't be refreshed
 			// (offline / expired), session is null — but bootstrap may have already
 			// restored auth from the local cache, so we must not wipe it here.
 			if (event === "INITIAL_SESSION" && !session) return;
 			setSession(session);
-			if (!session) setUser(null);
-			if (event === "PASSWORD_RECOVERY" && session) {
+			if (!session) {
+				setUser(null);
+				return;
+			}
+			if (event === "PASSWORD_RECOVERY") {
 				router.navigate({ to: "/reset-password" });
+				return;
+			}
+			// On web, SIGNED_IN fires when magic link lands on /auth/callback.
+			// Bootstrap has no session at that point, so we fetch the user here.
+			if (event === "SIGNED_IN" && !isTauri()) {
+				const role = await fetchOrCreateSupabaseUser(
+					session.user.id,
+					session.user.email ?? "",
+				);
+				const webUser = await fetchProfileForWeb(
+					session.user.id,
+					session.user.email ?? "",
+					role,
+				);
+				setUser(webUser);
+				router.navigate({ to: "/" });
 			}
 		});
 		return () => subscription.unsubscribe();
 	}, [setSession, setUser]);
 
-	// Handle deep link callbacks (magic link + password reset)
+	// Handle deep link callbacks (magic link + password reset) — Android only
 	useEffect(() => {
+		if (!isTauri()) return;
+
 		const onDeepLinkSession = async (session: Session) => {
 			setSession(session);
 			const role = await fetchOrCreateSupabaseUser(

@@ -2,6 +2,8 @@
 
 Community-contributed climbing routes. Users submit routes; admins verify them. Verified routes are visible to all; unverified routes are visible to the creator only.
 
+**Platform paths:** Service functions branch on `isTauri()`. Tauri (Android) reads/writes the local `routes_cache` SQLite table. Web (browser) calls Supabase directly — no local cache.
+
 ---
 
 ## Schema

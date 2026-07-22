@@ -2,6 +2,8 @@
 
 Personal climb log. The user's primary data — local-first, synced bidirectionally with Supabase.
 
+**Platform paths:** Service functions branch on `isTauri()`. Tauri (Android) reads/writes local SQLite. Web (browser) calls Supabase directly — no local cache; sync/pull functions are no-ops.
+
 ---
 
 ## Schema

@@ -1,4 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
+import { isTauri } from "@tauri-apps/api/core";
 import { Button } from "@/components/atoms/Button";
 import {
 	useCountries,
@@ -31,12 +32,15 @@ const RegionList = ({
 		);
 	}
 
+	const isWeb = !isTauri();
+
 	return (
 		<div className="flex flex-col gap-1 mt-2">
 			{regions.map((region) => {
-				const isDownloaded = downloadedIds.includes(region.id);
-				const isStale = isDownloaded && staleIds.includes(region.id);
-				const isThisDownloading = isPending && downloadingId === region.id;
+				const isDownloaded = isWeb || downloadedIds.includes(region.id);
+				const isStale = !isWeb && isDownloaded && staleIds.includes(region.id);
+				const isThisDownloading =
+					!isWeb && isPending && downloadingId === region.id;
 
 				return (
 					<div
@@ -56,7 +60,7 @@ const RegionList = ({
 						>
 							{region.name}
 						</button>
-						{isDownloaded ? (
+						{isWeb ? null : isDownloaded ? (
 							<div className="flex items-center gap-2">
 								{isStale ? (
 									<span className="text-xs text-amber-400">Outdated</span>

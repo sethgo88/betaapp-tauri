@@ -1,9 +1,5 @@
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import {
-	checkPermissions,
-	getCurrentPosition,
-	requestPermissions,
-} from "@tauri-apps/plugin-geolocation";
+import { getCurrentLocation } from "@/lib/platform/geolocation";
 import L from "leaflet";
 import { Crosshair, Layers, MapPin, Minus, Plus, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -91,19 +87,8 @@ const MapControls = ({
 	const handleLocate = useCallback(async () => {
 		setLocating(true);
 		try {
-			let perms = await checkPermissions();
-			if (
-				perms.location === "prompt" ||
-				perms.location === "prompt-with-rationale"
-			) {
-				perms = await requestPermissions(["location"]);
-			}
-			if (perms.location !== "granted") {
-				setLocating(false);
-				return;
-			}
-			const pos = await getCurrentPosition();
-			map.setView([pos.coords.latitude, pos.coords.longitude], 14);
+			const loc = await getCurrentLocation();
+			if (loc) map.setView([loc.lat, loc.lng], 14);
 		} catch {
 			// Permission denied or location unavailable
 		} finally {

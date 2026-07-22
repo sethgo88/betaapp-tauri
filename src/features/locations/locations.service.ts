@@ -1,3 +1,4 @@
+import { isTauri } from "@tauri-apps/api/core";
 import { getDb } from "@/lib/db";
 import type { SunData } from "@/lib/sun";
 import { supabase } from "@/lib/supabase";
@@ -13,6 +14,14 @@ import type {
 } from "./locations.schema";
 
 export async function fetchCountries(): Promise<Country[]> {
+	if (!isTauri()) {
+		const { data, error } = await supabase
+			.from("countries")
+			.select("*")
+			.order("sort_order");
+		if (error) throw error;
+		return (data ?? []).map((c) => ({ ...c, region_count: 0 })) as Country[];
+	}
 	const db = await getDb();
 	return db.select<Country[]>(
 		`SELECT c.*, (SELECT COUNT(*) FROM regions_cache r WHERE r.country_id = c.id) AS region_count
@@ -21,6 +30,18 @@ export async function fetchCountries(): Promise<Country[]> {
 }
 
 export async function fetchRegions(countryId: string): Promise<Region[]> {
+	if (!isTauri()) {
+		const { data, error } = await supabase
+			.from("regions")
+			.select("*")
+			.eq("country_id", countryId)
+			.order("sort_order");
+		if (error) throw error;
+		return (data ?? []).map((r) => ({
+			...r,
+			sub_region_count: 0,
+		})) as Region[];
+	}
 	const db = await getDb();
 	return db.select<Region[]>(
 		`SELECT r.*, (SELECT COUNT(*) FROM sub_regions_cache sr WHERE sr.region_id = r.id) AS sub_region_count
@@ -30,6 +51,18 @@ export async function fetchRegions(countryId: string): Promise<Region[]> {
 }
 
 export async function fetchSubRegions(regionId: string): Promise<SubRegion[]> {
+	if (!isTauri()) {
+		const { data, error } = await supabase
+			.from("sub_regions")
+			.select("*")
+			.eq("region_id", regionId)
+			.order("sort_order");
+		if (error) throw error;
+		return (data ?? []).map((sr) => ({
+			...sr,
+			crag_count: 0,
+		})) as SubRegion[];
+	}
 	const db = await getDb();
 	return db.select<SubRegion[]>(
 		`SELECT sr.*, (SELECT COUNT(*) FROM crags_cache c WHERE c.sub_region_id = sr.id) AS crag_count
@@ -39,6 +72,15 @@ export async function fetchSubRegions(regionId: string): Promise<SubRegion[]> {
 }
 
 export async function fetchCrags(subRegionId: string): Promise<Crag[]> {
+	if (!isTauri()) {
+		const { data, error } = await supabase
+			.from("crags")
+			.select("*")
+			.eq("sub_region_id", subRegionId)
+			.order("sort_order");
+		if (error) throw error;
+		return (data ?? []).map((c) => ({ ...c, wall_count: 0 })) as Crag[];
+	}
 	const db = await getDb();
 	return db.select<Crag[]>(
 		`SELECT c.*, (SELECT COUNT(*) FROM walls_cache w WHERE w.crag_id = c.id) AS wall_count
@@ -57,6 +99,18 @@ function parseSunData<T extends { sun_data?: unknown }>(row: T): T {
 }
 
 export async function fetchWalls(cragId: string): Promise<Wall[]> {
+	if (!isTauri()) {
+		const { data, error } = await supabase
+			.from("walls")
+			.select("*")
+			.eq("crag_id", cragId)
+			.order("sort_order");
+		if (error) throw error;
+		return (data ?? []).map((w) => ({
+			...parseSunData(w),
+			route_count: 0,
+		})) as Wall[];
+	}
 	const db = await getDb();
 	const rows = await db.select<Wall[]>(
 		`SELECT w.*, (SELECT COUNT(*) FROM routes_cache r WHERE r.wall_id = w.id) AS route_count
@@ -69,6 +123,15 @@ export async function fetchWalls(cragId: string): Promise<Wall[]> {
 // ── Single-entity fetches ────────────────────────────────────────────────────
 
 export async function fetchRegion(id: string): Promise<Region | null> {
+	if (!isTauri()) {
+		const { data, error } = await supabase
+			.from("regions")
+			.select("*")
+			.eq("id", id)
+			.single();
+		if (error && error.code !== "PGRST116") throw error;
+		return data ? ({ ...data, sub_region_count: 0 } as Region) : null;
+	}
 	const db = await getDb();
 	const rows = await db.select<Region[]>(
 		"SELECT * FROM regions_cache WHERE id = ?",
@@ -78,6 +141,15 @@ export async function fetchRegion(id: string): Promise<Region | null> {
 }
 
 export async function fetchSubRegion(id: string): Promise<SubRegion | null> {
+	if (!isTauri()) {
+		const { data, error } = await supabase
+			.from("sub_regions")
+			.select("*")
+			.eq("id", id)
+			.single();
+		if (error && error.code !== "PGRST116") throw error;
+		return data ? ({ ...data, crag_count: 0 } as SubRegion) : null;
+	}
 	const db = await getDb();
 	const rows = await db.select<SubRegion[]>(
 		"SELECT * FROM sub_regions_cache WHERE id = ?",
@@ -87,6 +159,15 @@ export async function fetchSubRegion(id: string): Promise<SubRegion | null> {
 }
 
 export async function fetchCrag(id: string): Promise<Crag | null> {
+	if (!isTauri()) {
+		const { data, error } = await supabase
+			.from("crags")
+			.select("*")
+			.eq("id", id)
+			.single();
+		if (error && error.code !== "PGRST116") throw error;
+		return data ? ({ ...data, wall_count: 0 } as Crag) : null;
+	}
 	const db = await getDb();
 	const rows = await db.select<Crag[]>(
 		"SELECT * FROM crags_cache WHERE id = ?",
@@ -96,6 +177,15 @@ export async function fetchCrag(id: string): Promise<Crag | null> {
 }
 
 export async function fetchWall(id: string): Promise<Wall | null> {
+	if (!isTauri()) {
+		const { data, error } = await supabase
+			.from("walls")
+			.select("*")
+			.eq("id", id)
+			.single();
+		if (error && error.code !== "PGRST116") throw error;
+		return data ? (parseSunData({ ...data, route_count: 0 }) as Wall) : null;
+	}
 	const db = await getDb();
 	const rows = await db.select<Wall[]>(
 		"SELECT * FROM walls_cache WHERE id = ?",
@@ -123,6 +213,7 @@ export async function updateLocationDescription(
 		.update({ description })
 		.eq("id", id);
 	if (error) throw error;
+	if (!isTauri()) return;
 
 	const db = await getDb();
 	await db.execute(
@@ -141,6 +232,7 @@ export async function updateLocationApproach(
 		.update({ approach })
 		.eq("id", id);
 	if (error) throw error;
+	if (!isTauri()) return;
 
 	const cacheTable = table === "crags" ? "crags_cache" : "walls_cache";
 	const db = await getDb();
@@ -151,6 +243,11 @@ export async function updateLocationApproach(
 }
 
 export async function fetchDownloadedRegionIds(): Promise<string[]> {
+	if (!isTauri()) {
+		// On web all regions are always available — return all region IDs
+		const { data } = await supabase.from("regions").select("id");
+		return (data ?? []).map((r: { id: string }) => r.id);
+	}
 	const db = await getDb();
 	const rows = await db.select<{ region_id: string }[]>(
 		"SELECT region_id FROM downloaded_regions",
@@ -165,6 +262,7 @@ export type DownloadedRegion = {
 };
 
 export async function fetchDownloadedRegions(): Promise<DownloadedRegion[]> {
+	if (!isTauri()) return [];
 	const db = await getDb();
 	return db.select<DownloadedRegion[]>(
 		"SELECT region_id, downloaded_at, server_updated_at FROM downloaded_regions",
@@ -172,6 +270,7 @@ export async function fetchDownloadedRegions(): Promise<DownloadedRegion[]> {
 }
 
 export async function checkRegionStaleness(): Promise<string[]> {
+	if (!isTauri()) return [];
 	const downloaded = await fetchDownloadedRegions();
 	if (downloaded.length === 0) return [];
 
@@ -198,7 +297,7 @@ export async function checkRegionStaleness(): Promise<string[]> {
 		.map((r) => r.region_id);
 }
 
-// ── Search (local cache only) ─────────────────────────────────────────────────
+// ── Search ────────────────────────────────────────────────────────────────────
 
 export type LocationSearchResult = {
 	id: string;
@@ -211,6 +310,68 @@ export async function searchLocations(
 	query: string,
 	stopAt: "sub_region" | "crag" | "wall" = "wall",
 ): Promise<LocationSearchResult[]> {
+	if (!isTauri()) {
+		const like = `%${query}%`;
+		const promises: Promise<LocationSearchResult[]>[] = [
+			supabase
+				.from("sub_regions")
+				.select("id, name, regions!inner(name)")
+				.ilike("name", like)
+				.limit(20)
+				.then(({ data }) =>
+					(data ?? []).map((r) => ({
+						id: r.id,
+						name: r.name,
+						kind: "sub_region" as const,
+						parent_name:
+							(r.regions as unknown as { name: string } | null)?.name ?? "",
+					})),
+				),
+		];
+
+		if (stopAt === "crag" || stopAt === "wall") {
+			promises.push(
+				supabase
+					.from("crags")
+					.select("id, name, sub_regions!inner(name)")
+					.ilike("name", like)
+					.limit(20)
+					.then(({ data }) =>
+						(data ?? []).map((r) => ({
+							id: r.id,
+							name: r.name,
+							kind: "crag" as const,
+							parent_name:
+								(r.sub_regions as unknown as { name: string } | null)?.name ??
+								"",
+						})),
+					),
+			);
+		}
+
+		if (stopAt === "wall") {
+			promises.push(
+				supabase
+					.from("walls")
+					.select("id, name, crags!inner(name)")
+					.ilike("name", like)
+					.limit(20)
+					.then(({ data }) =>
+						(data ?? []).map((r) => ({
+							id: r.id,
+							name: r.name,
+							kind: "wall" as const,
+							parent_name:
+								(r.crags as unknown as { name: string } | null)?.name ?? "",
+						})),
+					),
+			);
+		}
+
+		const results = await Promise.all(promises);
+		return results.flat().sort((a, b) => a.name.localeCompare(b.name));
+	}
+
 	const db = await getDb();
 	const like = `%${query}%`;
 
@@ -272,6 +433,68 @@ export async function getLocationAncestors(
 	id: string,
 	kind: "sub_region" | "crag" | "wall",
 ): Promise<LocationAncestors> {
+	if (!isTauri()) {
+		if (kind === "sub_region") {
+			const { data } = await supabase
+				.from("sub_regions")
+				.select("region_id, regions!inner(country_id)")
+				.eq("id", id)
+				.single();
+			if (!data) throw new Error(`Sub-region ${id} not found`);
+			const regionId = data.region_id;
+			const countryId = (data.regions as unknown as { country_id: string })
+				.country_id;
+			return { countryId, regionId, subRegionId: id };
+		}
+
+		if (kind === "crag") {
+			const { data } = await supabase
+				.from("crags")
+				.select(
+					"sub_region_id, sub_regions!inner(region_id, regions!inner(country_id))",
+				)
+				.eq("id", id)
+				.single();
+			if (!data) throw new Error(`Crag ${id} not found`);
+			const subRegionId = data.sub_region_id;
+			const sr = data.sub_regions as unknown as {
+				region_id: string;
+				regions: { country_id: string };
+			};
+			return {
+				countryId: sr.regions.country_id,
+				regionId: sr.region_id,
+				subRegionId,
+				cragId: id,
+			};
+		}
+
+		// kind === "wall"
+		const { data } = await supabase
+			.from("walls")
+			.select(
+				"crag_id, crags!inner(sub_region_id, sub_regions!inner(region_id, regions!inner(country_id)))",
+			)
+			.eq("id", id)
+			.single();
+		if (!data) throw new Error(`Wall ${id} not found`);
+		const cragId = data.crag_id;
+		const crag = data.crags as unknown as {
+			sub_region_id: string;
+			sub_regions: {
+				region_id: string;
+				regions: { country_id: string };
+			};
+		};
+		return {
+			countryId: crag.sub_regions.regions.country_id,
+			regionId: crag.sub_regions.region_id,
+			subRegionId: crag.sub_region_id,
+			cragId,
+			wallId: id,
+		};
+	}
+
 	const db = await getDb();
 
 	if (kind === "sub_region") {
@@ -337,9 +560,10 @@ export async function getLocationAncestors(
 	};
 }
 
-// ── Sync pulls ────────────────────────────────────────────────────────────────
+// ── Sync pulls (Tauri only) ────────────────────────────────────────────────────
 
 export async function pullCountries(): Promise<void> {
+	if (!isTauri()) return;
 	const { data, error } = await supabase.from("countries").select("*");
 	if (error) throw error;
 	if (!data || data.length === 0) return;
@@ -356,6 +580,7 @@ export async function pullCountries(): Promise<void> {
 }
 
 export async function pullRegions(): Promise<void> {
+	if (!isTauri()) return;
 	const { data, error } = await supabase.from("regions").select("*");
 	if (error) throw error;
 	if (!data || data.length === 0) return;
@@ -371,12 +596,13 @@ export async function pullRegions(): Promise<void> {
 	}
 }
 
-// ── Region download (full hierarchy pull) ─────────────────────────────────────
+// ── Region download (Tauri only) ──────────────────────────────────────────────
 
 export async function downloadRegion(regionId: string): Promise<void> {
+	if (!isTauri()) return;
+
 	const db = await getDb();
 
-	// 0. Fetch region metadata (including server updated_at for staleness tracking)
 	const { data: regionMeta, error: regionMetaError } = await supabase
 		.from("regions")
 		.select("created_at")
@@ -387,7 +613,6 @@ export async function downloadRegion(regionId: string): Promise<void> {
 		(regionMeta as unknown as { created_at?: string } | null)?.created_at ??
 		null;
 
-	// 1. Pull sub_regions
 	const { data: subRegions, error: srError } = await supabase
 		.from("sub_regions")
 		.select("*")
@@ -422,7 +647,6 @@ export async function downloadRegion(regionId: string): Promise<void> {
 		);
 	}
 
-	// 2. Pull crags
 	const subRegionIds = subRegions.map((sr) => sr.id);
 	const srPlaceholders = subRegionIds.map(() => "?").join(",");
 
@@ -460,7 +684,6 @@ export async function downloadRegion(regionId: string): Promise<void> {
 			);
 		}
 
-		// 3. Pull walls
 		const cragIds = crags.map((c) => c.id);
 		const cPlaceholders = cragIds.map(() => "?").join(",");
 
@@ -500,7 +723,6 @@ export async function downloadRegion(regionId: string): Promise<void> {
 				);
 			}
 
-			// 4. Pull verified routes
 			const wallIds = walls.map((w) => w.id);
 			const wPlaceholders = wallIds.map(() => "?").join(",");
 
@@ -544,7 +766,6 @@ export async function downloadRegion(regionId: string): Promise<void> {
 				}
 			}
 
-			// 5. Pull route tags
 			const routeIds = (routes ?? []).map((r) => r.id);
 			if (routeIds.length > 0) {
 				const rTagPlaceholders = routeIds.map(() => "?").join(",");
@@ -565,7 +786,6 @@ export async function downloadRegion(regionId: string): Promise<void> {
 				}
 			}
 
-			// 6. Pull wall tags
 			if (wallIds.length > 0) {
 				const { data: wallTags, error: wtError } = await supabase
 					.from("wall_tags")
@@ -610,6 +830,7 @@ export async function submitSubRegion(
 		created_by: userId,
 	});
 	if (error) throw error;
+	if (!isTauri()) return;
 
 	const db = await getDb();
 	await db.execute(
@@ -636,6 +857,7 @@ export async function submitCrag(
 		lng: values.lng ?? null,
 	});
 	if (error) throw error;
+	if (!isTauri()) return;
 
 	const db = await getDb();
 	await db.execute(
@@ -672,6 +894,7 @@ export async function submitWall(
 		created_by: userId,
 	});
 	if (error) throw error;
+	if (!isTauri()) return;
 
 	const db = await getDb();
 	await db.execute(
@@ -688,7 +911,6 @@ export async function submitWall(
 		],
 	);
 
-	// Inherit wall coords to crag if crag has no coordinates
 	if (values.lat != null && values.lng != null) {
 		await inheritWallCoordsToCrag(values.crag_id, values.lat, values.lng);
 	}
@@ -710,6 +932,7 @@ export async function adminAddSubRegion(
 		created_by: userId,
 	});
 	if (error) throw error;
+	if (!isTauri()) return { id };
 
 	const db = await getDb();
 	await db.execute(
@@ -735,6 +958,7 @@ export async function adminAddCrag(
 		lng: values.lng ?? null,
 	});
 	if (error) throw error;
+	if (!isTauri()) return { id };
 
 	const db = await getDb();
 	await db.execute(
@@ -769,6 +993,7 @@ export async function adminAddWall(
 		created_by: userId,
 	});
 	if (error) throw error;
+	if (!isTauri()) return { id };
 
 	const db = await getDb();
 	await db.execute(
@@ -801,6 +1026,7 @@ export async function verifyLocation(
 		.update({ status: "verified" })
 		.eq("id", id);
 	if (error) throw error;
+	if (!isTauri()) return;
 
 	const db = await getDb();
 	await db.execute(
@@ -818,6 +1044,7 @@ export async function rejectLocation(
 		.update({ status: "rejected", deleted_at: new Date().toISOString() })
 		.eq("id", id);
 	if (error) throw error;
+	if (!isTauri()) return;
 
 	const db = await getDb();
 	await db.execute(
@@ -897,7 +1124,7 @@ export async function fetchPendingLocations(): Promise<PendingLocationItem[]> {
 	);
 }
 
-// ── Admin writes (go directly to Supabase) ───────────────────────────────────
+// ── Admin writes (go directly to Supabase, then update local cache) ───────────
 
 export async function adminAddCountry(
 	name: string,
@@ -909,6 +1136,8 @@ export async function adminAddCountry(
 		.from("countries")
 		.insert({ id, name, code, sort_order: sortOrder });
 	if (error) throw error;
+	if (!isTauri()) return { id };
+
 	const db = await getDb();
 	await db.execute(
 		"INSERT INTO countries_cache (id, name, code, sort_order, created_at) VALUES (?, ?, ?, ?, datetime('now'))",
@@ -935,6 +1164,8 @@ export async function adminAddRegion(
 		sort_order: sortOrder,
 	});
 	if (error) throw error;
+	if (!isTauri()) return { id };
+
 	const db = await getDb();
 	await db.execute(
 		"INSERT INTO regions_cache (id, country_id, name, sort_order, created_at) VALUES (?, ?, ?, ?, datetime('now'))",
@@ -965,6 +1196,26 @@ export type MapCrag = {
 };
 
 export async function fetchAllCragsWithCoords(): Promise<MapCrag[]> {
+	if (!isTauri()) {
+		const { data, error } = await supabase
+			.from("crags")
+			.select("id, name, lat, lng, approach, sport_count, trad_count, boulder_count")
+			.not("lat", "is", null)
+			.not("lng", "is", null);
+		if (error) throw error;
+		return (data ?? []).map((r) => ({
+			...r,
+			lat: r.lat as number,
+			lng: r.lng as number,
+			approach: r.approach ?? null,
+			sport_count: r.sport_count ?? 0,
+			trad_count: r.trad_count ?? 0,
+			boulder_count: r.boulder_count ?? 0,
+			has_sport: (r.sport_count ?? 0) > 0,
+			has_trad: (r.trad_count ?? 0) > 0,
+			has_boulder: (r.boulder_count ?? 0) > 0,
+		}));
+	}
 	const db = await getDb();
 	const rows = await db.select<
 		{
@@ -1002,6 +1253,7 @@ export async function adminUpdateCragCoords(
 		.update({ lat, lng })
 		.eq("id", id);
 	if (error) throw error;
+	if (!isTauri()) return;
 
 	const db = await getDb();
 	await db.execute("UPDATE crags_cache SET lat = ?, lng = ? WHERE id = ?", [
@@ -1019,15 +1271,6 @@ export async function adminUpdateWallCoords(
 	lng: number,
 	cragId: string,
 ): Promise<void> {
-	// Update local cache first (always works)
-	const db = await getDb();
-	await db.execute("UPDATE walls_cache SET lat = ?, lng = ? WHERE id = ?", [
-		lat,
-		lng,
-		id,
-	]);
-
-	// Sync to Supabase
 	const { error } = await supabase
 		.from("walls")
 		.update({ lat, lng })
@@ -1036,7 +1279,17 @@ export async function adminUpdateWallCoords(
 		console.warn("Failed to sync wall coords to Supabase:", error.message);
 	}
 
-	// Inherit to crag if crag has no coordinates
+	if (!isTauri()) {
+		await inheritWallCoordsToCrag(cragId, lat, lng);
+		return;
+	}
+
+	const db = await getDb();
+	await db.execute("UPDATE walls_cache SET lat = ?, lng = ? WHERE id = ?", [
+		lat,
+		lng,
+		id,
+	]);
 	await inheritWallCoordsToCrag(cragId, lat, lng);
 }
 
@@ -1045,6 +1298,17 @@ async function inheritWallCoordsToCrag(
 	lat: number,
 	lng: number,
 ): Promise<void> {
+	if (!isTauri()) {
+		const { data } = await supabase
+			.from("crags")
+			.select("lat")
+			.eq("id", cragId)
+			.single();
+		if (data && data.lat == null) {
+			await supabase.from("crags").update({ lat, lng }).eq("id", cragId);
+		}
+		return;
+	}
 	const db = await getDb();
 	const rows = await db.select<{ lat: number | null }[]>(
 		"SELECT lat FROM crags_cache WHERE id = ?",
@@ -1080,6 +1344,30 @@ export type MapWall = {
 };
 
 export async function fetchAllWallsWithCoords(): Promise<MapWall[]> {
+	if (!isTauri()) {
+		const { data, error } = await supabase
+			.from("walls")
+			.select("id, crag_id, name, lat, lng, approach, wall_type, sport_count, trad_count, boulder_count, crags!inner(name)")
+			.not("lat", "is", null)
+			.not("lng", "is", null);
+		if (error) throw error;
+		return (data ?? []).map((r) => ({
+			id: r.id,
+			crag_id: r.crag_id,
+			name: r.name,
+			crag_name: (r.crags as unknown as { name: string })?.name ?? "",
+			lat: r.lat as number,
+			lng: r.lng as number,
+			approach: r.approach ?? null,
+			wall_type: (r as unknown as { wall_type?: string }).wall_type ?? "wall",
+			sport_count: r.sport_count ?? 0,
+			trad_count: r.trad_count ?? 0,
+			boulder_count: r.boulder_count ?? 0,
+			has_sport: (r.sport_count ?? 0) > 0,
+			has_trad: (r.trad_count ?? 0) > 0,
+			has_boulder: (r.boulder_count ?? 0) > 0,
+		}));
+	}
 	const db = await getDb();
 	const rows = await db.select<
 		{
@@ -1119,6 +1407,7 @@ export async function adminRenameLocation(
 ): Promise<void> {
 	const { error } = await supabase.from(table).update({ name }).eq("id", id);
 	if (error) throw error;
+	if (!isTauri()) return;
 
 	const db = await getDb();
 	await db.execute(
@@ -1130,6 +1419,23 @@ export async function adminRenameLocation(
 // ── Admin: delete locations (blocked if children exist) ───────────────────────
 
 export async function adminDeleteSubRegion(id: string): Promise<void> {
+	if (!isTauri()) {
+		const { count } = await supabase
+			.from("crags")
+			.select("*", { count: "exact", head: true })
+			.eq("sub_region_id", id);
+		if ((count ?? 0) > 0) {
+			throw new Error(
+				`Cannot delete: has ${count} crag(s). Move them first.`,
+			);
+		}
+		const { error } = await supabase
+			.from("sub_regions")
+			.update({ deleted_at: new Date().toISOString() })
+			.eq("id", id);
+		if (error) throw error;
+		return;
+	}
 	const db = await getDb();
 	const [children] = await db.select<{ count: number }[]>(
 		"SELECT COUNT(*) as count FROM crags_cache WHERE sub_region_id = ?",
@@ -1149,6 +1455,23 @@ export async function adminDeleteSubRegion(id: string): Promise<void> {
 }
 
 export async function adminDeleteCrag(id: string): Promise<void> {
+	if (!isTauri()) {
+		const { count } = await supabase
+			.from("walls")
+			.select("*", { count: "exact", head: true })
+			.eq("crag_id", id);
+		if ((count ?? 0) > 0) {
+			throw new Error(
+				`Cannot delete: has ${count} wall(s). Move them first.`,
+			);
+		}
+		const { error } = await supabase
+			.from("crags")
+			.update({ deleted_at: new Date().toISOString() })
+			.eq("id", id);
+		if (error) throw error;
+		return;
+	}
 	const db = await getDb();
 	const [children] = await db.select<{ count: number }[]>(
 		"SELECT COUNT(*) as count FROM walls_cache WHERE crag_id = ?",
@@ -1168,6 +1491,23 @@ export async function adminDeleteCrag(id: string): Promise<void> {
 }
 
 export async function adminDeleteWall(id: string): Promise<void> {
+	if (!isTauri()) {
+		const { count } = await supabase
+			.from("routes")
+			.select("*", { count: "exact", head: true })
+			.eq("wall_id", id);
+		if ((count ?? 0) > 0) {
+			throw new Error(
+				`Cannot delete: has ${count} route(s). Move them first.`,
+			);
+		}
+		// biome-ignore lint/suspicious/noExplicitAny: deleted_at not yet in generated Supabase types
+		const { error } = await (supabase.from("walls") as any)
+			.update({ deleted_at: new Date().toISOString() })
+			.eq("id", id);
+		if (error) throw error;
+		return;
+	}
 	const db = await getDb();
 	const [children] = await db.select<{ count: number }[]>(
 		"SELECT COUNT(*) as count FROM routes_cache WHERE wall_id = ?",
@@ -1197,6 +1537,7 @@ export async function adminMoveCrag(
 		.update({ sub_region_id: newSubRegionId })
 		.eq("id", cragId);
 	if (error) throw error;
+	if (!isTauri()) return;
 
 	const db = await getDb();
 	await db.execute("UPDATE crags_cache SET sub_region_id = ? WHERE id = ?", [
@@ -1214,6 +1555,7 @@ export async function adminMoveWall(
 		.update({ crag_id: newCragId })
 		.eq("id", wallId);
 	if (error) throw error;
+	if (!isTauri()) return;
 
 	const db = await getDb();
 	await db.execute("UPDATE walls_cache SET crag_id = ? WHERE id = ?", [
@@ -1233,6 +1575,7 @@ export async function adminUpdateWallType(
 		.update({ wall_type: wallType })
 		.eq("id", id);
 	if (error) throw error;
+	if (!isTauri()) return;
 
 	const db = await getDb();
 	await db.execute("UPDATE walls_cache SET wall_type = ? WHERE id = ?", [
@@ -1253,6 +1596,7 @@ export async function updateWallSunData(
 		.update({ sun_data: data })
 		.eq("id", wallId);
 	if (error) throw error;
+	if (!isTauri()) return;
 
 	const db = await getDb();
 	await db.execute("UPDATE walls_cache SET sun_data = ? WHERE id = ?", [

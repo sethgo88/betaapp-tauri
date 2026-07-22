@@ -11,14 +11,17 @@
 ┌───────────────────────▼─────────────────────────────────┐
 │               Feature Layer (src/features/)              │
 │   *.queries.ts   *.service.ts   *.store.ts   *.schema.ts │
+│           service functions branch on isTauri()          │
 └──────────┬──────────────────────────┬────────────────────┘
-           │                          │
+           │ Tauri (Android)          │ Web (browser)
 ┌──────────▼──────────┐   ┌──────────▼────────────────────┐
 │   SQLite (local)     │   │   Supabase (cloud)             │
 │   tauri-plugin-sql   │   │   @supabase/supabase-js        │
 │   src/lib/db.ts      │   │   src/lib/supabase.ts          │
 └─────────────────────┘   └───────────────────────────────┘
 ```
+
+Both platforms share the same codebase. On web, all reads and writes go directly to Supabase — there is no local SQLite and no download step. On Tauri (Android), the local SQLite cache is the primary data source; Supabase is synced on demand.
 
 ## Navigation Structure
 
@@ -43,16 +46,25 @@ Drawer (slides in from right):
 /                          → HomeView (personal climb list, requireAuth)
 /climbs/add                → AddClimbView (requireAuth)
 /climbs/$climbId           → ClimbDetailView (requireAuth)
-/climbs/$climbId/edit      → EditClimbView (requireAuth, delete inline)
 /profile                   → ProfileView (public)
-/routes                    → RoutesView (country/region browser, requireAuth)
+/reset-password            → ResetPasswordView (public)
+/auth/callback             → inline spinner — web only; Supabase redirects here after magic link
+/map                       → MapView (requireAuth)
+/search                    → SearchView (requireAuth)
+/routes                    → RoutesView (country/region browser; download UI Android-only, requireAuth)
+/routes/add                → AddEditRouteView (requireAuth)
+/routes/$routeId           → RouteDetailView (requireAuth)
+/routes/$routeId/edit      → AddEditRouteView (requireAuth)
 /routes/submit             → SubmitRouteView (requireAuth, search params: wallId, wallName)
-/regions/$regionId         → RegionView (sub-regions → crags, requireAuth)
-/crags/$cragId             → CragView (walls → routes + submit button, requireAuth)
+/regions/$regionId         → RegionView (requireAuth)
+/sub-regions/$subRegionId  → SubRegionView (requireAuth)
+/crags/$cragId             → CragView (requireAuth)
+/walls/$wallId             → WallView (requireAuth)
+/locations/add             → AddLocationView (requireAuth)
+/stats                     → StatsView (requireAuth)
 /settings                  → SettingsView (public)
 /admin/locations           → LocationManagerView (requireAdmin)
-/admin/locations/pending   → LocationVerificationView (requireAdmin)
-/admin/routes              → RouteVerificationView (requireAdmin)
+/admin/verify              → VerificationView (requireAdmin)
 ```
 
 ---
@@ -141,18 +153,33 @@ ProfileView → signIn(email, password) or signUp(email, password)
       ↓
 Supabase auth → session returned
       ↓
-fetchOrCreateSupabaseUser(userId):
-  SELECT role FROM user_roles WHERE user_id = ?
-  → "admin" | "user"
+fetchOrCreateSupabaseUser(userId) → role from user_roles table
       ↓
-upsertLocalUser(id, email, role) → local SQLite users table
+[Tauri] upsertLocalUser(id, email, role) → local SQLite users table
+[Web]   fetchProfileForWeb(id, email, role) → User built from Supabase profiles
       ↓
 auth.store: setUser(), setSession()
       ↓
-navigate("/") → runSync() fires
+navigate("/") → runSync() fires (Tauri only)
 ```
 
-### Offline Cold Start
+### Magic Link — Android
+```
+sendMagicLink → emailRedirectTo = Supabase Edge Function URL
+User taps link → Edge Function 302s to betaapp://auth/callback
+tauri-plugin-deep-link fires → exchangeCodeForSession → handleSession flow
+```
+
+### Magic Link — Web
+```
+sendMagicLink → emailRedirectTo = window.location.origin + '/auth/callback'
+User clicks link → browser opens app at /auth/callback (spinner shown)
+Supabase JS client detects tokens in URL → onAuthStateChange fires SIGNED_IN
+fetchOrCreateSupabaseUser → fetchProfileForWeb → setUser → navigate("/")
+Note: window.location.origin must be in Supabase's allowed redirect URL list
+```
+
+### Offline Cold Start (Android only)
 ```
 App launch (offline):
   navigator.onLine check → false (or betaapp-debug-offline flag set in DEV)
@@ -162,17 +189,6 @@ App launch (offline):
     if no session → falls through
   No session → fetchLocalUser() → setUser (no setSession); login screen shown
   When connectivity returns → useSync.runSync() auto-triggered
-```
-
-### Magic Link (deep link)
-```
-User taps magic link on device
-      ↓
-Android deep link opens app (betaapp://auth/callback?token=...)
-      ↓
-tauri-plugin-deep-link fires → Supabase exchanges token for session
-      ↓
-Same handleSession() flow as above
 ```
 
 ---
@@ -196,11 +212,13 @@ Admin role is managed via the `user_roles` table in Supabase (not `users.role`).
 
 ## Local-First Principles
 
-1. **All reads come from SQLite.** Supabase is never queried for display data (exception: admin views read unverified routes directly from Supabase).
-2. **The app works offline.** Offline climbs accumulate and sync when connected.
+These principles apply to the **Tauri (Android)** platform. The web platform is Supabase-direct with no local cache.
+
+1. **All reads come from SQLite (Android).** Supabase is never queried for display data on Android (exception: admin views read unverified routes directly from Supabase). On web, all reads go to Supabase.
+2. **The app works offline (Android).** Offline climbs accumulate and sync when connected. Web requires a network connection.
 3. **Soft deletes for user data.** `deleted_at` set on delete; never hard-deleted from local SQLite.
 4. **Last-write-wins conflict resolution.** The row with the newer `updated_at` wins. Acceptable for a single-user app.
-5. **Grades always available.** `grades-seed.ts` ensures grades exist before first sync.
+5. **Grades always available (Android).** `grades-seed.ts` ensures grades exist before first sync. On web, grades are fetched live from Supabase.
 6. **Reference data is read-only for users.** Users never push to reference tables.
 
 ---

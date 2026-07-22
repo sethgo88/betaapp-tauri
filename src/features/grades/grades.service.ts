@@ -1,3 +1,4 @@
+import { isTauri } from "@tauri-apps/api/core";
 import { getDb } from "@/lib/db";
 import { supabase } from "@/lib/supabase";
 import type { Grade } from "./grades.schema";
@@ -5,6 +6,15 @@ import type { Grade } from "./grades.schema";
 export async function fetchGrades(
 	discipline: "sport" | "boulder" | "trad",
 ): Promise<Grade[]> {
+	if (!isTauri()) {
+		const { data, error } = await supabase
+			.from("grades")
+			.select("*")
+			.eq("discipline", discipline)
+			.order("sort_order");
+		if (error) throw error;
+		return (data as Grade[]) ?? [];
+	}
 	const db = await getDb();
 	return db.select<Grade[]>(
 		"SELECT * FROM grades_cache WHERE discipline = ? ORDER BY sort_order ASC",
@@ -13,6 +23,7 @@ export async function fetchGrades(
 }
 
 export async function pullGrades(): Promise<void> {
+	if (!isTauri()) return;
 	const { data, error } = await supabase.from("grades").select("*");
 	if (error) throw error;
 	if (!data || data.length === 0) return;

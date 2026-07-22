@@ -109,6 +109,16 @@ interface AuthStore {
 
 ---
 
+## Platform paths
+
+All service functions support two execution paths:
+- **Tauri (Android):** reads/writes local SQLite `users` table; syncs with Supabase `profiles`
+- **Web (browser):** no local SQLite; builds `User` object directly from `supabase.auth.getUser()` + `profiles` + `user_roles`. `upsertLocalUser` delegates to `fetchProfileForWeb`. `fetchAndApplyProfile` skips the SQLite merge step.
+
+`restoreSession` uses `getSession()` — valid only at cold start (reads persisted localStorage tokens). All other auth checks use `getUser()`.
+
+---
+
 ## Session lifecycle
 
 ```
@@ -165,6 +175,26 @@ Logout:
   signOut() → setSession(null) → setUser(null)
   Realtime channel unsubscribed (useSync cleanup)
   Local data retained (local-first)
+```
+
+```
+App launch — web browser:
+  restoreSession() → getSession() reads localStorage tokens
+  if session → setSession; fetchOrCreateSupabaseUser → fetchProfileForWeb → setUser
+  if no session → user lands on /profile (login screen)
+
+Login (web — password):
+  signIn(email, password) → setSession
+  fetchOrCreateSupabaseUser(id) → get role
+  upsertLocalUser → fetchProfileForWeb (no SQLite write)
+  fetchAndApplyProfile → fetchProfileForWeb → setUser
+
+Login (web — magic link):
+  sendMagicLink(email) → emailRedirectTo = window.location.origin + '/auth/callback'
+  User clicks link in email → browser opens app at /auth/callback (spinner shown)
+  Supabase JS client detects tokens in URL → onAuthStateChange fires SIGNED_IN
+  fetchOrCreateSupabaseUser → fetchProfileForWeb → setUser → navigate to /
+  (AUTH_REDIRECT_URL is platform-aware: Tauri uses Edge Function → betaapp://, web uses window.location.origin)
 ```
 
 ---
