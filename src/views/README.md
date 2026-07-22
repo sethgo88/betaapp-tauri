@@ -15,6 +15,7 @@ Router defined in `src/router.tsx` using `createMemoryHistory` (required for And
 | `/climbs/$climbId` | `ClimbDetailView` | required | Full climb detail; inline grade/status editing, betas, burns, link |
 | `/profile` | `ProfileView` | public | Login / logout / forgot password; shows user info when authenticated |
 | `/reset-password` | `ResetPasswordView` | public | Set new password after tapping reset link from email |
+| `/auth/callback` | inline spinner | public | Web-only landing page for magic link / password reset redirects; Supabase JS client picks up tokens from URL and fires `SIGNED_IN` |
 | `/map` | `MapView` | required | Interactive map with Discovery (all downloaded crags) and Personal (crags with user's climbs) modes |
 | `/search` | `SearchView` | required | Real-time search across downloaded locations and routes |
 | `/routes` | `RoutesView` | required | Route Manager — browse countries → regions; download regions (Android only — web shows all regions as always-available) |

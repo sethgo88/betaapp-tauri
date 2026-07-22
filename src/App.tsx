@@ -159,15 +159,34 @@ function Bootstrap() {
 	useEffect(() => {
 		const {
 			data: { subscription },
-		} = supabase.auth.onAuthStateChange((event, session) => {
+		} = supabase.auth.onAuthStateChange(async (event, session) => {
 			// INITIAL_SESSION fires on startup. If the token couldn't be refreshed
 			// (offline / expired), session is null — but bootstrap may have already
 			// restored auth from the local cache, so we must not wipe it here.
 			if (event === "INITIAL_SESSION" && !session) return;
 			setSession(session);
-			if (!session) setUser(null);
-			if (event === "PASSWORD_RECOVERY" && session) {
+			if (!session) {
+				setUser(null);
+				return;
+			}
+			if (event === "PASSWORD_RECOVERY") {
 				router.navigate({ to: "/reset-password" });
+				return;
+			}
+			// On web, SIGNED_IN fires when magic link lands on /auth/callback.
+			// Bootstrap has no session at that point, so we fetch the user here.
+			if (event === "SIGNED_IN" && !isTauri()) {
+				const role = await fetchOrCreateSupabaseUser(
+					session.user.id,
+					session.user.email ?? "",
+				);
+				const webUser = await fetchProfileForWeb(
+					session.user.id,
+					session.user.email ?? "",
+					role,
+				);
+				setUser(webUser);
+				router.navigate({ to: "/" });
 			}
 		});
 		return () => subscription.unsubscribe();

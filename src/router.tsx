@@ -1,4 +1,5 @@
 import {
+	createBrowserHistory,
 	createMemoryHistory,
 	createRootRoute,
 	createRoute,
@@ -7,6 +8,8 @@ import {
 	redirect,
 	useParams,
 } from "@tanstack/react-router";
+import { isTauri } from "@tauri-apps/api/core";
+import { Spinner } from "@/components/atoms/Spinner";
 import { z } from "zod";
 import { AppLayout } from "@/components/templates/AppLayout";
 import { useAuthStore } from "@/features/auth/auth.store";
@@ -215,6 +218,20 @@ const adminVerificationRoute = createRoute({
 	component: VerificationView,
 });
 
+// Web-only: landing page for magic link / password reset redirects.
+// Supabase redirects here with tokens in the URL; the JS client picks them up
+// via onAuthStateChange and App.tsx navigates to "/" once the user is set.
+const authCallbackRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/auth/callback",
+	component: () => (
+		<div className="flex items-center justify-center gap-2 h-full">
+			<Spinner />
+			<span className="text-sm text-text-on-light">Signing you in…</span>
+		</div>
+	),
+});
+
 const routeTree = rootRoute.addChildren([
 	homeRoute,
 	addClimbRoute,
@@ -237,11 +254,16 @@ const routeTree = rootRoute.addChildren([
 	adminLocationsRoute,
 	adminVerificationRoute,
 	settingsRoute,
+	authCallbackRoute,
 ]);
 
-const memoryHistory = createMemoryHistory({ initialEntries: ["/"] });
+// Android WebView requires memory history (no real URL bar).
+// Web uses browser history so /auth/callback redirects are matched correctly.
+const history = isTauri()
+	? createMemoryHistory({ initialEntries: ["/"] })
+	: createBrowserHistory();
 
-export const router = createRouter({ routeTree, history: memoryHistory });
+export const router = createRouter({ routeTree, history });
 
 declare module "@tanstack/react-router" {
 	interface Register {
