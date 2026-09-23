@@ -1,4 +1,3 @@
-import { getCurrentLocation } from "@/lib/platform/geolocation";
 import L from "leaflet";
 import { Check, Crosshair, Layers, Minus, Plus, X } from "lucide-react";
 import { useCallback, useState } from "react";
@@ -11,6 +10,7 @@ import {
 	useMapEvents,
 } from "react-leaflet";
 import { tileLayers } from "@/lib/map-tiles";
+import { getCurrentLocation } from "@/lib/platform/geolocation";
 import { useUiStore } from "@/stores/ui.store";
 
 type Coords = { lat: number; lng: number };

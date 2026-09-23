@@ -231,7 +231,7 @@ Required in `src-tauri/gen/android/app/src/main/AndroidManifest.xml`:
 
 ## CSP (Content Security Policy)
 
-Supabase domains must be allowed in the CSP. Set in `src-tauri/tauri.conf.json`:
+Backend URLs must be explicitly allowed in the CSP. Set in `src-tauri/tauri.conf.json`. **Tauri dev mode ignores CSP — release builds enforce it strictly.** A missing entry causes silent failures that only appear in the release APK.
 
 ```json
 {
@@ -243,9 +243,30 @@ Supabase domains must be allowed in the CSP. Set in `src-tauri/tauri.conf.json`:
 }
 ```
 
-- `https://*.supabase.co` — Supabase REST and Auth API
-- `wss://*.supabase.co` — Supabase Realtime WebSocket
+- `https://*.supabase.co` — hosted Supabase REST and Auth API
+- `wss://*.supabase.co` — hosted Supabase Realtime WebSocket
 - `data: blob:` — local image data URLs
+
+### Self-hosted Supabase (HTTP)
+
+When using a self-hosted Supabase instance over plain HTTP (e.g. Tailscale LAN), add the server URL to both `connect-src` and `img-src`. Include both `http://` and `ws://` since Realtime uses WebSockets:
+
+```json
+"csp": "default-src 'self'; connect-src 'self' https://*.supabase.co wss://*.supabase.co http://100.85.209.13:8000 ws://100.85.209.13:8000 ...; img-src 'self' data: blob: http://100.85.209.13:8000; ..."
+```
+
+### Cleartext HTTP (Android)
+
+Android 9+ blocks cleartext HTTP in release builds by default. The `AndroidManifest.xml` uses a `${usesCleartextTraffic}` placeholder. In `src-tauri/gen/android/app/build.gradle.kts`, the debug build sets it to `true`; the release build must also set it when using an HTTP backend:
+
+```kotlin
+getByName("release") {
+    manifestPlaceholders["usesCleartextTraffic"] = "true"
+    // ...
+}
+```
+
+> If you move to a production HTTPS server, remove this flag and remove the `http://` / `ws://` entries from the CSP.
 
 ---
 
@@ -255,7 +276,8 @@ Supabase domains must be allowed in the CSP. Set in `src-tauri/tauri.conf.json`:
 |---|---|
 | Blank screen on app launch | Check memory history is used (not browser history) in TanStack Router |
 | Deep link not firing | Verify intent filter in manifest, rebuild, test with `adb shell am start` |
-| Supabase call silently fails | Check CSP allows `*.supabase.co`, check capabilities file |
+| Supabase call silently fails | Check CSP allows the backend URL (both `https://` and `wss://`), check capabilities file |
+| Release APK sync fails but dev works | CSP is enforced in release — add the backend URL to `connect-src` in `tauri.conf.json`. Also check `usesCleartextTraffic` in `build.gradle.kts` if using HTTP |
 | Back button closes app instead of navigating | Ensure `useAndroidBackButton()` is called in root layout |
 | SQLite migration fails | Check migration SQL for syntax errors; migrations run on every launch |
 | Release APK won't install over dev | Different application IDs (`com.betaapp.app` vs `.dev`) — they install side by side, not over each other |

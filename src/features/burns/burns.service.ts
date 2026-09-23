@@ -55,7 +55,11 @@ export async function updateBurn(
 	if (!isTauri()) {
 		const { error } = await supabase
 			.from("burns")
-			.update({ date: data.date, notes: data.notes ?? null, feel: data.feel ?? null })
+			.update({
+				date: data.date,
+				notes: data.notes ?? null,
+				feel: data.feel ?? null,
+			})
 			.eq("id", id)
 			.is("deleted_at", null);
 		if (error) throw error;

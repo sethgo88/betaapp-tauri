@@ -9,8 +9,8 @@ import {
 	useParams,
 } from "@tanstack/react-router";
 import { isTauri } from "@tauri-apps/api/core";
-import { Spinner } from "@/components/atoms/Spinner";
 import { z } from "zod";
+import { Spinner } from "@/components/atoms/Spinner";
 import { AppLayout } from "@/components/templates/AppLayout";
 import { useAuthStore } from "@/features/auth/auth.store";
 import AddClimbView from "@/views/AddClimbView";

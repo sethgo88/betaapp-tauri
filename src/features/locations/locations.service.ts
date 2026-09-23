@@ -89,10 +89,11 @@ export async function fetchCrags(subRegionId: string): Promise<Crag[]> {
 	);
 }
 
-function parseSunData<T extends { sun_data?: unknown }>(row: T): T {
-	if (typeof row.sun_data !== "string" || !row.sun_data) return row;
+function parseSunData<T>(row: T): T {
+	const r = row as Record<string, unknown>;
+	if (typeof r.sun_data !== "string" || !r.sun_data) return row;
 	try {
-		return { ...row, sun_data: JSON.parse(row.sun_data) };
+		return { ...row, sun_data: JSON.parse(r.sun_data as string) };
 	} catch {
 		return { ...row, sun_data: null };
 	}
@@ -326,7 +327,7 @@ export async function searchLocations(
 						parent_name:
 							(r.regions as unknown as { name: string } | null)?.name ?? "",
 					})),
-				),
+				) as Promise<LocationSearchResult[]>,
 		];
 
 		if (stopAt === "crag" || stopAt === "wall") {
@@ -345,7 +346,7 @@ export async function searchLocations(
 								(r.sub_regions as unknown as { name: string } | null)?.name ??
 								"",
 						})),
-					),
+					) as Promise<LocationSearchResult[]>,
 			);
 		}
 
@@ -364,7 +365,7 @@ export async function searchLocations(
 							parent_name:
 								(r.crags as unknown as { name: string } | null)?.name ?? "",
 						})),
-					),
+					) as Promise<LocationSearchResult[]>,
 			);
 		}
 
@@ -760,7 +761,9 @@ export async function downloadRegion(regionId: string): Promise<void> {
 							"verified",
 							row.created_by,
 							row.created_at,
-							row.sun_data != null ? JSON.stringify(row.sun_data) : null,
+							(row as Record<string, unknown>).sun_data != null
+								? JSON.stringify((row as Record<string, unknown>).sun_data)
+								: null,
 						],
 					);
 				}
@@ -1199,7 +1202,9 @@ export async function fetchAllCragsWithCoords(): Promise<MapCrag[]> {
 	if (!isTauri()) {
 		const { data, error } = await supabase
 			.from("crags")
-			.select("id, name, lat, lng, approach, sport_count, trad_count, boulder_count")
+			.select(
+				"id, name, lat, lng, approach, sport_count, trad_count, boulder_count",
+			)
 			.not("lat", "is", null)
 			.not("lng", "is", null);
 		if (error) throw error;
@@ -1347,7 +1352,9 @@ export async function fetchAllWallsWithCoords(): Promise<MapWall[]> {
 	if (!isTauri()) {
 		const { data, error } = await supabase
 			.from("walls")
-			.select("id, crag_id, name, lat, lng, approach, wall_type, sport_count, trad_count, boulder_count, crags!inner(name)")
+			.select(
+				"id, crag_id, name, lat, lng, approach, wall_type, sport_count, trad_count, boulder_count, crags!inner(name)",
+			)
 			.not("lat", "is", null)
 			.not("lng", "is", null);
 		if (error) throw error;
@@ -1425,9 +1432,7 @@ export async function adminDeleteSubRegion(id: string): Promise<void> {
 			.select("*", { count: "exact", head: true })
 			.eq("sub_region_id", id);
 		if ((count ?? 0) > 0) {
-			throw new Error(
-				`Cannot delete: has ${count} crag(s). Move them first.`,
-			);
+			throw new Error(`Cannot delete: has ${count} crag(s). Move them first.`);
 		}
 		const { error } = await supabase
 			.from("sub_regions")
@@ -1461,9 +1466,7 @@ export async function adminDeleteCrag(id: string): Promise<void> {
 			.select("*", { count: "exact", head: true })
 			.eq("crag_id", id);
 		if ((count ?? 0) > 0) {
-			throw new Error(
-				`Cannot delete: has ${count} wall(s). Move them first.`,
-			);
+			throw new Error(`Cannot delete: has ${count} wall(s). Move them first.`);
 		}
 		const { error } = await supabase
 			.from("crags")
@@ -1497,9 +1500,7 @@ export async function adminDeleteWall(id: string): Promise<void> {
 			.select("*", { count: "exact", head: true })
 			.eq("wall_id", id);
 		if ((count ?? 0) > 0) {
-			throw new Error(
-				`Cannot delete: has ${count} route(s). Move them first.`,
-			);
+			throw new Error(`Cannot delete: has ${count} route(s). Move them first.`);
 		}
 		// biome-ignore lint/suspicious/noExplicitAny: deleted_at not yet in generated Supabase types
 		const { error } = await (supabase.from("walls") as any)

@@ -25,10 +25,11 @@ export async function refreshRouteAvgRating(routeId: string): Promise<void> {
 	);
 }
 
-function parseSunData<T extends { sun_data?: unknown }>(row: T): T {
-	if (typeof row.sun_data !== "string" || !row.sun_data) return row;
+function parseSunData<T>(row: T): T {
+	const r = row as Record<string, unknown>;
+	if (typeof r.sun_data !== "string" || !r.sun_data) return row;
 	try {
-		return { ...row, sun_data: JSON.parse(row.sun_data) };
+		return { ...row, sun_data: JSON.parse(r.sun_data as string) };
 	} catch {
 		return { ...row, sun_data: null };
 	}
@@ -45,7 +46,7 @@ export async function fetchRoutes(wallId: string): Promise<Route[]> {
 			.order("sort_order")
 			.order("name");
 		if (error) throw error;
-		return (data ?? []).map(parseSunData) as Route[];
+		return (data ?? []).map(parseSunData) as unknown as Route[];
 	}
 	const db = await getDb();
 	const rows = await db.select<Route[]>(
@@ -81,7 +82,7 @@ export async function fetchRoute(id: string): Promise<Route | null> {
 			.is("deleted_at", null)
 			.single();
 		if (error && error.code !== "PGRST116") throw error;
-		return data ? (parseSunData(data) as Route) : null;
+		return data ? (parseSunData(data) as unknown as Route) : null;
 	}
 	const db = await getDb();
 	const rows = await db.select<Route[]>(
@@ -180,7 +181,7 @@ export async function searchLocalRoutes(query: string): Promise<Route[]> {
 			.order("name")
 			.limit(30);
 		if (error) throw error;
-		return (data ?? []) as Route[];
+		return (data ?? []) as unknown as Route[];
 	}
 	const db = await getDb();
 	const like = `%${query}%`;
@@ -398,7 +399,9 @@ export async function adminDeleteRoute(id: string): Promise<void> {
 	if (!isTauri()) return;
 
 	const db = await getDb();
-	await db.execute("UPDATE climbs SET route_id = NULL WHERE route_id = ?", [id]);
+	await db.execute("UPDATE climbs SET route_id = NULL WHERE route_id = ?", [
+		id,
+	]);
 	await db.execute("DELETE FROM routes_cache WHERE id = ?", [id]);
 }
 

@@ -7,7 +7,6 @@ import {
 } from "@tanstack/react-query";
 import { RouterProvider } from "@tanstack/react-router";
 import { isTauri } from "@tauri-apps/api/core";
-import { getCurrentLocation } from "@/lib/platform/geolocation";
 import { useEffect } from "react";
 import { Spinner } from "@/components/atoms/Spinner";
 import {
@@ -25,6 +24,7 @@ import { backfillClimbLocations } from "@/features/climbs/climbs.service";
 import { seedGrades } from "@/features/grades/grades-seed";
 import { seedTags } from "@/features/tags/tags-seed";
 import { useSync } from "@/hooks/useSync";
+import { getCurrentLocation } from "@/lib/platform/geolocation";
 import { supabase } from "@/lib/supabase";
 import { router } from "@/router";
 import { useUiStore } from "@/stores/ui.store";
