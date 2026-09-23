@@ -18,7 +18,7 @@
 			}
 		],
 		"security": {
-			"csp": "default-src 'self'; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.tile.openstreetmap.org https://tiles.stadiamaps.com; img-src 'self' data: blob: https://*.tile.openstreetmap.org https://tiles.stadiamaps.com https://*.supabase.co; style-src 'self' 'unsafe-inline'; script-src 'self'"
+			"csp": "default-src 'self'; connect-src 'self' https://*.supabase.co wss://*.supabase.co http://100.85.209.13:8000 ws://100.85.209.13:8000 https://*.tile.openstreetmap.org https://tiles.stadiamaps.com; img-src 'self' data: blob: https://*.tile.openstreetmap.org https://tiles.stadiamaps.com https://*.supabase.co http://100.85.209.13:8000; style-src 'self' 'unsafe-inline'; script-src 'self'"
 		}
 	},
 	"plugins": {

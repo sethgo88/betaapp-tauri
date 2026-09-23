@@ -230,7 +230,7 @@ export async function updateUserProfile(
 // On Tauri (Android): route through the Edge Function which 302s to betaapp://auth/callback
 // On web: redirect directly back to this app so the Supabase client can pick up the tokens
 const AUTH_REDIRECT_URL = isTauri()
-	? "https://tkiacbpbfwzhvschjavh.supabase.co/functions/v1/auth-redirect"
+	? "http://100.85.209.13:8000/functions/v1/auth-redirect"
 	: `${window.location.origin}/auth/callback`;
 
 export async function sendPasswordReset(email: string): Promise<void> {

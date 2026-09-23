@@ -270,6 +270,8 @@ export async function insertClimb(
 			route_id: routeId ?? null,
 			sent_date: data.sent_date ?? null,
 			rating: data.rating ?? null,
+			created_at: new Date().toISOString(),
+			updated_at: new Date().toISOString(),
 		});
 		if (error) throw error;
 		return id;

@@ -1,5 +1,4 @@
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { openExternalUrl } from "@/lib/platform/opener";
 import { ExternalLink, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/atoms/Button";
@@ -46,6 +45,7 @@ import {
 	useWallTopo,
 	useWallTopoLines,
 } from "@/features/topos/topos.queries";
+import { openExternalUrl } from "@/lib/platform/opener";
 import { getEffectiveSunData } from "@/lib/sun";
 
 const RouteDetailView = () => {

@@ -16,7 +16,6 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { uuid } from "@tanstack/react-form";
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { openExternalUrl } from "@/lib/platform/opener";
 import {
 	ExternalLink,
 	GripVertical,
@@ -68,6 +67,7 @@ import { useRoute } from "@/features/routes/routes.queries";
 import type { Route } from "@/features/routes/routes.schema";
 import { cn } from "@/lib/cn";
 import { formatDate } from "@/lib/date";
+import { openExternalUrl } from "@/lib/platform/opener";
 import { buildLocationString } from "@/utils/build-location-string";
 
 // ── Feel labels ───────────────────────────────────────────────────────────────

@@ -14,6 +14,7 @@ dist-ssr
 
 target/rust-analyzer/flycheck0/
 .env
+.env.local
 
 # Editor directories and files
 .vscode/*

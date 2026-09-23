@@ -1,6 +1,6 @@
 import { ChevronLeft } from "lucide-react";
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { SiblingDropdown } from "@/components/molecules/SiblingDropdown";
 import { Toast } from "@/components/molecules/Toast";
 import { Drawer } from "@/components/organisms/Drawer";
@@ -16,6 +16,7 @@ interface AppLayoutProps {
 export const AppLayout = ({ children }: AppLayoutProps) => {
 	const toasts = useUiStore((s) => s.toasts);
 	const [drawerOpen, setDrawerOpen] = useState(false);
+	const handleDrawerClose = useCallback(() => setDrawerOpen(false), []);
 	const topBar = useTopBar();
 	useAndroidBackButton();
 
@@ -65,7 +66,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
 				</main>
 			</div>
 			<NavBar onMenuOpen={() => setDrawerOpen(true)} />
-			<Drawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} />
+			<Drawer isOpen={drawerOpen} onClose={handleDrawerClose} />
 		</div>
 	);
 };

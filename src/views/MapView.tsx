@@ -1,5 +1,4 @@
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import { getCurrentLocation } from "@/lib/platform/geolocation";
 import L from "leaflet";
 import { Crosshair, Layers, MapPin, Minus, Plus, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -23,6 +22,7 @@ import {
 } from "@/features/map/map.queries";
 import { cn } from "@/lib/cn";
 import { tileLayers } from "@/lib/map-tiles";
+import { getCurrentLocation } from "@/lib/platform/geolocation";
 import { useUiStore } from "@/stores/ui.store";
 
 // ── Back-button override hook ────────────────────────────────────────────────
