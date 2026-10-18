@@ -40,6 +40,8 @@ export function useClimbImages(climbId: string) {
 		queryKey: [CLIMB_IMAGES_KEY, climbId],
 		queryFn: () => fetchClimbImages(climbId),
 		staleTime: SIGNED_URL_STALE_MS,
+		// Reads local SQLite first; must run offline so cached images still show
+		networkMode: "offlineFirst",
 		enabled: !!climbId,
 	});
 }

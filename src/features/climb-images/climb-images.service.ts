@@ -39,11 +39,16 @@ export async function fetchClimbImages(
 	return Promise.all(
 		rows.map(async (row) => {
 			const upload_status = row.upload_status ?? "uploaded";
-			const signed_url = row.local_data
-				? row.local_data
-				: upload_status === "uploaded"
-					? await signUrl(row.image_url)
-					: "";
+			let signed_url = "";
+			if (row.local_data) {
+				signed_url = row.local_data;
+			} else if (upload_status === "uploaded") {
+				try {
+					signed_url = await signUrl(row.image_url);
+				} catch {
+					// Offline or signing failed — leave empty so other images still load
+				}
+			}
 			return { ...row, upload_status, signed_url };
 		}),
 	);

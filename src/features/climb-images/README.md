@@ -60,7 +60,7 @@ CREATE TABLE climb_image_pins (
 
 | Function | Description |
 |---|---|
-| `fetchClimbImages(climbId)` | Returns images ordered by `sort_order`; prefers `local_data` (base64) when present, otherwise generates a signed URL for uploaded images |
+| `fetchClimbImages(climbId)` | Returns images ordered by `sort_order`; prefers `local_data` (base64) when present, otherwise generates a signed URL for uploaded images; if signing fails (e.g. offline) that image gets `signed_url: ""` instead of rejecting the whole list |
 | `getUserImageCount(userId)` | Count of non-deleted images across all climb logs (for 100-cap enforcement) |
 | `insertClimbImage(climbId, userId, storagePath, sortOrder, localData?, uploadStatus?)` | Inserts a new row; defaults to `upload_status='uploaded'` |
 | `markImageUploaded(id)` | Sets `upload_status='uploaded'` after a successful upload |
@@ -83,7 +83,7 @@ CREATE TABLE climb_image_pins (
 
 | Hook | Description |
 |---|---|
-| `useClimbImages(climbId)` | Query; `staleTime: 50min` to avoid signed URL expiry |
+| `useClimbImages(climbId)` | Query; `staleTime: 50min` to avoid signed URL expiry; `networkMode: 'offlineFirst'` so it runs offline |
 | `useUserImageCount()` | Query; reads userId from auth store |
 | `useAddClimbImage(climbId)` | Mutation; enforces 100-image cap; compresses → saves locally (pending) → uploads if online |
 | `useDeleteClimbImage(climbId)` | Mutation; soft-deletes row; removes from Storage only if `upload_status='uploaded'` |
