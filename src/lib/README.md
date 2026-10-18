@@ -107,18 +107,23 @@ Versioned migration runner. Maintains a `schema_version` table (single row) and 
 import { resizeAndCompress, uploadToStorage } from '@/lib/image-utils'
 ```
 
-### `resizeAndCompress(file, maxPx?, quality?): Promise<Blob>`
+### `resizeAndCompress(file, preset?): Promise<Blob>`
 
-Resizes and compresses an image file using the Canvas API. Caps the longest dimension at `maxPx` (default 1920px) and encodes as JPEG at `quality` (default 0.8 ≈ 80%). Returns a `Blob`. No external libraries.
+Resizes and compresses an image file using the Canvas API and encodes as **WebP** (falls back to JPEG when the WebView cannot encode WebP; check `blob.type` or use `extForBlob`). Colour is preserved. No external libraries.
+
+| Preset | Max edge | Quality | Used for |
+|---|---|---|---|
+| `beta` | 1280px | 0.65 | Personal climb beta photos |
+| `reference` (default) | 1600px | 0.75 | Shared route / wall / topo images |
 
 ```ts
-const blob = await resizeAndCompress(file)           // ~400KB average output
-const blob = await resizeAndCompress(file, 800, 0.7) // thumbnail variant
+const blob = await resizeAndCompress(file, 'beta')
+const ext = extForBlob(blob) // 'webp' | 'jpg'
 ```
 
-### `uploadToStorage(bucket, path, file): Promise<string>`
+### `uploadToStorage(bucket, pathBase, file, preset?): Promise<{ path, sizeBytes }>`
 
-Calls `resizeAndCompress` then uploads the result to Supabase Storage. Returns the **storage path** (e.g. `userId/climbId/uuid.jpg`) — not a full URL. Callers derive a displayable URL:
+Calls `resizeAndCompress`, appends the encoded extension to `pathBase` (path **without** extension), and uploads to Supabase Storage. Returns the final **storage path** (e.g. `userId/climbId/uuid.webp`) and the encoded `sizeBytes` — not a full URL. Callers store `sizeBytes` in `size_bytes` and derive a displayable URL:
 
 ```ts
 // Public bucket (e.g. route-images):

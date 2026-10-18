@@ -3,6 +3,7 @@ import { useAuthStore } from "@/features/auth/auth.store";
 import { setClimbOfflineAvailable } from "@/features/climbs/climbs.service";
 import {
 	blobToBase64,
+	extForBlob,
 	resizeAndCompress,
 	uploadBlobToStorage,
 } from "@/lib/image-utils";
@@ -71,10 +72,10 @@ export function useAddClimbImage(climbId: string) {
 
 			const sortOrder = await getClimbImageSortOrder(climbId);
 			const imageId = crypto.randomUUID();
-			const storagePath = `${userId}/${climbId}/${imageId}.jpg`;
 
 			// Compress once; save locally as base64, then attempt upload if online.
-			const blob = await resizeAndCompress(file);
+			const blob = await resizeAndCompress(file, "beta");
+			const storagePath = `${userId}/${climbId}/${imageId}.${extForBlob(blob)}`;
 			const localData = await blobToBase64(blob);
 			const id = await insertClimbImage(
 				climbId,
@@ -83,6 +84,7 @@ export function useAddClimbImage(climbId: string) {
 				sortOrder,
 				localData,
 				"pending",
+				blob.size,
 			);
 
 			if (navigator.onLine) {

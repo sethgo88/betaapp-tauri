@@ -16,13 +16,14 @@ export async function insertRouteImage(
 	uploadedBy: string,
 	imageUrl: string,
 	sortOrder: number,
+	sizeBytes?: number,
 ): Promise<string> {
 	const db = await getDb();
 	const id = crypto.randomUUID();
 	await db.execute(
-		`INSERT INTO route_images_cache (id, route_id, image_url, sort_order, uploaded_by, created_at)
-     VALUES (?, ?, ?, ?, ?, datetime('now'))`,
-		[id, routeId, imageUrl, sortOrder, uploadedBy],
+		`INSERT INTO route_images_cache (id, route_id, image_url, sort_order, uploaded_by, size_bytes, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`,
+		[id, routeId, imageUrl, sortOrder, uploadedBy, sizeBytes ?? null],
 	);
 	return id;
 }
@@ -36,14 +37,15 @@ export async function applyRemoteRouteImage(image: RouteImage): Promise<void> {
 	const db = await getDb();
 	await db.execute(
 		`INSERT OR REPLACE INTO route_images_cache
-     (id, route_id, image_url, sort_order, uploaded_by, created_at)
-     VALUES (?, ?, ?, ?, ?, ?)`,
+     (id, route_id, image_url, sort_order, uploaded_by, size_bytes, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
 		[
 			image.id,
 			image.route_id,
 			image.image_url,
 			image.sort_order,
 			image.uploaded_by,
+			image.size_bytes ?? null,
 			image.created_at,
 		],
 	);
@@ -64,13 +66,14 @@ export async function insertWallImage(
 	uploadedBy: string,
 	imageUrl: string,
 	sortOrder: number,
+	sizeBytes?: number,
 ): Promise<string> {
 	const db = await getDb();
 	const id = crypto.randomUUID();
 	await db.execute(
-		`INSERT INTO wall_images_cache (id, wall_id, image_url, sort_order, uploaded_by, created_at)
-     VALUES (?, ?, ?, ?, ?, datetime('now'))`,
-		[id, wallId, imageUrl, sortOrder, uploadedBy],
+		`INSERT INTO wall_images_cache (id, wall_id, image_url, sort_order, uploaded_by, size_bytes, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`,
+		[id, wallId, imageUrl, sortOrder, uploadedBy, sizeBytes ?? null],
 	);
 	return id;
 }
@@ -84,14 +87,15 @@ export async function applyRemoteWallImage(image: WallImage): Promise<void> {
 	const db = await getDb();
 	await db.execute(
 		`INSERT OR REPLACE INTO wall_images_cache
-     (id, wall_id, image_url, sort_order, uploaded_by, created_at)
-     VALUES (?, ?, ?, ?, ?, ?)`,
+     (id, wall_id, image_url, sort_order, uploaded_by, size_bytes, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
 		[
 			image.id,
 			image.wall_id,
 			image.image_url,
 			image.sort_order,
 			image.uploaded_by,
+			image.size_bytes ?? null,
 			image.created_at,
 		],
 	);

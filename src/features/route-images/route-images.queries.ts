@@ -34,16 +34,22 @@ export function useAddRouteImage(routeId: string) {
 			const existing = await fetchRouteImages(routeId);
 			const sortOrder = existing.length;
 
-			const storagePath = await uploadToStorage(
+			const { path: storagePath, sizeBytes } = await uploadToStorage(
 				"route-images",
-				`routes/${routeId}/${crypto.randomUUID()}.jpg`,
+				`routes/${routeId}/${crypto.randomUUID()}`,
 				file,
 			);
 			const { data } = supabase.storage
 				.from("route-images")
 				.getPublicUrl(storagePath);
 
-			await insertRouteImage(routeId, user.id, data.publicUrl, sortOrder);
+			await insertRouteImage(
+				routeId,
+				user.id,
+				data.publicUrl,
+				sortOrder,
+				sizeBytes,
+			);
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: [ROUTE_IMAGES_KEY, routeId] });
@@ -93,16 +99,22 @@ export function useAddWallImage(wallId: string) {
 			const existing = await fetchWallImages(wallId);
 			const sortOrder = existing.length;
 
-			const storagePath = await uploadToStorage(
+			const { path: storagePath, sizeBytes } = await uploadToStorage(
 				"route-images",
-				`walls/${wallId}/${crypto.randomUUID()}.jpg`,
+				`walls/${wallId}/${crypto.randomUUID()}`,
 				file,
 			);
 			const { data } = supabase.storage
 				.from("route-images")
 				.getPublicUrl(storagePath);
 
-			await insertWallImage(wallId, user.id, data.publicUrl, sortOrder);
+			await insertWallImage(
+				wallId,
+				user.id,
+				data.publicUrl,
+				sortOrder,
+				sizeBytes,
+			);
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: [WALL_IMAGES_KEY, wallId] });

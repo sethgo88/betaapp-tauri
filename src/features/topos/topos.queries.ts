@@ -45,9 +45,9 @@ export function useUploadWallTopoImage(wallId: string) {
 			const user = useAuthStore.getState().user;
 			if (!user) throw new Error("Not authenticated");
 
-			const storagePath = await uploadToStorage(
+			const { path: storagePath } = await uploadToStorage(
 				"route-images",
-				`topos/walls/${wallId}/${crypto.randomUUID()}.jpg`,
+				`topos/walls/${wallId}/${crypto.randomUUID()}`,
 				file,
 			);
 			const { data } = supabase.storage
@@ -172,9 +172,9 @@ export function useUpsertRouteTopo(routeId: string) {
 			let imageUrl: string;
 
 			if (file) {
-				const storagePath = await uploadToStorage(
+				const { path: storagePath } = await uploadToStorage(
 					"route-images",
-					`topos/routes/${routeId}/${crypto.randomUUID()}.jpg`,
+					`topos/routes/${routeId}/${crypto.randomUUID()}`,
 					file,
 				);
 				const { data } = supabase.storage

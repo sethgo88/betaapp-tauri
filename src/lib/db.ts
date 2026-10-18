@@ -659,6 +659,17 @@ const migrations: Migration[] = [
 			`ALTER TABLE climbs ADD COLUMN offline_available INTEGER NOT NULL DEFAULT 0`,
 		);
 	},
+
+	// v33: size_bytes on image tables for download size estimates (#251)
+	async (db) => {
+		await db.execute(`ALTER TABLE climb_images ADD COLUMN size_bytes INTEGER`);
+		await db.execute(
+			`ALTER TABLE route_images_cache ADD COLUMN size_bytes INTEGER`,
+		);
+		await db.execute(
+			`ALTER TABLE wall_images_cache ADD COLUMN size_bytes INTEGER`,
+		);
+	},
 ];
 
 export async function runMigrations(db: DbAdapter): Promise<void> {

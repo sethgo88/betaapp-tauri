@@ -14,9 +14,10 @@ CREATE TABLE climb_images (
   id            TEXT PRIMARY KEY,
   climb_id      TEXT NOT NULL,
   user_id       TEXT NOT NULL,
-  image_url     TEXT NOT NULL,      -- storage path, e.g. "{userId}/{climbId}/{imageId}.jpg"
+  image_url     TEXT NOT NULL,      -- storage path, e.g. "{userId}/{climbId}/{imageId}.webp" (older rows: .jpg)
   sort_order    INTEGER NOT NULL DEFAULT 0,
   local_data    TEXT,               -- base64 data URI; present while upload is pending OR when climb is marked offline_available
+  size_bytes    INTEGER,            -- encoded size; null for images uploaded before v33
   upload_status TEXT NOT NULL DEFAULT 'uploaded',  -- 'pending' | 'uploaded' | 'error'
   created_at    TEXT NOT NULL DEFAULT (datetime('now')),
   deleted_at    TEXT                -- soft delete
@@ -62,7 +63,7 @@ CREATE TABLE climb_image_pins (
 |---|---|
 | `fetchClimbImages(climbId)` | Returns images ordered by `sort_order`; prefers `local_data` (base64) when present, otherwise generates a signed URL for uploaded images; if signing fails (e.g. offline) that image gets `signed_url: ""` instead of rejecting the whole list |
 | `getUserImageCount(userId)` | Count of non-deleted images across all climb logs (for 100-cap enforcement) |
-| `insertClimbImage(climbId, userId, storagePath, sortOrder, localData?, uploadStatus?)` | Inserts a new row; defaults to `upload_status='uploaded'` |
+| `insertClimbImage(climbId, userId, storagePath, sortOrder, localData?, uploadStatus?, sizeBytes?)` | Inserts a new row; defaults to `upload_status='uploaded'` |
 | `markImageUploaded(id)` | Sets `upload_status='uploaded'` after a successful upload |
 | `uploadPendingImages(userId)` | Finds all `pending`/`error` rows, uploads each, marks as `uploaded`; sets `error` on failure |
 | `softDeleteClimbImage(id)` | Sets `deleted_at` |
@@ -99,7 +100,7 @@ CREATE TABLE climb_image_pins (
 ## Storage
 
 - **Bucket:** `climb-images` (private)
-- **Path pattern:** `{userId}/{climbId}/{imageId}.jpg`
+- **Path pattern:** `{userId}/{climbId}/{imageId}.webp` (extension follows the encoded format; compressed with the `beta` preset: 1280px, WebP q0.65)
 - **Upload flow:** compress → `blobToBase64` → insert row with `upload_status='pending'` → upload if online → `markImageUploaded`
 - **Offline fallback:** `local_data` base64 URI is used when present — either pending upload or cached for offline access
 - **Per-climb offline caching:** when `climbs.offline_available=1`, all image bytes are stored as base64 in `local_data`; `cacheNewOfflineImages` is called after each sync to auto-cache new images

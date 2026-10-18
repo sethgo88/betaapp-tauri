@@ -16,6 +16,7 @@ Non-admins can view images; only admins can upload or delete.
 | `image_url` | TEXT | Full public URL from Supabase Storage |
 | `sort_order` | INTEGER | Display order (0-based, ascending) |
 | `uploaded_by` | TEXT | User ID of the admin who uploaded |
+| `size_bytes` | INTEGER | Encoded size; null for images uploaded before v33 |
 | `created_at` | TEXT | `datetime('now')` |
 
 ### `wall_images_cache`
@@ -26,11 +27,14 @@ Non-admins can view images; only admins can upload or delete.
 | `image_url` | TEXT | Full public URL from Supabase Storage |
 | `sort_order` | INTEGER | Display order (0-based, ascending) |
 | `uploaded_by` | TEXT | User ID of the admin who uploaded |
+| `size_bytes` | INTEGER | Encoded size; null for images uploaded before v33 |
 | `created_at` | TEXT | `datetime('now')` |
 
 Storage path conventions:
-- Routes: `routes/{routeId}/{uuid}.jpg`
-- Walls: `walls/{wallId}/{uuid}.jpg`
+- Routes: `routes/{routeId}/{uuid}.webp`
+- Walls: `walls/{wallId}/{uuid}.webp`
+
+Extension follows the encoded format (WebP, JPEG fallback); older images are `.jpg`. Uploads use the `reference` preset (1600px, q0.75).
 
 ---
 
@@ -63,9 +67,9 @@ useDeleteWallImage(wallId)       // deleteWallImage + Storage remove; invalidate
 ```
 
 Upload flow (both route and wall):
-1. `uploadToStorage('route-images', path, file)` — resize/compress + upload, returns storage path
+1. `uploadToStorage('route-images', pathBase, file)` — resize/compress + upload, returns `{ path, sizeBytes }`
 2. `supabase.storage.from('route-images').getPublicUrl(path)` — get full public URL
-3. `insertRouteImage` / `insertWallImage` — persist URL to local SQLite
+3. `insertRouteImage` / `insertWallImage` — persist URL and `size_bytes` to local SQLite
 
 ---
 

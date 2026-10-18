@@ -30,7 +30,7 @@ RouteTopo     = { id, route_id, image_url, points: Point[], color, created_by, c
 
 Mirror the SQLite schema: `wall_topos`, `wall_topo_lines`, `route_topos`.
 
-**Storage:** `route-images` bucket under `topos/walls/{wallId}/{uuid}.jpg` and `topos/routes/{routeId}/{uuid}.jpg`.
+**Storage:** `route-images` bucket under `topos/walls/{wallId}/{uuid}.webp` and `topos/routes/{routeId}/{uuid}.webp` (older: `.jpg`).
 
 **RLS:** authenticated SELECT; admin-only INSERT/UPDATE/DELETE.
 

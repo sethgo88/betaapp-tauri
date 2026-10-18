@@ -79,12 +79,13 @@ export async function insertClimbImage(
 	sortOrder: number,
 	localData?: string,
 	uploadStatus: "pending" | "uploaded" = "uploaded",
+	sizeBytes?: number,
 ): Promise<string> {
 	const db = await getDb();
 	const id = crypto.randomUUID();
 	await db.execute(
-		`INSERT INTO climb_images (id, climb_id, user_id, image_url, sort_order, local_data, upload_status, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
+		`INSERT INTO climb_images (id, climb_id, user_id, image_url, sort_order, local_data, upload_status, size_bytes, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
 		[
 			id,
 			climbId,
@@ -93,6 +94,7 @@ export async function insertClimbImage(
 			sortOrder,
 			localData ?? null,
 			uploadStatus,
+			sizeBytes ?? null,
 		],
 	);
 	return id;
@@ -199,14 +201,15 @@ export async function applyRemoteClimbImage(image: ClimbImage): Promise<void> {
 	const db = await getDb();
 	await db.execute(
 		`INSERT OR REPLACE INTO climb_images
-     (id, climb_id, user_id, image_url, sort_order, upload_status, created_at, deleted_at)
-     VALUES (?, ?, ?, ?, ?, 'uploaded', ?, ?)`,
+     (id, climb_id, user_id, image_url, sort_order, upload_status, size_bytes, created_at, deleted_at)
+     VALUES (?, ?, ?, ?, ?, 'uploaded', ?, ?, ?)`,
 		[
 			image.id,
 			image.climb_id,
 			image.user_id,
 			image.image_url,
 			image.sort_order,
+			image.size_bytes ?? null,
 			image.created_at,
 			image.deleted_at ?? null,
 		],

@@ -6,6 +6,7 @@ export const RouteImageSchema = z.object({
 	image_url: z.string(),
 	sort_order: z.number().int(),
 	uploaded_by: z.string(),
+	size_bytes: z.number().nullable().optional(),
 	created_at: z.string(),
 });
 export type RouteImage = z.infer<typeof RouteImageSchema>;
@@ -16,6 +17,7 @@ export const WallImageSchema = z.object({
 	image_url: z.string(),
 	sort_order: z.number().int(),
 	uploaded_by: z.string(),
+	size_bytes: z.number().nullable().optional(),
 	created_at: z.string(),
 });
 export type WallImage = z.infer<typeof WallImageSchema>;

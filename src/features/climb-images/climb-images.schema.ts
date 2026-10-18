@@ -18,6 +18,7 @@ export const ClimbImageSchema = z.object({
 	created_at: z.string(),
 	deleted_at: z.string().nullable().optional(),
 	local_data: z.string().nullable().optional(),
+	size_bytes: z.number().nullable().optional(),
 	upload_status: UploadStatus.default("uploaded"),
 });
 
