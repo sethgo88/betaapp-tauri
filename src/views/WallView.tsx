@@ -28,6 +28,7 @@ import {
 	CoordinatePicker,
 	type PickerMarker,
 } from "@/components/molecules/CoordinatePicker";
+import { DownloadImagesButton } from "@/components/molecules/DownloadImagesButton";
 import { EditableDescription } from "@/components/molecules/EditableDescription";
 import { SunShadeSheet } from "@/components/molecules/SunShadeSheet";
 import { SunShadeSummary } from "@/components/molecules/SunShadeSummary";
@@ -226,6 +227,7 @@ const WallView = () => {
 	return (
 		<div className="flex flex-col gap-3">
 			<h1 className="text-xl font-display font-bold text-white">{wall.name}</h1>
+			<DownloadImagesButton scopeType="wall" scopeId={wallId} />
 
 			{isAdmin ? (
 				<select

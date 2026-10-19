@@ -84,6 +84,7 @@ Versioned migration runner. Maintains a `schema_version` table (single row) and 
 | v33 | `size_bytes` on `climb_images`, `route_images_cache`, `wall_images_cache` (#251) |
 | v34 | `size_bytes` on `wall_topos_cache`, `route_topos_cache` (#256) |
 | v35 | `cached_images` + `cached_image_refs` tables for the file-based image cache (#252) |
+| v36 | `image_downloads` registry of areas downloaded for offline images (#253) |
 
 ### Rules
 - Always use `?` positional parameters — never string interpolation (SQL injection)
@@ -103,6 +104,10 @@ Versioned migration runner. Maintains a `schema_version` table (single row) and 
 | `string \| null` | `TEXT` | Nullable columns |
 
 ---
+
+## format.ts
+
+`formatBytes(bytes)` — human-readable size ("1.5 KB", "8.4 MB").
 
 ## image-cache.ts — file store for cached images
 

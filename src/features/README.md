@@ -30,6 +30,7 @@ Not every feature needs all four files — add only what exists.
 | [`climbs/`](climbs/README.md) | Personal climb log (CRUD + sync) |
 | [`grades/`](grades/README.md) | Grade reference data, seed, Supabase pull |
 | [`image-cache/`](image-cache/README.md) | File-based offline image cache with scope reference counting |
+| [`image-downloads/`](image-downloads/README.md) | Download route/wall/topo images for offline by sub-area, crag, wall or route |
 | [`locations/`](locations/README.md) | 5-level location hierarchy, region download |
 | [`routes/`](routes/README.md) | Community routes, submission, admin verification |
 | [`sync/`](sync/README.md) | Push/pull orchestration, Realtime subscription |

@@ -4,6 +4,7 @@ import { Button } from "@/components/atoms/Button";
 import { Spinner } from "@/components/atoms/Spinner";
 import { ConfirmDeleteDialog } from "@/components/molecules/ConfirmDeleteDialog";
 import { CoordinatePicker } from "@/components/molecules/CoordinatePicker";
+import { DownloadImagesButton } from "@/components/molecules/DownloadImagesButton";
 import { EditableDescription } from "@/components/molecules/EditableDescription";
 import {
 	LocationDrillDown,
@@ -151,6 +152,7 @@ const SubRegionView = () => {
 			<h1 className="text-xl font-display font-bold text-white">
 				{subRegion.name}
 			</h1>
+			<DownloadImagesButton scopeType="sub_region" scopeId={subRegionId} />
 
 			<EditableDescription
 				description={subRegion.description}

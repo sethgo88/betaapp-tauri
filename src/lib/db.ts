@@ -700,6 +700,21 @@ const migrations: Migration[] = [
       )
     `);
 	},
+
+	// v36: registry of area image downloads (#253)
+	async (db) => {
+		await db.execute(`
+      CREATE TABLE IF NOT EXISTS image_downloads (
+        scope_type    TEXT NOT NULL,
+        scope_id      TEXT NOT NULL,
+        name          TEXT NOT NULL,
+        status        TEXT NOT NULL,
+        image_count   INTEGER NOT NULL DEFAULT 0,
+        downloaded_at TEXT,
+        PRIMARY KEY (scope_type, scope_id)
+      )
+    `);
+	},
 ];
 
 export async function runMigrations(db: DbAdapter): Promise<void> {

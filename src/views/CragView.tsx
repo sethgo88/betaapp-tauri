@@ -5,6 +5,7 @@ import { Button } from "@/components/atoms/Button";
 import { Spinner } from "@/components/atoms/Spinner";
 import { ConfirmDeleteDialog } from "@/components/molecules/ConfirmDeleteDialog";
 import { CoordinatePicker } from "@/components/molecules/CoordinatePicker";
+import { DownloadImagesButton } from "@/components/molecules/DownloadImagesButton";
 import { EditableDescription } from "@/components/molecules/EditableDescription";
 import {
 	LocationDrillDown,
@@ -239,6 +240,7 @@ const CragView = () => {
 					<h1 className="text-xl font-display font-bold text-white">
 						{crag.name}
 					</h1>
+					<DownloadImagesButton scopeType="crag" scopeId={cragId} />
 					<EditableDescription
 						description={crag.description}
 						isAdmin={isAdmin}

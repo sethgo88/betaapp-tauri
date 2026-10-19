@@ -11,6 +11,7 @@ import { TagPill } from "@/components/atoms/TagPill";
 import { AddLinkModal } from "@/components/molecules/AddLinkModal";
 import { AdminImageGallery } from "@/components/molecules/AdminImageGallery";
 import { ConfirmDeleteDialog } from "@/components/molecules/ConfirmDeleteDialog";
+import { DownloadImagesButton } from "@/components/molecules/DownloadImagesButton";
 import { EditableDescription } from "@/components/molecules/EditableDescription";
 import { LogClimbSheet } from "@/components/molecules/LogClimbSheet";
 import { RouteBodyChart } from "@/components/molecules/RouteBodyChart";
@@ -226,6 +227,11 @@ const RouteDetailView = () => {
 							{route.route_type}
 						</span>
 					</div>
+					<DownloadImagesButton
+						scopeType="route"
+						scopeId={routeId}
+						className="mt-2"
+					/>
 					{routeTags.length > 0 && (
 						<div className="flex flex-wrap gap-1.5 mt-2">
 							{routeTags.map((tag) => (
