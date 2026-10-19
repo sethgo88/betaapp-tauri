@@ -29,7 +29,7 @@ Sizes and counts of what is on disk come from `getCacheStats({ type, id })` (ima
 | `resolveScope(type, id)` | `{ regionId, name }` by walking up the local cache |
 | `isRegionDataDownloaded(regionId)` | Checks `downloaded_regions` |
 | `collectScopeImages(type, id)` | All unique `{ key, sizeBytes }` in the area (chunked `IN` queries) |
-| `getScopeSummary(type, id)` | `{ total, toDownload, knownBytes, unknownCount, regionDataMissing, areaName, regionName }` for the confirm dialog; only images not yet cached count; images without a recorded size are reported separately (`unknownCount`), not estimated |
+| `getScopeSummary(type, id)` | `{ total, toDownload, knownBytes, unknownCount, toRemove, regionDataMissing, areaName, regionName }` for the confirm dialog; only images not yet cached count; images without a recorded size are reported separately (`unknownCount`), not estimated |
 | `downloadScopeImages(type, id, { signal, onProgress, fetchImpl })` | Downloads region data if needed, registers the area as `partial`, unlinks images that left the area, links already-cached images, fetches the rest with a pool of 4, then marks `complete` (not if cancelled or any image failed). Re-running resumes without refetching cached files, and doubles as "re-fetch" |
 | `deleteScopeImages(type, id)` | `releaseScope` + remove the registry row |
 | `fetchImageDownloads()` / `fetchImageDownload(type, id)` | Registry reads |
@@ -52,6 +52,6 @@ Sizes and counts of what is on disk come from `getCacheStats({ type, id })` (ima
 | `useStorageOverview()` / `usePersonalPhotoClimbs()` | Totals and per-climb personal photo list |
 | `useRemoveClimbOfflinePhotos()` | Releases a climb's uploaded photo files and clears `offline_available`; pending-upload photos are kept |
 
-Known limitation: deleted gallery images (`route_images` / `wall_images`) are not pruned locally by sync (delta pull only), so deletions by an admin don't show as updates. Topos are fully re-pulled and pruned.
+Deleted gallery images: `pullRouteImages` / `pullWallImages` fully re-pull and prune the local cache (`pruneCacheRows`; an empty server response prunes nothing), so an image an admin deletes disappears from the local lists after the next sync. For a downloaded area it shows as a removed image (`pendingUpdate.removed`, chip "Updates available (−N)"); the Re-fetch dialog says how many will be deleted from the device and re-fetching releases the files.
 
 UI: `components/molecules/DownloadImagesButton`.

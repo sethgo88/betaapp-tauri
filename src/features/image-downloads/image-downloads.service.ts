@@ -227,6 +227,7 @@ export async function getScopeSummary(
 			toDownload: 0,
 			knownBytes: 0,
 			unknownCount: 0,
+			toRemove: 0,
 			regionDataMissing: false,
 			areaName,
 			regionName: null,
@@ -246,6 +247,7 @@ export async function getScopeSummary(
 			toDownload: 0,
 			knownBytes: 0,
 			unknownCount: 0,
+			toRemove: 0,
 			regionDataMissing: true,
 			areaName,
 			regionName,
@@ -255,7 +257,13 @@ export async function getScopeSummary(
 	const images = await collectScopeImages(type, id);
 	const cached = await getCachedKeys(images.map((i) => i.key));
 	const missing = images.filter((i) => !cached.has(i.key));
+	const linked = await db.select<{ key: string }[]>(
+		"SELECT key FROM cached_image_refs WHERE scope_type = ? AND scope_id = ?",
+		[type, id],
+	);
+	const currentKeys = new Set(images.map((i) => i.key));
 	return {
+		toRemove: linked.filter((r) => !currentKeys.has(r.key)).length,
 		total: images.length,
 		toDownload: missing.length,
 		knownBytes: missing.reduce((sum, i) => sum + (i.sizeBytes ?? 0), 0),
@@ -424,8 +432,10 @@ export async function getAreaImageStatuses(): Promise<AreaImageStatus[]> {
 				[record.scope_type, record.scope_id],
 			);
 			const have = new Set(linked.map((r) => r.key));
+			const currentKeys = new Set(current.map((i) => i.key));
 			const added = current.filter((i) => !have.has(i.key)).length;
-			if (added > 0) pendingUpdate = { added };
+			const removed = [...have].filter((k) => !currentKeys.has(k)).length;
+			if (added > 0 || removed > 0) pendingUpdate = { added, removed };
 		}
 		statuses.push({ record, stats, pendingUpdate });
 	}

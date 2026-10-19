@@ -47,6 +47,14 @@ const Chip = ({
 	</span>
 );
 
+function updateLabel(update: NonNullable<AreaImageStatus["pendingUpdate"]>) {
+	const parts = [
+		update.added > 0 ? `+${update.added}` : null,
+		update.removed > 0 ? `−${update.removed}` : null,
+	].filter(Boolean);
+	return `Updates available (${parts.join(" ")})`;
+}
+
 const AreaCard = ({ status }: { status: AreaImageStatus }) => {
 	const navigate = useNavigate();
 	const { record, stats, pendingUpdate } = status;
@@ -87,7 +95,7 @@ const AreaCard = ({ status }: { status: AreaImageStatus }) => {
 				<Chip tone="muted">{SCOPE_LABEL[record.scope_type]}</Chip>
 				{record.status === "partial" && <Chip tone="amber">Partial</Chip>}
 				{pendingUpdate && (
-					<Chip tone="amber">{`Updates available (+${pendingUpdate.added})`}</Chip>
+					<Chip tone="amber">{updateLabel(pendingUpdate)}</Chip>
 				)}
 			</div>
 			<p className="text-xs text-text-primary/70">

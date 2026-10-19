@@ -22,6 +22,8 @@ export type ScopeSummary = {
 	knownBytes: number;
 	/** To-download images with no recorded size (legacy uploads) */
 	unknownCount: number;
+	/** Downloaded images no longer in the area (deleted by an admin); a re-fetch deletes them */
+	toRemove: number;
 	/** True when the region's data isn't on the device, so counts can't be known yet */
 	regionDataMissing: boolean;
 	areaName: string;
@@ -38,8 +40,13 @@ export type AreaImageStatus = {
 	record: ImageDownload;
 	/** What is on disk for this area */
 	stats: { count: number; bytes: number };
-	/** New images in the area that aren't downloaded yet; null when up to date */
-	pendingUpdate: { added: number } | null;
+	/** Changes since the last download; null when up to date */
+	pendingUpdate: {
+		/** New images in the area that aren't downloaded yet */
+		added: number;
+		/** Downloaded images that have since been removed from the area */
+		removed: number;
+	} | null;
 };
 
 export type StorageOverview = {

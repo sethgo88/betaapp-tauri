@@ -234,7 +234,7 @@ describe("image manager", () => {
 			"INSERT INTO route_images_cache (id, route_id, image_url, sort_order, uploaded_by, size_bytes) VALUES ('ri2','r2','https://s/r2.webp',0,'u',200)",
 		);
 		[status] = await getAreaImageStatuses();
-		expect(status.pendingUpdate).toEqual({ added: 1 });
+		expect(status.pendingUpdate).toEqual({ added: 1, removed: 0 });
 
 		await downloadScopeImages("crag", "cr1", { fetchImpl: okFetch });
 		[status] = await getAreaImageStatuses();
@@ -297,5 +297,19 @@ describe("image manager", () => {
 		await clearClimbImageCache("c1");
 		expect(await readCachedBlob("climb:u/c1/a.webp")).toBeNull();
 		expect(await readCachedBlob("climb:u/c1/b.webp")).not.toBeNull();
+	});
+
+	it("reports removed images as an update and re-fetch deletes them", async () => {
+		await downloadScopeImages("crag", "cr1", { fetchImpl: okFetch });
+		sqlite.exec("DELETE FROM route_images_cache WHERE id = 'ri1'");
+
+		let [status] = await getAreaImageStatuses();
+		expect(status.pendingUpdate).toEqual({ added: 0, removed: 1 });
+		expect((await getScopeSummary("crag", "cr1")).toRemove).toBe(1);
+
+		await downloadScopeImages("crag", "cr1", { fetchImpl: okFetch });
+		[status] = await getAreaImageStatuses();
+		expect(status.pendingUpdate).toBeNull();
+		expect(await readCachedBlob("https://s/r1.webp")).toBeNull();
 	});
 });

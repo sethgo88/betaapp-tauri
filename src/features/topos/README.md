@@ -49,7 +49,7 @@ Mirror the SQLite schema: `wall_topos`, `wall_topo_lines`, `route_topos`.
 | `deleteWallTopo(id, imageUrl)` | Remove topo + all lines + storage file |
 | `upsertRouteTopo(routeId, imageUrl, points, color, createdBy, sizeBytes?)` | Create or update route topo; a points-only edit keeps the stored size |
 | `applyRemoteWallTopo` / `applyRemoteWallTopoLine` / `applyRemoteRouteTopo` | `INSERT OR REPLACE` into the cache — used by sync pull |
-| `pruneTopoCache(table, remoteIds)` | Delete cache rows missing from the server after a full pull |
+| `pruneCacheRows(table, remoteIds)` | Delete cache rows missing from the server after a full pull |
 | `deleteRouteTopo(id, imageUrl)` | Remove route topo + storage file |
 
 ## Query hooks (`topos.queries.ts`)

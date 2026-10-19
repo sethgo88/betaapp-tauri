@@ -35,7 +35,7 @@ Full paged pull (no `since`) of the admin-owned gallery tables, so edits to exis
 Push/pull `climb_image_pins` rows scoped to the user's images (via JOIN on `climb_images.user_id`). Pull strips the JOIN column before applying locally.
 
 ### `pullWallTopos()` / `pullWallTopoLines()` / `pullRouteTopos()`
-One-way pull of admin-owned topo tables into `wall_topos_cache`, `wall_topo_lines_cache`, `route_topos_cache` (includes `size_bytes`). Always a **full** pull (paged, 1000 rows/page) because edits to an existing topo don't change `created_at`; after each complete pull, cache rows no longer on the server are pruned via `pruneTopoCache`. Called from `useSync` after `pullWallImages`.
+One-way pull of admin-owned topo tables into `wall_topos_cache`, `wall_topo_lines_cache`, `route_topos_cache` (includes `size_bytes`). Always a **full** pull (paged, 1000 rows/page) because edits to an existing topo don't change `created_at`; after each complete pull, cache rows no longer on the server are pruned via `pruneCacheRows`. Called from `useSync` after `pullWallImages`.
 
 ### `pushRouteLinks(userId, since?)` / `pullRouteLinks(since?)`
 Push/pull community-shared `route_links`. Push is scoped to `user_id`; pull fetches all links (no user filter — community data). Delta uses `created_at`. Deletions are handled directly in `deleteRouteLink()` (Supabase soft-delete + local hard-delete) rather than via sync.

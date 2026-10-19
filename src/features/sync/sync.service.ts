@@ -30,7 +30,7 @@ import {
 	applyRemoteRouteTopo,
 	applyRemoteWallTopo,
 	applyRemoteWallTopoLine,
-	pruneTopoCache,
+	pruneCacheRows,
 } from "@/features/topos/topos.service";
 import { getDb } from "@/lib/db";
 import { supabase } from "@/lib/supabase";
@@ -304,17 +304,24 @@ export async function pullClimbImagePins(
 //
 // Fully re-pulled on every sync (small admin tables) so edits to an existing
 // row — e.g. the image optimizer repointing a file to a new WebP path — reach
-// other devices. Rows deleted on the server are not pruned yet (see the
-// "deleted gallery images" issue).
+// other devices, and cache rows deleted on the server are pruned afterwards.
 
 export async function pullRouteImages(): Promise<void> {
 	const rows = await fetchAllRows<RouteImage>("route_images");
 	for (const row of rows) await applyRemoteRouteImage(row);
+	await pruneCacheRows(
+		"route_images_cache",
+		rows.map((r) => r.id),
+	);
 }
 
 export async function pullWallImages(): Promise<void> {
 	const rows = await fetchAllRows<WallImage>("wall_images");
 	for (const row of rows) await applyRemoteWallImage(row);
+	await pruneCacheRows(
+		"wall_images_cache",
+		rows.map((r) => r.id),
+	);
 }
 
 // ── Topos pull (one-way — admin-managed content) ──────────────────────────────
@@ -347,7 +354,7 @@ async function fetchAllRows<T>(table: string): Promise<T[]> {
 export async function pullWallTopos(): Promise<void> {
 	const rows = await fetchAllRows<WallTopo>("wall_topos");
 	for (const row of rows) await applyRemoteWallTopo(row);
-	await pruneTopoCache(
+	await pruneCacheRows(
 		"wall_topos_cache",
 		rows.map((r) => r.id),
 	);
@@ -358,7 +365,7 @@ export async function pullWallTopoLines(): Promise<void> {
 		Omit<WallTopoLine, "points"> & { points: string }
 	>("wall_topo_lines");
 	for (const row of rows) await applyRemoteWallTopoLine(row);
-	await pruneTopoCache(
+	await pruneCacheRows(
 		"wall_topo_lines_cache",
 		rows.map((r) => r.id),
 	);
@@ -369,7 +376,7 @@ export async function pullRouteTopos(): Promise<void> {
 		Omit<RouteTopo, "points"> & { points: string }
 	>("route_topos");
 	for (const row of rows) await applyRemoteRouteTopo(row);
-	await pruneTopoCache(
+	await pruneCacheRows(
 		"route_topos_cache",
 		rows.map((r) => r.id),
 	);

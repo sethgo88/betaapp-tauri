@@ -310,13 +310,21 @@ export async function applyRemoteRouteTopo(topo: RouteTopoRow): Promise<void> {
 }
 
 /**
- * Remove cached topo rows that no longer exist on the server. Called after a
- * complete (all pages) pull so admin deletions propagate to other devices.
+ * Remove cached rows that no longer exist on the server. Called after a
+ * complete (all pages) pull of admin-owned content so deletions propagate to
+ * other devices. An empty server result is treated as "unknown" (outage / RLS
+ * hiccup) and prunes nothing, so a bad response can't wipe the local cache.
  */
-export async function pruneTopoCache(
-	table: "wall_topos_cache" | "wall_topo_lines_cache" | "route_topos_cache",
+export async function pruneCacheRows(
+	table:
+		| "wall_topos_cache"
+		| "wall_topo_lines_cache"
+		| "route_topos_cache"
+		| "route_images_cache"
+		| "wall_images_cache",
 	remoteIds: string[],
 ): Promise<void> {
+	if (remoteIds.length === 0) return;
 	const db = await getDb();
 	const local = await db.select<{ id: string }[]>(`SELECT id FROM ${table}`);
 	const keep = new Set(remoteIds);

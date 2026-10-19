@@ -26,15 +26,19 @@ function describe(summary: ScopeSummary): string {
 	if (summary.regionDataMissing) {
 		return `The data for ${summary.regionName ?? "this region"} isn't on this device yet. It will be downloaded first, then all images in ${summary.areaName} and everything under it.`;
 	}
+	const removal =
+		summary.toRemove > 0
+			? ` ${summary.toRemove} image${summary.toRemove === 1 ? "" : "s"} that ${summary.toRemove === 1 ? "was" : "were"} removed from the area will be deleted from this device.`
+			: "";
 	if (summary.toDownload === 0) {
-		return `All ${summary.total} images in ${summary.areaName} are already on this device.`;
+		return `All ${summary.total} images in ${summary.areaName} are already on this device.${removal}`;
 	}
 	const known =
 		summary.knownBytes > 0 ? `${formatBytes(summary.knownBytes)} known` : null;
 	const unknown =
 		summary.unknownCount > 0 ? `${summary.unknownCount} of unknown size` : null;
 	const size = [known, unknown].filter(Boolean).join(", ");
-	return `${summary.toDownload} image${summary.toDownload === 1 ? "" : "s"} in ${summary.areaName} and everything under it will be downloaded${size ? ` (${size})` : ""}.`;
+	return `${summary.toDownload} image${summary.toDownload === 1 ? "" : "s"} in ${summary.areaName} and everything under it will be downloaded${size ? ` (${size})` : ""}.${removal}`;
 }
 
 /** Download / resume / re-fetch / remove offline images for an area and its children. */
