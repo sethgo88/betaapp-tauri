@@ -29,7 +29,8 @@ Router defined in `src/router.tsx` using `createMemoryHistory` (required for And
 | `/routes/add` | `AddEditRouteView` | required | Add a new route with location drill-down; admin creates verified, user creates pending |
 | `/routes/$routeId/edit` | `AddEditRouteView` | required | Edit an existing route including changing its wall |
 | `/stats` | `StatsView` | required | Personal climbing stats — grade distribution, sends per month, burns per send |
-| `/settings` | `SettingsView` | public | App settings; dev-only offline simulation toggle |
+| `/settings` | `SettingsView` | public | App settings; Offline images card (Android); dev-only offline simulation toggle |
+| `/settings/images` | `ImageManagerView` | required | Offline image manager: downloaded areas, personal photos, update flags |
 | `/admin/locations` | `admin/LocationManagerView` | admin | Add/delete countries and regions in Supabase |
 | `/admin/verify` | `admin/VerificationView` | admin | Unified pending-submissions queue: routes and locations grouped by type with count badges; inline approve, edit, merge, reject |
 
