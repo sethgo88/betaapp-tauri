@@ -33,7 +33,7 @@ Sizes and counts of what is on disk come from `getCacheStats({ type, id })` (ima
 | `downloadScopeImages(type, id, { signal, onProgress, fetchImpl })` | Downloads region data if needed, registers the area as `partial`, unlinks images that left the area, links already-cached images, fetches the rest with a pool of 4, then marks `complete` (not if cancelled or any image failed). Re-running resumes without refetching cached files, and doubles as "re-fetch" |
 | `deleteScopeImages(type, id)` | `releaseScope` + remove the registry row |
 | `fetchImageDownloads()` / `fetchImageDownload(type, id)` | Registry reads |
-| `getAreaImageStatuses()` | Per downloaded area: `{ record, stats (on disk), pendingUpdate: { added } \| null }`. An update = images currently in the area that aren't linked to it in `cached_image_refs`; computed from local data (sync already pulled the newest rows). Partial areas never report updates |
+| `getAreaImageStatuses()` | Per downloaded area: `{ record, stats (on disk), pendingUpdate: { added, removed } \| null }`. An update = images currently in the area that aren't linked to it in `cached_image_refs` (added), or linked images no longer in the area (removed); computed from local data (sync already pulled the newest rows). Partial areas never report updates |
 | `getStorageOverview()` | `{ total, personal }` cache stats |
 | `listPersonalPhotoClimbs()` | Climbs with photo files under scope `climb`: `{ climbId, label, photoCount, bytes, offlineAvailable }` |
 
