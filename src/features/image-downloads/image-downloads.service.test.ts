@@ -130,7 +130,7 @@ describe("image-downloads.service", () => {
 		});
 		expect(result).toEqual({ downloaded: 2, failed: 0, cancelled: false });
 		expect(fetchSpy).toHaveBeenCalledTimes(2);
-		expect(progress.at(-1)).toBe(2);
+		expect(progress[progress.length - 1]).toBe(2);
 		expect((await fetchImageDownload("crag", "cr1"))?.status).toBe("complete");
 		expect(await readCachedBlob("https://s/w1.webp")).not.toBeNull();
 
