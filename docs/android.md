@@ -180,6 +180,7 @@ Declared in `src-tauri/capabilities/`. Missing capability = silent failure with 
 | `core:default` | Core Tauri APIs |
 | `sql:default`, `sql:allow-execute` | SQLite read/write |
 | `deep-link:default` | Magic link callback |
+| `fs:allow-exists`, `fs:allow-mkdir`, `fs:allow-read-file`, `fs:allow-write-file`, `fs:allow-remove` + `fs:scope` | Offline image cache files, scoped to `$APPDATA/image-cache/**` (#252) |
 
 If a Tauri API call silently fails on Android, check the capabilities file first.
 

@@ -1,3 +1,4 @@
+import { CachedImage } from "@/components/atoms/CachedImage";
 import { Spinner } from "@/components/atoms/Spinner";
 
 interface GalleryImage {
@@ -29,7 +30,8 @@ export function ImagePickerGrid({
 							onClick={() => onSelect(img.image_url)}
 							className="aspect-square rounded-[var(--radius-md)] overflow-hidden"
 						>
-							<img
+							<CachedImage
+								cacheKey={img.image_url}
 								src={img.image_url}
 								alt=""
 								className="w-full h-full object-cover"

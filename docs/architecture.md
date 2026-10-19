@@ -230,3 +230,4 @@ These principles apply to the **Tauri (Android)** platform. The web platform is 
 | `core:default` | Core Tauri APIs |
 | `sql:default`, `sql:allow-execute` | SQLite read/write |
 | `deep-link:default` | Magic link callback handling |
+| `fs:*` (exists, mkdir, read-file, write-file, remove) scoped to `$APPDATA/image-cache/**` | Offline image cache — image bytes are stored as files, tracked by `cached_images` / `cached_image_refs` (see `src/features/image-cache/README.md`) |

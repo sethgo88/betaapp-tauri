@@ -196,7 +196,9 @@ export async function pushClimbImages(
 	);
 	if (images.length === 0) return;
 
-	const { error } = await supabase.from("climb_images").upsert(images, {
+	// local_data is a legacy on-device column and must never be sent to the server
+	const rows = images.map(({ local_data: _localData, ...rest }) => rest);
+	const { error } = await supabase.from("climb_images").upsert(rows, {
 		onConflict: "id",
 	});
 	if (error) throw error;

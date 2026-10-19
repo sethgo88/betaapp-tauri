@@ -1,8 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/features/auth/auth.store";
 import { setClimbOfflineAvailable } from "@/features/climbs/climbs.service";
+import { climbImageKey } from "@/features/image-cache/image-cache.keys";
+import { CACHED_IMAGE_KEY } from "@/features/image-cache/image-cache.queries";
+import { cacheImage } from "@/features/image-cache/image-cache.service";
 import {
-	blobToBase64,
 	extForBlob,
 	resizeAndCompress,
 	uploadBlobToStorage,
@@ -73,16 +75,18 @@ export function useAddClimbImage(climbId: string) {
 			const sortOrder = await getClimbImageSortOrder(climbId);
 			const imageId = crypto.randomUUID();
 
-			// Compress once; save locally as base64, then attempt upload if online.
+			// Compress once; save to the local file cache, then attempt upload if online.
 			const blob = await resizeAndCompress(file, "beta");
 			const storagePath = `${userId}/${climbId}/${imageId}.${extForBlob(blob)}`;
-			const localData = await blobToBase64(blob);
+			await cacheImage(climbImageKey(storagePath), blob, {
+				type: "climb",
+				id: climbId,
+			});
 			const id = await insertClimbImage(
 				climbId,
 				userId,
 				storagePath,
 				sortOrder,
-				localData,
 				"pending",
 				blob.size,
 			);
@@ -98,6 +102,7 @@ export function useAddClimbImage(climbId: string) {
 		},
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: [CLIMB_IMAGES_KEY, climbId] });
+			qc.invalidateQueries({ queryKey: [CACHED_IMAGE_KEY] });
 			qc.invalidateQueries({ queryKey: [USER_IMAGE_COUNT_KEY, userId] });
 		},
 		onError: (err) => {
@@ -130,6 +135,7 @@ export function useDeleteClimbImage(climbId: string) {
 		},
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: [CLIMB_IMAGES_KEY, climbId] });
+			qc.invalidateQueries({ queryKey: [CACHED_IMAGE_KEY] });
 			qc.invalidateQueries({ queryKey: [USER_IMAGE_COUNT_KEY, userId] });
 		},
 	});
@@ -258,6 +264,7 @@ export function useSetClimbOfflineAvailable(climbId: string) {
 		onSuccess: (_data, enable) => {
 			qc.invalidateQueries({ queryKey: ["climbs", climbId] });
 			qc.invalidateQueries({ queryKey: [CLIMB_IMAGES_KEY, climbId] });
+			qc.invalidateQueries({ queryKey: [CACHED_IMAGE_KEY] });
 			addToast({
 				message: enable ? "Saved for offline" : "Offline copy removed",
 				type: "success",

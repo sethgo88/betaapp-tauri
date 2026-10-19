@@ -83,6 +83,7 @@ Versioned migration runner. Maintains a `schema_version` table (single row) and 
 | v31 | `sun_data` (TEXT, nullable) on `walls_cache` and `routes_cache` (#220) |
 | v33 | `size_bytes` on `climb_images`, `route_images_cache`, `wall_images_cache` (#251) |
 | v34 | `size_bytes` on `wall_topos_cache`, `route_topos_cache` (#256) |
+| v35 | `cached_images` + `cached_image_refs` tables for the file-based image cache (#252) |
 
 ### Rules
 - Always use `?` positional parameters — never string interpolation (SQL injection)
@@ -102,6 +103,10 @@ Versioned migration runner. Maintains a `schema_version` table (single row) and 
 | `string \| null` | `TEXT` | Nullable columns |
 
 ---
+
+## image-cache.ts — file store for cached images
+
+Thin wrapper over `@tauri-apps/plugin-fs` that reads/writes/removes files in `$APPDATA/image-cache/`. Exposes the `ImageFileStore` interface (`write(name, bytes)`, `read(name)`, `remove(name)`); `setImageFileStore()` swaps in an in-memory store for tests. Feature code never calls it directly — use `src/features/image-cache/image-cache.service.ts`.
 
 ## image-utils.ts — image resize, compress, and upload
 

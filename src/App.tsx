@@ -22,6 +22,7 @@ import {
 import { useAuthStore } from "@/features/auth/auth.store";
 import { backfillClimbLocations } from "@/features/climbs/climbs.service";
 import { seedGrades } from "@/features/grades/grades-seed";
+import { migrateLocalDataToFiles } from "@/features/image-cache/image-cache.service";
 import { seedTags } from "@/features/tags/tags-seed";
 import { useSync } from "@/hooks/useSync";
 import { getCurrentLocation } from "@/lib/platform/geolocation";
@@ -83,6 +84,8 @@ function Bootstrap() {
 			await seedGrades();
 			await seedTags();
 			await backfillClimbLocations();
+			// Fire-and-forget: legacy base64 photos become files; failures retry next launch
+			void migrateLocalDataToFiles();
 
 			// Allow dev-only flag to simulate offline startup without airplane mode.
 			// The flag read is gated to DEV so it compiles out of release builds.

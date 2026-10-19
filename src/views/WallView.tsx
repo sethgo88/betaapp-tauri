@@ -18,6 +18,7 @@ import { useNavigate, useParams } from "@tanstack/react-router";
 import { GripVertical, MapPin, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/atoms/Button";
+import { CachedImage } from "@/components/atoms/CachedImage";
 import { Spinner } from "@/components/atoms/Spinner";
 import { StarRating } from "@/components/atoms/StarRating";
 import { TagPill } from "@/components/atoms/TagPill";
@@ -311,7 +312,8 @@ const WallView = () => {
 						aria-label="View topo"
 					>
 						<div className="relative -translate-y-1/3">
-							<img
+							<CachedImage
+								cacheKey={wallTopo.image_url}
 								src={wallTopo.image_url}
 								alt="Wall topo"
 								className="w-full"

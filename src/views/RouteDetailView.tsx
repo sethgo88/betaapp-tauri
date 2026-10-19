@@ -2,6 +2,7 @@ import { useNavigate, useParams } from "@tanstack/react-router";
 import { ExternalLink, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/atoms/Button";
+import { CachedImage } from "@/components/atoms/CachedImage";
 import { Input } from "@/components/atoms/Input";
 import { Select } from "@/components/atoms/Select";
 import { Spinner } from "@/components/atoms/Spinner";
@@ -283,7 +284,8 @@ const RouteDetailView = () => {
 							<RouteTopoViewer topo={routeTopo} />
 						) : (
 							<div className="relative w-full">
-								<img
+								<CachedImage
+									cacheKey={wallTopo?.image_url}
 									src={wallTopo?.image_url}
 									alt="Route topo"
 									className="w-full"

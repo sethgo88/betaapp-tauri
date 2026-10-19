@@ -18,6 +18,7 @@ Technology choices for BetaApp. For usage patterns, see the relevant README in `
 | **tauri-plugin-sql** | True embedded SQLite; works offline; data survives app restarts | All access via `src/lib/db.ts` — never import plugin directly in feature code |
 | **Supabase** | Hosted Postgres with Auth, Realtime, RLS, and web dashboard as admin CMS | Credentials via `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` in `.env` (gitignored) |
 | **tauri-plugin-deep-link** | Handles `betaapp://` URL scheme on Android | Plugin registered; magic link auth wiring planned for Phase 11 |
+| **tauri-plugin-fs** | Real files in app-private storage for the offline image cache (SQLite BLOB/base64 is too heavy for many photos) | Scoped to `$APPDATA/image-cache/**`; all access via `src/lib/image-cache.ts` — never import the plugin in feature code |
 | **Leaflet + react-leaflet** | Interactive maps with OSM + Stadia Alidade Satellite tiles | CSS imported in `main.tsx`; custom SVG marker icons; Stadia API key via `VITE_STADIA_API_KEY` |
 | **recharts** | Composable React charting library for stats visualisations | Used in `StatsView`; chart colours are hardcoded hex values (CSS variables are not accessible inside canvas/SVG renderers) |
 | **pnpm** | Fast, strict dependency resolution | Never use `npm` or `yarn` |

@@ -8,6 +8,7 @@ import {
 	Trash2,
 } from "lucide-react";
 import { useRef, useState } from "react";
+import { CachedImage } from "@/components/atoms/CachedImage";
 import { Spinner } from "@/components/atoms/Spinner";
 import {
 	USER_IMAGE_CAP,
@@ -18,6 +19,7 @@ import {
 	useUserImageCount,
 } from "@/features/climb-images/climb-images.queries";
 import type { ClimbImageWithUrl } from "@/features/climb-images/climb-images.schema";
+import { climbImageKey } from "@/features/image-cache/image-cache.keys";
 import { ClimbImageViewer } from "./ClimbImageViewer";
 import { ConfirmDeleteDialog } from "./ConfirmDeleteDialog";
 import { PhotoViewer } from "./PhotoViewer";
@@ -88,7 +90,8 @@ const ImageActionSheet = ({
 						className="w-full aspect-video bg-black flex items-center justify-center overflow-hidden"
 						aria-label="View full screen"
 					>
-						<img
+						<CachedImage
+							cacheKey={climbImageKey(image.image_url)}
 							src={image.signed_url}
 							alt=""
 							className="max-w-full max-h-full object-contain"
@@ -115,7 +118,8 @@ const ImageActionSheet = ({
 										opacity: img.id === image.id ? 1 : 0.6,
 									}}
 								>
-									<img
+									<CachedImage
+										cacheKey={climbImageKey(img.image_url)}
 										src={img.signed_url}
 										alt=""
 										className="w-full h-full object-cover"
@@ -261,7 +265,8 @@ export const ClimbImageGallery = ({ climbId }: ClimbImageGalleryProps) => {
 						className="relative rounded-[var(--radius-md)] overflow-hidden block"
 						style={{ width: THUMB_SIZE, height: THUMB_SIZE }}
 					>
-						<img
+						<CachedImage
+							cacheKey={climbImageKey(img.image_url)}
 							src={img.signed_url}
 							alt=""
 							className="w-full h-full object-cover"
@@ -349,6 +354,7 @@ export const ClimbImageGallery = ({ climbId }: ClimbImageGalleryProps) => {
 			{photoViewerImage && (
 				<PhotoViewer
 					src={photoViewerImage.signed_url}
+					cacheKey={climbImageKey(photoViewerImage.image_url)}
 					onClose={() => setPhotoViewerImageId(null)}
 				/>
 			)}

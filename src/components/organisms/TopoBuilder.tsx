@@ -1,5 +1,6 @@
 import { X } from "lucide-react";
 import { useRef, useState } from "react";
+import { CachedImage } from "@/components/atoms/CachedImage";
 import { Spinner } from "@/components/atoms/Spinner";
 import { ConfirmDeleteDialog } from "@/components/molecules/ConfirmDeleteDialog";
 import { ImagePickerGrid } from "@/components/molecules/ImagePickerGrid";
@@ -417,7 +418,8 @@ const DrawingCanvas = ({
 				onMouseMove={handleMouseMove}
 				onMouseUp={handleMouseUp}
 			>
-				<img
+				<CachedImage
+					cacheKey={imageUrl.startsWith("blob:") ? null : imageUrl}
 					src={imageUrl}
 					alt="Topo background"
 					className="w-full pointer-events-none"

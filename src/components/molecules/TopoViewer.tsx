@@ -1,5 +1,6 @@
 import { ExternalLink } from "lucide-react";
 import { useState } from "react";
+import { CachedImage } from "@/components/atoms/CachedImage";
 import type {
 	RouteTopo,
 	WallTopo,
@@ -78,8 +79,8 @@ export const WallTopoViewer = ({
 						: undefined
 				}
 			>
-				{/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: onLoad measures natural image size, not a user interaction */}
-				<img
+				<CachedImage
+					cacheKey={topo.image_url}
 					src={topo.image_url}
 					alt="Wall topo"
 					className="w-full"
@@ -235,7 +236,8 @@ export const RouteTopoViewer = ({ topo }: RouteTopoViewerProps) => {
 
 	return (
 		<div className="relative w-full">
-			<img
+			<CachedImage
+				cacheKey={topo.image_url}
 				src={topo.image_url}
 				alt="Route topo"
 				className="w-full object-contain"

@@ -17,6 +17,15 @@
 		"deep-link:allow-get-current",
 		"deep-link:allow-is-registered",
 		"deep-link:allow-register",
-		"deep-link:allow-unregister"
+		"deep-link:allow-unregister",
+		"fs:allow-exists",
+		"fs:allow-mkdir",
+		"fs:allow-read-file",
+		"fs:allow-write-file",
+		"fs:allow-remove",
+		{
+			"identifier": "fs:scope",
+			"allow": [{ "path": "$APPDATA/image-cache" }, { "path": "$APPDATA/image-cache/**" }]
+		}
 	]
 }

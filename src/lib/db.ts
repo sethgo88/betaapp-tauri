@@ -680,6 +680,26 @@ const migrations: Migration[] = [
 			`ALTER TABLE route_topos_cache ADD COLUMN size_bytes INTEGER`,
 		);
 	},
+
+	// v35: file-based image cache (#252) — files live in app storage, rows track them
+	async (db) => {
+		await db.execute(`
+      CREATE TABLE IF NOT EXISTS cached_images (
+        key        TEXT PRIMARY KEY,
+        local_path TEXT NOT NULL,
+        bytes      INTEGER NOT NULL,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )
+    `);
+		await db.execute(`
+      CREATE TABLE IF NOT EXISTS cached_image_refs (
+        key        TEXT NOT NULL,
+        scope_type TEXT NOT NULL,
+        scope_id   TEXT NOT NULL,
+        PRIMARY KEY (key, scope_type, scope_id)
+      )
+    `);
+	},
 ];
 
 export async function runMigrations(db: DbAdapter): Promise<void> {

@@ -1,5 +1,6 @@
 import { Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
+import { CachedImage } from "@/components/atoms/CachedImage";
 import { Spinner } from "@/components/atoms/Spinner";
 import { ConfirmDeleteDialog } from "./ConfirmDeleteDialog";
 import { PhotoViewer } from "./PhotoViewer";
@@ -62,7 +63,8 @@ export const AdminImageGallery = ({
 							className="w-20 h-20 rounded-[var(--radius-md)] overflow-hidden block"
 							aria-label="View image"
 						>
-							<img
+							<CachedImage
+								cacheKey={img.image_url}
 								src={img.image_url}
 								alt=""
 								className="w-full h-full object-cover"
@@ -99,6 +101,7 @@ export const AdminImageGallery = ({
 			{fullscreenUrl && (
 				<PhotoViewer
 					src={fullscreenUrl}
+					cacheKey={fullscreenUrl}
 					onClose={() => setFullscreenUrl(null)}
 				/>
 			)}

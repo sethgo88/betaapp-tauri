@@ -1,9 +1,13 @@
-import { getDb } from "@/lib/db";
+import { climbImageKey } from "@/features/image-cache/image-cache.keys";
 import {
-	base64ToBlob,
-	blobToBase64,
-	uploadBlobToStorage,
-} from "@/lib/image-utils";
+	addRef,
+	cacheImage,
+	getCachedKeys,
+	readCachedBlob,
+	releaseRef,
+} from "@/features/image-cache/image-cache.service";
+import { getDb } from "@/lib/db";
+import { uploadBlobToStorage } from "@/lib/image-utils";
 import { supabase } from "@/lib/supabase";
 import type {
 	ClimbImage,
@@ -36,19 +40,28 @@ export async function fetchClimbImages(
 		"SELECT * FROM climb_images WHERE climb_id = ? AND deleted_at IS NULL ORDER BY sort_order ASC",
 		[climbId],
 	);
+	const cached = await getCachedKeys(
+		rows.map((r) => climbImageKey(r.image_url)),
+	);
 	return Promise.all(
 		rows.map(async (row) => {
 			const upload_status = row.upload_status ?? "uploaded";
 			let signed_url = "";
 			if (row.local_data) {
+				// Legacy base64 row not yet converted to a file
 				signed_url = row.local_data;
-			} else if (upload_status === "uploaded") {
+			} else if (
+				upload_status === "uploaded" &&
+				!cached.has(climbImageKey(row.image_url))
+			) {
+				// Not cached locally — fall back to a signed URL (needs network).
 				try {
 					signed_url = await signUrl(row.image_url);
 				} catch {
 					// Offline or signing failed — leave empty so other images still load
 				}
 			}
+			// Cached images resolve to a local file in the UI via useCachedImageUrl.
 			return { ...row, upload_status, signed_url };
 		}),
 	);
@@ -77,22 +90,20 @@ export async function insertClimbImage(
 	userId: string,
 	storagePath: string,
 	sortOrder: number,
-	localData?: string,
 	uploadStatus: "pending" | "uploaded" = "uploaded",
 	sizeBytes?: number,
 ): Promise<string> {
 	const db = await getDb();
 	const id = crypto.randomUUID();
 	await db.execute(
-		`INSERT INTO climb_images (id, climb_id, user_id, image_url, sort_order, local_data, upload_status, size_bytes, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
+		`INSERT INTO climb_images (id, climb_id, user_id, image_url, sort_order, upload_status, size_bytes, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
 		[
 			id,
 			climbId,
 			userId,
 			storagePath,
 			sortOrder,
-			localData ?? null,
 			uploadStatus,
 			sizeBytes ?? null,
 		],
@@ -116,9 +127,9 @@ export async function uploadPendingImages(userId: string): Promise<void> {
 	);
 
 	for (const img of pending) {
-		if (!img.local_data) continue;
 		try {
-			const blob = base64ToBlob(img.local_data);
+			const blob = await readCachedBlob(climbImageKey(img.image_url));
+			if (!blob) continue;
 			await uploadBlobToStorage("climb-images", img.image_url, blob);
 			await db.execute(
 				"UPDATE climb_images SET upload_status = 'uploaded' WHERE id = ?",
@@ -135,10 +146,20 @@ export async function uploadPendingImages(userId: string): Promise<void> {
 
 export async function softDeleteClimbImage(id: string): Promise<void> {
 	const db = await getDb();
+	const rows = await db.select<{ image_url: string; climb_id: string }[]>(
+		"SELECT image_url, climb_id FROM climb_images WHERE id = ?",
+		[id],
+	);
 	await db.execute(
 		"UPDATE climb_images SET deleted_at = datetime('now') WHERE id = ?",
 		[id],
 	);
+	if (rows[0]) {
+		await releaseRef(climbImageKey(rows[0].image_url), {
+			type: "climb",
+			id: rows[0].climb_id,
+		});
+	}
 }
 
 export async function reorderClimbImages(ids: string[]): Promise<void> {
@@ -157,20 +178,23 @@ export async function cacheImagesForOfflineClimb(
 	const db = await getDb();
 	const rows = await db.select<ClimbImage[]>(
 		`SELECT * FROM climb_images
-     WHERE climb_id = ? AND upload_status = 'uploaded'
-       AND local_data IS NULL AND deleted_at IS NULL`,
+     WHERE climb_id = ? AND upload_status = 'uploaded' AND deleted_at IS NULL`,
 		[climbId],
 	);
+	const cached = await getCachedKeys(
+		rows.map((r) => climbImageKey(r.image_url)),
+	);
 	for (const row of rows) {
+		const key = climbImageKey(row.image_url);
 		try {
-			const url = await signUrl(row.image_url);
-			const res = await fetch(url);
-			const blob = await res.blob();
-			const data = await blobToBase64(blob);
-			await db.execute("UPDATE climb_images SET local_data = ? WHERE id = ?", [
-				data,
-				row.id,
-			]);
+			if (cached.has(key)) {
+				// Already on disk (e.g. an uploaded photo) — just make sure the climb owns a ref
+				await addRef(key, { type: "climb", id: climbId });
+				continue;
+			}
+			const res = await fetch(await signUrl(row.image_url));
+			if (!res.ok) continue;
+			await cacheImage(key, await res.blob(), { type: "climb", id: climbId });
 		} catch {
 			// Non-fatal: skip this image, retry next time
 		}
@@ -179,10 +203,16 @@ export async function cacheImagesForOfflineClimb(
 
 export async function clearClimbImageCache(climbId: string): Promise<void> {
 	const db = await getDb();
-	await db.execute(
-		"UPDATE climb_images SET local_data = NULL WHERE climb_id = ? AND upload_status = 'uploaded'",
+	const rows = await db.select<{ image_url: string }[]>(
+		"SELECT image_url FROM climb_images WHERE climb_id = ? AND upload_status = 'uploaded'",
 		[climbId],
 	);
+	for (const row of rows) {
+		await releaseRef(climbImageKey(row.image_url), {
+			type: "climb",
+			id: climbId,
+		});
+	}
 }
 
 export async function cacheNewOfflineImages(userId: string): Promise<void> {

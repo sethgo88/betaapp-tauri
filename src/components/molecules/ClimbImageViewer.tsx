@@ -11,6 +11,7 @@ import {
 	X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { CachedImage } from "@/components/atoms/CachedImage";
 import { FootIcon } from "@/components/atoms/FootIcon";
 import { Input } from "@/components/atoms/Input";
 import {
@@ -25,6 +26,7 @@ import type {
 	PinType,
 	PointerDir,
 } from "@/features/climb-images/climb-images.schema";
+import { climbImageKey } from "@/features/image-cache/image-cache.keys";
 
 // ── Pin type config ───────────────────────────────────────────────────────────
 
@@ -472,8 +474,9 @@ export const ClimbImageViewer = ({ image, onClose }: ClimbImageViewerProps) => {
 				onTouchEnd={handleTouchEnd}
 			>
 				<div className="relative inline-block">
-					<img
+					<CachedImage
 						ref={imgRef}
+						cacheKey={climbImageKey(image.image_url)}
 						src={image.signed_url}
 						alt=""
 						className="max-w-full max-h-full object-contain select-none block"

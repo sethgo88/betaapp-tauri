@@ -1,12 +1,15 @@
 import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { CachedImage } from "@/components/atoms/CachedImage";
 
 interface PhotoViewerProps {
 	src: string;
+	/** Cache identity so a locally cached file is preferred over `src`. */
+	cacheKey?: string | null;
 	onClose: () => void;
 }
 
-export const PhotoViewer = ({ src, onClose }: PhotoViewerProps) => {
+export const PhotoViewer = ({ src, cacheKey, onClose }: PhotoViewerProps) => {
 	const [xf, setXf] = useState({ scale: 1, tx: 0, ty: 0, animated: false });
 	const xfRef = useRef(xf);
 	const containerRef = useRef<HTMLDivElement>(null);
@@ -170,7 +173,8 @@ export const PhotoViewer = ({ src, onClose }: PhotoViewerProps) => {
 						transition: xf.animated ? "transform 0.2s ease-out" : "none",
 					}}
 				>
-					<img
+					<CachedImage
+						cacheKey={cacheKey}
 						src={src}
 						alt=""
 						className="max-w-full max-h-full object-contain"
