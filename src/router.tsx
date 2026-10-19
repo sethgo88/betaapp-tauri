@@ -21,6 +21,7 @@ import VerificationView from "@/views/admin/VerificationView";
 import ClimbDetailView from "@/views/ClimbDetailView";
 import CragView from "@/views/CragView";
 import HomeView from "@/views/HomeView";
+import ImageManagerView from "@/views/ImageManagerView";
 import MapView from "@/views/MapView";
 import ProfileView from "@/views/ProfileView";
 import RegionView from "@/views/RegionView";
@@ -204,6 +205,13 @@ const settingsRoute = createRoute({
 	component: SettingsView,
 });
 
+const imageManagerRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/settings/images",
+	beforeLoad: requireAuth,
+	component: ImageManagerView,
+});
+
 const adminLocationsRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/admin/locations",
@@ -254,6 +262,7 @@ const routeTree = rootRoute.addChildren([
 	adminLocationsRoute,
 	adminVerificationRoute,
 	settingsRoute,
+	imageManagerRoute,
 	authCallbackRoute,
 ]);
 

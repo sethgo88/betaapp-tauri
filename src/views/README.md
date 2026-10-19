@@ -114,7 +114,10 @@ Personal climbing analytics. Sport/Boulder discipline toggle at top. Three recha
 Each panel shows a "Not enough data yet" empty state when the data array is empty. Powered by `useClimbStats(discipline)` → `climbs.stats.ts`.
 
 ### SettingsView `/settings`
-Public (no auth guard). Currently contains only a dev-only section (hidden in production). The "Simulate offline startup" toggle sets/clears the `betaapp-debug-offline` flag in localStorage, which makes `Bootstrap` treat the app as offline on the next cold start — useful for testing the offline session-restore path without airplane mode.
+Public (no auth guard). On Android it shows an **Offline images** card (total images · size on device) that opens `/settings/images`. Also contains a dev-only section (hidden in production). The "Simulate offline startup" toggle sets/clears the `betaapp-debug-offline` flag in localStorage, which makes `Bootstrap` treat the app as offline on the next cold start — useful for testing the offline session-restore path without airplane mode.
+
+### ImageManagerView `/settings/images`
+Requires auth (Android). Offline image manager: a storage summary (total images/size, personal photos split out); **Downloaded areas** — one card per `image_downloads` row with level, image count, size on disk, last downloaded, "Partial" / "Updates available (+N)" chips (updated areas sort first), tap-through to the area, and the shared `DownloadImagesButton` for Resume / Re-fetch / Remove; **Personal photos** — climbs with photo files on the device with a "Remove offline copy" action (pending uploads are kept). Data: `useStorageOverview`, `useAreaImageStatuses`, `usePersonalPhotoClimbs`, `useRemoveClimbOfflinePhotos`.
 
 ### admin/LocationManagerView `/admin/locations`
 Admin only. Loads countries + regions. Inline forms to add/delete entries. Calls admin mutation functions from `locations.service`.

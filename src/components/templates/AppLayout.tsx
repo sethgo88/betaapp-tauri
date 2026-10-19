@@ -1,6 +1,7 @@
 import { ChevronLeft } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCallback, useState } from "react";
+import { ImageUpdatesBanner } from "@/components/molecules/ImageUpdatesBanner";
 import { SiblingDropdown } from "@/components/molecules/SiblingDropdown";
 import { Toast } from "@/components/molecules/Toast";
 import { Drawer } from "@/components/organisms/Drawer";
@@ -44,6 +45,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
 					))}
 				</div>
 				<main className="pt-4 px-4 pb-[calc(7vh+1.5rem)]">
+					<ImageUpdatesBanner />
 					{topBar.backLabel && (
 						<div className="flex items-center justify-between mb-3 -ml-1">
 							<button

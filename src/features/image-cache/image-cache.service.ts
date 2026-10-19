@@ -145,18 +145,28 @@ export async function readCachedBlob(key: string): Promise<Blob | null> {
 
 export type CacheStats = { count: number; bytes: number };
 
-/** Total cached files and bytes, optionally limited to one scope type/id. */
-export async function getCacheStats(scope?: CacheScope): Promise<CacheStats> {
+/**
+ * Total cached files and bytes. Pass `{ type, id }` for one scope, or just
+ * `{ type }` for every scope of that type (e.g. all personal climb photos).
+ */
+export async function getCacheStats(scope?: {
+	type: string;
+	id?: string;
+}): Promise<CacheStats> {
 	const db = await getDb();
-	const rows = scope
-		? await db.select<{ count: number; bytes: number | null }[]>(
-				`SELECT COUNT(*) as count, SUM(c.bytes) as bytes FROM cached_images c
-         WHERE c.key IN (SELECT key FROM cached_image_refs WHERE scope_type = ? AND scope_id = ?)`,
-				[scope.type, scope.id],
-			)
-		: await db.select<{ count: number; bytes: number | null }[]>(
-				"SELECT COUNT(*) as count, SUM(bytes) as bytes FROM cached_images",
-			);
+	let sql = "SELECT COUNT(*) as count, SUM(bytes) as bytes FROM cached_images";
+	const params: unknown[] = [];
+	if (scope) {
+		sql += ` WHERE key IN (SELECT key FROM cached_image_refs WHERE scope_type = ?${
+			scope.id !== undefined ? " AND scope_id = ?" : ""
+		})`;
+		params.push(scope.type);
+		if (scope.id !== undefined) params.push(scope.id);
+	}
+	const rows = await db.select<{ count: number; bytes: number | null }[]>(
+		sql,
+		params,
+	);
 	return { count: rows[0]?.count ?? 0, bytes: rows[0]?.bytes ?? 0 };
 }
 

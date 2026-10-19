@@ -63,6 +63,7 @@ Drawer (slides in from right):
 /locations/add             → AddLocationView (requireAuth)
 /stats                     → StatsView (requireAuth)
 /settings                  → SettingsView (public)
+/settings/images           → ImageManagerView (requireAuth) — offline image manager
 /admin/locations           → LocationManagerView (requireAdmin)
 /admin/verify              → VerificationView (requireAdmin)
 ```

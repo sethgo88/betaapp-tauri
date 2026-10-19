@@ -3,17 +3,21 @@ import {
 	addRef,
 	cacheImage,
 	getCachedKeys,
+	getCacheStats,
 	releaseRef,
 	releaseScope,
 } from "@/features/image-cache/image-cache.service";
 import { downloadRegion } from "@/features/locations/locations.service";
 import { getDb } from "@/lib/db";
 import type {
+	AreaImageStatus,
 	DownloadResult,
 	ImageDownload,
+	PersonalPhotoClimb,
 	ScopeImage,
 	ScopeSummary,
 	ScopeType,
+	StorageOverview,
 } from "./image-downloads.schema";
 
 const POOL_SIZE = 4;
@@ -392,4 +396,75 @@ export async function deleteScopeImages(
 		"DELETE FROM image_downloads WHERE scope_type = ? AND scope_id = ?",
 		[type, id],
 	);
+}
+
+// ── Image Manager ─────────────────────────────────────────────────────────────
+
+/**
+ * Status of every downloaded area: what's on disk, and whether the area now
+ * contains images that haven't been downloaded (an "update"). Computed from
+ * local data only — sync has already pulled the newest image rows. Partial
+ * areas are resumable rather than "updated", so they never report an update.
+ */
+export async function getAreaImageStatuses(): Promise<AreaImageStatus[]> {
+	const db = await getDb();
+	const records = await fetchImageDownloads();
+	const statuses: AreaImageStatus[] = [];
+	for (const record of records) {
+		const scope = { type: record.scope_type, id: record.scope_id };
+		const stats = await getCacheStats(scope);
+		let pendingUpdate: AreaImageStatus["pendingUpdate"] = null;
+		if (record.status === "complete") {
+			const current = await collectScopeImages(
+				record.scope_type,
+				record.scope_id,
+			);
+			const linked = await db.select<{ key: string }[]>(
+				"SELECT key FROM cached_image_refs WHERE scope_type = ? AND scope_id = ?",
+				[record.scope_type, record.scope_id],
+			);
+			const have = new Set(linked.map((r) => r.key));
+			const added = current.filter((i) => !have.has(i.key)).length;
+			if (added > 0) pendingUpdate = { added };
+		}
+		statuses.push({ record, stats, pendingUpdate });
+	}
+	return statuses;
+}
+
+export async function getStorageOverview(): Promise<StorageOverview> {
+	return {
+		total: await getCacheStats(),
+		personal: await getCacheStats({ type: "climb" }),
+	};
+}
+
+/** Climbs that have photo files on the device (offline copies or pending uploads). */
+export async function listPersonalPhotoClimbs(): Promise<PersonalPhotoClimb[]> {
+	const db = await getDb();
+	const rows = await db.select<
+		{
+			climb_id: string;
+			label: string | null;
+			offline: number | null;
+			photo_count: number;
+			bytes: number | null;
+		}[]
+	>(
+		`SELECT r.scope_id AS climb_id, c.name AS label, c.offline_available AS offline,
+            COUNT(*) AS photo_count, SUM(ci.bytes) AS bytes
+     FROM cached_image_refs r
+     JOIN cached_images ci ON ci.key = r.key
+     LEFT JOIN climbs c ON c.id = r.scope_id
+     WHERE r.scope_type = 'climb'
+     GROUP BY r.scope_id
+     ORDER BY c.name ASC`,
+	);
+	return rows.map((r) => ({
+		climbId: r.climb_id,
+		label: r.label ?? "Deleted climb",
+		photoCount: r.photo_count,
+		bytes: r.bytes ?? 0,
+		offlineAvailable: !!r.offline,
+	}));
 }

@@ -8,7 +8,9 @@ vi.mock("@/features/locations/locations.service", () => ({
 	downloadRegion: (...args: unknown[]) => downloadRegion(...(args as [])),
 }));
 
+import { clearClimbImageCache } from "@/features/climb-images/climb-images.service";
 import {
+	cacheImage,
 	getCacheStats,
 	readCachedBlob,
 } from "@/features/image-cache/image-cache.service";
@@ -19,7 +21,10 @@ import {
 	deleteScopeImages,
 	downloadScopeImages,
 	fetchImageDownload,
+	getAreaImageStatuses,
 	getScopeSummary,
+	getStorageOverview,
+	listPersonalPhotoClimbs,
 } from "./image-downloads.service";
 
 function memoryStore(): ImageFileStore & { files: Map<string, Uint8Array> } {
@@ -206,5 +211,91 @@ describe("image-downloads.service", () => {
 		await downloadScopeImages("wall", "w1", { fetchImpl: okFetch });
 		expect(await readCachedBlob("https://s/r1.webp")).toBeNull();
 		expect(await readCachedBlob("https://s/w1.webp")).not.toBeNull();
+	});
+});
+
+describe("image manager", () => {
+	let sqlite: BetterSqlite3.Database;
+
+	beforeEach(async () => {
+		sqlite = await setupTestDb();
+		setImageFileStore(memoryStore());
+		downloadRegion.mockClear();
+		seed(sqlite);
+	});
+
+	it("reports an update when a new image appears in a downloaded area, and clears it after re-fetch", async () => {
+		await downloadScopeImages("crag", "cr1", { fetchImpl: okFetch });
+		let [status] = await getAreaImageStatuses();
+		expect(status.pendingUpdate).toBeNull();
+		expect(status.stats.count).toBe(2);
+
+		sqlite.exec(
+			"INSERT INTO route_images_cache (id, route_id, image_url, sort_order, uploaded_by, size_bytes) VALUES ('ri2','r2','https://s/r2.webp',0,'u',200)",
+		);
+		[status] = await getAreaImageStatuses();
+		expect(status.pendingUpdate).toEqual({ added: 1 });
+
+		await downloadScopeImages("crag", "cr1", { fetchImpl: okFetch });
+		[status] = await getAreaImageStatuses();
+		expect(status.pendingUpdate).toBeNull();
+		expect(status.stats.count).toBe(3);
+	});
+
+	it("does not report partial areas as updates", async () => {
+		const failing = (async () =>
+			new Response("x", { status: 500 })) as unknown as typeof fetch;
+		await downloadScopeImages("crag", "cr1", { fetchImpl: failing });
+		const [status] = await getAreaImageStatuses();
+		expect(status.record.status).toBe("partial");
+		expect(status.pendingUpdate).toBeNull();
+	});
+
+	it("totals storage and splits out personal photos", async () => {
+		await downloadScopeImages("wall", "w2", { fetchImpl: okFetch });
+		await cacheImage(
+			"climb:u/c1/a.webp",
+			new Blob(["12345"], { type: "image/webp" }),
+			{
+				type: "climb",
+				id: "c1",
+			},
+		);
+		const overview = await getStorageOverview();
+		expect(overview.personal).toEqual({ count: 1, bytes: 5 });
+		expect(overview.total.count).toBe(3); // w2 wall image + r3 topo + 1 personal
+	});
+
+	it("lists climbs with photos and removing the offline copy keeps pending uploads", async () => {
+		sqlite.exec(`
+      INSERT INTO climbs (id, user_id, name, grade, offline_available) VALUES ('c1','u','Test Climb','6a',1);
+      INSERT INTO climb_images (id, climb_id, user_id, image_url, sort_order, upload_status)
+        VALUES ('i1','c1','u','u/c1/a.webp',0,'uploaded'), ('i2','c1','u','u/c1/b.webp',1,'pending');
+    `);
+		const scope = { type: "climb", id: "c1" };
+		await cacheImage(
+			"climb:u/c1/a.webp",
+			new Blob(["aaa"], { type: "image/webp" }),
+			scope,
+		);
+		await cacheImage(
+			"climb:u/c1/b.webp",
+			new Blob(["bb"], { type: "image/webp" }),
+			scope,
+		);
+
+		expect(await listPersonalPhotoClimbs()).toEqual([
+			{
+				climbId: "c1",
+				label: "Test Climb",
+				photoCount: 2,
+				bytes: 5,
+				offlineAvailable: true,
+			},
+		]);
+
+		await clearClimbImageCache("c1");
+		expect(await readCachedBlob("climb:u/c1/a.webp")).toBeNull();
+		expect(await readCachedBlob("climb:u/c1/b.webp")).not.toBeNull();
 	});
 });

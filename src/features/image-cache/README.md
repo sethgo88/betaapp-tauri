@@ -38,7 +38,7 @@ Scope `{ type, id }`: `climb` + climbId for personal photos today. Area download
 | `releaseScope(scope)` | Unlink every key from a scope (delete a downloaded area / climb) |
 | `getCachedKeys(keys)` | Which of the given keys are cached |
 | `readCachedBlob(key)` | Blob from disk, or `null` (stale rows whose file vanished are dropped) |
-| `getCacheStats(scope?)` | `{ count, bytes }` overall or per scope — feeds the Image Manager (#254) |
+| `getCacheStats(scope?)` | `{ count, bytes }` overall, for one scope (`{ type, id }`), or for every scope of a type (`{ type }`, e.g. all personal photos) — feeds the Image Manager |
 | `migrateLocalDataToFiles()` | One-time launch job: legacy base64 `local_data` → files, clears the column; failures retry next launch |
 
 ## Hook (`image-cache.queries.ts`)

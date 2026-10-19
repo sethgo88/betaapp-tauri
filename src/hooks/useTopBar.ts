@@ -281,6 +281,16 @@ export function useTopBar(): TopBarState {
 		};
 	}
 
+	// ImageManagerView → SettingsView
+	if (pathname === "/settings/images") {
+		return {
+			backLabel: "Settings",
+			goBack: () => navigate({ to: "/settings" }),
+			siblings: [],
+			goToSibling: () => {},
+		};
+	}
+
 	// HomeView — no back button
 	if (pathname === "/") {
 		return {

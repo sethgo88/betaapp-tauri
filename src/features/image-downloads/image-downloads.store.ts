@@ -17,6 +17,9 @@ interface ImageDownloadStore {
 	begin: (type: ScopeType, id: string) => AbortController;
 	setProgress: (done: number, total: number) => void;
 	finish: () => void;
+	/** Session-only: hides the "image updates available" banner until next launch. */
+	updatesBannerDismissed: boolean;
+	dismissUpdatesBanner: () => void;
 }
 
 export const useImageDownloadStore = create<ImageDownloadStore>((set) => ({
@@ -33,4 +36,6 @@ export const useImageDownloadStore = create<ImageDownloadStore>((set) => ({
 			s.active ? { active: { ...s.active, done, total, preparing: false } } : s,
 		),
 	finish: () => set({ active: null }),
+	updatesBannerDismissed: false,
+	dismissUpdatesBanner: () => set({ updatesBannerDismissed: true }),
 }));

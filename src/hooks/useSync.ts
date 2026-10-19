@@ -94,6 +94,7 @@ export function useSync(userId: string | undefined) {
 			queryClient.invalidateQueries({ queryKey: ["regions"] });
 			queryClient.invalidateQueries({ queryKey: ["route-images"] });
 			queryClient.invalidateQueries({ queryKey: ["wall-images"] });
+			queryClient.invalidateQueries({ queryKey: ["image-downloads"] });
 			queryClient.invalidateQueries({ queryKey: ["wall-topo"] });
 			queryClient.invalidateQueries({ queryKey: ["wall-topo-lines"] });
 			queryClient.invalidateQueries({ queryKey: ["route-topo"] });

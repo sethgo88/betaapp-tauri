@@ -1,4 +1,9 @@
+import { useNavigate } from "@tanstack/react-router";
+import { isTauri } from "@tauri-apps/api/core";
+import { ChevronRight } from "lucide-react";
 import { useState } from "react";
+import { useStorageOverview } from "@/features/image-downloads/image-downloads.queries";
+import { formatBytes } from "@/lib/format";
 
 export const DEBUG_OFFLINE_FLAG = "betaapp-debug-offline";
 
@@ -54,12 +59,35 @@ const DevOfflineToggle = () => {
 	);
 };
 
+const OfflineImagesCard = () => {
+	const navigate = useNavigate();
+	const { data } = useStorageOverview();
+
+	return (
+		<button
+			type="button"
+			onClick={() => navigate({ to: "/settings/images" })}
+			className="rounded-lg bg-surface-card p-4 flex items-center justify-between gap-3 text-left"
+		>
+			<div>
+				<p className="text-sm font-medium text-text-primary">Offline images</p>
+				<p className="text-xs text-text-on-light mt-0.5">
+					{data?.total.count ?? 0} images ·{" "}
+					{formatBytes(data?.total.bytes ?? 0)} on this device
+				</p>
+			</div>
+			<ChevronRight size={18} className="text-text-primary shrink-0" />
+		</button>
+	);
+};
+
 const SettingsView = () => {
 	return (
 		<div className="flex flex-col gap-4">
 			<h1 className="font-display text-xl font-semibold text-white">
 				Settings
 			</h1>
+			{isTauri() && <OfflineImagesCard />}
 			<DevOfflineToggle />
 		</div>
 	);

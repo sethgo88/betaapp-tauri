@@ -33,6 +33,9 @@ Sizes and counts of what is on disk come from `getCacheStats({ type, id })` (ima
 | `downloadScopeImages(type, id, { signal, onProgress, fetchImpl })` | Downloads region data if needed, registers the area as `partial`, unlinks images that left the area, links already-cached images, fetches the rest with a pool of 4, then marks `complete` (not if cancelled or any image failed). Re-running resumes without refetching cached files, and doubles as "re-fetch" |
 | `deleteScopeImages(type, id)` | `releaseScope` + remove the registry row |
 | `fetchImageDownloads()` / `fetchImageDownload(type, id)` | Registry reads |
+| `getAreaImageStatuses()` | Per downloaded area: `{ record, stats (on disk), pendingUpdate: { added } \| null }`. An update = images currently in the area that aren't linked to it in `cached_image_refs`; computed from local data (sync already pulled the newest rows). Partial areas never report updates |
+| `getStorageOverview()` | `{ total, personal }` cache stats |
+| `listPersonalPhotoClimbs()` | Climbs with photo files under scope `climb`: `{ climbId, label, photoCount, bytes, offlineAvailable }` |
 
 ## Store & hooks
 
@@ -45,5 +48,10 @@ Sizes and counts of what is on disk come from `getCacheStats({ type, id })` (ima
 | `useScopeSummary()` | Mutation → `ScopeSummary` for the dialog |
 | `useStartImageDownload()` | Runs a download (one at a time), toasts the outcome, invalidates `image-downloads`, `cached-image`, `downloaded_regions` |
 | `useDeleteImageDownload()` | Removes an area's images |
+| `useAreaImageStatuses()` / `useImageUpdateCount()` | Manager rows; number of areas with updates (banner). Sync invalidates `image-downloads` so this refreshes after each sync |
+| `useStorageOverview()` / `usePersonalPhotoClimbs()` | Totals and per-climb personal photo list |
+| `useRemoveClimbOfflinePhotos()` | Releases a climb's uploaded photo files and clears `offline_available`; pending-upload photos are kept |
+
+Known limitation: deleted gallery images (`route_images` / `wall_images`) are not pruned locally by sync (delta pull only), so deletions by an admin don't show as updates. Topos are fully re-pulled and pruned.
 
 UI: `components/molecules/DownloadImagesButton`.
