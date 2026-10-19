@@ -2,6 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 import {
 	BarChart2,
 	CircleUser,
+	Image as ImageIcon,
 	Map as MapIcon,
 	MapPin,
 	Menu,
@@ -148,6 +149,14 @@ export const Drawer = ({ isOpen, onClose }: DrawerProps) => {
 							>
 								<MapPin size={18} />
 								<span>Verification</span>
+							</button>
+							<button
+								type="button"
+								className="flex items-center gap-3 py-3 px-2 text-left rounded-lg hover:bg-white/10"
+								onClick={() => handleNav("/admin/images")}
+							>
+								<ImageIcon size={18} />
+								<span>Image Optimization</span>
 							</button>
 						</>
 					)}

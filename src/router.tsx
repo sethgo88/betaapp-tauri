@@ -16,6 +16,7 @@ import { useAuthStore } from "@/features/auth/auth.store";
 import AddClimbView from "@/views/AddClimbView";
 import AddEditRouteView from "@/views/AddEditRouteView";
 import AddLocationView from "@/views/AddLocationView";
+import ImageOptimizerView from "@/views/admin/ImageOptimizerView";
 import LocationManagerView from "@/views/admin/LocationManagerView";
 import VerificationView from "@/views/admin/VerificationView";
 import ClimbDetailView from "@/views/ClimbDetailView";
@@ -219,6 +220,13 @@ const adminLocationsRoute = createRoute({
 	component: LocationManagerView,
 });
 
+const adminImagesRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/admin/images",
+	beforeLoad: requireAdmin,
+	component: ImageOptimizerView,
+});
+
 const adminVerificationRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/admin/verify",
@@ -261,6 +269,7 @@ const routeTree = rootRoute.addChildren([
 	statsRoute,
 	adminLocationsRoute,
 	adminVerificationRoute,
+	adminImagesRoute,
 	settingsRoute,
 	imageManagerRoute,
 	authCallbackRoute,

@@ -14,6 +14,7 @@ import {
 import {
 	getSyncMeta,
 	pullBurns,
+	pullClimbImageFileUpdates,
 	pullClimbImagePins,
 	pullClimbImages,
 	pullClimbs,
@@ -63,6 +64,7 @@ export function useSync(userId: string | undefined) {
 			await uploadPendingImages(userId);
 			await pushClimbImages(userId, since);
 			await pullClimbImages(userId, since);
+			await pullClimbImageFileUpdates(userId);
 			await cacheNewOfflineImages(userId);
 			await pushClimbImagePins(userId, since);
 			await pullClimbImagePins(userId, since);
@@ -73,8 +75,8 @@ export function useSync(userId: string | undefined) {
 			await checkRegionStaleness().then(() => {
 				queryClient.invalidateQueries({ queryKey: ["stale_region_ids"] });
 			});
-			await pullRouteImages(since);
-			await pullWallImages(since);
+			await pullRouteImages();
+			await pullWallImages();
 			await pullWallTopos();
 			await pullWallTopoLines();
 			await pullRouteTopos();

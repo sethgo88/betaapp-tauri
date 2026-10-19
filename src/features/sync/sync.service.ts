@@ -220,6 +220,43 @@ export async function pullClimbImages(
 	}
 }
 
+/**
+ * Apply server-side changes to the user's existing photos (the image optimizer
+ * repoints rows to a new file and size). Only touches rows that still exist
+ * locally and aren't deleted here, so it can't resurrect a local delete. The
+ * photo cap is 100, so a full fetch is tiny.
+ */
+export async function pullClimbImageFileUpdates(userId: string): Promise<void> {
+	// size_bytes isn't in the generated Supabase types yet
+	const { data, error } = await untypedSupabase
+		.from("climb_images")
+		.select("id, image_url, size_bytes, deleted_at")
+		.eq("user_id", userId);
+	if (error) throw error;
+	if (!data || data.length === 0) return;
+
+	const db = await getDb();
+	for (const row of data as {
+		id: string;
+		image_url: string;
+		size_bytes: number | null;
+		deleted_at: string | null;
+	}[]) {
+		if (row.deleted_at) continue;
+		await db.execute(
+			`UPDATE climb_images SET image_url = ?, size_bytes = ?
+       WHERE id = ? AND deleted_at IS NULL AND (image_url != ? OR size_bytes IS NOT ?)`,
+			[
+				row.image_url,
+				row.size_bytes ?? null,
+				row.id,
+				row.image_url,
+				row.size_bytes ?? null,
+			],
+		);
+	}
+}
+
 // ── Climb image pins push/pull ────────────────────────────────────────────────
 
 export async function pushClimbImagePins(
@@ -263,35 +300,21 @@ export async function pullClimbImagePins(
 	}
 }
 
-// ── Route images pull (one-way — admin-managed content) ───────────────────────
+// ── Route / wall images pull (one-way — admin-managed content) ────────────────
+//
+// Fully re-pulled on every sync (small admin tables) so edits to an existing
+// row — e.g. the image optimizer repointing a file to a new WebP path — reach
+// other devices. Rows deleted on the server are not pruned yet (see the
+// "deleted gallery images" issue).
 
-export async function pullRouteImages(since?: string): Promise<void> {
-	let query = supabase.from("route_images").select("*");
-	if (since) query = query.gt("created_at", since);
-
-	const { data, error } = await query;
-	if (error) throw error;
-	if (!data || data.length === 0) return;
-
-	for (const row of data) {
-		// Cast via unknown: database.types.ts reflects the old schema until Supabase tables are updated
-		await applyRemoteRouteImage(row as unknown as RouteImage);
-	}
+export async function pullRouteImages(): Promise<void> {
+	const rows = await fetchAllRows<RouteImage>("route_images");
+	for (const row of rows) await applyRemoteRouteImage(row);
 }
 
-// ── Wall images pull (one-way — admin-managed content) ────────────────────────
-
-export async function pullWallImages(since?: string): Promise<void> {
-	let query = supabase.from("wall_images").select("*");
-	if (since) query = query.gt("created_at", since);
-
-	const { data, error } = await query;
-	if (error) throw error;
-	if (!data || data.length === 0) return;
-
-	for (const row of data) {
-		await applyRemoteWallImage(row as unknown as WallImage);
-	}
+export async function pullWallImages(): Promise<void> {
+	const rows = await fetchAllRows<WallImage>("wall_images");
+	for (const row of rows) await applyRemoteWallImage(row);
 }
 
 // ── Topos pull (one-way — admin-managed content) ──────────────────────────────

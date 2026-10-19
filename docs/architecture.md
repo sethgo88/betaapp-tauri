@@ -66,6 +66,7 @@ Drawer (slides in from right):
 /settings/images           → ImageManagerView (requireAuth) — offline image manager
 /admin/locations           → LocationManagerView (requireAdmin)
 /admin/verify              → VerificationView (requireAdmin)
+/admin/images              → ImageOptimizerView (requireAdmin) — re-encode legacy images, backfill size_bytes
 ```
 
 ---

@@ -25,6 +25,12 @@ Fetches climbs from Supabase and applies them locally via `INSERT OR REPLACE` (p
 ### `pushClimbImages(userId, since?)` / `pullClimbImages(userId, since?)`
 Push/pull `climb_images` rows scoped by `user_id`. Delta uses `created_at` (images are immutable once created — only soft-deleted).
 
+### `pullClimbImageFileUpdates(userId)`
+Full fetch of the user's own `climb_images` (cap 100) that updates `image_url` / `size_bytes` of rows that already exist locally and aren't deleted here — used so the image optimizer's repointed files reach other devices without resurrecting local deletes. Runs right after `pullClimbImages`.
+
+### `pullRouteImages()` / `pullWallImages()`
+Full paged pull (no `since`) of the admin-owned gallery tables, so edits to existing rows (e.g. new WebP path) propagate. Server-side deletions are not pruned yet.
+
 ### `pushClimbImagePins(userId, since?)` / `pullClimbImagePins(userId, since?)`
 Push/pull `climb_image_pins` rows scoped to the user's images (via JOIN on `climb_images.user_id`). Pull strips the JOIN column before applying locally.
 

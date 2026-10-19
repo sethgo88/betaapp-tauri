@@ -81,8 +81,8 @@ Pull-only — images are admin-managed content. No push from client.
 
 ```ts
 // In sync.service.ts:
-pullRouteImages(since?)   // supabase → route_images → applyRemoteRouteImage for each row
-pullWallImages(since?)    // supabase → wall_images → applyRemoteWallImage for each row
+pullRouteImages()         // full paged pull; supabase → route_images → applyRemoteRouteImage for each row
+pullWallImages()          // full paged pull; supabase → wall_images → applyRemoteWallImage for each row
 ```
 
 Called from `useSync.ts` after `pullRegions()`. Query keys `['route-images']` and `['wall-images']` are invalidated after sync completes.

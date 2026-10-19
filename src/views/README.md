@@ -33,6 +33,7 @@ Router defined in `src/router.tsx` using `createMemoryHistory` (required for And
 | `/settings/images` | `ImageManagerView` | required | Offline image manager: downloaded areas, personal photos, update flags |
 | `/admin/locations` | `admin/LocationManagerView` | admin | Add/delete countries and regions in Supabase |
 | `/admin/verify` | `admin/VerificationView` | admin | Unified pending-submissions queue: routes and locations grouped by type with count badges; inline approve, edit, merge, reject |
+| `/admin/images` | `admin/ImageOptimizerView` | admin | One-off image optimization: re-encode legacy JPEGs as WebP, backfill `size_bytes` |
 
 ---
 
@@ -119,6 +120,9 @@ Public (no auth guard). On Android it shows an **Offline images** card (total im
 
 ### ImageManagerView `/settings/images`
 Requires auth (Android). Offline image manager: a storage summary (total images/size, personal photos split out); **Downloaded areas** — one card per `image_downloads` row with level, image count, size on disk, last downloaded, "Partial" / "Updates available (+N)" chips (updated areas sort first), tap-through to the area, and the shared `DownloadImagesButton` for Resume / Re-fetch / Remove; **Personal photos** — climbs with photo files on the device with a "Remove offline copy" action (pending uploads are kept). Data: `useStorageOverview`, `useAreaImageStatuses`, `usePersonalPhotoClimbs`, `useRemoveClimbOfflinePhotos`.
+
+### admin/ImageOptimizerView `/admin/images`
+Admin only. One-off image optimization: **Scan images** (counts to re-encode / size-only / up to date) → **Start optimization** (confirm dialog; progress bar; Cancel) → summary (re-encoded, sizes recorded, bytes saved, failures). See `features/image-optimizer/README.md`.
 
 ### admin/LocationManagerView `/admin/locations`
 Admin only. Loads countries + regions. Inline forms to add/delete entries. Calls admin mutation functions from `locations.service`.
