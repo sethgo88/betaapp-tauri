@@ -81,6 +81,8 @@ Versioned migration runner. Maintains a `schema_version` table (single row) and 
 | v29 | `rating` (INTEGER, nullable) on `climbs`; `avg_rating` (REAL, nullable) on `routes_cache` (#212) |
 | v30 | `rating_count` (INTEGER, default 0) on `routes_cache` (#212) |
 | v31 | `sun_data` (TEXT, nullable) on `walls_cache` and `routes_cache` (#220) |
+| v33 | `size_bytes` on `climb_images`, `route_images_cache`, `wall_images_cache` (#251) |
+| v34 | `size_bytes` on `wall_topos_cache`, `route_topos_cache` (#256) |
 
 ### Rules
 - Always use `?` positional parameters — never string interpolation (SQL injection)

@@ -100,3 +100,24 @@ export async function applyRemoteWallImage(image: WallImage): Promise<void> {
 		],
 	);
 }
+
+// ── Size lookup ───────────────────────────────────────────────────────────────
+
+/**
+ * Recorded size of a gallery image, found by its public URL. Used when a topo
+ * reuses an existing route/wall image so it inherits that image's size.
+ * Returns null for legacy images with no recorded size.
+ */
+export async function getImageSizeByUrl(
+	imageUrl: string,
+): Promise<number | null> {
+	const db = await getDb();
+	for (const table of ["route_images_cache", "wall_images_cache"]) {
+		const rows = await db.select<{ size_bytes: number | null }[]>(
+			`SELECT size_bytes FROM ${table} WHERE image_url = ? LIMIT 1`,
+			[imageUrl],
+		);
+		if (rows[0]) return rows[0].size_bytes;
+	}
+	return null;
+}

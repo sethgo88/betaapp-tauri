@@ -19,7 +19,10 @@ import {
 	pullClimbs,
 	pullRouteImages,
 	pullRouteLinks,
+	pullRouteTopos,
 	pullWallImages,
+	pullWallTopoLines,
+	pullWallTopos,
 	pushBurns,
 	pushClimbImagePins,
 	pushClimbImages,
@@ -72,6 +75,9 @@ export function useSync(userId: string | undefined) {
 			});
 			await pullRouteImages(since);
 			await pullWallImages(since);
+			await pullWallTopos();
+			await pullWallTopoLines();
+			await pullRouteTopos();
 			await pushRouteLinks(userId, since);
 			await pullRouteLinks(since);
 
@@ -88,6 +94,9 @@ export function useSync(userId: string | undefined) {
 			queryClient.invalidateQueries({ queryKey: ["regions"] });
 			queryClient.invalidateQueries({ queryKey: ["route-images"] });
 			queryClient.invalidateQueries({ queryKey: ["wall-images"] });
+			queryClient.invalidateQueries({ queryKey: ["wall-topo"] });
+			queryClient.invalidateQueries({ queryKey: ["wall-topo-lines"] });
+			queryClient.invalidateQueries({ queryKey: ["route-topo"] });
 			queryClient.invalidateQueries({ queryKey: ["route_links"] });
 			setSuccess();
 		} catch (err) {

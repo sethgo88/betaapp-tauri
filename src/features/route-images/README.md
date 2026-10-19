@@ -50,6 +50,8 @@ fetchWallImages(wallId)          → Promise<WallImage[]>
 insertWallImage(wallId, uploadedBy, imageUrl, sortOrder)   → Promise<string>
 deleteWallImage(id)              → Promise<void>
 applyRemoteWallImage(image)      → Promise<void>
+
+getImageSizeByUrl(imageUrl)      → Promise<number | null>  // size_bytes of a gallery image, so a topo reusing it inherits the size
 ```
 
 ---

@@ -670,6 +670,16 @@ const migrations: Migration[] = [
 			`ALTER TABLE wall_images_cache ADD COLUMN size_bytes INTEGER`,
 		);
 	},
+
+	// v34: size_bytes on topo tables (#256)
+	async (db) => {
+		await db.execute(
+			`ALTER TABLE wall_topos_cache ADD COLUMN size_bytes INTEGER`,
+		);
+		await db.execute(
+			`ALTER TABLE route_topos_cache ADD COLUMN size_bytes INTEGER`,
+		);
+	},
 ];
 
 export async function runMigrations(db: DbAdapter): Promise<void> {

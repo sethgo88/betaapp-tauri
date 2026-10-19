@@ -13,18 +13,20 @@ Admin-managed climbing route topo photos with drawn route lines. All users can v
 
 ```ts
 Point         = { x_pct: number, y_pct: number }  // 0-1 normalized
-WallTopo      = { id, wall_id, image_url, created_by, created_at }
+WallTopo      = { id, wall_id, image_url, size_bytes?, created_by, created_at }
 WallTopoLine  = { id, topo_id, route_id, points: Point[], color, sort_order, created_at }
-RouteTopo     = { id, route_id, image_url, points: Point[], color, created_by, created_at }
+RouteTopo     = { id, route_id, image_url, points: Point[], color, size_bytes?, created_by, created_at }
 ```
 
-### SQLite (migration v19)
+### SQLite (migration v19; `size_bytes` added in v34)
 
 | Table | Key columns |
 |---|---|
-| `wall_topos_cache` | `id`, `wall_id`, `image_url`, `created_by` |
+| `wall_topos_cache` | `id`, `wall_id`, `image_url`, `size_bytes`, `created_by` |
 | `wall_topo_lines_cache` | `id`, `topo_id`, `route_id`, `points` (JSON), `color`, `sort_order` |
-| `route_topos_cache` | `id`, `route_id`, `image_url`, `points` (JSON), `color`, `created_by` |
+| `route_topos_cache` | `id`, `route_id`, `image_url`, `points` (JSON), `color`, `size_bytes`, `created_by` |
+
+`size_bytes` is the encoded image size in bytes (null for images uploaded before it was recorded). Topos that reuse a gallery image inherit its size via `getImageSizeByUrl`.
 
 ### Supabase tables
 
@@ -41,11 +43,13 @@ Mirror the SQLite schema: `wall_topos`, `wall_topo_lines`, `route_topos`.
 | `fetchWallTopo(wallId)` | Get wall topo from local cache |
 | `fetchWallTopoLines(topoId)` | Get all lines for a topo, JSON points parsed |
 | `fetchRouteTopo(routeId)` | Get route topo from local cache |
-| `upsertWallTopo(wallId, imageUrl, createdBy)` | Create or update wall topo in Supabase + cache |
+| `upsertWallTopo(wallId, imageUrl, createdBy, sizeBytes?)` | Create or update wall topo (and its `size_bytes`) in Supabase + cache |
 | `upsertWallTopoLine(topoId, routeId, points, color, sortOrder)` | Create or update a route line |
 | `deleteWallTopoLine(id)` | Remove a route line |
 | `deleteWallTopo(id, imageUrl)` | Remove topo + all lines + storage file |
-| `upsertRouteTopo(routeId, imageUrl, points, color, createdBy)` | Create or update route topo |
+| `upsertRouteTopo(routeId, imageUrl, points, color, createdBy, sizeBytes?)` | Create or update route topo; a points-only edit keeps the stored size |
+| `applyRemoteWallTopo` / `applyRemoteWallTopoLine` / `applyRemoteRouteTopo` | `INSERT OR REPLACE` into the cache — used by sync pull |
+| `pruneTopoCache(table, remoteIds)` | Delete cache rows missing from the server after a full pull |
 | `deleteRouteTopo(id, imageUrl)` | Remove route topo + storage file |
 
 ## Query hooks (`topos.queries.ts`)

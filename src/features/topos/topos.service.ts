@@ -21,21 +21,22 @@ export async function upsertWallTopo(
 	wallId: string,
 	imageUrl: string,
 	createdBy: string,
+	sizeBytes?: number | null,
 ): Promise<string> {
 	const db = await getDb();
 
 	// Only one topo per wall — check for existing
 	const existing = await fetchWallTopo(wallId);
 	if (existing) {
-		// Update image url
+		// Update image url and its size together
 		await supabase
 			.from("wall_topos")
-			.update({ image_url: imageUrl })
+			.update({ image_url: imageUrl, size_bytes: sizeBytes ?? null })
 			.eq("id", existing.id);
-		await db.execute("UPDATE wall_topos_cache SET image_url = ? WHERE id = ?", [
-			imageUrl,
-			existing.id,
-		]);
+		await db.execute(
+			"UPDATE wall_topos_cache SET image_url = ?, size_bytes = ? WHERE id = ?",
+			[imageUrl, sizeBytes ?? null, existing.id],
+		);
 		return existing.id;
 	}
 
@@ -45,13 +46,14 @@ export async function upsertWallTopo(
 		id,
 		wall_id: wallId,
 		image_url: imageUrl,
+		size_bytes: sizeBytes ?? null,
 		created_by: createdBy,
 		created_at: now,
 	});
 	await db.execute(
-		`INSERT INTO wall_topos_cache (id, wall_id, image_url, created_by, created_at)
-     VALUES (?, ?, ?, ?, ?)`,
-		[id, wallId, imageUrl, createdBy, now],
+		`INSERT INTO wall_topos_cache (id, wall_id, image_url, size_bytes, created_by, created_at)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+		[id, wallId, imageUrl, sizeBytes ?? null, createdBy, now],
 	);
 	return id;
 }
@@ -174,19 +176,30 @@ export async function upsertRouteTopo(
 	points: Point[],
 	color: string,
 	createdBy: string,
+	sizeBytes?: number | null,
 ): Promise<string> {
 	const db = await getDb();
 	const pointsJson = JSON.stringify(points);
 
 	const existing = await fetchRouteTopo(routeId);
 	if (existing) {
+		// Points-only edits keep the stored size; a new image replaces it.
+		const size =
+			existing.image_url === imageUrl
+				? (existing.size_bytes ?? null)
+				: (sizeBytes ?? null);
 		await supabase
 			.from("route_topos")
-			.update({ image_url: imageUrl, points: pointsJson, color })
+			.update({
+				image_url: imageUrl,
+				points: pointsJson,
+				color,
+				size_bytes: size,
+			})
 			.eq("id", existing.id);
 		await db.execute(
-			"UPDATE route_topos_cache SET image_url = ?, points = ?, color = ? WHERE id = ?",
-			[imageUrl, pointsJson, color, existing.id],
+			"UPDATE route_topos_cache SET image_url = ?, points = ?, color = ?, size_bytes = ? WHERE id = ?",
+			[imageUrl, pointsJson, color, size, existing.id],
 		);
 		return existing.id;
 	}
@@ -199,13 +212,23 @@ export async function upsertRouteTopo(
 		image_url: imageUrl,
 		points: pointsJson,
 		color,
+		size_bytes: sizeBytes ?? null,
 		created_by: createdBy,
 		created_at: now,
 	});
 	await db.execute(
-		`INSERT INTO route_topos_cache (id, route_id, image_url, points, color, created_by, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
-		[id, routeId, imageUrl, pointsJson, color, createdBy, now],
+		`INSERT INTO route_topos_cache (id, route_id, image_url, points, color, size_bytes, created_by, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		[
+			id,
+			routeId,
+			imageUrl,
+			pointsJson,
+			color,
+			sizeBytes ?? null,
+			createdBy,
+			now,
+		],
 	);
 	return id;
 }
@@ -223,5 +246,83 @@ export async function deleteRouteTopo(
 		: null;
 	if (storagePath?.startsWith("topos/")) {
 		await supabase.storage.from("route-images").remove([storagePath]);
+	}
+}
+
+// ── Sync helpers (pull applies remote rows; used by sync.service.ts) ──────────
+
+type RemoteWallTopoLine = Omit<WallTopoLine, "points"> & { points: string };
+
+export async function applyRemoteWallTopo(topo: WallTopo): Promise<void> {
+	const db = await getDb();
+	await db.execute(
+		`INSERT OR REPLACE INTO wall_topos_cache
+     (id, wall_id, image_url, size_bytes, created_by, created_at)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+		[
+			topo.id,
+			topo.wall_id,
+			topo.image_url,
+			topo.size_bytes ?? null,
+			topo.created_by,
+			topo.created_at,
+		],
+	);
+}
+
+export async function applyRemoteWallTopoLine(
+	line: RemoteWallTopoLine,
+): Promise<void> {
+	const db = await getDb();
+	await db.execute(
+		`INSERT OR REPLACE INTO wall_topo_lines_cache
+     (id, topo_id, route_id, points, color, sort_order, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+		[
+			line.id,
+			line.topo_id,
+			line.route_id,
+			line.points,
+			line.color,
+			line.sort_order,
+			line.created_at,
+		],
+	);
+}
+
+export async function applyRemoteRouteTopo(topo: RouteTopoRow): Promise<void> {
+	const db = await getDb();
+	await db.execute(
+		`INSERT OR REPLACE INTO route_topos_cache
+     (id, route_id, image_url, points, color, size_bytes, created_by, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		[
+			topo.id,
+			topo.route_id,
+			topo.image_url,
+			topo.points,
+			topo.color,
+			topo.size_bytes ?? null,
+			topo.created_by,
+			topo.created_at,
+		],
+	);
+}
+
+/**
+ * Remove cached topo rows that no longer exist on the server. Called after a
+ * complete (all pages) pull so admin deletions propagate to other devices.
+ */
+export async function pruneTopoCache(
+	table: "wall_topos_cache" | "wall_topo_lines_cache" | "route_topos_cache",
+	remoteIds: string[],
+): Promise<void> {
+	const db = await getDb();
+	const local = await db.select<{ id: string }[]>(`SELECT id FROM ${table}`);
+	const keep = new Set(remoteIds);
+	for (const { id } of local) {
+		if (!keep.has(id)) {
+			await db.execute(`DELETE FROM ${table} WHERE id = ?`, [id]);
+		}
 	}
 }

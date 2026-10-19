@@ -10,6 +10,7 @@ export const WallTopoSchema = z.object({
 	id: z.string(),
 	wall_id: z.string(),
 	image_url: z.string(),
+	size_bytes: z.number().nullable().optional(),
 	created_by: z.string().nullable(),
 	created_at: z.string(),
 });
@@ -32,6 +33,7 @@ export const RouteTopoSchema = z.object({
 	image_url: z.string(),
 	points: z.array(PointSchema),
 	color: z.string(),
+	size_bytes: z.number().nullable().optional(),
 	created_by: z.string().nullable(),
 	created_at: z.string(),
 });

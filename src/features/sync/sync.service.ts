@@ -21,6 +21,17 @@ import {
 } from "@/features/route-images/route-images.service";
 import type { RouteLink } from "@/features/routes/routes.schema";
 import { applyRemoteRouteLink } from "@/features/routes/routes.service";
+import type {
+	RouteTopo,
+	WallTopo,
+	WallTopoLine,
+} from "@/features/topos/topos.schema";
+import {
+	applyRemoteRouteTopo,
+	applyRemoteWallTopo,
+	applyRemoteWallTopoLine,
+	pruneTopoCache,
+} from "@/features/topos/topos.service";
 import { getDb } from "@/lib/db";
 import { supabase } from "@/lib/supabase";
 
@@ -279,6 +290,64 @@ export async function pullWallImages(since?: string): Promise<void> {
 	for (const row of data) {
 		await applyRemoteWallImage(row as unknown as WallImage);
 	}
+}
+
+// ── Topos pull (one-way — admin-managed content) ──────────────────────────────
+//
+// Topo tables are small and admin-owned, so they are fully re-pulled on every
+// sync (edits to an existing topo don't change created_at, so a delta pull would
+// miss them) and cache rows deleted on the server are pruned afterwards.
+
+// Topo tables are not yet in the generated Supabase types
+// biome-ignore lint/suspicious/noExplicitAny: topo tables not in generated types
+const untypedSupabase = supabase as any;
+const TOPO_PAGE_SIZE = 1000;
+
+async function fetchAllRows<T>(table: string): Promise<T[]> {
+	const rows: T[] = [];
+	for (let from = 0; ; from += TOPO_PAGE_SIZE) {
+		const { data, error } = await untypedSupabase
+			.from(table)
+			.select("*")
+			.order("id")
+			.range(from, from + TOPO_PAGE_SIZE - 1);
+		if (error) throw error;
+		if (!data || data.length === 0) break;
+		rows.push(...(data as T[]));
+		if (data.length < TOPO_PAGE_SIZE) break;
+	}
+	return rows;
+}
+
+export async function pullWallTopos(): Promise<void> {
+	const rows = await fetchAllRows<WallTopo>("wall_topos");
+	for (const row of rows) await applyRemoteWallTopo(row);
+	await pruneTopoCache(
+		"wall_topos_cache",
+		rows.map((r) => r.id),
+	);
+}
+
+export async function pullWallTopoLines(): Promise<void> {
+	const rows = await fetchAllRows<
+		Omit<WallTopoLine, "points"> & { points: string }
+	>("wall_topo_lines");
+	for (const row of rows) await applyRemoteWallTopoLine(row);
+	await pruneTopoCache(
+		"wall_topo_lines_cache",
+		rows.map((r) => r.id),
+	);
+}
+
+export async function pullRouteTopos(): Promise<void> {
+	const rows = await fetchAllRows<
+		Omit<RouteTopo, "points"> & { points: string }
+	>("route_topos");
+	for (const row of rows) await applyRemoteRouteTopo(row);
+	await pruneTopoCache(
+		"route_topos_cache",
+		rows.map((r) => r.id),
+	);
 }
 
 // ── Route links push/pull (community data — all authenticated users) ──────────

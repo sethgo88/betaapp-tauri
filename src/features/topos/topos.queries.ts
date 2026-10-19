@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/features/auth/auth.store";
+import { getImageSizeByUrl } from "@/features/route-images/route-images.service";
 import { uploadToStorage } from "@/lib/image-utils";
 import { supabase } from "@/lib/supabase";
 import type { Point } from "./topos.schema";
@@ -45,7 +46,7 @@ export function useUploadWallTopoImage(wallId: string) {
 			const user = useAuthStore.getState().user;
 			if (!user) throw new Error("Not authenticated");
 
-			const { path: storagePath } = await uploadToStorage(
+			const { path: storagePath, sizeBytes } = await uploadToStorage(
 				"route-images",
 				`topos/walls/${wallId}/${crypto.randomUUID()}`,
 				file,
@@ -54,7 +55,7 @@ export function useUploadWallTopoImage(wallId: string) {
 				.from("route-images")
 				.getPublicUrl(storagePath);
 
-			await upsertWallTopo(wallId, data.publicUrl, user.id);
+			await upsertWallTopo(wallId, data.publicUrl, user.id, sizeBytes);
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: [WALL_TOPO_KEY, wallId] });
@@ -69,7 +70,12 @@ export function useSetWallTopoFromUrl(wallId: string) {
 		mutationFn: async (imageUrl: string) => {
 			const user = useAuthStore.getState().user;
 			if (!user) throw new Error("Not authenticated");
-			await upsertWallTopo(wallId, imageUrl, user.id);
+			await upsertWallTopo(
+				wallId,
+				imageUrl,
+				user.id,
+				await getImageSizeByUrl(imageUrl),
+			);
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: [WALL_TOPO_KEY, wallId] });
@@ -170,19 +176,23 @@ export function useUpsertRouteTopo(routeId: string) {
 			if (!user) throw new Error("Not authenticated");
 
 			let imageUrl: string;
+			let sizeBytes: number | null = null;
 
 			if (file) {
-				const { path: storagePath } = await uploadToStorage(
-					"route-images",
-					`topos/routes/${routeId}/${crypto.randomUUID()}`,
-					file,
-				);
+				const { path: storagePath, sizeBytes: uploadedSize } =
+					await uploadToStorage(
+						"route-images",
+						`topos/routes/${routeId}/${crypto.randomUUID()}`,
+						file,
+					);
 				const { data } = supabase.storage
 					.from("route-images")
 					.getPublicUrl(storagePath);
 				imageUrl = data.publicUrl;
+				sizeBytes = uploadedSize;
 			} else if (existingUrl) {
 				imageUrl = existingUrl;
+				sizeBytes = await getImageSizeByUrl(existingUrl);
 			} else {
 				// Updating points only — get existing URL
 				const existing = await fetchRouteTopo(routeId);
@@ -190,7 +200,14 @@ export function useUpsertRouteTopo(routeId: string) {
 				imageUrl = existing.image_url;
 			}
 
-			await upsertRouteTopo(routeId, imageUrl, points, color, user.id);
+			await upsertRouteTopo(
+				routeId,
+				imageUrl,
+				points,
+				color,
+				user.id,
+				sizeBytes,
+			);
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: [ROUTE_TOPO_KEY, routeId] });
